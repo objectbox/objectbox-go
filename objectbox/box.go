@@ -1,7 +1,7 @@
 package objectbox
 
 /*
-#cgo LDFLAGS: -L ${SRCDIR}/libs -lobjectboxc
+#cgo LDFLAGS: -lobjectboxc
 #include <stdlib.h>
 #include <string.h>
 #include "objectbox.h"
@@ -15,7 +15,7 @@ import (
 
 type Box struct {
 	objectBox *ObjectBox
-	box       *C.OB_box
+	box       *C.OBX_box
 	typeId    TypeId
 	binding   ObjectBinding
 	// FIXME not synchronized:
@@ -23,7 +23,7 @@ type Box struct {
 }
 
 func (box *Box) Destroy() (err error) {
-	rc := C.ob_box_destroy(box.box)
+	rc := C.obx_box_destroy(box.box)
 	box.box = nil
 	if rc != 0 {
 		err = createError()
@@ -32,7 +32,7 @@ func (box *Box) Destroy() (err error) {
 }
 
 func (box *Box) IdForPut(idCandidate uint64) (id uint64, err error) {
-	id = uint64(C.ob_box_id_for_put(box.box, C.uint64_t(idCandidate)))
+	id = uint64(C.obx_box_id_for_put(box.box, C.uint64_t(idCandidate)))
 	if id == 0 {
 		err = createError()
 	}
@@ -62,7 +62,7 @@ func (box *Box) finishInternalFbbAndPutAsync(id uint64, checkForPreviousObject b
 	if checkForPreviousObject {
 		cCheckPrevious = 1
 	}
-	rc := C.ob_box_put_async(box.box, C.uint64_t(id), unsafe.Pointer(&bytes[0]), C.size_t(len(bytes)),
+	rc := C.obx_box_put_async(box.box, C.uint64_t(id), unsafe.Pointer(&bytes[0]), C.size_t(len(bytes)),
 		C.int(cCheckPrevious))
 	if rc != 0 {
 		err = createError()

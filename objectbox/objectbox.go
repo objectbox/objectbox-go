@@ -1,7 +1,7 @@
 package objectbox
 
 /*
-#cgo LDFLAGS: -L ${SRCDIR}/libs -lobjectboxc
+#cgo LDFLAGS: -lobjectbox
 #include <stdlib.h>
 #include <string.h>
 #include "objectbox.h"
@@ -51,18 +51,14 @@ type ObjectBoxBuilder struct {
 }
 
 type ObjectBox struct {
-	store          *C.OB_store
+	store          *C.OBX_store
 	bindingsById   map[TypeId]ObjectBinding
 	bindingsByName map[string]ObjectBinding
 }
 
-type TableArray struct {
-	tableArray *C.OB_table_array
-}
-
 type BytesArray struct {
 	BytesArray  [][]byte
-	cBytesArray *C.OB_bytes_array
+	cBytesArray *C.OBX_bytes_array
 }
 
 type TxnFun func(transaction *Transaction) (err error)
@@ -132,7 +128,7 @@ func (builder *ObjectBoxBuilder) Build() (objectBox *ObjectBox, err error) {
 	defer C.free(unsafe.Pointer(cname))
 
 	objectBox = &ObjectBox{}
-	objectBox.store = C.ob_store_open(builder.model.model, nil)
+	objectBox.store = C.obx_store_open(builder.model.model, nil)
 	if objectBox.store == nil {
 		objectBox = nil
 		err = createError()
@@ -148,12 +144,12 @@ func (ob *ObjectBox) Destroy() {
 	storeToClose := ob.store
 	ob.store = nil
 	if storeToClose != nil {
-		C.ob_store_close(storeToClose)
+		C.obx_store_close(storeToClose)
 	}
 }
 
 func (ob *ObjectBox) BeginTxn() (txn *Transaction, err error) {
-	var ctxn = C.ob_txn_begin(ob.store)
+	var ctxn = C.obx_txn_begin(ob.store)
 	if ctxn == nil {
 		return nil, createError()
 	}
@@ -161,7 +157,7 @@ func (ob *ObjectBox) BeginTxn() (txn *Transaction, err error) {
 }
 
 func (ob *ObjectBox) BeginTxnRead() (txn *Transaction, err error) {
-	var ctxn = C.ob_txn_begin_read(ob.store)
+	var ctxn = C.obx_txn_begin_read(ob.store)
 	if ctxn == nil {
 		return nil, createError()
 	}
@@ -245,7 +241,7 @@ func (ob *ObjectBox) RunWithCursor(typeId TypeId, readOnly bool, cursorFun Curso
 }
 
 func (ob *ObjectBox) SetDebugFlags(flags uint) (err error) {
-	rc := C.ob_store_debug_flags(ob.store, C.uint32_t(flags))
+	rc := C.obx_store_debug_flags(ob.store, C.uint32_t(flags))
 	if rc != 0 {
 		err = createError()
 	}
@@ -263,7 +259,7 @@ func (ob *ObjectBox) Box(typeId TypeId) *Box {
 
 func (ob *ObjectBox) BoxOrError(typeId TypeId) (*Box, error) {
 	binding := ob.getBindingById(typeId)
-	cbox := C.ob_box_create(ob.store, C.uint(typeId))
+	cbox := C.obx_box_create(ob.store, C.uint(typeId))
 	if cbox == nil {
 		return nil, createError()
 	}
@@ -271,7 +267,7 @@ func (ob *ObjectBox) BoxOrError(typeId TypeId) (*Box, error) {
 }
 
 func (ob *ObjectBox) Strict() *ObjectBox {
-	if C.ob_store_await_async_completion(ob.store) != 0 {
+	if C.obx_store_await_async_completion(ob.store) != 0 {
 		fmt.Println(createError())
 	}
 	return ob
@@ -281,13 +277,13 @@ func (bytesArray *BytesArray) Destroy() {
 	cBytesArray := bytesArray.cBytesArray
 	if cBytesArray != nil {
 		bytesArray.cBytesArray = nil
-		C.ob_bytes_array_destroy(cBytesArray)
+		C.obx_bytes_array_destroy(cBytesArray)
 	}
 	bytesArray.BytesArray = nil
 }
 
 func createError() error {
-	msg := C.ob_last_error_message()
+	msg := C.obx_last_error_message()
 	if msg == nil {
 		return errors.New("no error info available; please report")
 	} else {

@@ -1,7 +1,7 @@
 package objectbox
 
 /*
-#cgo LDFLAGS: -L ${SRCDIR}/libs -lobjectboxc
+#cgo LDFLAGS: -lobjectbox
 #include <stdlib.h>
 #include <string.h>
 #include "objectbox.h"
@@ -14,13 +14,13 @@ import (
 )
 
 type Cursor struct {
-	cursor  *C.OB_cursor
+	cursor  *C.OBX_cursor
 	binding ObjectBinding
 	fbb     *flatbuffers.Builder
 }
 
 func (cursor *Cursor) Destroy() (err error) {
-	rc := C.ob_cursor_destroy(cursor.cursor)
+	rc := C.obx_cursor_destroy(cursor.cursor)
 	cursor.cursor = nil
 	if rc != 0 {
 		err = createError()
@@ -56,7 +56,7 @@ func (cursor *Cursor) GetBytes(id uint64) (bytes []byte, err error) {
 	var data *C.void
 	var dataSize C.size_t
 	dataPtr := unsafe.Pointer(data) // Need ptr to an unsafe ptr here
-	rc := C.ob_cursor_get(cursor.cursor, C.uint64_t(id), &dataPtr, &dataSize)
+	rc := C.obx_cursor_get(cursor.cursor, C.uint64_t(id), &dataPtr, &dataSize)
 	if rc != 0 {
 		if rc != 404 {
 			err = createError()
@@ -71,7 +71,7 @@ func (cursor *Cursor) First() (bytes []byte, err error) {
 	var data *C.void
 	var dataSize C.size_t
 	dataPtr := unsafe.Pointer(data) // Need ptr to an unsafe ptr here
-	rc := C.ob_cursor_first(cursor.cursor, &dataPtr, &dataSize)
+	rc := C.obx_cursor_first(cursor.cursor, &dataPtr, &dataSize)
 	if rc != 0 {
 		if rc != 404 {
 			err = createError()
@@ -86,7 +86,7 @@ func (cursor *Cursor) Next() (bytes []byte, err error) {
 	var data *C.void
 	var dataSize C.size_t
 	dataPtr := unsafe.Pointer(data) // Need ptr to an unsafe ptr here
-	rc := C.ob_cursor_next(cursor.cursor, &dataPtr, &dataSize)
+	rc := C.obx_cursor_next(cursor.cursor, &dataPtr, &dataSize)
 	if rc != 0 {
 		if rc != 404 {
 			err = createError()
@@ -99,7 +99,7 @@ func (cursor *Cursor) Next() (bytes []byte, err error) {
 
 func (cursor *Cursor) Count() (count uint64, err error) {
 	var cCount C.uint64_t
-	rc := C.ob_cursor_count(cursor.cursor, &cCount)
+	rc := C.obx_cursor_count(cursor.cursor, &cCount)
 	if rc != 0 {
 		err = createError()
 		return
@@ -130,7 +130,7 @@ func (cursor *Cursor) finishInternalFbbAndPut(id uint64, checkForPreviousObject 
 	if checkForPreviousObject {
 		cCheckPrevious = 1
 	}
-	rc := C.ob_cursor_put(cursor.cursor, C.uint64_t(id), unsafe.Pointer(&bytes[0]), C.size_t(len(bytes)),
+	rc := C.obx_cursor_put(cursor.cursor, C.uint64_t(id), unsafe.Pointer(&bytes[0]), C.size_t(len(bytes)),
 		C.int(cCheckPrevious))
 	if rc != 0 {
 		err = createError()
@@ -143,7 +143,7 @@ func (cursor *Cursor) finishInternalFbbAndPut(id uint64, checkForPreviousObject 
 }
 
 func (cursor *Cursor) IdForPut(idCandidate uint64) (id uint64, err error) {
-	id = uint64(C.ob_cursor_id_for_put(cursor.cursor, C.uint64_t(idCandidate)))
+	id = uint64(C.obx_cursor_id_for_put(cursor.cursor, C.uint64_t(idCandidate)))
 	if id == 0 {
 		err = createError()
 	}
@@ -151,7 +151,7 @@ func (cursor *Cursor) IdForPut(idCandidate uint64) (id uint64, err error) {
 }
 
 func (cursor *Cursor) RemoveAll() (err error) {
-	rc := C.ob_cursor_remove_all(cursor.cursor)
+	rc := C.obx_cursor_remove_all(cursor.cursor)
 	if rc != 0 {
 		err = createError()
 	}
@@ -162,7 +162,7 @@ func (cursor *Cursor) FindByString(propertyId uint, value string) (bytesArray *B
 	cvalue := C.CString(value)
 	defer C.free(unsafe.Pointer(cvalue))
 
-	cBytesArray := C.ob_query_by_string(cursor.cursor, C.uint32_t(propertyId), cvalue)
+	cBytesArray := C.obx_query_by_string(cursor.cursor, C.uint32_t(propertyId), cvalue)
 	if cBytesArray == nil {
 		err = createError()
 		return
@@ -170,7 +170,7 @@ func (cursor *Cursor) FindByString(propertyId uint, value string) (bytesArray *B
 	size := int(cBytesArray.size)
 	plainBytesArray := make([][]byte, size)
 	if size > 0 {
-		goBytesArray := (*[1 << 30]C.OB_bytes)(unsafe.Pointer(cBytesArray.bytes))[:size:size]
+		goBytesArray := (*[1 << 30]C.OBX_bytes)(unsafe.Pointer(cBytesArray.bytes))[:size:size]
 		for i := 0; i < size; i++ {
 			cBytes := goBytesArray[i]
 			dataBytes := C.GoBytes(cBytes.data, C.int(cBytes.size))

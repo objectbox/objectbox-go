@@ -1,7 +1,7 @@
 package objectbox
 
 /*
-#cgo LDFLAGS: -L ${SRCDIR}/libs -lobjectboxc
+#cgo LDFLAGS: -lobjectbox
 #include <stdlib.h>
 #include <string.h>
 #include "objectbox.h"
@@ -62,7 +62,7 @@ const (
 )
 
 type Model struct {
-	model          *C.OB_model
+	model          *C.OBX_model
 	lastEntityName string
 	lastEntityId   TypeId
 	Err            error
@@ -70,7 +70,7 @@ type Model struct {
 
 func NewModel() (model *Model, err error) {
 	model = &Model{}
-	model.model = C.ob_model_create()
+	model.model = C.obx_model_create()
 	if model.model == nil {
 		model = nil
 		err = createError()
@@ -82,7 +82,7 @@ func (model *Model) LastEntityId(id TypeId, uid uint64) {
 	if model.Err != nil {
 		return
 	}
-	C.ob_model_last_entity_id(model.model, C.uint(id), C.ulong(uid))
+	C.obx_model_last_entity_id(model.model, C.uint(id), C.ulong(uid))
 }
 
 func (model *Model) Entity(name string, id TypeId, uid uint64) (err error) {
@@ -92,7 +92,7 @@ func (model *Model) Entity(name string, id TypeId, uid uint64) (err error) {
 	cname := C.CString(name)
 	defer C.free(unsafe.Pointer(cname))
 
-	rc := C.ob_model_entity(model.model, cname, C.uint(id), C.ulong(uid))
+	rc := C.obx_model_entity(model.model, cname, C.uint(id), C.ulong(uid))
 	if rc != 0 {
 		err = createError()
 		model.Err = err
@@ -107,7 +107,7 @@ func (model *Model) EntityLastPropertyId(id TypeId, uid uint64) (err error) {
 	if model.Err != nil {
 		return model.Err
 	}
-	rc := C.ob_model_entity_last_property_id(model.model, C.uint(id), C.ulong(uid))
+	rc := C.obx_model_entity_last_property_id(model.model, C.uint(id), C.ulong(uid))
 	if rc != 0 {
 		err = createError()
 		model.Err = err
@@ -122,7 +122,7 @@ func (model *Model) Property(name string, propertyType int, id TypeId, uid uint6
 	cname := C.CString(name)
 	defer C.free(unsafe.Pointer(cname))
 
-	rc := C.ob_model_property(model.model, cname, C.OBPropertyType(propertyType), C.uint(id), C.ulong(uid))
+	rc := C.obx_model_property(model.model, cname, C.OBPropertyType(propertyType), C.uint(id), C.ulong(uid))
 	if rc != 0 {
 		err = createError()
 		model.Err = err
@@ -134,7 +134,7 @@ func (model *Model) PropertyFlags(propertyFlags int) (err error) {
 	if model.Err != nil {
 		return model.Err
 	}
-	rc := C.ob_model_property_flags(model.model, C.OBPropertyFlags(propertyFlags))
+	rc := C.obx_model_property_flags(model.model, C.OBPropertyFlags(propertyFlags))
 	if rc != 0 {
 		err = createError()
 		model.Err = err

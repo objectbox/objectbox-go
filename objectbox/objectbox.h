@@ -1,12 +1,29 @@
+/*
+ * Copyright 2018 ObjectBox Ltd. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 // Single header file for the ObjectBox C API
 //
 // Naming conventions
 // ------------------
-// * methods: ob_thing_action()
-// * structs: OB_thing {}
-// * error codes: OB_ERROR_REASON
-// * enums: ?
+// * methods: obx_thing_action()
+// * structs: OBX_thing {}
+// * error codes: OBX_ERROR_REASON
+// * enums: TODO
 //
+
 #ifndef OBJECTBOX_H
 #define OBJECTBOX_H
 
@@ -14,59 +31,83 @@
 #include <stdio.h>
 
 //----------------------------------------------
+// ObjectBox version codes
+//----------------------------------------------
+
+// Note that you should use methods with prefix obx_version_ to check when linking against the dynamic library
+#define OBX_VERSION_MAJOR 0
+#define OBX_VERSION_MINOR 1
+#define OBX_VERSION_PATCH 0
+
+/// Returns the version of the library as ints. Pointers may be null
+void obx_version(int* major, int* minor, int* patch);
+
+/// Checks if the version of the library is equal to or higher than the given version ints.
+/// @returns 1 if the condition is met and 0 otherwise
+int obx_version_is_at_least(int major, int minor, int patch);
+
+/// Returns the version of the library to be printed.
+/// The format may change; to query for version use the int based methods instead.
+const char* obx_version_string();
+
+/// Returns the version of the ObjectBox core to be printed.
+/// The format may change, do not rely on its current form.
+const char* obx_version_core_string();
+
+//----------------------------------------------
 // Return codes
 //----------------------------------------------
 
 /// Value returned when no error occurred (0)
-#define OB_SUCCESS 0
+#define OBX_SUCCESS 0
 
 /// Returned by e.g. get operations if nothing was found for a specific ID.
 /// This is NOT an error condition, and thus no last error info is set.
-#define OB_NOT_FOUND 404
+#define OBX_NOT_FOUND 404
 
 // General errors
-#define OB_ERROR_ILLEGAL_STATE 10001
-#define OB_ERROR_ILLEGAL_ARGUMENT 10002
-#define OB_ERROR_ALLOCATION 10003
-#define OB_ERROR_NO_ERROR_INFO 10097
-#define OB_ERROR_GENERAL 10098
-#define OB_ERROR_UNKNOWN 10099
+#define OBX_ERROR_ILLEGAL_STATE 10001
+#define OBX_ERROR_ILLEGAL_ARGUMENT 10002
+#define OBX_ERROR_ALLOCATION 10003
+#define OBX_ERROR_NO_ERROR_INFO 10097
+#define OBX_ERROR_GENERAL 10098
+#define OBX_ERROR_UNKNOWN 10099
 
 // Storage errors (often have a secondary error code)
-#define OB_ERROR_DB_FULL 10101
-#define OB_ERROR_MAX_READERS_EXCEEDED 10102
-#define OB_ERROR_STORE_MUST_SHUTDOWN 10103
-#define OB_ERROR_STORAGE_GENERAL 10199
+#define OBX_ERROR_DB_FULL 10101
+#define OBX_ERROR_MAX_READERS_EXCEEDED 10102
+#define OBX_ERROR_STORE_MUST_SHUTDOWN 10103
+#define OBX_ERROR_STORAGE_GENERAL 10199
 
 // Data errors
-#define OB_ERROR_UNIQUE_VIOLATED 10201
-#define OB_ERROR_NON_UNIQUE_RESULT 10202
-#define OB_ERROR_CONSTRAINT_VIOLATED 10299
+#define OBX_ERROR_UNIQUE_VIOLATED 10201
+#define OBX_ERROR_NON_UNIQUE_RESULT 10202
+#define OBX_ERROR_CONSTRAINT_VIOLATED 10299
 
 // STD errors
-#define OB_ERROR_STD_ILLEGAL_ARGUMENT 10301
-#define OB_ERROR_STD_OUT_OF_RANGE 10302
-#define OB_ERROR_STD_LENGTH 10303
-#define OB_ERROR_STD_BAD_ALLOC 10304
-#define OB_ERROR_STD_RANGE 10305
-#define OB_ERROR_STD_OVERFLOW 10306
-#define OB_ERROR_STD_OTHER 10399
+#define OBX_ERROR_STD_ILLEGAL_ARGUMENT 10301
+#define OBX_ERROR_STD_OUT_OF_RANGE 10302
+#define OBX_ERROR_STD_LENGTH 10303
+#define OBX_ERROR_STD_BAD_ALLOC 10304
+#define OBX_ERROR_STD_RANGE 10305
+#define OBX_ERROR_STD_OVERFLOW 10306
+#define OBX_ERROR_STD_OTHER 10399
 
 // Inconsistencies detected
-#define OB_ERROR_SCHEMA 10501
-#define OB_ERROR_FILE_CORRUPT 10502
+#define OBX_ERROR_SCHEMA 10501
+#define OBX_ERROR_FILE_CORRUPT 10502
 
 //----------------------------------------------
 // Error info
 //----------------------------------------------
 
-int ob_last_error_code();
+int obx_last_error_code();
 
-const char* ob_last_error_message();
+const char* obx_last_error_message();
 
-int ob_last_error_secondary();
+int obx_last_error_secondary();
 
-void ob_last_error_clear();
+void obx_last_error_clear();
 
 //----------------------------------------------
 // Model
@@ -120,38 +161,38 @@ typedef enum {
 
 } OBPropertyFlags;
 
-struct OB_model;
-typedef struct OB_model OB_model;
+struct OBX_model;
+typedef struct OBX_model OBX_model;
 
-OB_model* ob_model_create();
+OBX_model* obx_model_create();
 
-/// Only call when not calling ob_store_open (which will destroy it internally)
-int ob_model_destroy(OB_model* model);
+/// Only call when not calling obx_store_open (which will destroy it internally)
+int obx_model_destroy(OBX_model* model);
 
-void ob_model_last_entity_id(OB_model*, uint32_t id, uint64_t uid);
+void obx_model_last_entity_id(OBX_model*, uint32_t id, uint64_t uid);
 
-void ob_model_last_index_id(OB_model* model, uint32_t id, uint64_t uid);
+void obx_model_last_index_id(OBX_model* model, uint32_t id, uint64_t uid);
 
-void ob_model_last_relation_id(OB_model* model, uint32_t id, uint64_t uid);
+void obx_model_last_relation_id(OBX_model* model, uint32_t id, uint64_t uid);
 
-int ob_model_entity(OB_model* model, const char* name, uint32_t id, uint64_t uid);
+int obx_model_entity(OBX_model* model, const char* name, uint32_t id, uint64_t uid);
 
-int ob_model_entity_last_property_id(OB_model* model, uint32_t id, uint64_t uid);
+int obx_model_entity_last_property_id(OBX_model* model, uint32_t id, uint64_t uid);
 
-int ob_model_property(OB_model* model, const char* name, OBPropertyType type, uint32_t id, uint64_t uid);
+int obx_model_property(OBX_model* model, const char* name, OBPropertyType type, uint32_t id, uint64_t uid);
 
-int ob_model_property_flags(OB_model* model, OBPropertyFlags flags);
+int obx_model_property_flags(OBX_model* model, OBPropertyFlags flags);
 
-int ob_model_property_index_id(OB_model* model, uint32_t id, uint64_t uid);
+int obx_model_property_index_id(OBX_model* model, uint32_t id, uint64_t uid);
 
 //----------------------------------------------
 // Store
 //----------------------------------------------
 
-struct OB_store;
-typedef struct OB_store OB_store;
+struct OBX_store;
+typedef struct OBX_store OBX_store;
 
-struct OB_store_options {
+struct OBX_store_options {
     /// Use NULL for default value ("objectbox")
     char* directory;
 
@@ -165,7 +206,7 @@ struct OB_store_options {
     unsigned int maxReaders;
 };
 
-typedef struct OB_store_options OB_store_options;
+typedef struct OBX_store_options OBX_store_options;
 
 enum DebugFlags {
     DebugFlags_LOG_TRANSACTIONS_READ = 1,
@@ -175,109 +216,98 @@ enum DebugFlags {
     DebugFlags_LOG_ASYNC_QUEUE = 16,
 };
 
-struct OB_bytes {
+struct OBX_bytes {
     void* data;
     size_t size;
 };
-typedef struct OB_bytes OB_bytes;
+typedef struct OBX_bytes OBX_bytes;
 
-struct OB_bytes_array {
-    OB_bytes* bytes;
+struct OBX_bytes_array {
+    OBX_bytes* bytes;
     size_t size;
 };
-typedef struct OB_bytes_array OB_bytes_array;
+typedef struct OBX_bytes_array OBX_bytes_array;
 
-struct OB_table_array {
-    void* tables;
-    size_t size;
-};
-typedef struct OB_table_array OB_table_array;
-
-
-OB_store* ob_store_open_bytes(const void* modelBytes, size_t modelSize, const OB_store_options* options);
+OBX_store* obx_store_open_bytes(const void* modelBytes, size_t modelSize, const OBX_store_options* options);
 
 /// Note: the model is destroyed by calling this method
-OB_store* ob_store_open(OB_model* model, const OB_store_options* options);
+OBX_store* obx_store_open(OBX_model* model, const OBX_store_options* options);
 
-int ob_store_await_async_completion(OB_store* store);
+int obx_store_await_async_completion(OBX_store* store);
 
-int ob_store_debug_flags(OB_store* store, uint32_t debugFlags);
+int obx_store_debug_flags(OBX_store* store, uint32_t debugFlags);
 
-int ob_store_close(OB_store* store);
+int obx_store_close(OBX_store* store);
 
 //----------------------------------------------
 // Transaction
 //----------------------------------------------
 
-struct OB_txn;
-typedef struct OB_txn OB_txn;
+struct OBX_txn;
+typedef struct OBX_txn OBX_txn;
 
-OB_txn* ob_txn_begin(OB_store* store);
+OBX_txn* obx_txn_begin(OBX_store* store);
 
-OB_txn* ob_txn_begin_read(OB_store* store);
+OBX_txn* obx_txn_begin_read(OBX_store* store);
 
-int ob_txn_destroy(OB_txn* txn);
+int obx_txn_destroy(OBX_txn* txn);
 
-int ob_txn_abort(OB_txn* txn);
+int obx_txn_abort(OBX_txn* txn);
 
-int ob_txn_commit(OB_txn* txn);
+int obx_txn_commit(OBX_txn* txn);
 
 //----------------------------------------------
 // Cursor
 //----------------------------------------------
 
-struct OB_cursor;
-typedef struct OB_cursor OB_cursor;
+struct OBX_cursor;
+typedef struct OBX_cursor OBX_cursor;
 
-OB_cursor* ob_cursor_create(OB_txn* txn, uint32_t schemaEntityId);
+OBX_cursor* obx_cursor_create(OBX_txn* txn, uint32_t schemaEntityId);
 
-OB_cursor* ob_cursor_create2(OB_txn* txn, const char* schemaEntityName);
+OBX_cursor* obx_cursor_create2(OBX_txn* txn, const char* schemaEntityName);
 
-int ob_cursor_destroy(OB_cursor* cursor);
+int obx_cursor_destroy(OBX_cursor* cursor);
 
-uint64_t ob_cursor_id_for_put(OB_cursor* cursor, uint64_t idOrZero);
+uint64_t obx_cursor_id_for_put(OBX_cursor* cursor, uint64_t idOrZero);
 
-int ob_cursor_put(OB_cursor* cursor, uint64_t entityId, const void* data, size_t size, int checkForPreviousValueFlag);
+int obx_cursor_put(OBX_cursor* cursor, uint64_t entityId, const void* data, size_t size, int checkForPreviousValueFlag);
 
-int ob_cursor_get(OB_cursor* cursor, uint64_t entityId, void** data, size_t* size);
+int obx_cursor_get(OBX_cursor* cursor, uint64_t entityId, void** data, size_t* size);
 
-int ob_cursor_first(OB_cursor* cursor, void** data, size_t* size);
+int obx_cursor_first(OBX_cursor* cursor, void** data, size_t* size);
 
-int ob_cursor_next(OB_cursor* cursor, void** data, size_t* size);
+int obx_cursor_next(OBX_cursor* cursor, void** data, size_t* size);
 
-int ob_cursor_remove(OB_cursor* cursor, uint64_t entityId);
+int obx_cursor_remove(OBX_cursor* cursor, uint64_t entityId);
 
-int ob_cursor_remove_all(OB_cursor* cursor);
+int obx_cursor_remove_all(OBX_cursor* cursor);
 
-int ob_cursor_count(OB_cursor* cursor, uint64_t* outCount);
+int obx_cursor_count(OBX_cursor* cursor, uint64_t* outCount);
 
 //----------------------------------------------
 // Box
 //----------------------------------------------
 
-struct OB_box;
-typedef struct OB_box OB_box;
+struct OBX_box;
+typedef struct OBX_box OBX_box;
 
-OB_box* ob_box_create(OB_store* store, uint32_t schemaEntityId);
+OBX_box* obx_box_create(OBX_store* store, uint32_t schemaEntityId);
 
-int ob_box_destroy(OB_box* box);
+int obx_box_destroy(OBX_box* box);
 
-uint64_t ob_box_id_for_put(OB_box* box, uint64_t idOrZero);
+uint64_t obx_box_id_for_put(OBX_box* box, uint64_t idOrZero);
 
-int ob_box_put_async(OB_box* box, uint64_t entityId, const void* data, size_t size, int checkForPreviousValueFlag);
+int obx_box_put_async(OBX_box* box, uint64_t entityId, const void* data, size_t size, int checkForPreviousValueFlag);
 
 //----------------------------------------------
 // Query
 //----------------------------------------------
 
-OB_table_array* ob_simple_query_string(OB_cursor* cursor, uint32_t propertyId, const char* value, uint32_t valueSize);
+OBX_bytes_array* obx_query_by_string(OBX_cursor* cursorStruct, uint32_t propertyId, const char* value);
 
-OB_bytes_array* ob_query_by_string(OB_cursor* cursorStruct, uint32_t propertyId, const char* value);
+void obx_bytes_destroy(OBX_bytes* bytes);
 
-void ob_bytes_destroy(OB_bytes* bytes);
-
-void ob_bytes_array_destroy(OB_bytes_array* bytesArray);
-
-void ob_table_array_destroy(OB_table_array* tableArray);
+void obx_bytes_array_destroy(OBX_bytes_array* bytesArray);
 
 #endif //OBJECTBOX_H

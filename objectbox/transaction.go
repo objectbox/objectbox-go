@@ -1,7 +1,7 @@
 package objectbox
 
 /*
-#cgo LDFLAGS: -L ${SRCDIR}/libs -lobjectboxc
+#cgo LDFLAGS: -lobjectbox
 #include <stdlib.h>
 #include <string.h>
 #include "objectbox.h"
@@ -14,12 +14,12 @@ import (
 )
 
 type Transaction struct {
-	txn       *C.OB_txn
+	txn       *C.OBX_txn
 	objectBox *ObjectBox
 }
 
 func (txn *Transaction) Destroy() (err error) {
-	rc := C.ob_txn_destroy(txn.txn)
+	rc := C.obx_txn_destroy(txn.txn)
 	txn.txn = nil
 	if rc != 0 {
 		err = createError()
@@ -28,7 +28,7 @@ func (txn *Transaction) Destroy() (err error) {
 }
 
 func (txn *Transaction) Abort() (err error) {
-	rc := C.ob_txn_abort(txn.txn)
+	rc := C.obx_txn_abort(txn.txn)
 	if rc != 0 {
 		err = createError()
 	}
@@ -36,7 +36,7 @@ func (txn *Transaction) Abort() (err error) {
 }
 
 func (txn *Transaction) Commit() (err error) {
-	rc := C.ob_txn_commit(txn.txn)
+	rc := C.obx_txn_commit(txn.txn)
 	if rc != 0 {
 		err = createError()
 	}
@@ -44,7 +44,7 @@ func (txn *Transaction) Commit() (err error) {
 }
 
 func (txn *Transaction) createCursor(typeId TypeId, binding ObjectBinding) (*Cursor, error) {
-	ccursor := C.ob_cursor_create(txn.txn, C.uint(typeId))
+	ccursor := C.obx_cursor_create(txn.txn, C.uint(typeId))
 	if ccursor == nil {
 		return nil, createError()
 	}
@@ -56,7 +56,7 @@ func (txn *Transaction) CursorForName(entitySchemaName string) (*Cursor, error) 
 	cname := C.CString(entitySchemaName)
 	defer C.free(unsafe.Pointer(cname))
 
-	ccursor := C.ob_cursor_create2(txn.txn, cname)
+	ccursor := C.obx_cursor_create2(txn.txn, cname)
 	if ccursor == nil {
 		return nil, createError()
 	}

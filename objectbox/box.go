@@ -10,6 +10,7 @@ import "C"
 
 import (
 	"github.com/google/flatbuffers/go"
+	"sync/atomic"
 	"unsafe"
 )
 
@@ -18,8 +19,12 @@ type Box struct {
 	box       *C.OBX_box
 	typeId    TypeId
 	binding   ObjectBinding
-	// FIXME not synchronized:
+
+	// Must be used in combination with fbbInUseAtomic
 	fbb *flatbuffers.Builder
+
+	// Values 0 (unused) or 1 (in use); use only with CompareAndSwapInt32
+	fbbInUseAtomic uint32
 }
 
 func (box *Box) Destroy() (err error) {
@@ -49,12 +54,19 @@ func (box *Box) PutAsync(object interface{}) (id uint64, err error) {
 	if err != nil {
 		return
 	}
-	box.binding.Flatten(object, box.fbb, id)
-	return id, box.finishInternalFbbAndPutAsync(id, checkForPreviousValue)
+
+	var fbb *flatbuffers.Builder
+	if atomic.CompareAndSwapUint32(&box.fbbInUseAtomic, 0, 1) {
+		defer atomic.StoreUint32(&box.fbbInUseAtomic, 0)
+		fbb = box.fbb
+	} else {
+		fbb = flatbuffers.NewBuilder(256)
+	}
+	box.binding.Flatten(object, fbb, id)
+	return id, box.finishFbbAndPutAsync(fbb, id, checkForPreviousValue)
 }
 
-func (box *Box) finishInternalFbbAndPutAsync(id uint64, checkForPreviousObject bool) (err error) {
-	fbb := box.fbb
+func (box *Box) finishFbbAndPutAsync(fbb *flatbuffers.Builder, id uint64, checkForPreviousObject bool) (err error) {
 	fbb.Finish(fbb.EndObject())
 	bytes := fbb.FinishedBytes()
 

@@ -248,7 +248,7 @@ func (ob *ObjectBox) SetDebugFlags(flags uint) (err error) {
 	return
 }
 
-/// Returns a Box, panics on error (see BoxOrError)
+// Returns a Box, panics on error (see BoxOrError)
 func (ob *ObjectBox) Box(typeId TypeId) *Box {
 	box, err := ob.BoxOrError(typeId)
 	if err != nil {
@@ -263,10 +263,16 @@ func (ob *ObjectBox) BoxOrError(typeId TypeId) (*Box, error) {
 	if cbox == nil {
 		return nil, createError()
 	}
-	return &Box{ob, cbox, typeId, binding, flatbuffers.NewBuilder(512)}, nil
+	return &Box{
+		objectBox: ob,
+		box:       cbox,
+		typeId:    typeId,
+		binding:   binding,
+		fbb:       flatbuffers.NewBuilder(512),
+	}, nil
 }
 
-func (ob *ObjectBox) Strict() *ObjectBox {
+func (ob *ObjectBox) AwaitAsyncCompletion() *ObjectBox {
 	if C.obx_store_await_async_completion(ob.store) != 0 {
 		fmt.Println(createError())
 	}

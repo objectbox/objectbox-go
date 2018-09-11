@@ -1,0 +1,11 @@
+# Binary libs
+*.so
+*.dylib
+*.dll
+
+# IDE (e.g. CLion)
+.idea/
+
+# DB files
+data.mdb
+lock.mdb

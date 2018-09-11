@@ -1,0 +1,28 @@
+namespace flat;
+
+table Event {
+    id: ulong;
+
+    device: string;
+    date: long;
+}
+
+table Reading {
+	id: ulong;
+
+	/// to-one relation
+	eventId: ulong;
+
+    date: long;
+
+	valueName: string;
+
+	/// Device sensor data value
+	valueString: string;
+
+	/// Device sensor data value
+	valueInteger: long;
+
+	/// Device sensor data value
+	valueFloating: double;
+}

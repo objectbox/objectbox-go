@@ -65,7 +65,7 @@ type TxnFun func(transaction *Transaction) (err error)
 type CursorFun func(cursor *Cursor) (err error)
 
 func NewObjectBoxBuilder() (builder *ObjectBoxBuilder) {
-	if C.obx_version_is_at_least(0, 1, 0) == 0 {
+	if C.obx_version_is_at_least(0, 2, 0) == 0 {
 		var version string
 		msg := C.obx_version_string()
 		if msg == nil {
@@ -73,7 +73,7 @@ func NewObjectBoxBuilder() (builder *ObjectBoxBuilder) {
 		} else {
 			version = C.GoString(msg)
 		}
-		panic("Minimum libobjectbox version 0.1.0 required, but found " + version +
+		panic("Minimum libobjectbox version 0.2.0 required, but found " + version +
 			". Check https://github.com/objectbox/objectbox-c for updates.")
 	}
 	model, err := NewModel()

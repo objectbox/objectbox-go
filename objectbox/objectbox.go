@@ -290,6 +290,17 @@ func (ob *ObjectBox) AwaitAsyncCompletion() *ObjectBox {
 	return ob
 }
 
+func (ob *ObjectBox) Query(typeId TypeId) (*QueryBuilder, error) {
+	qb := C.obx_qb_create(ob.store, C.uint(typeId))
+	if qb == nil {
+		return nil, createError()
+	}
+	return &QueryBuilder{
+		objectBox: ob,
+		cqb:       qb,
+	}, nil
+}
+
 func (bytesArray *BytesArray) Destroy() {
 	cBytesArray := bytesArray.cBytesArray
 	if cBytesArray != nil {

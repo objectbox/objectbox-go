@@ -26,11 +26,7 @@ func TestQueryBuilder(t *testing.T) {
 
 		slice, err := query.Find(cursor)
 		assert.NoErr(t, err)
-
-		// TODO should be empty slice instead of nil
-		if slice != nil && len(slice.([]object.Event)) != 0 {
-			t.Fatalf("unexpected size")
-		}
+		assert.EqInt(t, 0, len(slice.([]object.Event)))
 		return
 	})
 

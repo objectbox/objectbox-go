@@ -39,7 +39,7 @@ func (cursor *Cursor) Get(id uint64) (object interface{}, err error) {
 func (cursor *Cursor) GetAll() (slice interface{}, err error) {
 	var bytes []byte
 	binding := cursor.binding
-	slice = nil
+	slice = cursor.binding.MakeSlice(16)
 
 	for bytes, err = cursor.First(); bytes != nil; bytes, err = cursor.Next() {
 		if err != nil || bytes == nil {

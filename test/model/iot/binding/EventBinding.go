@@ -60,9 +60,10 @@ func toModelEvent(src *Event) *object.Event {
 	}
 }
 
+func (EventBinding) MakeSlice(capacity int) interface{} {
+	return make([]object.Event, 0, 16)
+}
+
 func (EventBinding) AppendToSlice(slice interface{}, entity interface{}) interface{} {
-	if slice == nil {
-		slice = make([]object.Event, 0, 16)
-	}
 	return append(slice.([]object.Event), *entity.(*object.Event))
 }

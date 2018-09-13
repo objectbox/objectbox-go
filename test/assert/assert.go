@@ -4,20 +4,17 @@ import (
 	"fmt"
 	"path/filepath"
 	"runtime"
-	"runtime/debug"
 	"testing"
 )
 
 func EqString(t *testing.T, expected string, actual string) {
 	if expected != actual {
-		debug.PrintStack()
 		Failf(t, "Expected \""+expected+"\", but got \""+actual+"\"")
 	}
 }
 
 func EqInt(t *testing.T, expected int, actual int) {
 	if expected != actual {
-		debug.PrintStack()
 		Failf(t, "Expected %v, but got %v", expected, actual)
 	}
 }

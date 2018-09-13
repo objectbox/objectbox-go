@@ -75,10 +75,11 @@ func (ReadingBinding) ToObject(bytes []byte) interface{} {
 	return toModelReading(flatReading)
 }
 
+func (ReadingBinding) MakeSlice(capacity int) interface{} {
+	return make([]object.Reading, 0, 16)
+}
+
 func (ReadingBinding) AppendToSlice(slice interface{}, entity interface{}) (sliceNew interface{}) {
-	if slice == nil {
-		slice = make([]object.Reading, 0, 16)
-	}
 	return append(slice.([]object.Reading), *entity.(*object.Reading))
 }
 

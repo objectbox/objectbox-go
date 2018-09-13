@@ -26,6 +26,8 @@ func (query *Query) Find(cursor *Cursor) (slice interface{}, err error) {
 		return
 	}
 	defer bytesArray.Destroy()
+
+	slice = cursor.binding.MakeSlice(len(bytesArray.BytesArray))
 	for _, bytesData := range bytesArray.BytesArray {
 		object := cursor.binding.ToObject(bytesData)
 		slice = cursor.binding.AppendToSlice(slice, object)

@@ -36,6 +36,7 @@ type ObjectBinding interface {
 	GetId(object interface{}) (id uint64, err error)
 	Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64)
 	ToObject(bytes []byte) interface{}
+	MakeSlice(capacity int) interface{}
 	AppendToSlice(slice interface{}, object interface{}) (sliceNew interface{})
 }
 

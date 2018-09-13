@@ -1,9 +1,7 @@
 package assert
 
 import (
-	"bufio"
 	"fmt"
-	"os"
 	"path/filepath"
 	"runtime"
 	"runtime/debug"
@@ -35,9 +33,7 @@ func Failf(t *testing.T, format string, args ...interface{}) {
 }
 
 func Fail(t *testing.T, text string) {
-	firstLocation := ""
-	stack_count := 0
-	stack_string := ""
+	stack_string := "Call stack:\n"
 	for idx := 1; ; idx++ {
 		_, file, line, ok := runtime.Caller(idx)
 		if !ok {
@@ -50,18 +46,7 @@ func Fail(t *testing.T, text string) {
 		if filename == "testing.go" {
 			break
 		}
-		location := fmt.Sprintf("%v:%v", filename, line)
-		if firstLocation == "" {
-			firstLocation = location
-		}
-		stack_string += fmt.Sprintf("    %v\n", location)
-		stack_count++
+		stack_string += fmt.Sprintf("%v:%v\n", filename, line)
 	}
-	if stack_count > 1 {
-		fmt.Println("Full stack for [" + text + "]:\n" + stack_string)
-
-	}
-
-	bufio.NewWriter(os.Stdout).Flush()
-	t.Fatal(text, "\nat", firstLocation)
+	t.Fatal(text, "\n", stack_string)
 }

@@ -20,16 +20,20 @@ func CreateObjectBox() *ObjectBox {
 	return objectBox
 }
 
-func PutEvent(ob *ObjectBox, device string, date int64) uint64 {
+func PutEvent(ob *ObjectBox, device string, date int64) *object.Event {
 	event := object.Event{Device: device, Date: date}
 	id, err := ob.Box(1).Put(&event)
 	assert.NoErr(nil, err)
-	return id
+	event.Id = id
+	return &event
 }
 
-func PutEvents(ob *ObjectBox, count int) {
+func PutEvents(ob *ObjectBox, count int) []*object.Event {
 	// TODO TX
+	events := make([]*object.Event, 0, count)
 	for i := 1; i <= count; i++ {
-		PutEvent(ob, "device "+strconv.Itoa(i), int64(10000+i))
+		event := PutEvent(ob, "device "+strconv.Itoa(i), int64(10000+i))
+		events = append(events, event)
 	}
+	return events
 }

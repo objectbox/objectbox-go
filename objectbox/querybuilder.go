@@ -24,10 +24,22 @@ func (qb *QueryBuilder) Destroy() (err error) {
 	return
 }
 
-func (qb *QueryBuilder) StringEq(propertyId TypeId, value string, caseSensitive bool) {
+func (qb *QueryBuilder) StringEq(propertyId TypeId, value string, caseSensitive bool) (err error) {
 	cvalue := C.CString(value)
 	defer C.free(unsafe.Pointer(cvalue))
-	C.obx_qb_string_equal(qb.cqb, C.uint32_t(propertyId), cvalue, C.bool(caseSensitive))
+	rc := C.obx_qb_string_equal(qb.cqb, C.uint32_t(propertyId), cvalue, C.bool(caseSensitive))
+	if rc != 0 {
+		err = createError()
+	}
+	return
+}
+
+func (qb *QueryBuilder) IntBetween(propertyId TypeId, value1 int64, value2 int64) (err error) {
+	rc := C.obx_qb_long_between(qb.cqb, C.uint32_t(propertyId), C.int64_t(value1), C.int64_t(value2))
+	if rc != 0 {
+		err = createError()
+	}
+	return
 }
 
 func (qb *QueryBuilder) Build() (query *Query, err error) {

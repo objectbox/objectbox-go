@@ -2,9 +2,11 @@ package objectbox
 
 /*
 #cgo LDFLAGS: -lobjectboxc
+#include <stdlib.h>
 #include "objectbox.h"
 */
 import "C"
+import "unsafe"
 
 type QueryBuilder struct {
 	objectBox *ObjectBox
@@ -20,6 +22,12 @@ func (qb *QueryBuilder) Destroy() (err error) {
 		}
 	}
 	return
+}
+
+func (qb *QueryBuilder) StringEq(propertyId TypeId, value string, caseSensitive bool) {
+	cvalue := C.CString(value)
+	defer C.free(unsafe.Pointer(cvalue))
+	C.obx_qb_string_equal(qb.cqb, C.uint32_t(propertyId), cvalue, C.bool(caseSensitive))
 }
 
 func (qb *QueryBuilder) Build() (query *Query, err error) {

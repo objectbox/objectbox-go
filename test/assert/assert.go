@@ -38,7 +38,7 @@ func Failf(t *testing.T, format string, args ...interface{}) {
 }
 
 func Fail(t *testing.T, text string) {
-	stack_string := "Call stack:\n"
+	stackString := "Call stack:\n"
 	for idx := 1; ; idx++ {
 		_, file, line, ok := runtime.Caller(idx)
 		if !ok {
@@ -51,7 +51,11 @@ func Fail(t *testing.T, text string) {
 		if filename == "testing.go" {
 			break
 		}
-		stack_string += fmt.Sprintf("%v:%v\n", filename, line)
+		stackString += fmt.Sprintf("%v:%v\n", filename, line)
 	}
-	t.Fatal(text, "\n", stack_string)
+	if t != nil {
+		t.Fatal(text, "\n", stackString)
+	} else {
+		fmt.Print(text, "\n", stackString)
+	}
 }

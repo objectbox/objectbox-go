@@ -60,5 +60,30 @@ func TestQueryBuilder(t *testing.T) {
 
 		return
 	})
+}
+
+func TestQueryBuilder_StringEq(t *testing.T) {
+	objectBox := iot.CreateObjectBox()
+	box := objectBox.Box(1)
+	box.RemoveAll()
+
+	iot.PutEvents(objectBox, 3)
+
+	qb, err := objectBox.Query(1)
+	assert.NoErr(t, err)
+	defer qb.Destroy()
+	qb.StringEq(2, "device 2", false)
+	query, err := qb.Build()
+	assert.NoErr(t, err)
+	defer query.Destroy()
+
+	objectBox.RunWithCursor(1, true, func(cursor *objectbox.Cursor) (err error) {
+		slice, err := query.Find(cursor)
+		assert.NoErr(t, err)
+		events := slice.([]object.Event)
+		assert.EqInt(t, 1, len(events))
+		assert.EqString(t, "device 2", events[0].Device)
+		return
+	})
 
 }

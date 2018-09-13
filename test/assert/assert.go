@@ -3,6 +3,7 @@ package assert
 import (
 	"fmt"
 	"path/filepath"
+	"reflect"
 	"runtime"
 	"testing"
 )
@@ -15,6 +16,13 @@ func EqString(t *testing.T, expected string, actual string) {
 
 func EqInt(t *testing.T, expected int, actual int) {
 	if expected != actual {
+		Failf(t, "Expected %v, but got %v", expected, actual)
+	}
+}
+
+// Uses reflect.DeepEqual to test for equality
+func Eq(t *testing.T, expected interface{}, actual interface{}) {
+	if !reflect.DeepEqual(expected, actual) {
 		Failf(t, "Expected %v, but got %v", expected, actual)
 	}
 }

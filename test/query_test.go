@@ -38,9 +38,7 @@ func TestQueryBuilder(t *testing.T) {
 
 	event.Device = "dev2"
 	id2, err := box.Put(&event)
-	if err != nil {
-		t.Fatalf("Could not add 2nd event: %v", err)
-	}
+	assert.NoErr(t, err)
 
 	objectBox.RunWithCursor(1, true, func(cursor *objectbox.Cursor) (err error) {
 		bytesArray, err := query.FindBytes(cursor)
@@ -54,10 +52,10 @@ func TestQueryBuilder(t *testing.T) {
 			t.Fatalf("unexpected size")
 		}
 
-		assert.EqInt(t, int(id1), int(events[0].Id))
+		assert.Eq(t, id1, events[0].Id)
 		assert.EqString(t, "dev1", events[0].Device)
 
-		assert.EqInt(t, int(id2), int(events[1].Id))
+		assert.Eq(t, id2, events[1].Id)
 		assert.EqString(t, "dev2", events[1].Device)
 
 		return

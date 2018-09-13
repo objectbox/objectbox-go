@@ -1,7 +1,7 @@
 package objectbox
 
 /*
-#cgo LDFLAGS: -lobjectboxc
+#cgo LDFLAGS: -lobjectbox
 #include <stdlib.h>
 #include "objectbox.h"
 */

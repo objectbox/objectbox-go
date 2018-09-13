@@ -101,7 +101,7 @@ func TestQueryBuilder_IntBetween(t *testing.T) {
 	defer qb.Destroy()
 	start := events[2].Date
 	end := events[4].Date
-	qb.IntBetween(3, -start, end)
+	qb.IntBetween(3, start, end)
 	query, err := qb.Build()
 	assert.NoErr(t, err)
 	defer query.Destroy()

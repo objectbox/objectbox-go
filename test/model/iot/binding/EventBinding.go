@@ -45,6 +45,8 @@ func flattenModelEvent(event *object.Event, fbb *flatbuffers.Builder, id uint64)
 	if offsetDevice != Unavailable {
 		EventAddDevice(fbb, offsetDevice)
 	}
+
+	EventAddDate(fbb, event.Date)
 }
 
 func (EventBinding) ToObject(bytes []byte) interface{} {

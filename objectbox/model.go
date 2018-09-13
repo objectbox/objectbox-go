@@ -3,7 +3,6 @@ package objectbox
 /*
 #cgo LDFLAGS: -lobjectbox
 #include <stdlib.h>
-#include <string.h>
 #include "objectbox.h"
 */
 import "C"

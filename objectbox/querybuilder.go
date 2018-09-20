@@ -35,7 +35,7 @@ func (qb *QueryBuilder) StringEq(propertyId TypeId, value string, caseSensitive 
 }
 
 func (qb *QueryBuilder) IntBetween(propertyId TypeId, value1 int64, value2 int64) (err error) {
-	rc := C.obx_qb_long_between(qb.cqb, C.uint32_t(propertyId), C.int64_t(value1), C.int64_t(value2))
+	rc := C.obx_qb_int_between(qb.cqb, C.uint32_t(propertyId), C.int64_t(value1), C.int64_t(value2))
 	if rc != 0 {
 		err = createError()
 	}

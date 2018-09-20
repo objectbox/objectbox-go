@@ -31,6 +31,10 @@
 #include <stdio.h>
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 //----------------------------------------------
 // ObjectBox version codes
 //----------------------------------------------
@@ -185,6 +189,8 @@ int obx_model_property(OBX_model* model, const char* name, OBPropertyType type, 
 
 int obx_model_property_flags(OBX_model* model, OBPropertyFlags flags);
 
+int obx_model_property_relation(OBX_model* model, const char* targetEntity, uint32_t indexId, uint64_t indexUid);
+
 int obx_model_property_index_id(OBX_model* model, uint32_t id, uint64_t uid);
 
 //----------------------------------------------
@@ -229,6 +235,12 @@ struct OBX_bytes_array {
     size_t size;
 };
 typedef struct OBX_bytes_array OBX_bytes_array;
+
+struct OBX_id_array {
+    uint64_t* ids;
+    size_t size;
+};
+typedef struct OBX_id_array OBX_id_array;
 
 OBX_store* obx_store_open_bytes(const void* modelBytes, size_t modelSize, const OBX_store_options* options);
 
@@ -291,6 +303,9 @@ int obx_cursor_remove_all(OBX_cursor* cursor);
 
 int obx_cursor_count(OBX_cursor* cursor, uint64_t* outCount);
 
+OBX_bytes_array* obx_cursor_backlink_bytes(OBX_cursor* cursor, uint32_t schemaEntityId, uint32_t propertyId, uint64_t entityId);
+OBX_id_array* obx_cursor_backlink_ids(OBX_cursor* cursor, uint32_t schemaEntityId, uint32_t propertyId, uint64_t entityId);
+
 //----------------------------------------------
 // Box
 //----------------------------------------------
@@ -313,37 +328,55 @@ int obx_box_put_async(OBX_box* box, uint64_t entityId, const void* data, size_t 
 struct OBX_query_builder;
 typedef struct OBX_query_builder OBX_query_builder;
 
+/// Query Builder condition identifier
+/// - returned by condition creating functions,
+/// - used to combine conditions with any/all, thus building more complex conditions
+typedef int obx_qb_cond;
+
 OBX_query_builder* obx_qb_create(OBX_store* store, uint32_t entity_id);
 int obx_qb_close(OBX_query_builder* builder);
 int obx_qb_error_code(OBX_query_builder* builder);
 const char* obx_qb_error_message(OBX_query_builder* builder);
 
-int obx_qb_null(OBX_query_builder* builder, uint32_t property_id);
-int obx_qb_not_null(OBX_query_builder* builder, uint32_t property_id);
+obx_qb_cond obx_qb_null(OBX_query_builder* builder, uint32_t property_id);
+obx_qb_cond obx_qb_not_null(OBX_query_builder* builder, uint32_t property_id);
 
-int obx_qb_string_equal(OBX_query_builder* builder, uint32_t property_id, const char* value, bool case_sensitive);
-int obx_qb_string_not_equal(OBX_query_builder* builder, uint32_t property_id, const char* value, bool case_sensitive);
-int obx_qb_string_contains(OBX_query_builder* builder, uint32_t property_id, const char* value, bool case_sensitive);
-int obx_qb_string_starts_with(OBX_query_builder* builder, uint32_t property_id, const char* value, bool case_sensitive);
-int obx_qb_string_ends_with(OBX_query_builder* builder, uint32_t property_id, const char* value, bool case_sensitive);
-int obx_qb_string_greater(OBX_query_builder* builder, uint32_t property_id, const char* value, bool case_sensitive, bool with_equal);
-int obx_qb_string_less(OBX_query_builder* builder, uint32_t property_id, const char* value, bool case_sensitive, bool with_equal);
-int obx_qb_string_in(OBX_query_builder* builder, uint32_t property_id, const char* values[], size_t count, bool case_sensitive);
+obx_qb_cond obx_qb_string_equal(OBX_query_builder* builder, uint32_t property_id, const char* value, bool case_sensitive);
+obx_qb_cond obx_qb_string_not_equal(OBX_query_builder* builder, uint32_t property_id, const char* value, bool case_sensitive);
+obx_qb_cond obx_qb_string_contains(OBX_query_builder* builder, uint32_t property_id, const char* value, bool case_sensitive);
+obx_qb_cond obx_qb_string_starts_with(OBX_query_builder* builder, uint32_t property_id, const char* value, bool case_sensitive);
+obx_qb_cond obx_qb_string_ends_with(OBX_query_builder* builder, uint32_t property_id, const char* value, bool case_sensitive);
+obx_qb_cond obx_qb_string_greater(OBX_query_builder* builder, uint32_t property_id, const char* value, bool case_sensitive, bool with_equal);
+obx_qb_cond obx_qb_string_less(OBX_query_builder* builder, uint32_t property_id, const char* value, bool case_sensitive, bool with_equal);
+obx_qb_cond obx_qb_string_in(OBX_query_builder* builder, uint32_t property_id, const char* values[], size_t count, bool case_sensitive);
 
-int obx_qb_long_equal(OBX_query_builder* builder, uint32_t property_id, int64_t value);
-int obx_qb_long_not_equal(OBX_query_builder* builder, uint32_t property_id, int64_t value);
-int obx_qb_long_greater(OBX_query_builder* builder, uint32_t property_id, int64_t value);
-int obx_qb_long_less(OBX_query_builder* builder, uint32_t property_id, int64_t value);
-int obx_qb_long_between(OBX_query_builder* builder, uint32_t property_id, int64_t value_a, int64_t value_b);
-int obx_qb_long_in(OBX_query_builder* builder, uint32_t property_id, const int64_t values[], size_t count);
+obx_qb_cond obx_qb_int_equal(OBX_query_builder* builder, uint32_t property_id, int64_t value);
+obx_qb_cond obx_qb_int_not_equal(OBX_query_builder* builder, uint32_t property_id, int64_t value);
+obx_qb_cond obx_qb_int_greater(OBX_query_builder* builder, uint32_t property_id, int64_t value);
+obx_qb_cond obx_qb_int_less(OBX_query_builder* builder, uint32_t property_id, int64_t value);
+obx_qb_cond obx_qb_int_between(OBX_query_builder* builder, uint32_t property_id, int64_t value_a, int64_t value_b);
 
-int obx_qb_double_greater(OBX_query_builder* builder, uint32_t property_id, double value);
-int obx_qb_double_less(OBX_query_builder* builder, uint32_t property_id, double value);
-int obx_qb_double_between(OBX_query_builder* builder, uint32_t property_id, double value_a, double value_b);
+obx_qb_cond obx_qb_int64_in(OBX_query_builder* builder, uint32_t property_id, const int64_t values[], size_t count);
+obx_qb_cond obx_qb_int64_not_in(OBX_query_builder* builder, uint32_t property_id, const int64_t values[], size_t count);
 
-int obx_qb_bytes_equal(OBX_query_builder* builder, uint32_t property_id, const void* value, size_t length);
-int obx_qb_bytes_greater(OBX_query_builder* builder, uint32_t property_id, const void* value, size_t length);
-int obx_qb_bytes_less(OBX_query_builder* builder, uint32_t property_id, const void* value, size_t length);
+obx_qb_cond obx_qb_int32_in(OBX_query_builder* builder, uint32_t property_id, const int32_t values[], size_t count);
+obx_qb_cond obx_qb_int32_not_in(OBX_query_builder* builder, uint32_t property_id, const int32_t values[], size_t count);
+
+obx_qb_cond obx_qb_double_greater(OBX_query_builder* builder, uint32_t property_id, double value);
+obx_qb_cond obx_qb_double_less(OBX_query_builder* builder, uint32_t property_id, double value);
+obx_qb_cond obx_qb_double_between(OBX_query_builder* builder, uint32_t property_id, double value_a, double value_b);
+
+obx_qb_cond obx_qb_bytes_equal(OBX_query_builder* builder, uint32_t property_id, const void* value, size_t length);
+obx_qb_cond obx_qb_bytes_greater(OBX_query_builder* builder, uint32_t property_id, const void* value, size_t length, bool with_equal);
+obx_qb_cond obx_qb_bytes_less(OBX_query_builder* builder, uint32_t property_id, const void* value, size_t length, bool with_equal);
+
+/// Combines conditions[] to a new condition using operator AND (all) or OR (any)
+/// Note that these functions remove original conditions from the condition list and thus affect indices of remaining
+/// conditions in the list
+obx_qb_cond obx_qb_all(OBX_query_builder* builder, const obx_qb_cond conditions[], size_t count);
+obx_qb_cond obx_qb_any(OBX_query_builder* builder, const obx_qb_cond conditions[], size_t count);
+
+int obx_qb_parameter_alias(OBX_query_builder* builder, const char * alias);
 
 //----------------------------------------------
 // Query
@@ -355,13 +388,48 @@ OBX_query* obx_query_create(OBX_query_builder* builder);
 int obx_query_close(OBX_query* query);
 
 OBX_bytes_array* obx_query_find(OBX_query* query, OBX_cursor* cursor);
+OBX_id_array* obx_query_find_ids(OBX_query* query, OBX_cursor* cursor);
+int obx_query_count(OBX_query* query, OBX_cursor* cursor, uint64_t* outCount);
+
+/// Removes (deletes!) all matching entities.
+int obx_query_remove(OBX_query* query, OBX_cursor* cursor, uint64_t* outCount);
+
+// TODO either introduce other group of "param" functions with entityId, or require entityId in each call
+int obx_query_string_param(OBX_query* query, uint32_t propertyId, const char* value);
+int obx_query_string_params_in(OBX_query* query, uint32_t propertyId, const char* values[], size_t count);
+int obx_query_int_param(OBX_query* query, uint32_t propertyId, int64_t value);
+int obx_query_int_params(OBX_query* query, uint32_t propertyId, int64_t value_a, int64_t value_b);
+int obx_query_int64_params_in(OBX_query* query, uint32_t propertyId, const int64_t values[], size_t count);
+int obx_query_int32_params_in(OBX_query* query, uint32_t propertyId, const int32_t values[], size_t count);
+int obx_query_double_param(OBX_query* query, uint32_t propertyId, double value);
+int obx_query_double_params(OBX_query* query, uint32_t propertyId, double value_a, double value_b);
+int obx_query_bytes_param(OBX_query* query, uint32_t propertyId, const void* value, size_t length);
+
+int obx_query_string_param_alias(OBX_query* query, const char * alias, const char* value);
+int obx_query_string_params_in_alias(OBX_query* query, const char * alias, const char* values[], size_t count);
+int obx_query_int_param_alias(OBX_query* query, const char* alias, int64_t value);
+int obx_query_int_params_alias(OBX_query* query, const char* alias, int64_t value_a, int64_t value_b);
+int obx_query_int64_params_in_alias(OBX_query* query, const char* alias, const int64_t values[], size_t count);
+int obx_query_int32_params_in_alias(OBX_query* query, const char* alias, const int32_t values[], size_t count);
+int obx_query_double_param_alias(OBX_query* query, const char * alias, double value);
+int obx_query_double_params_alias(OBX_query* query, const char * alias, double value_a, double value_b);
+int obx_query_bytes_param_alias(OBX_query* query, const char * alias, const void* value, size_t length);
+
+/// the resulting char* is valid until another call on describe_parameters is made on the same query or until the query is freed
+const char* obx_query_describe_parameters(OBX_query* query);
+
+/// the resulting char* is valid until another call on to_string is made on the same query or until the query is freed
+const char* obx_query_to_string(OBX_query* query);
 
 // TODO remove
 OBX_bytes_array* obx_query_by_string(OBX_cursor* cursorStruct, uint32_t propertyId, const char* value);
 
 void obx_bytes_destroy(OBX_bytes* bytes);
-
 void obx_bytes_array_destroy(OBX_bytes_array* bytesArray);
+void obx_id_array_destroy(OBX_id_array* idsArray);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif //OBJECTBOX_H

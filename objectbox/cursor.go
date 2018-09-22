@@ -36,19 +36,12 @@ func (cursor *Cursor) Get(id uint64) (object interface{}, err error) {
 }
 
 func (cursor *Cursor) GetAll() (slice interface{}, err error) {
-	var bytes []byte
-	binding := cursor.binding
-	slice = cursor.binding.MakeSlice(16)
-
-	for bytes, err = cursor.First(); bytes != nil; bytes, err = cursor.Next() {
-		if err != nil || bytes == nil {
-			slice = nil
-			return
-		}
-		object := binding.ToObject(bytes)
-		slice = binding.AppendToSlice(slice, object)
+	cBytesArray := C.obx_cursor_get_all(cursor.cursor)
+	if cBytesArray == nil {
+		err = createError()
+		return
 	}
-	return slice, nil
+	return cursor.cBytesArrayToObjects(cBytesArray), nil
 }
 
 func (cursor *Cursor) GetBytes(id uint64) (bytes []byte, err error) {

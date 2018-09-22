@@ -179,3 +179,32 @@ func (cursor *Cursor) FindByString(propertyId uint, value string) (bytesArray *B
 
 	return &BytesArray{plainBytesArray, cBytesArray}, nil
 }
+
+func (cursor *Cursor) cBytesArrayToObjects(cBytesArray *C.OBX_bytes_array) (slice interface{}) {
+	bytesArray := cBytesArrayToGo(cBytesArray)
+	defer bytesArray.Destroy()
+	return cursor.bytesArrayToObjects(bytesArray)
+}
+
+func (cursor *Cursor) bytesArrayToObjects(bytesArray *BytesArray) (slice interface{}) {
+	slice = cursor.binding.MakeSlice(len(bytesArray.BytesArray))
+	for _, bytesData := range bytesArray.BytesArray {
+		object := cursor.binding.ToObject(bytesData)
+		slice = cursor.binding.AppendToSlice(slice, object)
+	}
+	return
+}
+
+func cBytesArrayToGo(cBytesArray *C.OBX_bytes_array) (bytesArray *BytesArray) {
+	size := int(cBytesArray.size)
+	plainBytesArray := make([][]byte, size)
+	if size > 0 {
+		goBytesArray := (*[1 << 30]C.OBX_bytes)(unsafe.Pointer(cBytesArray.bytes))[:size:size]
+		for i := 0; i < size; i++ {
+			cBytes := goBytesArray[i]
+			dataBytes := C.GoBytes(cBytes.data, C.int(cBytes.size))
+			plainBytesArray[i] = dataBytes
+		}
+	}
+	return &BytesArray{plainBytesArray, cBytesArray}
+}

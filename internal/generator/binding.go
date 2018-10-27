@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"go/ast"
 	"go/types"
+	"strconv"
+	"strings"
 )
 
 type Binding struct {
@@ -17,11 +19,15 @@ type Binding struct {
 type Entity struct {
 	Name       string
 	Properties []*Property
+	PropertyId *Property
 }
 
 type Property struct {
-	Name string
-	Type string
+	Name   string
+	ObType string
+	GoType string
+	FbType string
+	FbSlot int
 }
 
 func newBinding() (*Binding, error) {
@@ -84,16 +90,27 @@ func (binding *Binding) loadAstStruct(node ast.Node) (err error) {
 	case *ast.StructType:
 		for _, f := range t.Fields.List {
 			if len(f.Names) != 1 {
-				return fmt.Errorf("Struct %s has a f with an invalid number of names, one expected, got %v",
+				return fmt.Errorf("struct %s has a f with an invalid number of names, one expected, got %v",
 					entity.Name, len(f.Names))
 			}
 
 			property := &Property{
 				Name: f.Names[0].Name,
+
+				// TODO what about backward compatibility? We need to keep track of previous properties
+				FbSlot: len(entity.Properties),
 			}
 
-			if property.Type, err = binding.getPropertyType(f.Type); err != nil {
+			if err = property.loadType(f.Type); err != nil {
 				return err
+			}
+
+			if strings.ToLower(property.Name) == "id" {
+				if entity.PropertyId != nil {
+					return fmt.Errorf("struct %s has multiple ID properties - %s and %s",
+						entity.Name, entity.PropertyId.Name, property.Name)
+				}
+				entity.PropertyId = property
 			}
 
 			entity.Properties = append(entity.Properties, property)
@@ -104,35 +121,65 @@ func (binding *Binding) loadAstStruct(node ast.Node) (err error) {
 	return nil
 }
 
-func (binding *Binding) getPropertyType(t ast.Expr) (typ string, err error) {
-	// NOTE potential optimization if we didn't need to convert to string first
-	ts := types.ExprString(t)
+func (property *Property) loadType(t ast.Expr) error {
+	property.GoType = types.ExprString(t)
 
-	if ts == "string" {
-		typ = "String"
-	} else if ts == "int" || ts == "uint" || ts == "int64" || ts == "uint64" {
-		typ = "Long"
-	} else if ts == "int32" || ts == "uint32" || ts == "rune" {
-		typ = "Int"
-	} else if ts == "int8" || ts == "int16" || ts == "uint8" || ts == "uint16" {
-		typ = "Short"
+	// TODO check thoroughly
+
+	ts := property.GoType
+	if property.GoType == "string" {
+		property.ObType = "String"
+		property.FbType = "UOffsetT"
+	} else if ts == "int" || ts == "int64" {
+		property.ObType = "Long"
+		property.FbType = "Int64"
+	} else if ts == "uint" || ts == "uint64" {
+		property.ObType = "Long"
+		property.FbType = "Uint64"
+	} else if ts == "int32" || ts == "rune" {
+		property.ObType = "Int"
+		property.FbType = "Int32"
+	} else if ts == "uint32" {
+		property.ObType = "Int"
+		property.FbType = "Uint32"
+	} else if ts == "int8" {
+		property.ObType = "Short"
+		property.FbType = "Int8"
+	} else if ts == "uint8" {
+		property.ObType = "Short"
+		property.FbType = "Uint8"
+	} else if ts == "int16" {
+		property.ObType = "Short"
+		property.FbType = "Int16"
+	} else if ts == "uint16" {
+		property.ObType = "Short"
+		property.FbType = "Uint16"
 	} else if ts == "float32" {
-		typ = "Float"
+		property.ObType = "Float"
+		property.FbType = "Float32"
 	} else if ts == "float64" {
-		typ = "Double"
+		property.ObType = "Double"
+		property.FbType = "Float64"
 	} else if ts == "byte" {
-		typ = "Byte"
+		property.ObType = "Byte"
+		property.FbType = "Byte"
 	} else if ts == "bool" {
-		typ = "Bool"
+		property.ObType = "Bool"
+		property.FbType = "Bool"
+	} else {
+		return fmt.Errorf("unknown type %s", ts)
 	}
 
 	// TODO Date (through tags)
 	// TODO relation
 	// TODO []byte byte vector
 
-	if len(typ) == 0 {
-		err = fmt.Errorf("unknown type %s", t)
-	}
+	return nil
+}
 
-	return
+// calculates flatbuffers vTableOffset
+// called from the template
+func (property *Property) VTableOffset() string {
+	// TODO verify this, derived from the FB generated code & https://google.github.io/flatbuffers/md__internals.html
+	return strconv.FormatInt(int64(4+2*property.FbSlot), 10)
 }

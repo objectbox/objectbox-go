@@ -4,6 +4,7 @@ package data
 
 type Task struct {
 	Id   uint64
-	Date int64
+	Date uint64 `t:date`
 	Text string
+	//Data []byte
 }

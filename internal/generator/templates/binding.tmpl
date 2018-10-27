@@ -2,13 +2,51 @@
 
 package {{ .Package }}
 
-{{ range $entity := .Entities }}
-    {{ $entity.Name }}
-        {{ range $field := $entity.Fields }}
-            {{ $field.Name }}
-        {{ end }}
-{{ end }}
-
 import (
-    {{/* TODO imports */}}
+	"github.com/google/flatbuffers/go"
+	"github.com/objectbox/objectbox-go/objectbox"
 )
+
+{{ range $entity := .Entities }}
+type {{ $entity.Name }}Binding struct {
+}
+
+func ({{ $entity.Name }}Binding) AddToModel(model objectbox.Model) {
+    {{/* TODO IDs maybe save them to the original file as tag? Or read the already existing generated file as well?*/}}
+    model.Entity("{{ $entity.Name }}", 1, 10001)
+    {{ range $property := $entity.Properties }}
+    model.Property("{{ $property.Name }}", objectbox.PropertyType_{{ $property.Type }}, 1, 10001001)
+    {{/* TODO property flags*/}}
+    {{ end }}
+    {{/* TODO last property*/}}
+    model.EntityLastPropertyId(3, 10001003)
+}
+
+func ({{ $entity.Name }}Binding) cast(entity interface{}) (*{{ $entity.Name }}, error) {
+    ent, ok := entity.(*{{ $entity.Name }})
+    if !ok {
+        // Programming error, OK to panic
+        // TODO reevalute this
+        panic("Object has wrong type")
+    }
+    return ent, nil
+}
+
+func ({{ $entity.Name }}Binding) GetId(entity interface{}) (uint64, error) {
+	if ent, err := entity.(*{{ $entity.Name }}); err != nil {
+	    return 0, err
+	} else {
+	    return ent.Id, nil
+	}
+}
+
+// TODO error return?
+func ({{ $entity.Name }}Binding) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
+    ent, err := entity.(*{{ $entity.Name }});
+	if err != nil {
+	    panic(err)
+	}
+
+    // TODO implement
+}
+{{ end }}

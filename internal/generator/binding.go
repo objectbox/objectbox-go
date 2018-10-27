@@ -3,6 +3,7 @@ package generator
 import (
 	"fmt"
 	"go/ast"
+	"go/types"
 )
 
 type Binding struct {
@@ -14,12 +15,13 @@ type Binding struct {
 }
 
 type Entity struct {
-	Name   string
-	Fields []*Field
+	Name       string
+	Properties []*Property
 }
 
-type Field struct {
+type Property struct {
 	Name string
+	Type string
 }
 
 func newBinding() (*Binding, error) {
@@ -73,7 +75,7 @@ func (binding *Binding) entityLoader(node ast.Node) bool {
 	return false
 }
 
-func (binding *Binding) loadAstStruct(node ast.Node) error {
+func (binding *Binding) loadAstStruct(node ast.Node) (err error) {
 	entity := &Entity{
 		Name: binding.recentEntity.Name.Name,
 	}
@@ -86,14 +88,51 @@ func (binding *Binding) loadAstStruct(node ast.Node) error {
 					entity.Name, len(f.Names))
 			}
 
-			field := &Field{
+			property := &Property{
 				Name: f.Names[0].Name,
 			}
 
-			entity.Fields = append(entity.Fields, field)
+			if property.Type, err = binding.getPropertyType(f.Type); err != nil {
+				return err
+			}
+
+			entity.Properties = append(entity.Properties, property)
 		}
 	}
 
 	binding.Entities = append(binding.Entities, entity)
 	return nil
+}
+
+func (binding *Binding) getPropertyType(t ast.Expr) (typ string, err error) {
+	// NOTE potential optimization if we didn't need to convert to string first
+	ts := types.ExprString(t)
+
+	if ts == "string" {
+		typ = "String"
+	} else if ts == "int" || ts == "uint" || ts == "int64" || ts == "uint64" {
+		typ = "Long"
+	} else if ts == "int32" || ts == "uint32" || ts == "rune" {
+		typ = "Int"
+	} else if ts == "int8" || ts == "int16" || ts == "uint8" || ts == "uint16" {
+		typ = "Short"
+	} else if ts == "float32" {
+		typ = "Float"
+	} else if ts == "float64" {
+		typ = "Double"
+	} else if ts == "byte" {
+		typ = "Byte"
+	} else if ts == "bool" {
+		typ = "Bool"
+	}
+
+	// TODO Date (through tags)
+	// TODO relation
+	// TODO []byte byte vector
+
+	if len(typ) == 0 {
+		err = fmt.Errorf("unknown type %s", t)
+	}
+
+	return
 }

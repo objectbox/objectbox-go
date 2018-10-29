@@ -12,11 +12,12 @@ type {{$entity.Name}}Binding struct {
 	_tab flatbuffers.Table
 }
 
-func (*{{$entity.Name}}Binding) AddToModel(model objectbox.Model) {
+func ({{$entity.Name}}Binding) AddToModel(model *objectbox.Model) {
     {{/* TODO IDs maybe save them to the original file as tag? Or read the already existing generated file as well?*/}}
     model.Entity("{{$entity.Name}}", 1, 10001)
     {{range $property := $entity.Properties -}}
     model.Property("{{$property.Name}}", objectbox.PropertyType_{{$property.ObType}}, 1, 10001001) {{/* TODO property flags*/}}
+    {{if len $property.Flags}}model.PropertyFlags(PropertyFlags_ID){{end}}
     {{end}}
     model.EntityLastPropertyId(3, 10001003) {{/* TODO last property*/}}
 }
@@ -31,7 +32,7 @@ func castFromDynamic(entity interface{}) (*{{$entity.Name}}, error) {
     return ent, nil
 }
 
-func (*{{$entity.Name}}Binding) GetId(entity interface{}) (uint64, error) {
+func ({{$entity.Name}}Binding) GetId(entity interface{}) (uint64, error) {
 	if ent, err := castFromDynamic(entity); err != nil {
 	    return 0, err
 	} else {
@@ -39,7 +40,7 @@ func (*{{$entity.Name}}Binding) GetId(entity interface{}) (uint64, error) {
 	}
 }
 
-func (*{{$entity.Name}}Binding) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
+func ({{$entity.Name}}Binding) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
     ent, err := castFromDynamic(entity)
     if err != nil {
         // TODO return error and panic in the caller if really, really necessary
@@ -63,11 +64,14 @@ func (*{{$entity.Name}}Binding) Flatten(entity interface{}, fbb *flatbuffers.Bui
     // build the FlatBuffers object
     fbb.StartObject({{len $entity.Properties}})
     {{range $property := $entity.Properties -}}
-    fbb.Prepend{{$property.FbType}}Slot({{$property.FbSlot}}, {{if eq $property.FbType "UOffsetT"}}offset{{$property.Name}}{{else}}ent.{{$property.Name}}{{end}}, 0)
+    fbb.Prepend{{$property.FbType}}Slot({{$property.FbSlot}},
+        {{- if eq $property.FbType "UOffsetT"}} offset{{$property.Name}}
+        {{- else if eq $property.Name $entity.PropertyId.Name}} id
+        {{- else}} ent.{{$property.Name}}{{end}}, 0)
     {{end}}
 }
 
-func (*{{$entity.Name}}Binding) ToObject(bytes []byte) interface{} {
+func ({{$entity.Name}}Binding) ToObject(bytes []byte) interface{} {
 	binding := getRootAs{{$entity.Name}}Binding(bytes, flatbuffers.UOffsetT(0))
 
 	return &{{$entity.Name}}{
@@ -103,11 +107,11 @@ func (binding *{{$entity.Name}}Binding) property{{$property.Name}}() {{$property
 }
 {{end}}
 
-func (*{{$entity.Name}}Binding) MakeSlice(capacity int) interface{} {
+func ({{$entity.Name}}Binding) MakeSlice(capacity int) interface{} {
 	return make([]{{$entity.Name}}, 0, capacity)
 }
 
-func (*{{$entity.Name}}Binding) AppendToSlice(slice interface{}, entity interface{}) interface{} {
+func ({{$entity.Name}}Binding) AppendToSlice(slice interface{}, entity interface{}) interface{} {
 	return append(slice.([]{{$entity.Name}}), *entity.(*{{$entity.Name}}))
 }
 

@@ -28,6 +28,7 @@ type Property struct {
 	GoType string
 	FbType string
 	FbSlot int
+	Flags  []string
 }
 
 func newBinding() (*Binding, error) {

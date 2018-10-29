@@ -5,6 +5,7 @@ package {{.Package}}
 import (
 	"github.com/google/flatbuffers/go"
 	"github.com/objectbox/objectbox-go/objectbox"
+	"github.com/objectbox/objectbox-go/objectbox/fbutils"
 )
 
 {{range $entity := .Entities -}}
@@ -72,40 +73,14 @@ func ({{$entity.Name}}Binding) Flatten(entity interface{}, fbb *flatbuffers.Buil
 }
 
 func ({{$entity.Name}}Binding) ToObject(bytes []byte) interface{} {
-	binding := getRootAs{{$entity.Name}}Binding(bytes, flatbuffers.UOffsetT(0))
+	table := fbutils.GetRootAsTable(bytes, flatbuffers.UOffsetT(0))
 
 	return &{{$entity.Name}}{
 	{{- range $property := $entity.Properties}}
-		{{$property.Name}}: binding.property{{$property.Name}}(),
+		{{$property.Name}}: table.OffsetAs{{$property.GoType | StringTitle}}({{$property.VTableOffset}}),
 	{{- end}}
 	}
 }
-
-func getRootAs{{$entity.Name}}Binding(buf []byte, offset flatbuffers.UOffsetT) *{{$entity.Name}}Binding {
-	n := flatbuffers.GetUOffsetT(buf[offset:])
-	x := &{{$entity.Name}}Binding{}
-	x._tab.Bytes = buf
-	x._tab.Pos = n + offset
-	return x
-}
-
-{{range $property := $entity.Properties}}
-func (binding *{{$entity.Name}}Binding) property{{$property.Name}}() {{$property.GoType}} {
-	if o := flatbuffers.UOffsetT(binding._tab.Offset({{$property.VTableOffset}})); o != 0 {
-	    {{/* TODO review the casts for all types */}}
-        {{- if eq $property.GoType "string" -}}
-        return string(binding._tab.ByteVector(o + binding._tab.Pos))
-        {{- else -}}
-        return binding._tab.Get{{$property.FbType}}(o + binding._tab.Pos)
-        {{- end}}
-	}
-	{{if eq $property.GoType "string" -}}
-	return ""
-	{{- else -}}
-    return 0
-    {{- end}}
-}
-{{end}}
 
 func ({{$entity.Name}}Binding) MakeSlice(capacity int) interface{} {
 	return make([]{{$entity.Name}}, 0, capacity)

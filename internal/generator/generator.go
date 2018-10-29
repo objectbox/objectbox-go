@@ -3,6 +3,7 @@ package generator
 import (
 	"html/template"
 	"os"
+	"strings"
 
 	// TODO check whether we can use this dependency
 	// used to include template in the compiled binary
@@ -40,7 +41,11 @@ func generateBindingFile(binding *Binding) (err error) {
 		return err
 	}
 
-	tpl := template.Must(template.New("binding").Parse(tplText))
+	funcMap := template.FuncMap{
+		"StringTitle": strings.Title,
+	}
+
+	tpl := template.Must(template.New("binding").Funcs(funcMap).Parse(tplText))
 	if err = tpl.Execute(os.Stdout, binding); err != nil { // TODO replace os.Stdout with file writer
 		return err
 	}

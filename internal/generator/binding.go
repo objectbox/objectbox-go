@@ -4,9 +4,12 @@ import (
 	"fmt"
 	"go/ast"
 	"go/types"
-	"strconv"
+	"sort"
 	"strings"
 )
+
+type uid = uint64
+type id = uint32
 
 type Binding struct {
 	Package  string
@@ -18,17 +21,26 @@ type Binding struct {
 
 type Entity struct {
 	Name       string
+	Id         id
+	Uid        uid
 	Properties []*Property
 	PropertyId *Property
 }
 
 type Property struct {
-	Name   string
-	ObType string
-	GoType string
-	FbType string
-	FbSlot int
-	Flags  []string
+	Name        string
+	Id          id
+	Uid         uid
+	Annotations map[string]*Annotation
+	ObType      string
+	ObFlags     []string // in ascending order
+	GoType      string
+	FbType      string
+	FbSlot      int
+}
+
+type Annotation struct {
+	Value string
 }
 
 func newBinding() (*Binding, error) {
@@ -85,6 +97,9 @@ func (binding *Binding) entityLoader(node ast.Node) bool {
 func (binding *Binding) loadAstStruct(node ast.Node) (err error) {
 	entity := &Entity{
 		Name: binding.recentEntity.Name.Name,
+		// TODO
+		Id:  0,
+		Uid: 0,
 	}
 
 	switch t := node.(type) {
@@ -102,11 +117,20 @@ func (binding *Binding) loadAstStruct(node ast.Node) (err error) {
 				FbSlot: len(entity.Properties),
 			}
 
+			if err = property.loadAnnotations(f.Tag.Value); err != nil {
+				return err
+			}
+
 			if err = property.loadType(f.Type); err != nil {
 				return err
 			}
 
-			if strings.ToLower(property.Name) == "id" {
+			if err = property.loadObFlags(f); err != nil {
+				return err
+			}
+
+			// if this is an ID, set it as entity.PropertyId
+			if x := sort.SearchStrings(property.ObFlags, "ID"); property.ObFlags != nil && property.ObFlags[x] == "ID" {
 				if entity.PropertyId != nil {
 					return fmt.Errorf("struct %s has multiple ID properties - %s and %s",
 						entity.Name, entity.PropertyId.Name, property.Name)
@@ -119,6 +143,33 @@ func (binding *Binding) loadAstStruct(node ast.Node) (err error) {
 	}
 
 	binding.Entities = append(binding.Entities, entity)
+	return nil
+}
+
+func (property *Property) loadAnnotations(tags string) error {
+	if len(tags) > 1 && tags[0] == tags[len(tags)-1] && (tags[0] == '`' || tags[0] == '"') {
+		tags = tags[1 : len(tags)-1]
+	}
+	if tags == "" {
+		return nil
+	}
+
+	property.Annotations = make(map[string]*Annotation)
+
+	// tags are space separated
+	for _, tag := range strings.Split(tags, " ") {
+		if len(tag) > 0 {
+			ss := strings.Split(tags, ":")
+			if len(ss) == 1 {
+				property.Annotations[tag] = &Annotation{}
+			} else if len(ss) == 2 {
+				property.Annotations[ss[0]] = &Annotation{Value: ss[1]}
+			} else {
+				return fmt.Errorf("unkown tag format, multiple colons in the value %s", tag)
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -171,16 +222,35 @@ func (property *Property) loadType(t ast.Expr) error {
 		return fmt.Errorf("unknown type %s", ts)
 	}
 
-	// TODO Date (through tags)
+	// TODO Date (through annotations)
 	// TODO relation
 	// TODO []byte byte vector
 
 	return nil
 }
 
+func (property *Property) loadObFlags(f *ast.Field) error {
+	if property.Annotations["id"] != nil || strings.ToLower(property.Name) == "id" {
+		property.ObFlags = append(property.ObFlags, "ID")
+	}
+
+	// we guarantee that flags are in ascending order so that they could be searchable
+	if property.ObFlags != nil {
+		sort.Strings(property.ObFlags)
+	}
+	return nil
+}
+
+func (property *Property) loadIds(f *ast.Field) error {
+	// TODO how to generate IDs?
+	// maybe save them to the original file as tag? Or read the already existing generated file as well?
+
+	return nil
+}
+
 // calculates flatbuffers vTableOffset
 // called from the template
-func (property *Property) VTableOffset() string {
+func (property *Property) VTableOffset() int {
 	// TODO verify this, derived from the FB generated code & https://google.github.io/flatbuffers/md__internals.html
-	return strconv.FormatInt(int64(4+2*property.FbSlot), 10)
+	return 4 + 2*property.FbSlot
 }

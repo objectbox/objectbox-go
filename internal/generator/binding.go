@@ -163,6 +163,10 @@ func (binding *Binding) loadAstStruct(node ast.Node) (err error) {
 		}
 	}
 
+	if entity.PropertyId == nil {
+		return fmt.Errorf("field annotated `id` is missing on entity %s", entity.Name)
+	}
+
 	binding.Entities = append(binding.Entities, entity)
 	return nil
 }

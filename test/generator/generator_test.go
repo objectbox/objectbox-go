@@ -27,9 +27,21 @@ func processAndTest(t *testing.T, sourceFile, bindingFile string) {
 	assert.Eq(t, infoSource.Mode(), infoBinding.Mode())
 }
 
-func TestGeneratorSimple(t *testing.T) {
+func TestTask(t *testing.T) {
 	var sourceFile = "data/task.go"
 	var bindingFile = "data/taskbinding.go"
+
+	// test when there's no binding file before
+	os.Remove(bindingFile)
+	processAndTest(t, sourceFile, bindingFile)
+
+	// test when the binding file already exists
+	processAndTest(t, sourceFile, bindingFile)
+}
+
+func TestTypeful(t *testing.T) {
+	var sourceFile = "data/typeful.go"
+	var bindingFile = "data/typefulbinding.go"
 
 	// test when there's no binding file before
 	os.Remove(bindingFile)

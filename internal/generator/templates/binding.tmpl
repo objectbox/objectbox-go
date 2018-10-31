@@ -89,4 +89,32 @@ func ({{$entity.Name}}Binding) MakeSlice(capacity int) interface{} {
 func ({{$entity.Name}}Binding) AppendToSlice(slice interface{}, entity interface{}) interface{} {
 	return append(slice.([]{{$entity.Name}}), *entity.(*{{$entity.Name}}))
 }
+
+type {{$entity.Name}}Box struct {
+	*objectbox.Box
+}
+
+func BoxFor{{$entity.Name}}(ob *objectbox.ObjectBox) *{{$entity.Name}}Box {
+	return &{{$entity.Name}}Box{
+		Box: ob.Box({{$entity.Id}}),
+	}
+}
+
+func (box *{{$entity.Name}}Box) Get(id uint64) (*{{$entity.Name}}, error) {
+	entity, err := box.Box.Get(id)
+	if err != nil {
+		return nil, err
+	}
+	if ent, err := castFromDynamic(entity); err != nil {
+        return nil, err
+    } else {
+        return ent, nil
+    }
+}
+
+func (box *{{$entity.Name}}Box) Remove(entity *{{$entity.Name}}) (err error) {
+	// TODO return box.Box.Remove(entity.{{$entity.PropertyId.Name}})
+	return nil
+}
+
 {{end -}}

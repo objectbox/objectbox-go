@@ -13,14 +13,17 @@ func main() {
 	stopOnError(err)
 
 	fmt.Printf("Generating ObjectBox bindings for %s", file)
+	fmt.Println()
 
 	err = generator.Process(file)
 	stopOnError(err)
 }
 
 func stopOnError(err error) {
-	fmt.Printf(err.Error())
-	os.Exit(1)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 }
 
 func getArgs() (file string, line uint, err error) {

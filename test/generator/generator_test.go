@@ -8,6 +8,9 @@ import (
 	"github.com/objectbox/objectbox-go/test/assert"
 )
 
+// TODO implement test similar to gofmt
+// i. e. GLOB("data/*.input"), process & compare with "data/*.expected" files
+
 func processAndTest(t *testing.T, sourceFile, bindingFile string) {
 	var err error
 
@@ -16,12 +19,12 @@ func processAndTest(t *testing.T, sourceFile, bindingFile string) {
 
 	infoBinding, err := os.Stat(bindingFile)
 	assert.NoErr(t, err)
-	assert.Eq(t, infoBinding.Size(), int64(3079))
+	assert.Eq(t, int64(3079), infoBinding.Size())
 
 	// check the permissions
 	infoSource, err := os.Stat(sourceFile)
 	assert.NoErr(t, err)
-	assert.Eq(t, infoBinding.Mode(), infoSource.Mode())
+	assert.Eq(t, infoSource.Mode(), infoBinding.Mode())
 }
 
 func TestGeneratorSimple(t *testing.T) {

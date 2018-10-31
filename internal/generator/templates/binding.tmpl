@@ -89,4 +89,4 @@ func ({{$entity.Name}}Binding) MakeSlice(capacity int) interface{} {
 func ({{$entity.Name}}Binding) AppendToSlice(slice interface{}, entity interface{}) interface{} {
 	return append(slice.([]{{$entity.Name}}), *entity.(*{{$entity.Name}}))
 }
-{{- end}}
+{{end -}}

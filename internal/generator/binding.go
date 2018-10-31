@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"go/ast"
 	"go/types"
-	"sort"
 	"strings"
 )
 
@@ -15,8 +14,8 @@ type Binding struct {
 	Package  string
 	Entities []*Entity
 
-	recentEntity *ast.TypeSpec
-	err          error
+	currentEntityName string
+	err               error
 }
 
 type Entity struct {
@@ -24,11 +23,12 @@ type Entity struct {
 	Id         id
 	Uid        uid
 	Properties []*Property
-	PropertyId *Property
+	PropertyId *Property // TODO what if ID is not defined? what about GetId function?
 }
 
 type Property struct {
 	Name        string
+	ObName      string
 	Id          id
 	Uid         uid
 	Annotations map[string]*Annotation
@@ -71,17 +71,17 @@ func (binding *Binding) entityLoader(node ast.Node) bool {
 	switch v := node.(type) {
 	case *ast.TypeSpec:
 		// this might be the name of the next struct
-		binding.recentEntity = v
+		binding.currentEntityName = v.Name.Name
 		return true
 	case *ast.StructType:
-		if binding.recentEntity == nil {
+		if binding.currentEntityName == "" {
 			// NOTE this should probably not happen
 			binding.err = fmt.Errorf("encountered a struct without a name")
 			return false
 		} else {
 			binding.err = binding.loadAstStruct(node)
 			// reset after it has been "consumed"
-			binding.recentEntity = nil
+			binding.currentEntityName = ""
 		}
 		return true
 
@@ -96,10 +96,14 @@ func (binding *Binding) entityLoader(node ast.Node) bool {
 
 func (binding *Binding) loadAstStruct(node ast.Node) (err error) {
 	entity := &Entity{
-		Name: binding.recentEntity.Name.Name,
+		Name: binding.currentEntityName,
 		// TODO
 		Id:  0,
 		Uid: 0,
+	}
+
+	var fullError = func(err error, property *Property) error {
+		return fmt.Errorf("%s on property %s, entity %s", err, property.Name, entity.Name)
 	}
 
 	switch t := node.(type) {
@@ -117,25 +121,42 @@ func (binding *Binding) loadAstStruct(node ast.Node) (err error) {
 				FbSlot: len(entity.Properties),
 			}
 
-			if err = property.loadAnnotations(f.Tag.Value); err != nil {
-				return err
+			if f.Tag != nil {
+				if err = property.loadAnnotations(f.Tag.Value); err != nil {
+					return fullError(err, property)
+				}
+			}
+
+			// transient properties are not stored, thus no need to use it in the binding
+			if property.Annotations["transient"] != nil {
+				continue
 			}
 
 			if err = property.loadType(f.Type); err != nil {
-				return err
+				return fullError(err, property)
 			}
 
 			if err = property.loadObFlags(f); err != nil {
-				return err
+				return fullError(err, property)
 			}
 
 			// if this is an ID, set it as entity.PropertyId
-			if x := sort.SearchStrings(property.ObFlags, "ID"); property.ObFlags != nil && property.ObFlags[x] == "ID" {
+			if property.Annotations["id"] != nil {
 				if entity.PropertyId != nil {
 					return fmt.Errorf("struct %s has multiple ID properties - %s and %s",
 						entity.Name, entity.PropertyId.Name, property.Name)
 				}
 				entity.PropertyId = property
+			}
+
+			if property.Annotations["nameindb"] != nil {
+				if len(property.Annotations["nameindb"].Value) == 0 {
+					return fullError(fmt.Errorf("nameInDb annotation value must not be empty"), property)
+				} else {
+					property.ObName = property.Annotations["nameindb"].Value
+				}
+			} else {
+				property.ObName = property.Name
 			}
 
 			entity.Properties = append(entity.Properties, property)
@@ -146,6 +167,12 @@ func (binding *Binding) loadAstStruct(node ast.Node) (err error) {
 	return nil
 }
 
+// Supported annotations:
+// id
+// index (value|hash|hash64)
+// unique
+// nameInDb
+// transient
 func (property *Property) loadAnnotations(tags string) error {
 	if len(tags) > 1 && tags[0] == tags[len(tags)-1] && (tags[0] == '`' || tags[0] == '"') {
 		tags = tags[1 : len(tags)-1]
@@ -159,13 +186,30 @@ func (property *Property) loadAnnotations(tags string) error {
 	// tags are space separated
 	for _, tag := range strings.Split(tags, " ") {
 		if len(tag) > 0 {
-			ss := strings.Split(tags, ":")
-			if len(ss) == 1 {
-				property.Annotations[tag] = &Annotation{}
-			} else if len(ss) == 2 {
-				property.Annotations[ss[0]] = &Annotation{Value: ss[1]}
+			var name string
+			var value = &Annotation{}
+
+			// if it contains a colon, it's a key:"value" pair
+			if i := strings.IndexRune(tags, ':'); i >= 0 {
+				name = tags[0:i]
+				tags = tags[i+1:]
+
+				if len(tags) > 1 && tags[0] == tags[len(tags)-1] && tags[0] == '"' {
+					value.Value = strings.TrimSpace(tags[1 : len(tags)-1])
+				} else {
+					return fmt.Errorf("invalid annotation value %s for %s, expecting `name:\"value\"` format", tags, name)
+				}
 			} else {
-				return fmt.Errorf("unkown tag format, multiple colons in the value %s", tag)
+				// otherwise there's no value
+				name = tags
+			}
+
+			name = strings.ToLower(name)
+
+			if property.Annotations[name] != nil {
+				return fmt.Errorf("duplicate annotation %s", name)
+			} else {
+				property.Annotations[name] = value
 			}
 		}
 	}
@@ -229,15 +273,36 @@ func (property *Property) loadType(t ast.Expr) error {
 	return nil
 }
 
+func (property *Property) addObFlag(flag string) {
+	property.ObFlags = append(property.ObFlags, flag)
+}
+
 func (property *Property) loadObFlags(f *ast.Field) error {
-	if property.Annotations["id"] != nil || strings.ToLower(property.Name) == "id" {
-		property.ObFlags = append(property.ObFlags, "ID")
+	if property.Annotations["id"] != nil {
+		property.addObFlag("ID")
 	}
 
-	// we guarantee that flags are in ascending order so that they could be searchable
-	if property.ObFlags != nil {
-		sort.Strings(property.ObFlags)
+	if property.Annotations["index"] != nil {
+		property.addObFlag("INDEXED")
+		switch strings.ToLower(property.Annotations["index"].Value) {
+		case "":
+			// default
+		case "value":
+			// TODO this doesn't seem to be implemented by the c-api?
+			property.addObFlag("INDEX_VALUE")
+		case "hash":
+			property.addObFlag("INDEX_HASH")
+		case "hash64":
+			property.addObFlag("INDEX_HASH64")
+		default:
+			return fmt.Errorf("unknown index type %s", property.Annotations["index"].Value)
+		}
 	}
+
+	if property.Annotations["unique"] != nil {
+		property.addObFlag("UNIQUE")
+	}
+
 	return nil
 }
 

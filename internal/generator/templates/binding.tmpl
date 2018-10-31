@@ -10,18 +10,17 @@ import (
 
 {{range $entity := .Entities -}}
 type {{$entity.Name}}Binding struct {
-	_tab flatbuffers.Table
 }
 
 func ({{$entity.Name}}Binding) AddToModel(model *objectbox.Model) {
     model.Entity("{{$entity.Name}}", {{$entity.Id}}, {{$entity.Uid}})
     {{range $property := $entity.Properties -}}
-    model.Property("{{$property.Name}}", objectbox.PropertyType_{{$property.ObType}}, {{$property.Id}}, {{$property.Uid}})
+    model.Property("{{$property.ObName}}", objectbox.PropertyType_{{$property.ObType}}, {{$property.Id}}, {{$property.Uid}})
     {{if len $property.ObFlags -}}
         model.PropertyFlags(
         {{- range $index, $flag := $property.ObFlags -}}
-            {{if gt $index 0}} | {{end}}PropertyFlags_{{$flag}}
-        {{- end}});
+            {{if gt $index 0}} | {{end}}objectbox.PropertyFlags_{{$flag}}
+        {{- end}})
     {{end -}}
     {{end -}}
     model.EntityLastPropertyId(3, 10001003) {{/* TODO last property*/}}
@@ -55,11 +54,8 @@ func ({{$entity.Name}}Binding) Flatten(entity interface{}, fbb *flatbuffers.Buil
     // prepare the "offset" properties
     {{- range $property := $entity.Properties}}
         {{- if eq $property.FbType "UOffsetT"}}
-    var offset{{$property.Name}} flatbuffers.UOffsetT = 0
             {{- if eq $property.GoType "string"}}
-    if len(ent.{{$property.Name}}) > 0 {
-        offset{{$property.Name}} = fbb.CreateString(ent.{{$property.Name}})
-    }
+    var offset{{$property.Name}} = fbutils.CreateStringOffset(fbb, ent.{{$property.Name}})
             {{- else -}}
             TODO offset creation for the {{$property.Name}}, type ${{$property.GoType}} is not implemented
             {{- end -}}

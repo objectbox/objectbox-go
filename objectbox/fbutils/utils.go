@@ -7,6 +7,14 @@ type Table struct {
 	_tab flatbuffers.Table
 }
 
+func CreateStringOffset(fbb *flatbuffers.Builder, value string) flatbuffers.UOffsetT {
+	if len(value) > 0 {
+		return fbb.CreateString(value)
+	} else {
+		return 0
+	}
+}
+
 func GetRootAsTable(buf []byte, offset flatbuffers.UOffsetT) *Table {
 	n := flatbuffers.GetUOffsetT(buf[offset:])
 	x := &Table{}

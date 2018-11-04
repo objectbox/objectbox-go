@@ -230,16 +230,16 @@ func (property *Property) loadType(t ast.Expr) error {
 	if property.GoType == "string" {
 		property.ObType = "String"
 		property.FbType = "UOffsetT"
-	} else if ts == "int" || ts == "int64" {
+	} else if ts == "int64" {
 		property.ObType = "Long"
 		property.FbType = "Int64"
-	} else if ts == "uint" || ts == "uint64" {
+	} else if ts == "uint64" {
 		property.ObType = "Long"
 		property.FbType = "Uint64"
-	} else if ts == "int32" || ts == "rune" {
+	} else if ts == "int" || ts == "int32" || ts == "rune" {
 		property.ObType = "Int"
 		property.FbType = "Int32"
-	} else if ts == "uint32" {
+	} else if ts == "uint" || ts == "uint32" {
 		property.ObType = "Int"
 		property.FbType = "Uint32"
 	} else if ts == "int8" {
@@ -263,6 +263,9 @@ func (property *Property) loadType(t ast.Expr) error {
 	} else if ts == "byte" {
 		property.ObType = "Byte"
 		property.FbType = "Byte"
+	} else if ts == "[]byte" {
+		property.ObType = "ByteVector"
+		property.FbType = "UOffsetT"
 	} else if ts == "bool" {
 		property.ObType = "Bool"
 		property.FbType = "Bool"
@@ -270,9 +273,15 @@ func (property *Property) loadType(t ast.Expr) error {
 		return fmt.Errorf("unknown type %s", ts)
 	}
 
-	// TODO Date (through annotations)
+	if property.Annotations["date"] != nil {
+		if property.ObType != "Long" {
+			return fmt.Errorf("invalid underlying type (%s) for date field", property.ObType)
+		} else {
+			property.ObType = "Date"
+		}
+	}
+
 	// TODO relation
-	// TODO []byte byte vector
 
 	return nil
 }

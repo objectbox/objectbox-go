@@ -17,6 +17,8 @@ import (
 )
 
 func Process(sourceFile string) (err error) {
+	var err2 error
+
 	var f *file
 	if f, err = parseFile(sourceFile); err != nil {
 		return fmt.Errorf("can't parse GO file %s: %s", sourceFile, err)
@@ -36,6 +38,13 @@ func Process(sourceFile string) (err error) {
 		return fmt.Errorf("can't generate binding file %s: %s", sourceFile, err)
 	}
 
+	if formattedSource, err := format.Source(bindingSource); err != nil {
+		// we just store error but still writ the file so that we can check it manually
+		err2 = fmt.Errorf("failed to format generated binding file %s: %s", sourceFile, err)
+	} else {
+		bindingSource = formattedSource
+	}
+
 	var extension = path.Ext(sourceFile)
 	var bindingFile = sourceFile[0:len(sourceFile)-len(extension)] + "binding" + extension
 
@@ -43,7 +52,7 @@ func Process(sourceFile string) (err error) {
 		return fmt.Errorf("can't write binding file %s: %s", sourceFile, err)
 	}
 
-	return nil
+	return err2
 }
 
 func generateBinding(binding *Binding) (data []byte, err error) {
@@ -72,12 +81,7 @@ func generateBinding(binding *Binding) (data []byte, err error) {
 		return nil, fmt.Errorf("failed to flush buffer: %s", err)
 	}
 
-	// format the bindings source (same as gofmt)
-	if data, err = format.Source(b.Bytes()); err != nil {
-		return nil, fmt.Errorf("failed to format generated binding file: %s", err)
-	}
-
-	return data, nil
+	return b.Bytes(), nil
 }
 
 func writeBindingFile(sourceFile string, bindingFile string, data []byte) (err error) {

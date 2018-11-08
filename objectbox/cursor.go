@@ -8,8 +8,9 @@ package objectbox
 import "C"
 
 import (
-	"github.com/google/flatbuffers/go"
 	"unsafe"
+
+	"github.com/google/flatbuffers/go"
 )
 
 type Cursor struct {
@@ -19,7 +20,7 @@ type Cursor struct {
 }
 
 func (cursor *Cursor) Destroy() (err error) {
-	rc := C.obx_cursor_destroy(cursor.cursor)
+	rc := C.obx_cursor_close(cursor.cursor)
 	cursor.cursor = nil
 	if rc != 0 {
 		err = createError()
@@ -118,12 +119,8 @@ func (cursor *Cursor) finishInternalFbbAndPut(id uint64, checkForPreviousObject 
 	fbb.Finish(fbb.EndObject())
 	bytes := fbb.FinishedBytes()
 
-	cCheckPrevious := 0
-	if checkForPreviousObject {
-		cCheckPrevious = 1
-	}
-	rc := C.obx_cursor_put(cursor.cursor, C.uint64_t(id), unsafe.Pointer(&bytes[0]), C.size_t(len(bytes)),
-		C.int(cCheckPrevious))
+	rc := C.obx_cursor_put(cursor.cursor,
+		C.uint64_t(id), unsafe.Pointer(&bytes[0]), C.size_t(len(bytes)), C.bool(checkForPreviousObject))
 	if rc != 0 {
 		err = createError()
 	}
@@ -150,28 +147,29 @@ func (cursor *Cursor) RemoveAll() (err error) {
 	return
 }
 
-func (cursor *Cursor) FindByString(propertyId uint, value string) (bytesArray *BytesArray, err error) {
-	cvalue := C.CString(value)
-	defer C.free(unsafe.Pointer(cvalue))
-
-	cBytesArray := C.obx_query_by_string(cursor.cursor, C.uint32_t(propertyId), cvalue)
-	if cBytesArray == nil {
-		err = createError()
-		return
-	}
-	size := int(cBytesArray.size)
-	plainBytesArray := make([][]byte, size)
-	if size > 0 {
-		goBytesArray := (*[1 << 30]C.OBX_bytes)(unsafe.Pointer(cBytesArray.bytes))[:size:size]
-		for i := 0; i < size; i++ {
-			cBytes := goBytesArray[i]
-			dataBytes := C.GoBytes(cBytes.data, C.int(cBytes.size))
-			plainBytesArray[i] = dataBytes
-		}
-	}
-
-	return &BytesArray{plainBytesArray, cBytesArray}, nil
-}
+// TODO remove
+//func (cursor *Cursor) FindByString(propertyId uint, value string) (bytesArray *BytesArray, err error) {
+//	cvalue := C.CString(value)
+//	defer C.free(unsafe.Pointer(cvalue))
+//
+//	cBytesArray := C.obx_query_by_string(cursor.cursor, C.uint32_t(propertyId), cvalue)
+//	if cBytesArray == nil {
+//		err = createError()
+//		return
+//	}
+//	size := int(cBytesArray.size)
+//	plainBytesArray := make([][]byte, size)
+//	if size > 0 {
+//		goBytesArray := (*[1 << 30]C.OBX_bytes)(unsafe.Pointer(cBytesArray.bytes))[:size:size]
+//		for i := 0; i < size; i++ {
+//			cBytes := goBytesArray[i]
+//			dataBytes := C.GoBytes(cBytes.data, C.int(cBytes.size))
+//			plainBytesArray[i] = dataBytes
+//		}
+//	}
+//
+//	return &BytesArray{plainBytesArray, cBytesArray}, nil
+//}
 
 func (cursor *Cursor) cBytesArrayToObjects(cBytesArray *C.OBX_bytes_array) (slice interface{}) {
 	bytesArray := cBytesArrayToGo(cBytesArray)
@@ -189,7 +187,7 @@ func (cursor *Cursor) bytesArrayToObjects(bytesArray *BytesArray) (slice interfa
 }
 
 func cBytesArrayToGo(cBytesArray *C.OBX_bytes_array) (bytesArray *BytesArray) {
-	size := int(cBytesArray.size)
+	size := int(cBytesArray.count)
 	plainBytesArray := make([][]byte, size)
 	if size > 0 {
 		goBytesArray := (*[1 << 30]C.OBX_bytes)(unsafe.Pointer(cBytesArray.bytes))[:size:size]

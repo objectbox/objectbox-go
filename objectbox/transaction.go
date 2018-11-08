@@ -8,8 +8,9 @@ package objectbox
 import "C"
 
 import (
-	"github.com/google/flatbuffers/go"
 	"unsafe"
+
+	"github.com/google/flatbuffers/go"
 )
 
 type Transaction struct {
@@ -18,7 +19,7 @@ type Transaction struct {
 }
 
 func (txn *Transaction) Destroy() (err error) {
-	rc := C.obx_txn_destroy(txn.txn)
+	rc := C.obx_txn_close(txn.txn)
 	txn.txn = nil
 	if rc != 0 {
 		err = createError()

@@ -10,10 +10,11 @@ import "C"
 import (
 	"errors"
 	"fmt"
-	"github.com/google/flatbuffers/go"
 	"runtime"
 	"strconv"
 	"strings"
+
+	"github.com/google/flatbuffers/go"
 )
 
 const Unavailable = flatbuffers.UOffsetT(0)
@@ -153,7 +154,7 @@ func (ob *ObjectBox) RunWithCursor(typeId TypeId, readOnly bool, cursorFun Curso
 }
 
 func (ob *ObjectBox) SetDebugFlags(flags uint) (err error) {
-	rc := C.obx_store_debug_flags(ob.store, C.uint32_t(flags))
+	rc := C.obx_store_debug_flags(ob.store, C.OBDebugFlags(flags))
 	if rc != 0 {
 		err = createError()
 	}
@@ -206,7 +207,7 @@ func (bytesArray *BytesArray) Destroy() {
 	cBytesArray := bytesArray.cBytesArray
 	if cBytesArray != nil {
 		bytesArray.cBytesArray = nil
-		C.obx_bytes_array_destroy(cBytesArray)
+		C.obx_bytes_array_free(cBytesArray)
 	}
 	bytesArray.BytesArray = nil
 }

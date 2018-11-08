@@ -25,7 +25,7 @@ type ObjectBoxBuilder struct {
 }
 
 func NewObjectBoxBuilder() (builder *ObjectBoxBuilder) {
-	if C.obx_version_is_at_least(0, 3, 0) == 0 {
+	if !C.obx_version_is_at_least(0, 3, 0) {
 		var version string
 		msg := C.obx_version_string()
 		if msg == nil {

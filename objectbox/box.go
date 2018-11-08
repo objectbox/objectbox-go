@@ -8,9 +8,10 @@ package objectbox
 import "C"
 
 import (
-	"github.com/google/flatbuffers/go"
 	"sync/atomic"
 	"unsafe"
+
+	"github.com/google/flatbuffers/go"
 )
 
 type Box struct {
@@ -27,7 +28,7 @@ type Box struct {
 }
 
 func (box *Box) Destroy() (err error) {
-	rc := C.obx_box_destroy(box.box)
+	rc := C.obx_box_close(box.box)
 	box.box = nil
 	if rc != 0 {
 		err = createError()
@@ -69,12 +70,8 @@ func (box *Box) finishFbbAndPutAsync(fbb *flatbuffers.Builder, id uint64, checkF
 	fbb.Finish(fbb.EndObject())
 	bytes := fbb.FinishedBytes()
 
-	cCheckPrevious := 0
-	if checkForPreviousObject {
-		cCheckPrevious = 1
-	}
-	rc := C.obx_box_put_async(box.box, C.uint64_t(id), unsafe.Pointer(&bytes[0]), C.size_t(len(bytes)),
-		C.int(cCheckPrevious))
+	rc := C.obx_box_put_async(box.box,
+		C.uint64_t(id), unsafe.Pointer(&bytes[0]), C.size_t(len(bytes)), C.bool(checkForPreviousObject))
 	if rc != 0 {
 		err = createError()
 	}

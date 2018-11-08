@@ -23,7 +23,7 @@ func ({{$entity.Name}}Binding) AddToModel(model *objectbox.Model) {
         {{- end}})
     {{end -}}
     {{end -}}
-    model.EntityLastPropertyId(3, 10001003) {{/* TODO last property*/}}
+    model.EntityLastPropertyId({{$entity.LastProperty.Id}}, {{$entity.LastProperty.Uid}})
 }
 
 func as{{$entity.Name}}(entity interface{}) (*{{$entity.Name}}, error) {
@@ -40,7 +40,7 @@ func ({{$entity.Name}}Binding) GetId(entity interface{}) (uint64, error) {
 	if ent, err := as{{$entity.Name}}(entity); err != nil {
 	    return 0, err
 	} else {
-	    return ent.{{$entity.PropertyId.Name}}, nil
+	    return ent.{{$entity.IdProperty.Name}}, nil
 	}
 }
 
@@ -67,9 +67,9 @@ func ({{$entity.Name}}Binding) Flatten(entity interface{}, fbb *flatbuffers.Buil
     // build the FlatBuffers object
     fbb.StartObject({{len $entity.Properties}})
     {{range $property := $entity.Properties -}}
-    fbb.Prepend{{$property.FbType}}Slot({{$property.FbSlot}},
+    fbb.Prepend{{$property.FbType}}Slot({{$property.Id}},
         {{- if eq $property.FbType "UOffsetT"}} offset{{$property.Name}}, 0)
-        {{- else if eq $property.Name $entity.PropertyId.Name}} id, 0)
+        {{- else if eq $property.Name $entity.IdProperty.Name}} id, 0)
         {{- else if eq $property.GoType "bool"}} ent.{{$property.Name}}, false)
         {{- else if eq $property.GoType "int"}} int32(ent.{{$property.Name}}), 0)
         {{- else if eq $property.GoType "uint"}} uint32(ent.{{$property.Name}}), 0)
@@ -118,9 +118,9 @@ func (box *{{$entity.Name}}Box) Get(id uint64) (*{{$entity.Name}}, error) {
     }
 }
 
-func (box *{{$entity.Name}}Box) Remove(entity *{{$entity.Name}}) (err error) {
-	// TODO return box.Box.Remove(entity.{{$entity.PropertyId.Name}})
-	return nil
-}
+// TODO
+// func (box *{{$entity.Name}}Box) Remove(entity *{{$entity.Name}}) (err error) {
+// 	   return box.Box.Remove(entity.{{$entity.IdProperty.Name}})
+// }
 
 {{end -}}

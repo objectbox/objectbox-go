@@ -30,7 +30,7 @@ func processAndTest(t *testing.T, sourceFile, bindingFile string, expectedSize i
 func TestTask(t *testing.T) {
 	var sourceFile = "data/task.go"
 	var bindingFile = "data/taskbinding.go"
-	var expectedSize = int64(3518)
+	var expectedSize = int64(3681)
 
 	// test when there's no binding file before
 	os.Remove(bindingFile)
@@ -43,7 +43,7 @@ func TestTask(t *testing.T) {
 func TestTypeful(t *testing.T) {
 	var sourceFile = "data/typeful.go"
 	var bindingFile = "data/typefulbinding.go"
-	var expectedSize = int64(4919)
+	var expectedSize = int64(5331)
 
 	// test when there's no binding file before
 	os.Remove(bindingFile)

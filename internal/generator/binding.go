@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go/ast"
 	"go/types"
+	"hash/fnv"
 	"strings"
 )
 
@@ -19,11 +20,14 @@ type Binding struct {
 }
 
 type Entity struct {
-	Name       string
-	Id         id
-	Uid        uid
-	Properties []*Property
-	PropertyId *Property // TODO what if ID is not defined? what about GetId function?
+	Name         string
+	Id           id
+	Uid          uid
+	Properties   []*Property
+	IdProperty   *Property
+	LastProperty *Property
+
+	binding *Binding // parent
 }
 
 type Property struct {
@@ -33,10 +37,11 @@ type Property struct {
 	Uid         uid
 	Annotations map[string]*Annotation
 	ObType      string
-	ObFlags     []string // in ascending order
+	ObFlags     []string
 	GoType      string
 	FbType      string
-	FbSlot      int
+
+	entity *Entity
 }
 
 type Annotation struct {
@@ -79,7 +84,7 @@ func (binding *Binding) entityLoader(node ast.Node) bool {
 			binding.err = fmt.Errorf("encountered a struct without a name")
 			return false
 		} else {
-			binding.err = binding.loadAstStruct(node)
+			binding.err = binding.createEntityFromAst(node)
 			// reset after it has been "consumed"
 			binding.currentEntityName = ""
 		}
@@ -94,15 +99,13 @@ func (binding *Binding) entityLoader(node ast.Node) bool {
 	return false
 }
 
-func (binding *Binding) loadAstStruct(node ast.Node) (err error) {
+func (binding *Binding) createEntityFromAst(node ast.Node) (err error) {
 	entity := &Entity{
-		Name: binding.currentEntityName,
-		// TODO
-		Id:  0,
-		Uid: 0,
+		binding: binding,
+		Name:    binding.currentEntityName,
 	}
 
-	var fullError = func(err error, property *Property) error {
+	var propertyError = func(err error, property *Property) error {
 		return fmt.Errorf("%s on property %s, entity %s", err, property.Name, entity.Name)
 	}
 
@@ -115,15 +118,13 @@ func (binding *Binding) loadAstStruct(node ast.Node) (err error) {
 			}
 
 			property := &Property{
-				Name: f.Names[0].Name,
-
-				// TODO what about backward compatibility? We need to keep track of previous properties
-				FbSlot: len(entity.Properties),
+				entity: entity,
+				Name:   f.Names[0].Name,
 			}
 
 			if f.Tag != nil {
-				if err = property.loadAnnotations(f.Tag.Value); err != nil {
-					return fullError(err, property)
+				if err = property.setAnnotations(f.Tag.Value); err != nil {
+					return propertyError(err, property)
 				}
 			}
 
@@ -132,26 +133,26 @@ func (binding *Binding) loadAstStruct(node ast.Node) (err error) {
 				continue
 			}
 
-			if err = property.loadType(f.Type); err != nil {
-				return fullError(err, property)
+			if err = property.setType(f.Type); err != nil {
+				return propertyError(err, property)
 			}
 
-			if err = property.loadObFlags(f); err != nil {
-				return fullError(err, property)
+			if err = property.setObFlags(*f); err != nil {
+				return propertyError(err, property)
 			}
 
-			// if this is an ID, set it as entity.PropertyId
+			// if this is an ID, set it as entity.IdProperty
 			if property.Annotations["id"] != nil {
-				if entity.PropertyId != nil {
+				if entity.IdProperty != nil {
 					return fmt.Errorf("struct %s has multiple ID properties - %s and %s",
-						entity.Name, entity.PropertyId.Name, property.Name)
+						entity.Name, entity.IdProperty.Name, property.Name)
 				}
-				entity.PropertyId = property
+				entity.IdProperty = property
 			}
 
 			if property.Annotations["nameindb"] != nil {
 				if len(property.Annotations["nameindb"].Value) == 0 {
-					return fullError(fmt.Errorf("nameInDb annotation value must not be empty"), property)
+					return propertyError(fmt.Errorf("nameInDb annotation value must not be empty"), property)
 				} else {
 					property.ObName = property.Annotations["nameindb"].Value
 				}
@@ -163,11 +164,49 @@ func (binding *Binding) loadAstStruct(node ast.Node) (err error) {
 		}
 	}
 
-	if entity.PropertyId == nil {
+	if len(entity.Properties) == 0 {
+		return fmt.Errorf("there are no properties in the entity %s", entity.Name)
+	}
+
+	entity.LastProperty = entity.Properties[len(entity.Properties)-1]
+
+	if entity.IdProperty == nil {
+		// TODO what if ID is not defined? what about GetId function?
+		// at the moment we don't allow this; ID is required
 		return fmt.Errorf("field annotated `id` is missing on entity %s", entity.Name)
 	}
 
+	if err = entity.setIds(); err != nil {
+		return err
+	}
+
 	binding.Entities = append(binding.Entities, entity)
+	return nil
+}
+
+// sets Id & Uid on entity and its properties
+func (entity *Entity) setIds() error {
+	// TODO persistence similar to objectbox-java (json file)
+	// TODO read //uid() comment for the entity
+
+	// at the moment, we just generate a hash based on the entity name & package
+	h := fnv.New64a()
+	if _, err := h.Write([]byte(entity.binding.Package + " " + entity.Name)); err != nil {
+		return fmt.Errorf("could not generate entity %s Uid: %s", entity.Name, err)
+	}
+	entity.Uid = h.Sum64()
+
+	// Id is actually a 24bit integer, i. e. max is 16777215, so let's convert when generating from UID (uint64)
+	entity.Id = id(entity.Uid >> 40)
+
+	// reduce Uid a little so that we have nice namespacing for properties
+	entity.Uid /= 10000
+
+	for index, property := range entity.Properties {
+		property.Id = id(index)
+		property.Uid = entity.Uid*10000 + uid(property.Id)
+	}
+
 	return nil
 }
 
@@ -177,7 +216,7 @@ func (binding *Binding) loadAstStruct(node ast.Node) (err error) {
 // unique
 // nameInDb
 // transient
-func (property *Property) loadAnnotations(tags string) error {
+func (property *Property) setAnnotations(tags string) error {
 	if len(tags) > 1 && tags[0] == tags[len(tags)-1] && (tags[0] == '`' || tags[0] == '"') {
 		tags = tags[1 : len(tags)-1]
 	}
@@ -201,7 +240,8 @@ func (property *Property) loadAnnotations(tags string) error {
 				if len(tags) > 1 && tags[0] == tags[len(tags)-1] && tags[0] == '"' {
 					value.Value = strings.TrimSpace(tags[1 : len(tags)-1])
 				} else {
-					return fmt.Errorf("invalid annotation value %s for %s, expecting `name:\"value\"` format", tags, name)
+					return fmt.Errorf("invalid annotation value %s for %s, expecting `name:\"value\"` format",
+						tags, name)
 				}
 			} else {
 				// otherwise there's no value
@@ -221,7 +261,7 @@ func (property *Property) loadAnnotations(tags string) error {
 	return nil
 }
 
-func (property *Property) loadType(t ast.Expr) error {
+func (property *Property) setType(t ast.Expr) error {
 	property.GoType = types.ExprString(t)
 
 	// TODO check thoroughly
@@ -290,7 +330,7 @@ func (property *Property) addObFlag(flag string) {
 	property.ObFlags = append(property.ObFlags, flag)
 }
 
-func (property *Property) loadObFlags(f *ast.Field) error {
+func (property *Property) setObFlags(f ast.Field) error {
 	if property.Annotations["id"] != nil {
 		property.addObFlag("ID")
 	}
@@ -319,16 +359,16 @@ func (property *Property) loadObFlags(f *ast.Field) error {
 	return nil
 }
 
-func (property *Property) loadIds(f *ast.Field) error {
-	// TODO how to generate IDs?
-	// maybe save them to the original file as tag? Or read the already existing generated file as well?
-
-	return nil
-}
-
 // calculates flatbuffers vTableOffset
 // called from the template
-func (property *Property) VTableOffset() int {
-	// TODO verify this, derived from the FB generated code & https://google.github.io/flatbuffers/md__internals.html
-	return 4 + 2*property.FbSlot
+func (property *Property) VTableOffset() uint16 {
+	// derived from the FB generated code & https://google.github.io/flatbuffers/md__internals.html
+	var result = 4 + 2*property.Id
+
+	if uint32(uint16(result)) != result {
+		panic(fmt.Errorf("can't calculate FlatBuffers VTableOffset: property %s ID %d is too large",
+			property.Name, property.Id))
+	}
+
+	return uint16(result)
 }

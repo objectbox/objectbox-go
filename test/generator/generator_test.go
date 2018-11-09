@@ -11,6 +11,9 @@ import (
 // TODO implement test similar to gofmt
 // i. e. GLOB("data/*.input"), process & compare with "data/*.expected" files
 
+var taskSize int64 = 3673
+var typefulSize int64 = 5302
+
 func processAndTest(t *testing.T, sourceFile, bindingFile, modelInfoFile string, expectedSize int64) {
 	var err error
 
@@ -31,28 +34,36 @@ func TestTask(t *testing.T) {
 	var sourceFile = "data/task.go"
 	var bindingFile = "data/taskbinding.go"
 	var modelInfoFile = "data/objectbox-model-info.js"
-	var expectedSize = int64(3681)
 
 	// test when there's no binding file before
 	os.Remove(bindingFile)
-	//os.Remove(modelInfoFile)
-	processAndTest(t, sourceFile, bindingFile, modelInfoFile, expectedSize)
+	os.Remove(modelInfoFile)
+	processAndTest(t, sourceFile, bindingFile, modelInfoFile, taskSize)
 
 	// test when the binding file already exists
-	processAndTest(t, sourceFile, bindingFile, modelInfoFile, expectedSize)
+	processAndTest(t, sourceFile, bindingFile, modelInfoFile, taskSize)
 }
 
 func TestTypeful(t *testing.T) {
 	var sourceFile = "data/typeful.go"
 	var bindingFile = "data/typefulbinding.go"
 	var modelInfoFile = "data/objectbox-model-info.js"
-	var expectedSize = int64(5331)
 
 	// test when there's no binding file before
 	os.Remove(bindingFile)
 	os.Remove(modelInfoFile)
-	processAndTest(t, sourceFile, bindingFile, modelInfoFile, expectedSize)
+	processAndTest(t, sourceFile, bindingFile, modelInfoFile, typefulSize)
 
 	// test when the binding file already exists
-	processAndTest(t, sourceFile, bindingFile, modelInfoFile, expectedSize)
+	processAndTest(t, sourceFile, bindingFile, modelInfoFile, typefulSize)
+}
+
+func TestMultiple(t *testing.T) {
+	var modelInfoFile = "data/objectbox-model-info.js"
+
+	// test when there's no binding file before
+	os.Remove(modelInfoFile)
+
+	processAndTest(t, "data/task.go", "data/taskbinding.go", modelInfoFile, taskSize)
+	processAndTest(t, "data/typeful.go", "data/typefulbinding.go", modelInfoFile, typefulSize)
 }

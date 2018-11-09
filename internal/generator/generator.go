@@ -11,12 +11,14 @@ import (
 	"path"
 	"strings"
 
+	"github.com/objectbox/objectbox-go/internal/generator/modelinfo"
+
 	// TODO check whether we can use this dependency
 	// used to include template in the compiled binary
 	"github.com/gobuffalo/packr"
 )
 
-func Process(sourceFile string) (err error) {
+func Process(sourceFile, modelInfoFile string) (err error) {
 	var err2 error
 
 	var f *file
@@ -24,13 +26,28 @@ func Process(sourceFile string) (err error) {
 		return fmt.Errorf("can't parse GO file %s: %s", sourceFile, err)
 	}
 
-	var binding *Binding
-	if binding, err = newBinding(); err != nil {
-		return err
+	var modelInfo *modelinfo.ModelInfo
+	if modelInfo, err = modelinfo.LoadOrCreateModel(modelInfoFile); err != nil {
+		return fmt.Errorf("can't init ModelInfo: %s", err)
+	} else {
+		defer modelInfo.Close()
 	}
 
-	if err = binding.loadAstFile(f); err != nil {
+	if err = modelInfo.Validate(); err != nil {
+		return fmt.Errorf("invalid ModelInfo loaded: %s", err)
+	}
+
+	var binding *Binding
+	if binding, err = newBinding(); err != nil {
+		return fmt.Errorf("can't init Binding: %s", err)
+	}
+
+	if err = binding.createFromAst(f); err != nil {
 		return fmt.Errorf("can't prepare bindings for %s: %s", sourceFile, err)
+	}
+
+	if err = mergeBindingWithModelInfo(binding, modelInfo); err != nil {
+		return fmt.Errorf("can't merge binding model information: %s", err)
 	}
 
 	var bindingSource []byte
@@ -50,9 +67,16 @@ func Process(sourceFile string) (err error) {
 
 	if err = writeBindingFile(sourceFile, bindingFile, bindingSource); err != nil {
 		return fmt.Errorf("can't write binding file %s: %s", sourceFile, err)
+	} else if err2 != nil {
+		// now when the binding has been written (for debugging purposes), we can return the error
+		return err2
 	}
 
-	return err2
+	if err = modelInfo.Write(); err != nil {
+		return fmt.Errorf("can't write model-info file %s: %s", modelInfoFile, err)
+	}
+
+	return nil
 }
 
 func generateBinding(binding *Binding) (data []byte, err error) {

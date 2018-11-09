@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"go/ast"
 	"go/types"
-	"hash/fnv"
 	"strings"
 )
 
@@ -52,7 +51,7 @@ func newBinding() (*Binding, error) {
 	return &Binding{}, nil
 }
 
-func (binding *Binding) loadAstFile(f *file) (err error) {
+func (binding *Binding) createFromAst(f *file) (err error) {
 	binding.Package = f.f.Name.Name // this is actually package name, not file name
 
 	// process all structs
@@ -186,28 +185,29 @@ func (binding *Binding) createEntityFromAst(node ast.Node) (err error) {
 
 // sets Id & Uid on entity and its properties
 func (entity *Entity) setIds() error {
-	// TODO persistence similar to objectbox-java (json file)
-	// TODO read //uid() comment for the entity
-
-	// at the moment, we just generate a hash based on the entity name & package
-	h := fnv.New64a()
-	if _, err := h.Write([]byte(entity.binding.Package + " " + entity.Name)); err != nil {
-		return fmt.Errorf("could not generate entity %s Uid: %s", entity.Name, err)
-	}
-	entity.Uid = h.Sum64()
-
-	// Id is actually a 24bit integer, i. e. max is 16777215, so let's convert when generating from UID (uint64)
-	entity.Id = id(entity.Uid >> 40)
-
-	// reduce Uid a little so that we have nice namespacing for properties
-	entity.Uid /= 10000
-
-	for index, property := range entity.Properties {
-		property.Id = id(index)
-		property.Uid = entity.Uid*10000 + uid(property.Id)
-	}
-
 	return nil
+	//// TODO persistence similar to objectbox-java (json file)
+	//// TODO read //uid() comment for the entity
+	//
+	//// at the moment, we just generate a hash based on the entity name & package
+	//h := fnv.New64a()
+	//if _, err := h.Write([]byte(entity.binding.Package + " " + entity.Name)); err != nil {
+	//	return fmt.Errorf("could not generate entity %s Uid: %s", entity.Name, err)
+	//}
+	//entity.Uid = h.Sum64()
+	//
+	//// Id is actually a 24bit integer, i. e. max is 16777215, so let's convert when generating from UID (uint64)
+	//entity.Id = id(entity.Uid >> 40)
+	//
+	//// reduce Uid a little so that we have nice namespacing for properties
+	//entity.Uid /= 10000
+	//
+	//for index, property := range entity.Properties {
+	//	property.Id = id(index)
+	//	property.Uid = entity.Uid*10000 + uid(property.Id)
+	//}
+	//
+	//return nil
 }
 
 // Supported annotations:

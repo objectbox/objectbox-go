@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"os"
 	"path"
+	"time"
 
 	"github.com/objectbox/objectbox-go/internal/generator"
 )
@@ -14,6 +16,9 @@ func main() {
 
 	fmt.Printf("Generating ObjectBox bindings for %s", file)
 	fmt.Println()
+
+	// we need to do it here, not in the internal/generator because it wouldn't be testable
+	rand.Seed(time.Now().UTC().UnixNano())
 
 	err = generator.Process(file)
 	stopOnError(err)

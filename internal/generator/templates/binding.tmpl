@@ -18,9 +18,10 @@ func ({{$entity.Name}}Binding) AddToModel(model *objectbox.Model) {
     model.Property("{{$property.ObName}}", objectbox.PropertyType_{{$property.ObType}}, {{$property.Id}}, {{$property.Uid}})
     {{if len $property.ObFlags -}}
         model.PropertyFlags(
-        {{- range $index, $flag := $property.ObFlags -}}
-            {{if gt $index 0}} | {{end}}objectbox.PropertyFlags_{{$flag}}
+        {{- range $key, $flag := $property.ObFlags -}}
+            {{if gt $key 0}} | {{end}}objectbox.PropertyFlags_{{$flag}}
         {{- end}})
+        {{- /* TODO model.PropertyIndexId() && model.PropertyRelation() */}}
     {{end -}}
     {{end -}}
     model.EntityLastPropertyId({{$entity.LastProperty.Id}}, {{$entity.LastProperty.Uid}})

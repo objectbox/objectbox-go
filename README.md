@@ -38,6 +38,12 @@ which deeply integrate into the language using e.g. [@Entity annotations](https:
 
 A better language integration could be build based on reflection, code generation, or a combination of both.
 
+Building
+------------
+```sh
+./build/build.sh
+```
+
 License
 -------
     Copyright 2018 ObjectBox Ltd. All rights reserved.

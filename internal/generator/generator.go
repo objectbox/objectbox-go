@@ -18,6 +18,11 @@ import (
 	"github.com/gobuffalo/packr"
 )
 
+func BindingFileName(sourceFile string) string {
+	var extension = path.Ext(sourceFile)
+	return sourceFile[0:len(sourceFile)-len(extension)] + "-binding" + extension
+}
+
 func Process(sourceFile, modelInfoFile string) (err error) {
 	var err2 error
 
@@ -62,10 +67,7 @@ func Process(sourceFile, modelInfoFile string) (err error) {
 		bindingSource = formattedSource
 	}
 
-	var extension = path.Ext(sourceFile)
-	var bindingFile = sourceFile[0:len(sourceFile)-len(extension)] + "binding" + extension
-
-	if err = writeBindingFile(sourceFile, bindingFile, bindingSource); err != nil {
+	if err = writeBindingFile(sourceFile, BindingFileName(sourceFile), bindingSource); err != nil {
 		return fmt.Errorf("can't write binding file %s: %s", sourceFile, err)
 	} else if err2 != nil {
 		// now when the binding has been written (for debugging purposes), we can return the error

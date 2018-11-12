@@ -1,7 +1,5 @@
 package object
 
-//go:generate objectbox-bindings
-
 type Task struct {
 	Id       uint64 `id`
 	Uid      string `index`

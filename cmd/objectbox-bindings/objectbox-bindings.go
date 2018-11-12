@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"math/rand"
 	"os"
@@ -11,51 +12,52 @@ import (
 )
 
 func main() {
-	file, _, err := getArgs()
-	stopOnError(err)
+	file, _, modelFile := getArgs()
 
 	fmt.Printf("Generating ObjectBox bindings for %s", file)
 	fmt.Println()
 
-	// we need to do it here, not in the internal/generator because it wouldn't be testable
+	// we need to do random seeding here instead of the internal/generator so that it can be easily testable
 	rand.Seed(time.Now().UTC().UnixNano())
 
-	err = generator.Process(file)
+	err := generator.Process(file, modelFile)
 	stopOnError(err)
 }
 
 func stopOnError(err error) {
 	if err != nil {
 		fmt.Println(err)
-		os.Exit(1)
+		os.Exit(2)
 	}
 }
 
-func getArgs() (file string, line uint, err error) {
+func getArgs() (file string, line uint, modelFile string) {
+	var hasAll = true
 	line = 0
 
-	// if the command is run by go:generate some environment variables are set
-	// https://golang.org/pkg/cmd/go/internal/generate/
-	if gofile, exists := os.LookupEnv("GOFILE"); exists {
-		file = gofile
-		// TODO if we want to create for just one struct
-		//if goline, exists := os.LookupEnv("GOLINE"); exists {
-		//	line, err := strconv.ParseUint(goline, 10, 0)
-		//	if err != nil {
-		//		err = fmt.Errorf("Error parsing GOLINE environment variable as int: %s", err)
-		//		return
-		//	}
-		//}
-	}
+	file = *flag.String("source", "", "path to the source file containing structs to process")
 
 	if len(file) == 0 {
-		if len(os.Args) <= 1 {
-			err = fmt.Errorf("usage: %s file.go", path.Base(os.Args[0]))
-			return
-		} else {
-			file = os.Args[1]
+		// if the command is run by go:generate some environment variables are set
+		// https://golang.org/pkg/cmd/go/internal/generate/
+		if gofile, exists := os.LookupEnv("GOFILE"); exists {
+			file = gofile
+		}
+
+		if len(file) == 0 {
+			hasAll = false
 		}
 	}
 
+	modelFile = *flag.String("persist", "", "path to the model information persistence file")
+
+	if len(modelFile) == 0 {
+		modelFile = path.Join(path.Dir(file), "objectbox-model-info.js")
+	}
+
+	if !hasAll {
+		flag.Usage()
+		os.Exit(1)
+	}
 	return
 }

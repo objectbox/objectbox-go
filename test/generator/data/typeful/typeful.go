@@ -1,7 +1,5 @@
 package object
 
-//go:generate objectbox-bindings
-
 // Tests all available GO & ObjectBox types
 type Typeful struct {
 	Id         uint64 `id` // NOTE ID is currently required

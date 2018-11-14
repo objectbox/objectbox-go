@@ -1,3 +1,4 @@
+// Package objectbox provides a super-fast, light-weight object persistence framework.
 package objectbox
 
 /*
@@ -30,6 +31,7 @@ const (
 
 type TypeId uint32
 
+// An ObjectBinding provides an interface for various object types to be included in the model
 type ObjectBinding interface {
 	AddToModel(model *Model)
 	GetId(object interface{}) (id uint64, err error)

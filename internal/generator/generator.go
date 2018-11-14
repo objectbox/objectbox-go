@@ -1,3 +1,4 @@
+// Package generator provides tools to generate ObjectBox entity bindings between GO structs & ObjectBox schema
 package generator
 
 import (
@@ -12,10 +13,7 @@ import (
 	"strings"
 
 	"github.com/objectbox/objectbox-go/internal/generator/modelinfo"
-
-	// TODO check whether we can use this dependency
-	// used to include template in the compiled binary
-	"github.com/gobuffalo/packr"
+	"github.com/objectbox/objectbox-go/internal/generator/templates"
 )
 
 func BindingFileName(sourceFile string) string {
@@ -23,6 +21,8 @@ func BindingFileName(sourceFile string) string {
 	return sourceFile[0:len(sourceFile)-len(extension)] + "-binding" + extension
 }
 
+// Process is the main API method of the package
+// it takes source file & model-information file paths and generates bindings (as a sibling file to the source file)
 func Process(sourceFile, modelInfoFile string) (err error) {
 	var err2 error
 
@@ -82,13 +82,7 @@ func Process(sourceFile, modelInfoFile string) (err error) {
 }
 
 func generateBinding(binding *Binding) (data []byte, err error) {
-	// load the template for the binding
-	box := packr.NewBox("./templates")
-
-	var tplText string
-	if tplText, err = box.MustString("binding.tmpl"); err != nil {
-		return nil, fmt.Errorf("can't load template from the binary distribution: %s", err)
-	}
+	var tplText = templates.Binding()
 
 	funcMap := template.FuncMap{
 		"StringTitle": strings.Title,

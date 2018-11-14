@@ -175,39 +175,8 @@ func (binding *Binding) createEntityFromAst(node ast.Node) (err error) {
 		return fmt.Errorf("field annotated `id` is missing on entity %s", entity.Name)
 	}
 
-	if err = entity.setIds(); err != nil {
-		return err
-	}
-
 	binding.Entities = append(binding.Entities, entity)
 	return nil
-}
-
-// sets Id & Uid on entity and its properties
-func (entity *Entity) setIds() error {
-	return nil
-	//// TODO persistence similar to objectbox-java (json file)
-	//// TODO read //uid() comment for the entity
-	//
-	//// at the moment, we just generate a hash based on the entity name & package
-	//h := fnv.New64a()
-	//if _, err := h.Write([]byte(entity.binding.Package + " " + entity.Name)); err != nil {
-	//	return fmt.Errorf("could not generate entity %s Uid: %s", entity.Name, err)
-	//}
-	//entity.Uid = h.Sum64()
-	//
-	//// Id is actually a 24bit integer, i. e. max is 16777215, so let's convert when generating from UID (uint64)
-	//entity.Id = id(entity.Uid >> 40)
-	//
-	//// reduce Uid a little so that we have nice namespacing for properties
-	//entity.Uid /= 10000
-	//
-	//for index, property := range entity.Properties {
-	//	property.Id = id(index)
-	//	property.Uid = entity.Uid*10000 + uid(property.Id)
-	//}
-	//
-	//return nil
 }
 
 // Supported annotations:

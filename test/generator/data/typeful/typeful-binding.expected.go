@@ -46,6 +46,16 @@ func asTypeful(entity interface{}) (*Typeful, error) {
 	return ent, nil
 }
 
+func asTypefuls(entities interface{}) ([]Typeful, error) {
+	ent, ok := entities.([]Typeful)
+	if !ok {
+		// Programming error, OK to panic
+		// TODO don't panic here, handle in the caller if necessary to panic
+		panic("Object has wrong type, expecting 'Typeful'")
+	}
+	return ent, nil
+}
+
 func (TypefulBinding) GetId(entity interface{}) (uint64, error) {
 	if ent, err := asTypeful(entity); err != nil {
 		return 0, err
@@ -67,25 +77,25 @@ func (TypefulBinding) Flatten(entity interface{}, fbb *flatbuffers.Builder, id u
 
 	// build the FlatBuffers object
 	fbb.StartObject(19)
-	fbb.PrependUint64Slot(1, id, 0)
-	fbb.PrependInt32Slot(2, int32(ent.Int), 0)
-	fbb.PrependInt8Slot(3, ent.Int8, 0)
-	fbb.PrependInt16Slot(4, ent.Int16, 0)
-	fbb.PrependInt32Slot(5, ent.Int32, 0)
-	fbb.PrependInt64Slot(6, ent.Int64, 0)
-	fbb.PrependUint32Slot(7, uint32(ent.Uint), 0)
-	fbb.PrependUint8Slot(8, ent.Uint8, 0)
-	fbb.PrependUint16Slot(9, ent.Uint16, 0)
-	fbb.PrependUint32Slot(10, ent.Uint32, 0)
-	fbb.PrependUint64Slot(11, ent.Uint64, 0)
-	fbb.PrependBoolSlot(12, ent.Bool, false)
-	fbb.PrependUOffsetTSlot(13, offsetString, 0)
-	fbb.PrependByteSlot(14, ent.Byte, 0)
-	fbb.PrependUOffsetTSlot(15, offsetByteVector, 0)
-	fbb.PrependInt32Slot(16, ent.Rune, 0)
-	fbb.PrependFloat32Slot(17, ent.Float32, 0)
-	fbb.PrependFloat64Slot(18, ent.Float64, 0)
-	fbb.PrependUint64Slot(19, ent.Date, 0)
+	fbb.PrependUint64Slot(0, id, 0)
+	fbb.PrependInt32Slot(1, int32(ent.Int), 0)
+	fbb.PrependInt8Slot(2, ent.Int8, 0)
+	fbb.PrependInt16Slot(3, ent.Int16, 0)
+	fbb.PrependInt32Slot(4, ent.Int32, 0)
+	fbb.PrependInt64Slot(5, ent.Int64, 0)
+	fbb.PrependUint32Slot(6, uint32(ent.Uint), 0)
+	fbb.PrependUint8Slot(7, ent.Uint8, 0)
+	fbb.PrependUint16Slot(8, ent.Uint16, 0)
+	fbb.PrependUint32Slot(9, ent.Uint32, 0)
+	fbb.PrependUint64Slot(10, ent.Uint64, 0)
+	fbb.PrependBoolSlot(11, ent.Bool, false)
+	fbb.PrependUOffsetTSlot(12, offsetString, 0)
+	fbb.PrependByteSlot(13, ent.Byte, 0)
+	fbb.PrependUOffsetTSlot(14, offsetByteVector, 0)
+	fbb.PrependInt32Slot(15, ent.Rune, 0)
+	fbb.PrependFloat32Slot(16, ent.Float32, 0)
+	fbb.PrependFloat64Slot(17, ent.Float64, 0)
+	fbb.PrependUint64Slot(18, ent.Date, 0)
 }
 
 func (TypefulBinding) ToObject(bytes []byte) interface{} {
@@ -137,11 +147,15 @@ func (box *TypefulBox) Get(id uint64) (*Typeful, error) {
 	if err != nil {
 		return nil, err
 	}
-	if ent, err := asTypeful(entity); err != nil {
+	return asTypeful(entity)
+}
+
+func (box *TypefulBox) GetAll() ([]Typeful, error) {
+	entities, err := box.Box.GetAll()
+	if err != nil {
 		return nil, err
-	} else {
-		return ent, nil
 	}
+	return asTypefuls(entities)
 }
 
 // TODO

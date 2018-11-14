@@ -40,6 +40,16 @@ func as{{$entity.Name}}(entity interface{}) (*{{$entity.Name}}, error) {
     return ent, nil
 }
 
+func as{{$entity.Name}}s(entities interface{}) ([]{{$entity.Name}}, error) {
+    ent, ok := entities.([]{{$entity.Name}})
+    if !ok {
+        // Programming error, OK to panic
+        // TODO don't panic here, handle in the caller if necessary to panic
+        panic("Object has wrong type, expecting '{{$entity.Name}}'")
+    }
+    return ent, nil
+}
+
 func ({{$entity.Name}}Binding) GetId(entity interface{}) (uint64, error) {
 	if ent, err := as{{$entity.Name}}(entity); err != nil {
 	    return 0, err
@@ -71,7 +81,7 @@ func ({{$entity.Name}}Binding) Flatten(entity interface{}, fbb *flatbuffers.Buil
     // build the FlatBuffers object
     fbb.StartObject({{len $entity.Properties}})
     {{range $property := $entity.Properties -}}
-    fbb.Prepend{{$property.FbType}}Slot({{$property.Id}},
+    fbb.Prepend{{$property.FbType}}Slot({{$property.FbSlot}},
         {{- if eq $property.FbType "UOffsetT"}} offset{{$property.Name}}, 0)
         {{- else if eq $property.Name $entity.IdProperty.Name}} id, 0)
         {{- else if eq $property.GoType "bool"}} ent.{{$property.Name}}, false)
@@ -115,11 +125,15 @@ func (box *{{$entity.Name}}Box) Get(id uint64) (*{{$entity.Name}}, error) {
 	if err != nil {
 		return nil, err
 	}
-	if ent, err := as{{$entity.Name}}(entity); err != nil {
-        return nil, err
-    } else {
-        return ent, nil
-    }
+	return as{{$entity.Name}}(entity)
+}
+
+func (box *{{$entity.Name}}Box) GetAll() ([]{{$entity.Name}}, error) {
+	entities, err := box.Box.GetAll()
+	if err != nil {
+		return nil, err
+	}
+	return as{{$entity.Name}}s(entities)
 }
 
 // TODO

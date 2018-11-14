@@ -341,3 +341,9 @@ func (property *Property) VTableOffset() uint16 {
 
 	return uint16(result)
 }
+
+// calculates flatbuffers slot number
+// called from the template
+func (property *Property) FbSlot() uint16 {
+	return uint16(property.Id - 1)
+}

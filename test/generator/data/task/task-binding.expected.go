@@ -37,6 +37,16 @@ func asTask(entity interface{}) (*Task, error) {
 	return ent, nil
 }
 
+func asTasks(entities interface{}) ([]Task, error) {
+	ent, ok := entities.([]Task)
+	if !ok {
+		// Programming error, OK to panic
+		// TODO don't panic here, handle in the caller if necessary to panic
+		panic("Object has wrong type, expecting 'Task'")
+	}
+	return ent, nil
+}
+
 func (TaskBinding) GetId(entity interface{}) (uint64, error) {
 	if ent, err := asTask(entity); err != nil {
 		return 0, err
@@ -61,13 +71,13 @@ func (TaskBinding) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint
 
 	// build the FlatBuffers object
 	fbb.StartObject(7)
-	fbb.PrependUint64Slot(1, id, 0)
-	fbb.PrependUOffsetTSlot(2, offsetUid, 0)
-	fbb.PrependUOffsetTSlot(3, offsetName, 0)
-	fbb.PrependUOffsetTSlot(4, offsetPlace, 0)
-	fbb.PrependUOffsetTSlot(5, offsetSource, 0)
-	fbb.PrependUOffsetTSlot(6, offsetText, 0)
-	fbb.PrependUint64Slot(7, ent.Date, 0)
+	fbb.PrependUint64Slot(0, id, 0)
+	fbb.PrependUOffsetTSlot(1, offsetUid, 0)
+	fbb.PrependUOffsetTSlot(2, offsetName, 0)
+	fbb.PrependUOffsetTSlot(3, offsetPlace, 0)
+	fbb.PrependUOffsetTSlot(4, offsetSource, 0)
+	fbb.PrependUOffsetTSlot(5, offsetText, 0)
+	fbb.PrependUint64Slot(6, ent.Date, 0)
 }
 
 func (TaskBinding) ToObject(bytes []byte) interface{} {
@@ -107,11 +117,15 @@ func (box *TaskBox) Get(id uint64) (*Task, error) {
 	if err != nil {
 		return nil, err
 	}
-	if ent, err := asTask(entity); err != nil {
+	return asTask(entity)
+}
+
+func (box *TaskBox) GetAll() ([]Task, error) {
+	entities, err := box.Box.GetAll()
+	if err != nil {
 		return nil, err
-	} else {
-		return ent, nil
 	}
+	return asTasks(entities)
 }
 
 // TODO

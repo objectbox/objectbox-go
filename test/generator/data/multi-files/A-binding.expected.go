@@ -29,6 +29,16 @@ func asA(entity interface{}) (*A, error) {
 	return ent, nil
 }
 
+func asAs(entities interface{}) ([]A, error) {
+	ent, ok := entities.([]A)
+	if !ok {
+		// Programming error, OK to panic
+		// TODO don't panic here, handle in the caller if necessary to panic
+		panic("Object has wrong type, expecting 'A'")
+	}
+	return ent, nil
+}
+
 func (ABinding) GetId(entity interface{}) (uint64, error) {
 	if ent, err := asA(entity); err != nil {
 		return 0, err
@@ -49,8 +59,8 @@ func (ABinding) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64)
 
 	// build the FlatBuffers object
 	fbb.StartObject(2)
-	fbb.PrependUint64Slot(1, id, 0)
-	fbb.PrependUOffsetTSlot(2, offsetName, 0)
+	fbb.PrependUint64Slot(0, id, 0)
+	fbb.PrependUOffsetTSlot(1, offsetName, 0)
 }
 
 func (ABinding) ToObject(bytes []byte) interface{} {
@@ -85,11 +95,15 @@ func (box *ABox) Get(id uint64) (*A, error) {
 	if err != nil {
 		return nil, err
 	}
-	if ent, err := asA(entity); err != nil {
+	return asA(entity)
+}
+
+func (box *ABox) GetAll() ([]A, error) {
+	entities, err := box.Box.GetAll()
+	if err != nil {
 		return nil, err
-	} else {
-		return ent, nil
 	}
+	return asAs(entities)
 }
 
 // TODO

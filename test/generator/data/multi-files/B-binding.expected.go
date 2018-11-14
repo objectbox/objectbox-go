@@ -70,9 +70,9 @@ func (BBinding) ToObject(bytes []byte) interface{} {
 	table := fbutils.GetRootAsTable(bytes, flatbuffers.UOffsetT(0))
 
 	return &B{
-		Id:   table.OffsetAsUint64(6),
-		Name: table.OffsetAsString(8),
-		Info: table.OffsetAsString(10),
+		Id:   table.OffsetAsUint64(4),
+		Name: table.OffsetAsString(6),
+		Info: table.OffsetAsString(8),
 	}
 }
 

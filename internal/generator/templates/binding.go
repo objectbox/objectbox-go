@@ -97,7 +97,7 @@ func ({{$entity.Name}}Binding) ToObject(bytes []byte) interface{} {
 
 	return &{{$entity.Name}}{
 	{{- range $property := $entity.Properties}}
-		{{$property.Name}}: table.OffsetAs{{if eq $property.GoType "[]byte"}}ByteVector{{else}}{{$property.GoType | StringTitle}}{{end}}({{$property.VTableOffset}}),
+		{{$property.Name}}: table.OffsetAs{{if eq $property.GoType "[]byte"}}ByteVector{{else}}{{$property.GoType | StringTitle}}{{end}}({{$property.FbvTableOffset}}),
 	{{- end}}
 	}
 }

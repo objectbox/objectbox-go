@@ -330,9 +330,9 @@ func (property *Property) setObFlags(f ast.Field) error {
 
 // calculates flatbuffers vTableOffset
 // called from the template
-func (property *Property) VTableOffset() uint16 {
+func (property *Property) FbvTableOffset() uint16 {
 	// derived from the FB generated code & https://google.github.io/flatbuffers/md__internals.html
-	var result = 4 + 2*property.Id
+	var result = 4 + 2*uint32(property.FbSlot())
 
 	if uint32(uint16(result)) != result {
 		panic(fmt.Errorf("can't calculate FlatBuffers VTableOffset: property %s ID %d is too large",
@@ -344,6 +344,6 @@ func (property *Property) VTableOffset() uint16 {
 
 // calculates flatbuffers slot number
 // called from the template
-func (property *Property) FbSlot() uint16 {
-	return uint16(property.Id - 1)
+func (property *Property) FbSlot() int {
+	return int(property.Id - 1)
 }

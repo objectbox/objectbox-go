@@ -1,11 +1,12 @@
 package objectbox_test
 
 import (
+	"testing"
+
 	"github.com/objectbox/objectbox-go/objectbox"
 	"github.com/objectbox/objectbox-go/test/assert"
 	"github.com/objectbox/objectbox-go/test/model/iot"
 	"github.com/objectbox/objectbox-go/test/model/iot/object"
-	"testing"
 )
 
 func TestQueryBuilder(t *testing.T) {
@@ -15,9 +16,9 @@ func TestQueryBuilder(t *testing.T) {
 
 	qb, err := objectBox.Query(1)
 	assert.NoErr(t, err)
-	query, err := qb.BuildAndDestroy()
+	query, err := qb.BuildAndClose()
 	assert.NoErr(t, err)
-	defer query.Destroy()
+	defer query.Close()
 
 	objectBox.RunWithCursor(1, true, func(cursor *objectbox.Cursor) (err error) {
 		bytesArray, err := query.FindBytes(cursor)
@@ -71,11 +72,11 @@ func TestQueryBuilder_StringEq(t *testing.T) {
 
 	qb, err := objectBox.Query(1)
 	assert.NoErr(t, err)
-	defer qb.Destroy()
+	defer qb.Close()
 	qb.StringEq(2, "device 2", false)
 	query, err := qb.Build()
 	assert.NoErr(t, err)
-	defer query.Destroy()
+	defer query.Close()
 
 	objectBox.RunWithCursor(1, true, func(cursor *objectbox.Cursor) (err error) {
 		slice, err := query.Find(cursor)
@@ -98,13 +99,13 @@ func TestQueryBuilder_IntBetween(t *testing.T) {
 
 	qb, err := objectBox.Query(1)
 	assert.NoErr(t, err)
-	defer qb.Destroy()
+	defer qb.Close()
 	start := events[2].Date
 	end := events[4].Date
 	qb.IntBetween(3, start, end)
 	query, err := qb.Build()
 	assert.NoErr(t, err)
-	defer query.Destroy()
+	defer query.Close()
 
 	objectBox.RunWithCursor(1, true, func(cursor *objectbox.Cursor) (err error) {
 		slice, err := query.Find(cursor)

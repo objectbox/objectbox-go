@@ -19,7 +19,7 @@ type Cursor struct {
 	fbb     *flatbuffers.Builder
 }
 
-func (cursor *Cursor) Destroy() (err error) {
+func (cursor *Cursor) Close() (err error) {
 	rc := C.obx_cursor_close(cursor.cursor)
 	cursor.cursor = nil
 	if rc != 0 {
@@ -157,7 +157,7 @@ func (cursor *Cursor) RemoveAll() (err error) {
 
 func (cursor *Cursor) cBytesArrayToObjects(cBytesArray *C.OBX_bytes_array) (slice interface{}) {
 	bytesArray := cBytesArrayToGo(cBytesArray)
-	defer bytesArray.Destroy()
+	defer bytesArray.Close()
 	return cursor.bytesArrayToObjects(bytesArray)
 }
 

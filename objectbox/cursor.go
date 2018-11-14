@@ -157,7 +157,7 @@ func (cursor *Cursor) RemoveAll() (err error) {
 
 func (cursor *Cursor) cBytesArrayToObjects(cBytesArray *C.OBX_bytes_array) (slice interface{}) {
 	bytesArray := cBytesArrayToGo(cBytesArray)
-	defer bytesArray.Close()
+	defer bytesArray.Free()
 	return cursor.bytesArrayToObjects(bytesArray)
 }
 

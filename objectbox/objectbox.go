@@ -203,7 +203,7 @@ func (ob *ObjectBox) Query(typeId TypeId) (*QueryBuilder, error) {
 	}, nil
 }
 
-func (bytesArray *BytesArray) Close() {
+func (bytesArray *BytesArray) Free() {
 	cBytesArray := bytesArray.cBytesArray
 	if cBytesArray != nil {
 		bytesArray.cBytesArray = nil

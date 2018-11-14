@@ -24,7 +24,7 @@ func (query *Query) Find(cursor *Cursor) (slice interface{}, err error) {
 	if err != nil {
 		return
 	}
-	defer bytesArray.Close()
+	defer bytesArray.Free()
 	return cursor.bytesArrayToObjects(bytesArray), nil
 }
 

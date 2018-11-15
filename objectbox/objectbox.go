@@ -13,7 +13,6 @@ import (
 	"fmt"
 	"runtime"
 	"strconv"
-	"strings"
 
 	"github.com/google/flatbuffers/go"
 )
@@ -124,7 +123,7 @@ func (ob ObjectBox) getBindingById(typeId TypeId) ObjectBinding {
 }
 
 func (ob ObjectBox) getBindingByName(typeName string) ObjectBinding {
-	binding := ob.bindingsByName[strings.ToLower(typeName)]
+	binding := ob.bindingsByName[typeName]
 	if binding == nil {
 		// Configuration error by the dev, OK to panic
 		panic("Configuration error; no binding registered for type name " + typeName)

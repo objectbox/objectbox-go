@@ -55,7 +55,7 @@ type BytesArray struct {
 type TxnFun func(transaction *Transaction) (err error)
 type CursorFun func(cursor *Cursor) (err error)
 
-func (ob *ObjectBox) Destroy() {
+func (ob *ObjectBox) Close() {
 	storeToClose := ob.store
 	ob.store = nil
 	if storeToClose != nil {
@@ -102,13 +102,13 @@ func (ob *ObjectBox) RunInTxn(readOnly bool, txnFun TxnFun) (err error) {
 	if !readOnly && err == nil {
 		err = txn.Commit()
 	}
-	err2 := txn.Destroy()
+	err2 := txn.Close()
 	if err == nil {
 		err = err2
 	}
 	runtime.UnlockOSThread()
 
-	//fmt.Println("<<< END TX Destroy")
+	//fmt.Println("<<< END TX Close")
 	//os.Stdout.Sync()
 
 	return
@@ -147,7 +147,7 @@ func (ob *ObjectBox) RunWithCursor(typeId TypeId, readOnly bool, cursorFun Curso
 		//fmt.Println("<<< END C")
 		//os.Stdout.Sync()
 
-		err2 := cursor.Destroy()
+		err2 := cursor.Close()
 		if err == nil {
 			err = err2
 		}
@@ -205,7 +205,7 @@ func (ob *ObjectBox) Query(typeId TypeId) (*QueryBuilder, error) {
 	}, nil
 }
 
-func (bytesArray *BytesArray) Destroy() {
+func (bytesArray *BytesArray) Free() {
 	cBytesArray := bytesArray.cBytesArray
 	if cBytesArray != nil {
 		bytesArray.cBytesArray = nil

@@ -10,7 +10,7 @@ type Query struct {
 	cquery *C.OBX_query
 }
 
-func (query *Query) Destroy() (err error) {
+func (query *Query) Close() (err error) {
 	rc := C.obx_query_close(query.cquery)
 	query.cquery = nil
 	if rc != 0 {
@@ -24,7 +24,7 @@ func (query *Query) Find(cursor *Cursor) (slice interface{}, err error) {
 	if err != nil {
 		return
 	}
-	defer bytesArray.Destroy()
+	defer bytesArray.Free()
 	return cursor.bytesArrayToObjects(bytesArray), nil
 }
 

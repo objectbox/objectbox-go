@@ -13,7 +13,7 @@ type QueryBuilder struct {
 	cqb       *C.OBX_query_builder
 }
 
-func (qb *QueryBuilder) Destroy() (err error) {
+func (qb *QueryBuilder) Close() (err error) {
 	if qb.cqb != nil {
 		rc := C.obx_qb_close(qb.cqb)
 		qb.cqb = nil
@@ -50,11 +50,11 @@ func (qb *QueryBuilder) Build() (query *Query, err error) {
 	return &Query{cquery: cquery}, nil
 }
 
-func (qb *QueryBuilder) BuildAndDestroy() (query *Query, err error) {
+func (qb *QueryBuilder) BuildAndClose() (query *Query, err error) {
 	query, err = qb.Build()
-	err2 := qb.Destroy()
+	err2 := qb.Close()
 	if err == nil && err2 != nil {
-		query.Destroy()
+		query.Close()
 		return nil, err2
 	}
 	return

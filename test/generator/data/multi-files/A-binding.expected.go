@@ -106,7 +106,6 @@ func (box *ABox) GetAll() ([]A, error) {
 	return asAs(entities)
 }
 
-// TODO
-// func (box *ABox) Remove(entity *A) (err error) {
-// 	   return box.Box.Remove(entity.Id)
-// }
+func (box *ABox) Remove(entity *A) (err error) {
+	return box.Box.Remove(entity.Id)
+}

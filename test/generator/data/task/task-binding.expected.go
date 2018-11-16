@@ -128,7 +128,6 @@ func (box *TaskBox) GetAll() ([]Task, error) {
 	return asTasks(entities)
 }
 
-// TODO
-// func (box *TaskBox) Remove(entity *Task) (err error) {
-// 	   return box.Box.Remove(entity.Id)
-// }
+func (box *TaskBox) Remove(entity *Task) (err error) {
+	return box.Box.Remove(entity.Id)
+}

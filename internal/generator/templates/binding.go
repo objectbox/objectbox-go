@@ -145,9 +145,8 @@ func (box *{{$entity.Name}}Box) GetAll() ([]{{$entity.Name}}, error) {
 	return as{{$entity.Name}}s(entities)
 }
 
-// TODO
-// func (box *{{$entity.Name}}Box) Remove(entity *{{$entity.Name}}) (err error) {
-// 	   return box.Box.Remove(entity.{{$entity.IdProperty.Name}})
-// }
+func (box *{{$entity.Name}}Box) Remove(entity *{{$entity.Name}}) (err error) {
+	return box.Box.Remove(entity.{{$entity.IdProperty.Name}})
+}
 
 {{end -}}`))

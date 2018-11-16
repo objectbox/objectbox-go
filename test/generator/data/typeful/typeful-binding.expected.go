@@ -158,7 +158,6 @@ func (box *TypefulBox) GetAll() ([]Typeful, error) {
 	return asTypefuls(entities)
 }
 
-// TODO
-// func (box *TypefulBox) Remove(entity *Typeful) (err error) {
-// 	   return box.Box.Remove(entity.Id)
-// }
+func (box *TypefulBox) Remove(entity *Typeful) (err error) {
+	return box.Box.Remove(entity.Id)
+}

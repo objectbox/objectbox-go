@@ -110,7 +110,6 @@ func (box *BBox) GetAll() ([]B, error) {
 	return asBs(entities)
 }
 
-// TODO
-// func (box *BBox) Remove(entity *B) (err error) {
-// 	   return box.Box.Remove(entity.Id)
-// }
+func (box *BBox) Remove(entity *B) (err error) {
+	return box.Box.Remove(entity.Id)
+}

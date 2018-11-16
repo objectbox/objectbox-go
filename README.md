@@ -7,9 +7,8 @@ In this embedded mode, it runs within your application process.
 Some features
 -------------
 * Object storage based on [FlatBuffers](https://google.github.io/flatbuffers/)
-* Zero-copy reads
 * Secondary indexes based on object properties
-* Simple get/put API
+* Simple CRUD API
 * Asynchronous puts
 * Automatic model migration (no schema upgrade scripts etc.) 
 * (Coming soon: Powerful queries) 
@@ -17,19 +16,24 @@ Some features
 
 Installation
 ------------
-A prerequisite to using the Go APIs is the ObjectBox binary library (.so, .dylib, .dll depending on the platform).
-In the [ObjectBox C repository](https://github.com/objectbox/objectbox-c),
-you should find a [download.sh](https://github.com/objectbox/objectbox-c/download.sh)
-([raw](https://raw.githubusercontent.com/objectbox/objectbox-c/master/download.sh)) script.
-Get and the using `chmod +x download.sh` and `./download.sh`.
-Follow the instructions and type `Y` when it asks you if it should install the library. 
+To get started with ObjectBox you can get the repository code as usual with go get 
+and install the two prerequisites - pre-compiled library and a bindings generator.
 
-For details please check the [ObjectBox C repository](https://github.com/objectbox/objectbox-c).
+```bash
+go get github.com/objectbox/objectbox-go
+
+wget https://raw.githubusercontent.com/objectbox/objectbox-c/master/download.sh
+bash ./download.sh
+
+go install $GOPATH/src/github.com/objectbox/objectbox-go/cmd/objectbox-bindings/
+```
+
+See [installation docs](https://golang.objectbox.io/install) for more details and further instructions.
 
 Docs
 ----
 Documentation is still on-going work.
-To get started, please have a look at the [test](test) directory for now.
+To get started, please have a look at the [examples](examples) directory and [golang.objectbox.io](https://golang.objectbox.io).
 
 Current state
 -------------

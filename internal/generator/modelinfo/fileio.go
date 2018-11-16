@@ -77,5 +77,11 @@ func createModelJsonFile(path string) (model *ModelInfo, err error) {
 		return nil, err
 	}
 
+	// write it with initial content (so that we know it's writable & it would have correct contents on next tool run)
+	if err = model.Write(); err != nil {
+		defer model.Close()
+		return nil, fmt.Errorf("can't write file %s: %s", path, err)
+	}
+
 	return model, nil
 }

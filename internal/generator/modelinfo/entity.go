@@ -2,6 +2,7 @@ package modelinfo
 
 import (
 	"fmt"
+	"strings"
 )
 
 type Entity struct {
@@ -80,7 +81,7 @@ func (entity *Entity) FindPropertyByUid(uid uid) (*Property, error) {
 
 func (entity *Entity) FindPropertyByName(name string) (*Property, error) {
 	for _, property := range entity.Properties {
-		if property.Name == name {
+		if strings.ToLower(property.Name) == strings.ToLower(name) {
 			return property, nil
 		}
 	}

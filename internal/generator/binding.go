@@ -5,6 +5,8 @@ import (
 	"go/ast"
 	"go/types"
 	"strings"
+
+	"github.com/objectbox/objectbox-go/internal/generator/modelinfo"
 )
 
 type uid = uint64
@@ -19,12 +21,12 @@ type Binding struct {
 }
 
 type Entity struct {
-	Name         string
-	Id           id
-	Uid          uid
-	Properties   []*Property
-	IdProperty   *Property
-	LastProperty *Property
+	Name           string
+	Id             id
+	Uid            uid
+	Properties     []*Property
+	IdProperty     *Property
+	LastPropertyId modelinfo.IdUid
 
 	binding *Binding // parent
 }
@@ -104,6 +106,8 @@ func (binding *Binding) createEntityFromAst(node ast.Node) (err error) {
 		Name:    binding.currentEntityName,
 	}
 
+	propertiesByName := make(map[string]bool)
+
 	var propertyError = func(err error, property *Property) error {
 		return fmt.Errorf("%s on property %s, entity %s", err, property.Name, entity.Name)
 	}
@@ -159,6 +163,15 @@ func (binding *Binding) createEntityFromAst(node ast.Node) (err error) {
 				property.ObName = property.Name
 			}
 
+			// ObjectBox core internally converts to lowercase so we should check it as this as well
+			var realObName = strings.ToLower(property.ObName)
+			if propertiesByName[realObName] {
+				return propertyError(fmt.Errorf(
+					"duplicate name (note that property names are case insensitive)"), property)
+			} else {
+				propertiesByName[realObName] = true
+			}
+
 			entity.Properties = append(entity.Properties, property)
 		}
 	}
@@ -166,8 +179,6 @@ func (binding *Binding) createEntityFromAst(node ast.Node) (err error) {
 	if len(entity.Properties) == 0 {
 		return fmt.Errorf("there are no properties in the entity %s", entity.Name)
 	}
-
-	entity.LastProperty = entity.Properties[len(entity.Properties)-1]
 
 	if entity.IdProperty == nil {
 		// TODO what if ID is not defined? what about GetId function?

@@ -72,8 +72,18 @@ func generateAllFiles(t *testing.T, dir string, modelInfoFile string) {
 		}
 
 		err = generator.Process(sourceFile, modelInfoFile)
-		assert.NoErr(t, err)
 
+		// handle negative test
+		var shouldFail = strings.HasPrefix(path.Base(sourceFile), "!")
+		if shouldFail {
+			if err == nil {
+				assert.Failf(t, "Unexpected PASS on a negative test %s", sourceFile)
+			} else {
+				return
+			}
+		}
+
+		assert.NoErr(t, err)
 		var bindingFile = generator.BindingFileName(sourceFile)
 		var expectedFile = bindingFile[0:len(bindingFile)-3] + ".expected.go"
 

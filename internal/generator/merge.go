@@ -43,6 +43,8 @@ func mergeModelEntity(bindingEntity *Entity, modelEntity *modelinfo.Entity) (err
 		}
 	}
 
+	bindingEntity.LastPropertyId = modelEntity.LastPropertyId
+
 	return nil
 }
 

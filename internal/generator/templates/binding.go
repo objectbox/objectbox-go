@@ -27,7 +27,7 @@ func ({{$entity.Name}}Binding) AddToModel(model *objectbox.Model) {
         {{- /* TODO model.PropertyIndexId() && model.PropertyRelation() */}}
     {{end -}}
     {{end -}}
-    model.EntityLastPropertyId({{$entity.LastProperty.Id}}, {{$entity.LastProperty.Uid}})
+    model.EntityLastPropertyId({{$entity.LastPropertyId.GetId}}, {{$entity.LastPropertyId.GetUid}})
 }
 
 func as{{$entity.Name}}(entity interface{}) (*{{$entity.Name}}, error) {

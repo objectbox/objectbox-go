@@ -3,6 +3,7 @@ package modelinfo
 import (
 	"fmt"
 	"os"
+	"strings"
 )
 
 type id = uint32
@@ -108,7 +109,7 @@ func (model *ModelInfo) FindEntityByUid(uid uid) (*Entity, error) {
 
 func (model *ModelInfo) FindEntityByName(name string) (*Entity, error) {
 	for _, entity := range model.Entities {
-		if entity.Name == name {
+		if strings.ToLower(entity.Name) == strings.ToLower(name) {
 			return entity, nil
 		}
 	}

@@ -139,6 +139,14 @@ func (cursor *Cursor) IdForPut(idCandidate uint64) (id uint64, err error) {
 	return
 }
 
+func (cursor *Cursor) Remove(id uint64) (err error) {
+	rc := C.obx_cursor_remove(cursor.cursor, C.uint64_t(id))
+	if rc != 0 {
+		err = createError()
+	}
+	return
+}
+
 func (cursor *Cursor) RemoveAll() (err error) {
 	rc := C.obx_cursor_remove_all(cursor.cursor)
 	if rc != 0 {
@@ -146,30 +154,6 @@ func (cursor *Cursor) RemoveAll() (err error) {
 	}
 	return
 }
-
-// TODO remove
-//func (cursor *Cursor) FindByString(propertyId uint, value string) (bytesArray *BytesArray, err error) {
-//	cvalue := C.CString(value)
-//	defer C.free(unsafe.Pointer(cvalue))
-//
-//	cBytesArray := C.obx_query_by_string(cursor.cursor, C.uint32_t(propertyId), cvalue)
-//	if cBytesArray == nil {
-//		err = createError()
-//		return
-//	}
-//	size := int(cBytesArray.size)
-//	plainBytesArray := make([][]byte, size)
-//	if size > 0 {
-//		goBytesArray := (*[1 << 30]C.OBX_bytes)(unsafe.Pointer(cBytesArray.bytes))[:size:size]
-//		for i := 0; i < size; i++ {
-//			cBytes := goBytesArray[i]
-//			dataBytes := C.GoBytes(cBytes.data, C.int(cBytes.size))
-//			plainBytesArray[i] = dataBytes
-//		}
-//	}
-//
-//	return &BytesArray{plainBytesArray, cBytesArray}, nil
-//}
 
 func (cursor *Cursor) cBytesArrayToObjects(cBytesArray *C.OBX_bytes_array) (slice interface{}) {
 	bytesArray := cBytesArrayToGo(cBytesArray)

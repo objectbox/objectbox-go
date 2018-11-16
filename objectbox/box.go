@@ -91,6 +91,12 @@ func (box *Box) Put(object interface{}) (id uint64, err error) {
 	return
 }
 
+func (box *Box) Remove(id uint64) (err error) {
+	return box.objectBox.RunWithCursor(box.typeId, false, func(cursor *Cursor) error {
+		return cursor.Remove(id)
+	})
+}
+
 func (box *Box) RemoveAll() (err error) {
 	return box.objectBox.RunWithCursor(box.typeId, false, func(cursor *Cursor) error {
 		return cursor.RemoveAll()

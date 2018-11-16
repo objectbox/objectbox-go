@@ -6,14 +6,13 @@ import (
 	"bytes"
 	"fmt"
 	"go/format"
-	"html/template"
 	"io/ioutil"
 	"os"
 	"path"
-	"strings"
+
+	"github.com/objectbox/objectbox-go/internal/generator/templates"
 
 	"github.com/objectbox/objectbox-go/internal/generator/modelinfo"
-	"github.com/objectbox/objectbox-go/internal/generator/templates"
 )
 
 func BindingFileName(sourceFile string) string {
@@ -82,18 +81,9 @@ func Process(sourceFile, modelInfoFile string) (err error) {
 }
 
 func generateBinding(binding *Binding) (data []byte, err error) {
-	var tplText = templates.Binding()
-
-	funcMap := template.FuncMap{
-		"StringTitle": strings.Title,
-	}
-
-	// prepare the template
-	tpl := template.Must(template.New("binding").Funcs(funcMap).Parse(tplText))
-
 	var b bytes.Buffer
 	writer := bufio.NewWriter(&b)
-	if err = tpl.Execute(writer, binding); err != nil {
+	if err = templates.BindingTemplate.Execute(writer, binding); err != nil {
 		return nil, fmt.Errorf("template execution failed: %s", err)
 	}
 

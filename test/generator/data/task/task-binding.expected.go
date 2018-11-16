@@ -116,6 +116,8 @@ func (box *TaskBox) Get(id uint64) (*Task, error) {
 	entity, err := box.Box.Get(id)
 	if err != nil {
 		return nil, err
+	} else if entity == nil {
+		return nil, nil
 	}
 	return asTask(entity)
 }

@@ -146,6 +146,8 @@ func (box *TypefulBox) Get(id uint64) (*Typeful, error) {
 	entity, err := box.Box.Get(id)
 	if err != nil {
 		return nil, err
+	} else if entity == nil {
+		return nil, nil
 	}
 	return asTypeful(entity)
 }

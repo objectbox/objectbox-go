@@ -133,6 +133,8 @@ func (box *{{$entity.Name}}Box) Get(id uint64) (*{{$entity.Name}}, error) {
 	entity, err := box.Box.Get(id)
 	if err != nil {
 		return nil, err
+	} else if entity == nil {
+		return nil, nil
 	}
 	return as{{$entity.Name}}(entity)
 }

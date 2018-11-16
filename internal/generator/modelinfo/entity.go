@@ -10,10 +10,13 @@ type Entity struct {
 	Name           string      `json:"name"`
 	LastPropertyId IdUid       `json:"lastPropertyId"`
 	Properties     []*Property `json:"properties"`
+
+	model *ModelInfo
 }
 
-func CreateEntity(id id, uid uid) *Entity {
+func CreateEntity(model *ModelInfo, id id, uid uid) *Entity {
 	return &Entity{
+		model:      model,
 		Id:         CreateIdUid(id, uid),
 		Properties: make([]*Property, 0),
 	}
@@ -96,10 +99,7 @@ func (entity *Entity) CreateProperty() (*Property, error) {
 	}
 
 	// generate a unique UID
-	uniqueUid, err := generateUid(func(uid uid) bool {
-		item, err := entity.FindPropertyByUid(uid)
-		return item == nil && err != nil
-	})
+	uniqueUid, err := entity.model.generateUid()
 
 	if err != nil {
 		return nil, err
@@ -111,4 +111,23 @@ func (entity *Entity) CreateProperty() (*Property, error) {
 	entity.LastPropertyId = property.Id
 
 	return property, nil
+}
+
+// recursively checks whether given UID is present in the model
+func (entity *Entity) containsUid(searched uid) bool {
+	if entity.Id.getUidSafe() == searched {
+		return true
+	}
+
+	if entity.LastPropertyId.getUidSafe() == searched {
+		return true
+	}
+
+	for _, property := range entity.Properties {
+		if property.containsUid(searched) {
+			return true
+		}
+	}
+
+	return false
 }

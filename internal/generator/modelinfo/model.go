@@ -2,6 +2,7 @@ package modelinfo
 
 import (
 	"fmt"
+	"math/rand"
 	"os"
 	"strings"
 )
@@ -124,19 +125,76 @@ func (model *ModelInfo) CreateEntity() (*Entity, error) {
 	}
 
 	// generate a unique UID
-	uniqueUid, err := generateUid(func(uid uid) bool {
-		item, err := model.FindEntityByUid(uid)
-		return item == nil && err != nil
-	})
+	uniqueUid, err := model.generateUid()
 
 	if err != nil {
 		return nil, err
 	}
 
-	var entity = CreateEntity(id, uniqueUid)
+	var entity = CreateEntity(model, id, uniqueUid)
 
 	model.Entities = append(model.Entities, entity)
 	model.LastEntityId = entity.Id
 
 	return entity, nil
+}
+
+func (model *ModelInfo) generateUid() (result uid, err error) {
+	result = 0
+
+	for i := 0; i < 1000; i++ {
+		t := uid(rand.Int63())
+		if !model.containsUid(t) {
+			result = t
+			break
+		}
+	}
+
+	if result == 0 {
+		err = fmt.Errorf("internal error = could not generate a unique UID")
+	}
+
+	return result, err
+}
+
+// recursively checks whether given UID is present in the model
+func (model *ModelInfo) containsUid(searched uid) bool {
+	if model.LastEntityId.getUidSafe() == searched {
+		return true
+	}
+
+	if model.LastIndexId.getUidSafe() == searched {
+		return true
+	}
+
+	if searchSliceUid(model.RetiredEntityUids, searched) {
+		return true
+	}
+
+	if searchSliceUid(model.RetiredIndexUids, searched) {
+		return true
+	}
+
+	if searchSliceUid(model.RetiredPropertyUids, searched) {
+		return true
+	}
+
+	for _, entity := range model.Entities {
+		if entity.containsUid(searched) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// the passed slices are not too large so let's just do linear search
+func searchSliceUid(slice []uid, searched uid) bool {
+	for _, i := range slice {
+		if i == searched {
+			return true
+		}
+	}
+
+	return false
 }

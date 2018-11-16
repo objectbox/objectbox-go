@@ -32,3 +32,16 @@ func (property *Property) Validate() error {
 
 	return nil
 }
+
+// recursively checks whether given UID is present in the model
+func (property *Property) containsUid(searched uid) bool {
+	if property.Id.getUidSafe() == searched {
+		return true
+	}
+
+	if property.IndexId != nil && property.IndexId.getUidSafe() == searched {
+		return true
+	}
+
+	return false
+}

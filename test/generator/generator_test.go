@@ -35,8 +35,8 @@ func TestAll(t *testing.T) {
 
 		var dir = path.Join(datadir, folder.Name())
 
-		modelInfoFile := path.Join(dir, "objectbox-model-info.js")
-		modelInfoExpectedFile := modelInfoFile[0:len(modelInfoFile)-3] + ".expected.js"
+		modelInfoFile := path.Join(dir, "objectbox-model-info.json")
+		modelInfoExpectedFile := modelInfoFile[0:len(modelInfoFile)-len(path.Ext(modelInfoFile))] + ".expected.json"
 
 		// run the generation twice, first time with deleting old modelInfo
 		for i := 0; i <= 1; i++ {

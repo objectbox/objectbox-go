@@ -9,15 +9,15 @@ type id = uint32
 type uid = uint64
 
 type ModelInfo struct {
-	Comment      []string
-	Entities     []*Entity
-	LastEntityId IdUid
-	LastIndexId  IdUid
+	Comment      []string  `json:"comment"`
+	Entities     []*Entity `json:"entities"`
+	LastEntityId IdUid     `json:"lastEntityId"`
+	LastIndexId  IdUid     `json:"lastIndexId"`
 	//ModelVersion        int
 	//Version             int
-	RetiredEntityUids   []uid
-	RetiredIndexUids    []uid
-	RetiredPropertyUids []uid
+	RetiredEntityUids   []uid `json:"retiredEntityUids"`
+	RetiredIndexUids    []uid `json:"retiredIndexUids"`
+	RetiredPropertyUids []uid `json:"retiredPropertyUids"`
 
 	file *os.File // file handle, locked while the model is open
 }

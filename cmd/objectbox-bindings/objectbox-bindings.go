@@ -52,7 +52,7 @@ func getArgs() (file string, line uint, modelFile string) {
 	modelFile = *flag.String("persist", "", "path to the model information persistence file")
 
 	if len(modelFile) == 0 {
-		modelFile = path.Join(path.Dir(file), "objectbox-model-info.js")
+		modelFile = path.Join(path.Dir(file), "objectbox-model-info.json")
 	}
 
 	if !hasAll {

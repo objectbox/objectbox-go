@@ -5,10 +5,10 @@ import (
 )
 
 type Entity struct {
-	Id             IdUid
-	Name           string
-	LastPropertyId IdUid
-	Properties     []*Property
+	Id             IdUid       `json:"id"`
+	Name           string      `json:"name"`
+	LastPropertyId IdUid       `json:"lastPropertyId"`
+	Properties     []*Property `json:"properties"`
 }
 
 func CreateEntity(id id, uid uid) *Entity {

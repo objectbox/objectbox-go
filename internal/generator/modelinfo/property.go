@@ -3,9 +3,9 @@ package modelinfo
 import "fmt"
 
 type Property struct {
-	Id      IdUid
-	Name    string
-	IndexId *IdUid // optional
+	Id      IdUid  `json:"id"`
+	Name    string `json:"name"`
+	IndexId *IdUid `json:"indexId,omitempty"`
 }
 
 func CreateProperty(id id, uid uid) *Property {

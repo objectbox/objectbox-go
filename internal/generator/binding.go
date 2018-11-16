@@ -213,19 +213,19 @@ func (property *Property) setAnnotations(tags string) error {
 			var value = &Annotation{}
 
 			// if it contains a colon, it's a key:"value" pair
-			if i := strings.IndexRune(tags, ':'); i >= 0 {
-				name = tags[0:i]
-				tags = tags[i+1:]
+			if i := strings.IndexRune(tag, ':'); i >= 0 {
+				name = tag[0:i]
+				tag = tag[i+1:]
 
-				if len(tags) > 1 && tags[0] == tags[len(tags)-1] && tags[0] == '"' {
-					value.Value = strings.TrimSpace(tags[1 : len(tags)-1])
+				if len(tag) > 1 && tag[0] == tag[len(tag)-1] && tag[0] == '"' {
+					value.Value = strings.TrimSpace(tag[1 : len(tag)-1])
 				} else {
 					return fmt.Errorf("invalid annotation value %s for %s, expecting `name:\"value\"` format",
-						tags, name)
+						tag, name)
 				}
 			} else {
 				// otherwise there's no value
-				name = tags
+				name = tag
 			}
 
 			name = strings.ToLower(name)

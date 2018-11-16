@@ -15,9 +15,6 @@ import (
 	"github.com/objectbox/objectbox-go/test/assert"
 )
 
-// TODO implement test similar to gofmt
-// i. e. GLOB("data/*.input"), process & compare with "data/*.expected" files
-//
 func TestAll(t *testing.T) {
 	var datadir = "data"
 	folders, err := ioutil.ReadDir(datadir)

@@ -7,7 +7,6 @@ type Task struct {
 	Place    string `index:"hash"`
 	Source   string `index:"hash64"`
 	Text     string `nameInDb:"text"`
-	Date     uint64 `date`
+	Date     uint64 `date json:"date"`
 	tempInfo string `transient`
-	//Data []byte
 }

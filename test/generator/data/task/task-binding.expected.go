@@ -37,8 +37,8 @@ func asTask(entity interface{}) (*Task, error) {
 	return ent, nil
 }
 
-func asTasks(entities interface{}) ([]Task, error) {
-	ent, ok := entities.([]Task)
+func asTasks(entities interface{}) ([]*Task, error) {
+	ent, ok := entities.([]*Task)
 	if !ok {
 		// Programming error, OK to panic
 		// TODO don't panic here, handle in the caller if necessary to panic
@@ -95,11 +95,11 @@ func (TaskBinding) ToObject(bytes []byte) interface{} {
 }
 
 func (TaskBinding) MakeSlice(capacity int) interface{} {
-	return make([]Task, 0, capacity)
+	return make([]*Task, 0, capacity)
 }
 
 func (TaskBinding) AppendToSlice(slice interface{}, entity interface{}) interface{} {
-	return append(slice.([]Task), *entity.(*Task))
+	return append(slice.([]*Task), entity.(*Task))
 }
 
 type TaskBox struct {
@@ -120,7 +120,7 @@ func (box *TaskBox) Get(id uint64) (*Task, error) {
 	return asTask(entity)
 }
 
-func (box *TaskBox) GetAll() ([]Task, error) {
+func (box *TaskBox) GetAll() ([]*Task, error) {
 	entities, err := box.Box.GetAll()
 	if err != nil {
 		return nil, err

@@ -29,8 +29,8 @@ func asA(entity interface{}) (*A, error) {
 	return ent, nil
 }
 
-func asAs(entities interface{}) ([]A, error) {
-	ent, ok := entities.([]A)
+func asAs(entities interface{}) ([]*A, error) {
+	ent, ok := entities.([]*A)
 	if !ok {
 		// Programming error, OK to panic
 		// TODO don't panic here, handle in the caller if necessary to panic
@@ -73,11 +73,11 @@ func (ABinding) ToObject(bytes []byte) interface{} {
 }
 
 func (ABinding) MakeSlice(capacity int) interface{} {
-	return make([]A, 0, capacity)
+	return make([]*A, 0, capacity)
 }
 
 func (ABinding) AppendToSlice(slice interface{}, entity interface{}) interface{} {
-	return append(slice.([]A), *entity.(*A))
+	return append(slice.([]*A), entity.(*A))
 }
 
 type ABox struct {
@@ -98,7 +98,7 @@ func (box *ABox) Get(id uint64) (*A, error) {
 	return asA(entity)
 }
 
-func (box *ABox) GetAll() ([]A, error) {
+func (box *ABox) GetAll() ([]*A, error) {
 	entities, err := box.Box.GetAll()
 	if err != nil {
 		return nil, err

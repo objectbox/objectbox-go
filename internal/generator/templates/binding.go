@@ -49,8 +49,8 @@ func as{{$entity.Name}}(entity interface{}) (*{{$entity.Name}}, error) {
     return ent, nil
 }
 
-func as{{$entity.Name}}s(entities interface{}) ([]{{$entity.Name}}, error) {
-    ent, ok := entities.([]{{$entity.Name}})
+func as{{$entity.Name}}s(entities interface{}) ([]*{{$entity.Name}}, error) {
+    ent, ok := entities.([]*{{$entity.Name}})
     if !ok {
         // Programming error, OK to panic
         // TODO don't panic here, handle in the caller if necessary to panic
@@ -112,11 +112,11 @@ func ({{$entity.Name}}Binding) ToObject(bytes []byte) interface{} {
 }
 
 func ({{$entity.Name}}Binding) MakeSlice(capacity int) interface{} {
-	return make([]{{$entity.Name}}, 0, capacity)
+	return make([]*{{$entity.Name}}, 0, capacity)
 }
 
 func ({{$entity.Name}}Binding) AppendToSlice(slice interface{}, entity interface{}) interface{} {
-	return append(slice.([]{{$entity.Name}}), *entity.(*{{$entity.Name}}))
+	return append(slice.([]*{{$entity.Name}}), entity.(*{{$entity.Name}}))
 }
 
 type {{$entity.Name}}Box struct {
@@ -137,7 +137,7 @@ func (box *{{$entity.Name}}Box) Get(id uint64) (*{{$entity.Name}}, error) {
 	return as{{$entity.Name}}(entity)
 }
 
-func (box *{{$entity.Name}}Box) GetAll() ([]{{$entity.Name}}, error) {
+func (box *{{$entity.Name}}Box) GetAll() ([]*{{$entity.Name}}, error) {
 	entities, err := box.Box.GetAll()
 	if err != nil {
 		return nil, err

@@ -46,8 +46,8 @@ func asTypeful(entity interface{}) (*Typeful, error) {
 	return ent, nil
 }
 
-func asTypefuls(entities interface{}) ([]Typeful, error) {
-	ent, ok := entities.([]Typeful)
+func asTypefuls(entities interface{}) ([]*Typeful, error) {
+	ent, ok := entities.([]*Typeful)
 	if !ok {
 		// Programming error, OK to panic
 		// TODO don't panic here, handle in the caller if necessary to panic
@@ -125,11 +125,11 @@ func (TypefulBinding) ToObject(bytes []byte) interface{} {
 }
 
 func (TypefulBinding) MakeSlice(capacity int) interface{} {
-	return make([]Typeful, 0, capacity)
+	return make([]*Typeful, 0, capacity)
 }
 
 func (TypefulBinding) AppendToSlice(slice interface{}, entity interface{}) interface{} {
-	return append(slice.([]Typeful), *entity.(*Typeful))
+	return append(slice.([]*Typeful), entity.(*Typeful))
 }
 
 type TypefulBox struct {
@@ -150,7 +150,7 @@ func (box *TypefulBox) Get(id uint64) (*Typeful, error) {
 	return asTypeful(entity)
 }
 
-func (box *TypefulBox) GetAll() ([]Typeful, error) {
+func (box *TypefulBox) GetAll() ([]*Typeful, error) {
 	entities, err := box.Box.GetAll()
 	if err != nil {
 		return nil, err

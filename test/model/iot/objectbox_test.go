@@ -1,15 +1,17 @@
 package iot
 
 import (
-	"github.com/objectbox/objectbox-go/test/assert"
-	. "github.com/objectbox/objectbox-go/test/model/iot/object"
 	"testing"
+
+	"github.com/objectbox/objectbox-go/test/assert"
 )
 
 func TestObjectBoxEvents(t *testing.T) {
 	objectBox := CreateObjectBox()
-	box := objectBox.Box(1)
-	box.RemoveAll()
+
+	box := BoxForEvent(objectBox)
+	assert.NoErr(t, box.RemoveAll())
+
 	event := Event{
 		Device: "my device",
 	}
@@ -22,14 +24,13 @@ func TestObjectBoxEvents(t *testing.T) {
 	assert.NoErr(t, err)
 	t.Logf("Added 2nd object ID %v", objectId)
 
-	objectRead, err := box.Get(objectId)
+	eventRead, err := box.Get(objectId)
 	assert.NoErr(t, err)
-	eventRead := objectRead.(*Event)
 	if objectId != eventRead.Id || event.Device != eventRead.Device {
 		t.Fatalf("Event data error: %v vs. %v", event, eventRead)
 	}
 
 	all, err := box.GetAll()
 	assert.NoErr(t, err)
-	assert.EqInt(t, 2, len(all.([]Event)))
+	assert.EqInt(t, 2, len(all))
 }

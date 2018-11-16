@@ -1,11 +1,11 @@
 package objectbox_test
 
 import (
+	"testing"
+
 	"github.com/objectbox/objectbox-go/objectbox"
 	"github.com/objectbox/objectbox-go/test/assert"
 	"github.com/objectbox/objectbox-go/test/model/iot"
-	"github.com/objectbox/objectbox-go/test/model/iot/object"
-	"testing"
 )
 
 func TestQueryBuilder(t *testing.T) {
@@ -26,11 +26,11 @@ func TestQueryBuilder(t *testing.T) {
 
 		slice, err := query.Find(cursor)
 		assert.NoErr(t, err)
-		assert.EqInt(t, 0, len(slice.([]object.Event)))
+		assert.EqInt(t, 0, len(slice.([]*iot.Event)))
 		return
 	})
 
-	event := object.Event{
+	event := iot.Event{
 		Device: "dev1",
 	}
 	id1, err := box.Put(&event)
@@ -47,7 +47,7 @@ func TestQueryBuilder(t *testing.T) {
 
 		slice, err := query.Find(cursor)
 		assert.NoErr(t, err)
-		events := slice.([]object.Event)
+		events := slice.([]*iot.Event)
 		if len(events) != 2 {
 			t.Fatalf("unexpected size")
 		}
@@ -80,7 +80,7 @@ func TestQueryBuilder_StringEq(t *testing.T) {
 	objectBox.RunWithCursor(1, true, func(cursor *objectbox.Cursor) (err error) {
 		slice, err := query.Find(cursor)
 		assert.NoErr(t, err)
-		events := slice.([]object.Event)
+		events := slice.([]*iot.Event)
 		assert.EqInt(t, 1, len(events))
 		assert.EqString(t, "device 2", events[0].Device)
 		return
@@ -109,7 +109,7 @@ func TestQueryBuilder_IntBetween(t *testing.T) {
 	objectBox.RunWithCursor(1, true, func(cursor *objectbox.Cursor) (err error) {
 		slice, err := query.Find(cursor)
 		assert.NoErr(t, err)
-		events := slice.([]object.Event)
+		events := slice.([]*iot.Event)
 		assert.EqInt(t, 3, len(events))
 		assert.Eq(t, start, events[0].Date)
 		assert.Eq(t, start+1, events[1].Date)

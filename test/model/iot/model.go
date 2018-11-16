@@ -1,14 +1,16 @@
-package object
+package iot
+
+//go:generate objectbox-bindings
 
 type Event struct {
-	Id     uint64
+	Id     uint64 `id`
 	Device string
-	Date   int64
+	Date   int64 `date`
 }
 
 type Reading struct {
-	Id   uint64
-	Date int64
+	Id   uint64 `id`
+	Date int64  `date`
 
 	/// to-one relation
 	EventId uint64

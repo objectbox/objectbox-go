@@ -1,0 +1,68 @@
+{
+  "comment": [
+    "KEEP THIS FILE! Check it into a version control system (VCS) like git.",
+    "ObjectBox manages crucial IDs for your object model. See docs for details.",
+    "If you have VCS merge conflicts, you must resolve them according to ObjectBox docs."
+  ],
+  "entities": [
+    {
+      "id": "1:1468539308767086854",
+      "name": "Event",
+      "lastPropertyId": "3:5907655274386702697",
+      "properties": [
+        {
+          "id": "1:3098166604415018001",
+          "name": "Id"
+        },
+        {
+          "id": "2:1213411729427304641",
+          "name": "Device"
+        },
+        {
+          "id": "3:5907655274386702697",
+          "name": "Date"
+        }
+      ]
+    },
+    {
+      "id": "2:5284076134434938613",
+      "name": "Reading",
+      "lastPropertyId": "7:7102253623343671118",
+      "properties": [
+        {
+          "id": "1:3968063745680890327",
+          "name": "Id"
+        },
+        {
+          "id": "2:4852407661923085028",
+          "name": "Date"
+        },
+        {
+          "id": "3:1403806151574554320",
+          "name": "EventId"
+        },
+        {
+          "id": "4:5626221656121286670",
+          "name": "ValueName"
+        },
+        {
+          "id": "5:7303099924122013060",
+          "name": "ValueString"
+        },
+        {
+          "id": "6:1404333021836291657",
+          "name": "ValueInteger"
+        },
+        {
+          "id": "7:7102253623343671118",
+          "name": "ValueFloating"
+        }
+      ]
+    }
+  ],
+  "lastEntityId": "2:5284076134434938613",
+  "lastIndexId": "",
+  "retiredEntityUids": [],
+  "retiredIndexUids": [],
+  "retiredPropertyUids": []
+}

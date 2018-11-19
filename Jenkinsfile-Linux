@@ -15,6 +15,7 @@ pipeline {
     }
     environment {
         GOPATH = "${env.WORKSPACE}/go"
+        LD_LIBRARY_PATH = "${WORKSPACE}/lib"  // Maybe add :${LD_LIBRARY_PATH} if it's not empty
     }
     options {
         buildDiscarder(logRotator(numToKeepStr: '500', artifactNumToKeepStr: '500'))

@@ -42,7 +42,7 @@ func (qb *QueryBuilder) StringEq(propertyId TypeId, value string, caseSensitive 
 	}
 	cvalue := C.CString(value)
 	defer C.free(unsafe.Pointer(cvalue))
-	qb.cLastCondition = C.obx_qb_string_equal(qb.cqb, C.uint32_t(propertyId), cvalue, C.bool(caseSensitive))
+	qb.cLastCondition = C.obx_qb_string_equal(qb.cqb, C.obx_schema_id(propertyId), cvalue, C.bool(caseSensitive))
 	qb.checkForCError() // Mirror C error early to Err
 
 	// TBD: depending on Go's query API, return either *QueryBuilder or query condition

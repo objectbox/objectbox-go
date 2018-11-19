@@ -9,6 +9,7 @@ import "C"
 
 import (
 	"unsafe"
+        "reflect"
 
 	"github.com/google/flatbuffers/go"
 )
@@ -49,7 +50,7 @@ func (cursor *Cursor) GetBytes(id uint64) (bytes []byte, err error) {
 	var data *C.void
 	var dataSize C.size_t
 	dataPtr := unsafe.Pointer(data) // Need ptr to an unsafe ptr here
-	rc := C.obx_cursor_get(cursor.cursor, C.uint64_t(id), &dataPtr, &dataSize)
+	rc := C.obx_cursor_get(cursor.cursor, C.obx_id(id), &dataPtr, &dataSize)
 	if rc != 0 {
 		if rc != 404 {
 			err = createError()
@@ -120,7 +121,7 @@ func (cursor *Cursor) finishInternalFbbAndPut(id uint64, checkForPreviousObject 
 	bytes := fbb.FinishedBytes()
 
 	rc := C.obx_cursor_put(cursor.cursor,
-		C.uint64_t(id), unsafe.Pointer(&bytes[0]), C.size_t(len(bytes)), C.bool(checkForPreviousObject))
+		C.obx_id(id), unsafe.Pointer(&bytes[0]), C.size_t(len(bytes)), C.bool(checkForPreviousObject))
 	if rc != 0 {
 		err = createError()
 	}
@@ -132,7 +133,7 @@ func (cursor *Cursor) finishInternalFbbAndPut(id uint64, checkForPreviousObject 
 }
 
 func (cursor *Cursor) IdForPut(idCandidate uint64) (id uint64, err error) {
-	id = uint64(C.obx_cursor_id_for_put(cursor.cursor, C.uint64_t(idCandidate)))
+	id = uint64(C.obx_cursor_id_for_put(cursor.cursor, C.obx_id(idCandidate)))
 	if id == 0 {
 		err = createError()
 	}
@@ -140,7 +141,7 @@ func (cursor *Cursor) IdForPut(idCandidate uint64) (id uint64, err error) {
 }
 
 func (cursor *Cursor) Remove(id uint64) (err error) {
-	rc := C.obx_cursor_remove(cursor.cursor, C.uint64_t(id))
+	rc := C.obx_cursor_remove(cursor.cursor, C.obx_id(id))
 	if rc != 0 {
 		err = createError()
 	}
@@ -174,7 +175,9 @@ func cBytesArrayToGo(cBytesArray *C.OBX_bytes_array) (bytesArray *BytesArray) {
 	size := int(cBytesArray.count)
 	plainBytesArray := make([][]byte, size)
 	if size > 0 {
-		goBytesArray := (*[1 << 30]C.OBX_bytes)(unsafe.Pointer(cBytesArray.bytes))[:size:size]
+                var goBytesArray []C.OBX_bytes
+                header := (*reflect.SliceHeader)(unsafe.Pointer(&goBytesArray))
+                *header = reflect.SliceHeader{uintptr(unsafe.Pointer(cBytesArray.bytes)), size, size}
 		for i := 0; i < size; i++ {
 			cBytes := goBytesArray[i]
 			dataBytes := C.GoBytes(cBytes.data, C.int(cBytes.size))

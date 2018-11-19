@@ -37,7 +37,7 @@ func (box *Box) Close() (err error) {
 }
 
 func (box *Box) IdForPut(idCandidate uint64) (id uint64, err error) {
-	id = uint64(C.obx_box_id_for_put(box.box, C.uint64_t(idCandidate)))
+	id = uint64(C.obx_box_id_for_put(box.box, C.obx_id(idCandidate)))
 	if id == 0 {
 		err = createError()
 	}
@@ -71,7 +71,7 @@ func (box *Box) finishFbbAndPutAsync(fbb *flatbuffers.Builder, id uint64, checkF
 	bytes := fbb.FinishedBytes()
 
 	rc := C.obx_box_put_async(box.box,
-		C.uint64_t(id), unsafe.Pointer(&bytes[0]), C.size_t(len(bytes)), C.bool(checkForPreviousObject))
+		C.obx_id(id), unsafe.Pointer(&bytes[0]), C.size_t(len(bytes)), C.bool(checkForPreviousObject))
 	if rc != 0 {
 		err = createError()
 	}

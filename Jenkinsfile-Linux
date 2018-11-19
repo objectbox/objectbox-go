@@ -15,7 +15,8 @@ pipeline {
     }
     environment {
         GOPATH = "${env.WORKSPACE}/go"
-        LD_LIBRARY_PATH = "${WORKSPACE}/lib"  // Maybe add :${LD_LIBRARY_PATH} if it's not empty
+        LD_LIBRARY_PATH = "${WORKSPACE}/lib"  // We assume it was empty
+        CGO_LDFLAGS = "-L${WORKSPACE}/lib  -Wl,-rpath -Wl,${WORKSPACE}/lib"   // Used by the compiler
     }
     options {
         buildDiscarder(logRotator(numToKeepStr: '500', artifactNumToKeepStr: '500'))
@@ -26,10 +27,6 @@ pipeline {
         stage('init') {
             steps {
                 sh 'git submodule update --init --recursive'
-            }
-        }
-        stage('get-flatbuffers') {
-            steps {
                 sh 'go get github.com/google/flatbuffers/go'
             }
         }
@@ -41,9 +38,12 @@ pipeline {
             }
         }
 
-        stage('compile') {
+        stage('build') {
             steps {
-                sh 'cd objectbox && export CGO_LDFLAGS="-L${WORKSPACE}/lib  -Wl,-rpath -Wl,${WORKSPACE}/lib" && go build && go install'
+                // Go expects things to be in very specific locations (within $GOPATH)
+                sh 'mkdir -p ${GOPATH}/src/github.com/objectbox && cd  ${GOPATH}/src/github.com/objectbox && ln -sv $WORKSPACE objectbox-go'
+
+                sh 'cd ${GOPATH}/src/github.com/objectbox/objectbox-go/objectbox && go build && go install'
             }
         }
         stage('test') {

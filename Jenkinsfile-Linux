@@ -43,8 +43,7 @@ pipeline {
 
         stage('compile') {
             steps {
-                sh 'ls $LD_LIBRARY_PATH'
-                sh 'cd objectbox && go build'
+                sh 'cd objectbox && export CGO_LDFLAGS="-L${WORKSPACE}/lib  -Wl,-rpath -Wl,${WORKSPACE}/lib" && go build'
             }
         }
         stage('test') {

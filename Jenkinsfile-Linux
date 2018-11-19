@@ -43,6 +43,7 @@ pipeline {
 
         stage('compile') {
             steps {
+                sh 'ls $LD_LIBRARY_PATH'
                 sh 'cd objectbox && go build'
             }
         }

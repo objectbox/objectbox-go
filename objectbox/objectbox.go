@@ -87,6 +87,7 @@ func (ob *ObjectBox) RunInTxn(readOnly bool, txnFun TxnFun) (err error) {
 		txn, err = ob.BeginTxn()
 	}
 	if err != nil {
+		runtime.UnlockOSThread()
 		return
 	}
 

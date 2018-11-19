@@ -42,7 +42,7 @@ func (query *Query) FindBytes(cursor *Cursor) (bytesArray *BytesArray, err error
 func (query *Query) SetParamString(propertyId TypeId, value string) (err error) {
 	cvalue := C.CString(value)
 	defer C.free(unsafe.Pointer(cvalue))
-	rc := C.obx_query_string_param(query.cquery, C.uint32_t(propertyId), cvalue)
+	rc := C.obx_query_string_param(query.cquery, C.obx_schema_id(propertyId), cvalue)
 	if rc != 0 {
 		return createError()
 	}
@@ -50,7 +50,7 @@ func (query *Query) SetParamString(propertyId TypeId, value string) (err error) 
 }
 
 func (query *Query) SetParamInt(propertyId TypeId, value int64) (err error) {
-	rc := C.obx_query_int_param(query.cquery, C.uint32_t(propertyId), C.int64_t(value))
+	rc := C.obx_query_int_param(query.cquery, C.obx_schema_id(propertyId), C.int64_t(value))
 	if rc != 0 {
 		return createError()
 	}

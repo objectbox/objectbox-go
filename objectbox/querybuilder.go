@@ -53,7 +53,7 @@ func (qb *QueryBuilder) IntBetween(propertyId TypeId, value1 int64, value2 int64
 	if qb.Err != nil {
 		return
 	}
-	qb.cLastCondition = C.obx_qb_int_between(qb.cqb, C.uint32_t(propertyId), C.int64_t(value1), C.int64_t(value2))
+	qb.cLastCondition = C.obx_qb_int_between(qb.cqb, C.obx_schema_id(propertyId), C.int64_t(value1), C.int64_t(value2))
 	qb.checkForCError() // Mirror C error early to Err
 
 	// TBD: depending on Go's query API, return either *QueryBuilder or query condition

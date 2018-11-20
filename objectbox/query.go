@@ -2,9 +2,11 @@ package objectbox
 
 /*
 #cgo LDFLAGS: -lobjectbox
+#include <stdlib.h>
 #include "objectbox.h"
 */
 import "C"
+import "unsafe"
 
 type Query struct {
 	cquery *C.OBX_query
@@ -35,4 +37,22 @@ func (query *Query) FindBytes(cursor *Cursor) (bytesArray *BytesArray, err error
 		return
 	}
 	return cBytesArrayToGo(cBytesArray), nil
+}
+
+func (query *Query) SetParamString(propertyId TypeId, value string) (err error) {
+	cvalue := C.CString(value)
+	defer C.free(unsafe.Pointer(cvalue))
+	rc := C.obx_query_string_param(query.cquery, C.uint32_t(propertyId), cvalue)
+	if rc != 0 {
+		return createError()
+	}
+	return
+}
+
+func (query *Query) SetParamInt(propertyId TypeId, value int64) (err error) {
+	rc := C.obx_query_int_param(query.cquery, C.uint32_t(propertyId), C.int64_t(value))
+	if rc != 0 {
+		return createError()
+	}
+	return
 }

@@ -194,15 +194,17 @@ func (ob *ObjectBox) AwaitAsyncCompletion() *ObjectBox {
 	return ob
 }
 
-func (ob *ObjectBox) Query(typeId TypeId) (*QueryBuilder, error) {
+func (ob *ObjectBox) Query(typeId TypeId) *QueryBuilder {
 	qb := C.obx_qb_create(ob.store, C.uint(typeId))
+	var err error = nil
 	if qb == nil {
-		return nil, createError()
+		err = createError()
 	}
 	return &QueryBuilder{
 		objectBox: ob,
 		cqb:       qb,
-	}, nil
+		Err:       err,
+	}
 }
 
 func (bytesArray *BytesArray) Free() {

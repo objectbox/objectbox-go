@@ -56,7 +56,7 @@ func (ABinding) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64)
 	// prepare the "offset" properties
 
 	// build the FlatBuffers object
-	fbb.StartObject(1)
+	fbb.StartObject(2)
 	fbb.PrependUint64Slot(0, id, 0)
 }
 

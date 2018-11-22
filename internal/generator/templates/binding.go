@@ -88,7 +88,7 @@ func ({{$entity.Name}}Binding) Flatten(entity interface{}, fbb *flatbuffers.Buil
     {{- end}}
 
     // build the FlatBuffers object
-    fbb.StartObject({{len $entity.Properties}})
+    fbb.StartObject({{$entity.LastPropertyId.GetId}})
     {{range $property := $entity.Properties -}}
     fbb.Prepend{{$property.FbType}}Slot({{$property.FbSlot}},
         {{- if eq $property.FbType "UOffsetT"}} offset{{$property.Name}}, 0)

@@ -7,7 +7,6 @@ import (
 
 	"github.com/objectbox/objectbox-go/objectbox"
 	"github.com/objectbox/objectbox-go/test/model/iot"
-	"github.com/objectbox/objectbox-go/test/model/iot/object"
 )
 
 func TestTransactionInsert(t *testing.T) {
@@ -22,7 +21,7 @@ func TestTransactionInsert(t *testing.T) {
 		assert.NoErr(t, err)
 
 		for i := insert; i > 0; i-- {
-			_, err := cursor.Put(&object.Event{})
+			_, err := cursor.Put(&iot.Event{})
 			assert.NoErr(t, err)
 		}
 		return nil

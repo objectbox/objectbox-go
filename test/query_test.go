@@ -87,7 +87,7 @@ func TestQueryBuilder_StringEq(t *testing.T) {
 		query.SetParamString(2, "device 1")
 		slice, err = query.Find(cursor)
 		assert.NoErr(t, err)
-		events = slice.([]object.Event)
+		events = slice.([]*iot.Event)
 		assert.EqInt(t, 1, len(events))
 		assert.EqString(t, "device 1", events[0].Device)
 

@@ -59,14 +59,15 @@ func Process(sourceFile, modelInfoFile string) (err error) {
 		return fmt.Errorf("can't generate binding file %s: %s", sourceFile, err)
 	}
 
+	var bindingFile = BindingFileName(sourceFile)
 	if formattedSource, err := format.Source(bindingSource); err != nil {
 		// we just store error but still writ the file so that we can check it manually
-		err2 = fmt.Errorf("failed to format generated binding file %s: %s", sourceFile, err)
+		err2 = fmt.Errorf("failed to format generated binding file %s: %s", bindingFile, err)
 	} else {
 		bindingSource = formattedSource
 	}
 
-	if err = writeBindingFile(sourceFile, BindingFileName(sourceFile), bindingSource); err != nil {
+	if err = writeBindingFile(sourceFile, bindingFile, bindingSource); err != nil {
 		return fmt.Errorf("can't write binding file %s: %s", sourceFile, err)
 	} else if err2 != nil {
 		// now when the binding has been written (for debugging purposes), we can return the error

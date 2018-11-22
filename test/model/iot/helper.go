@@ -8,10 +8,11 @@ import (
 )
 
 func CreateObjectBox() *ObjectBox {
-	builder := NewObjectBoxBuilder().Name("iot-test").LastEntityId(2, 5284076134434938613)
+	builder := NewObjectBoxBuilder().Name("iot-test")
 	//objectBox.SetDebugFlags(DebugFlags_LOG_ASYNC_QUEUE)
-	builder.RegisterBinding(EventBinding{})
-	builder.RegisterBinding(ReadingBinding{})
+	builder.RegisterBinding(EventBinding)
+	builder.RegisterBinding(ReadingBinding)
+	builder.LastEntityId(ReadingBinding.Id, ReadingBinding.Uid)
 	objectBox, err := builder.Build()
 	if err != nil {
 		panic(err)

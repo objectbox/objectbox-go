@@ -8,10 +8,17 @@ import (
 	"github.com/objectbox/objectbox-go/objectbox/fbutils"
 )
 
-type EventBinding struct {
+type eventEntityInfo struct {
+	Id  objectbox.TypeId
+	Uid uint64
 }
 
-func (EventBinding) AddToModel(model *objectbox.Model) {
+var EventBinding = eventEntityInfo{
+	Id:  1,
+	Uid: 1468539308767086854,
+}
+
+func (eventEntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("Event", 1, 1468539308767086854)
 	model.Property("Id", objectbox.PropertyType_Long, 1, 3098166604415018001)
 	model.PropertyFlags(objectbox.PropertyFlags_ID)
@@ -20,11 +27,11 @@ func (EventBinding) AddToModel(model *objectbox.Model) {
 	model.EntityLastPropertyId(3, 5907655274386702697)
 }
 
-func (EventBinding) GetId(entity interface{}) (uint64, error) {
+func (eventEntityInfo) GetId(entity interface{}) (uint64, error) {
 	return entity.(*Event).Id, nil
 }
 
-func (EventBinding) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
+func (eventEntityInfo) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
 	ent := entity.(*Event)
 	var offsetDevice = fbutils.CreateStringOffset(fbb, ent.Device)
 
@@ -35,7 +42,7 @@ func (EventBinding) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uin
 	fbb.PrependInt64Slot(2, ent.Date, 0)
 }
 
-func (EventBinding) ToObject(bytes []byte) interface{} {
+func (eventEntityInfo) ToObject(bytes []byte) interface{} {
 	table := fbutils.GetRootAsTable(bytes, flatbuffers.UOffsetT(0))
 
 	return &Event{
@@ -45,11 +52,11 @@ func (EventBinding) ToObject(bytes []byte) interface{} {
 	}
 }
 
-func (EventBinding) MakeSlice(capacity int) interface{} {
+func (eventEntityInfo) MakeSlice(capacity int) interface{} {
 	return make([]*Event, 0, capacity)
 }
 
-func (EventBinding) AppendToSlice(slice interface{}, entity interface{}) interface{} {
+func (eventEntityInfo) AppendToSlice(slice interface{}, entity interface{}) interface{} {
 	return append(slice.([]*Event), entity.(*Event))
 }
 
@@ -85,10 +92,17 @@ func (box *EventBox) Remove(entity *Event) (err error) {
 	return box.Box.Remove(entity.Id)
 }
 
-type ReadingBinding struct {
+type readingEntityInfo struct {
+	Id  objectbox.TypeId
+	Uid uint64
 }
 
-func (ReadingBinding) AddToModel(model *objectbox.Model) {
+var ReadingBinding = readingEntityInfo{
+	Id:  2,
+	Uid: 5284076134434938613,
+}
+
+func (readingEntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("Reading", 2, 5284076134434938613)
 	model.Property("Id", objectbox.PropertyType_Long, 1, 3968063745680890327)
 	model.PropertyFlags(objectbox.PropertyFlags_ID)
@@ -101,11 +115,11 @@ func (ReadingBinding) AddToModel(model *objectbox.Model) {
 	model.EntityLastPropertyId(7, 7102253623343671118)
 }
 
-func (ReadingBinding) GetId(entity interface{}) (uint64, error) {
+func (readingEntityInfo) GetId(entity interface{}) (uint64, error) {
 	return entity.(*Reading).Id, nil
 }
 
-func (ReadingBinding) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
+func (readingEntityInfo) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
 	ent := entity.(*Reading)
 	var offsetValueName = fbutils.CreateStringOffset(fbb, ent.ValueName)
 	var offsetValueString = fbutils.CreateStringOffset(fbb, ent.ValueString)
@@ -121,7 +135,7 @@ func (ReadingBinding) Flatten(entity interface{}, fbb *flatbuffers.Builder, id u
 	fbb.PrependFloat64Slot(6, ent.ValueFloating, 0)
 }
 
-func (ReadingBinding) ToObject(bytes []byte) interface{} {
+func (readingEntityInfo) ToObject(bytes []byte) interface{} {
 	table := fbutils.GetRootAsTable(bytes, flatbuffers.UOffsetT(0))
 
 	return &Reading{
@@ -135,11 +149,11 @@ func (ReadingBinding) ToObject(bytes []byte) interface{} {
 	}
 }
 
-func (ReadingBinding) MakeSlice(capacity int) interface{} {
+func (readingEntityInfo) MakeSlice(capacity int) interface{} {
 	return make([]*Reading, 0, capacity)
 }
 
-func (ReadingBinding) AppendToSlice(slice interface{}, entity interface{}) interface{} {
+func (readingEntityInfo) AppendToSlice(slice interface{}, entity interface{}) interface{} {
 	return append(slice.([]*Reading), entity.(*Reading))
 }
 

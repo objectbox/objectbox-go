@@ -7,6 +7,10 @@ import (
 
 var funcMap = template.FuncMap{
 	"StringTitle": strings.Title,
+	"StringCamel": func(s string) string {
+		result := strings.Title(s)
+		return strings.ToLower(result[0:1]) + result[1:]
+	},
 }
 
 var BindingTemplate = template.Must(template.New("binding").Funcs(funcMap).Parse(
@@ -21,10 +25,18 @@ import (
 )
 
 {{range $entity := .Entities -}}
-type {{$entity.Name}}Binding struct {
+{{$entityNameCamel := $entity.Name | StringCamel -}}
+type {{$entityNameCamel}}EntityInfo struct {
+	Id objectbox.TypeId
+	Uid uint64
 }
 
-func ({{$entity.Name}}Binding) AddToModel(model *objectbox.Model) {
+var {{$entity.Name}}Binding = {{$entityNameCamel}}EntityInfo {
+	Id: {{$entity.Id}}, 
+	Uid: {{$entity.Uid}},
+}
+
+func ({{$entityNameCamel}}EntityInfo) AddToModel(model *objectbox.Model) {
     model.Entity("{{$entity.Name}}", {{$entity.Id}}, {{$entity.Uid}})
     {{range $property := $entity.Properties -}}
     model.Property("{{$property.ObName}}", objectbox.PropertyType_{{$property.ObType}}, {{$property.Id}}, {{$property.Uid}})
@@ -39,11 +51,11 @@ func ({{$entity.Name}}Binding) AddToModel(model *objectbox.Model) {
     model.EntityLastPropertyId({{$entity.LastPropertyId.GetId}}, {{$entity.LastPropertyId.GetUid}})
 }
 
-func ({{$entity.Name}}Binding) GetId(entity interface{}) (uint64, error) {
+func ({{$entityNameCamel}}EntityInfo) GetId(entity interface{}) (uint64, error) {
 	return entity.(*{{$entity.Name}}).{{$entity.IdProperty.Name}}, nil
 }
 
-func ({{$entity.Name}}Binding) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
+func ({{$entityNameCamel}}EntityInfo) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
     {{if $entity.HasNonIdProperty}}ent := entity.(*{{$entity.Name}}){{end -}}
 
     {{- range $property := $entity.Properties}}
@@ -72,7 +84,7 @@ func ({{$entity.Name}}Binding) Flatten(entity interface{}, fbb *flatbuffers.Buil
     {{end -}}
 }
 
-func ({{$entity.Name}}Binding) ToObject(bytes []byte) interface{} {
+func ({{$entityNameCamel}}EntityInfo) ToObject(bytes []byte) interface{} {
 	table := fbutils.GetRootAsTable(bytes, flatbuffers.UOffsetT(0))
 
 	return &{{$entity.Name}}{
@@ -89,11 +101,11 @@ func ({{$entity.Name}}Binding) ToObject(bytes []byte) interface{} {
 	}
 }
 
-func ({{$entity.Name}}Binding) MakeSlice(capacity int) interface{} {
+func ({{$entityNameCamel}}EntityInfo) MakeSlice(capacity int) interface{} {
 	return make([]*{{$entity.Name}}, 0, capacity)
 }
 
-func ({{$entity.Name}}Binding) AppendToSlice(slice interface{}, entity interface{}) interface{} {
+func ({{$entityNameCamel}}EntityInfo) AppendToSlice(slice interface{}, entity interface{}) interface{} {
 	return append(slice.([]*{{$entity.Name}}), entity.(*{{$entity.Name}}))
 }
 

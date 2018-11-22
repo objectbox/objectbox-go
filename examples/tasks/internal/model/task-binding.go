@@ -8,10 +8,17 @@ import (
 	"github.com/objectbox/objectbox-go/objectbox/fbutils"
 )
 
-type TaskBinding struct {
+type taskEntityInfo struct {
+	Id  objectbox.TypeId
+	Uid uint64
 }
 
-func (TaskBinding) AddToModel(model *objectbox.Model) {
+var TaskBinding = taskEntityInfo{
+	Id:  1,
+	Uid: 1306759095002958910,
+}
+
+func (taskEntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("Task", 1, 1306759095002958910)
 	model.Property("Id", objectbox.PropertyType_Long, 1, 2193439623591184445)
 	model.PropertyFlags(objectbox.PropertyFlags_ID)
@@ -21,11 +28,11 @@ func (TaskBinding) AddToModel(model *objectbox.Model) {
 	model.EntityLastPropertyId(4, 8083684673086871702)
 }
 
-func (TaskBinding) GetId(entity interface{}) (uint64, error) {
+func (taskEntityInfo) GetId(entity interface{}) (uint64, error) {
 	return entity.(*Task).Id, nil
 }
 
-func (TaskBinding) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
+func (taskEntityInfo) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
 	ent := entity.(*Task)
 	var offsetText = fbutils.CreateStringOffset(fbb, ent.Text)
 
@@ -37,7 +44,7 @@ func (TaskBinding) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint
 	fbb.PrependInt64Slot(3, ent.DateFinished, 0)
 }
 
-func (TaskBinding) ToObject(bytes []byte) interface{} {
+func (taskEntityInfo) ToObject(bytes []byte) interface{} {
 	table := fbutils.GetRootAsTable(bytes, flatbuffers.UOffsetT(0))
 
 	return &Task{
@@ -48,11 +55,11 @@ func (TaskBinding) ToObject(bytes []byte) interface{} {
 	}
 }
 
-func (TaskBinding) MakeSlice(capacity int) interface{} {
+func (taskEntityInfo) MakeSlice(capacity int) interface{} {
 	return make([]*Task, 0, capacity)
 }
 
-func (TaskBinding) AppendToSlice(slice interface{}, entity interface{}) interface{} {
+func (taskEntityInfo) AppendToSlice(slice interface{}, entity interface{}) interface{} {
 	return append(slice.([]*Task), entity.(*Task))
 }
 

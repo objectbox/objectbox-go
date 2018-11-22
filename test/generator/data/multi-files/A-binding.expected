@@ -8,10 +8,17 @@ import (
 	"github.com/objectbox/objectbox-go/objectbox/fbutils"
 )
 
-type ABinding struct {
+type aEntityInfo struct {
+	Id  objectbox.TypeId
+	Uid uint64
 }
 
-func (ABinding) AddToModel(model *objectbox.Model) {
+var ABinding = aEntityInfo{
+	Id:  1,
+	Uid: 8717895732742165505,
+}
+
+func (aEntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("A", 1, 8717895732742165505)
 	model.Property("Id", objectbox.PropertyType_Long, 1, 2259404117704393152)
 	model.PropertyFlags(objectbox.PropertyFlags_ID)
@@ -19,11 +26,11 @@ func (ABinding) AddToModel(model *objectbox.Model) {
 	model.EntityLastPropertyId(2, 6050128673802995827)
 }
 
-func (ABinding) GetId(entity interface{}) (uint64, error) {
+func (aEntityInfo) GetId(entity interface{}) (uint64, error) {
 	return entity.(*A).Id, nil
 }
 
-func (ABinding) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
+func (aEntityInfo) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
 	ent := entity.(*A)
 	var offsetName = fbutils.CreateStringOffset(fbb, ent.Name)
 
@@ -33,7 +40,7 @@ func (ABinding) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64)
 	fbb.PrependUOffsetTSlot(1, offsetName, 0)
 }
 
-func (ABinding) ToObject(bytes []byte) interface{} {
+func (aEntityInfo) ToObject(bytes []byte) interface{} {
 	table := fbutils.GetRootAsTable(bytes, flatbuffers.UOffsetT(0))
 
 	return &A{
@@ -42,11 +49,11 @@ func (ABinding) ToObject(bytes []byte) interface{} {
 	}
 }
 
-func (ABinding) MakeSlice(capacity int) interface{} {
+func (aEntityInfo) MakeSlice(capacity int) interface{} {
 	return make([]*A, 0, capacity)
 }
 
-func (ABinding) AppendToSlice(slice interface{}, entity interface{}) interface{} {
+func (aEntityInfo) AppendToSlice(slice interface{}, entity interface{}) interface{} {
 	return append(slice.([]*A), entity.(*A))
 }
 

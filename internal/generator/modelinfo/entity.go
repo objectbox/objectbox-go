@@ -48,11 +48,13 @@ func (entity *Entity) Validate() (err error) {
 						entity.LastPropertyId, property.Name, property.Id)
 				}
 				found = true
-				break
+			} else if lastId < property.Id.getIdSafe() {
+				return fmt.Errorf("lastPropertyId %s is lower than property %s %s",
+					entity.LastPropertyId, property.Name, property.Id)
 			}
 		}
 
-		if !found {
+		if !found && !searchSliceUid(entity.model.RetiredPropertyUids, lastUid) {
 			return fmt.Errorf("lastPropertyId %s doesn't match any property", entity.LastPropertyId)
 		}
 	}
@@ -111,6 +113,27 @@ func (entity *Entity) CreateProperty() (*Property, error) {
 	entity.LastPropertyId = property.Id
 
 	return property, nil
+}
+
+func (entity *Entity) RemoveProperty(property *Property) error {
+	var indexToRemove = -1
+	for index, prop := range entity.Properties {
+		if prop == property {
+			indexToRemove = index
+		}
+	}
+
+	if indexToRemove < 0 {
+		return fmt.Errorf("can't remove property %s %s - not found", property.Name, property.Id)
+	}
+
+	// remove from list
+	entity.Properties = append(entity.Properties[:indexToRemove], entity.Properties[indexToRemove+1:]...)
+
+	// store the UID in the "retired" list so that it's not reused in the future
+	entity.model.RetiredPropertyUids = append(entity.model.RetiredPropertyUids, property.Id.getUidSafe())
+
+	return nil
 }
 
 // recursively checks whether given UID is present in the model

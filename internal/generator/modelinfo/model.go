@@ -45,9 +45,15 @@ func (model *ModelInfo) Validate() (err error) {
 	}
 
 	for _, entity := range model.Entities {
+		if entity.model == nil {
+			entity.model = model
+		} else if entity.model != model {
+			return fmt.Errorf("entity %s %s has incorrect model reference", entity.Name, entity.Id)
+		}
+
 		err = entity.Validate()
 		if err != nil {
-			return fmt.Errorf("entity %s %s is invalid: %s", entity.Name, string(entity.Id), err)
+			return fmt.Errorf("entity %s %s is invalid: %s", entity.Name, entity.Id, err)
 		}
 	}
 
@@ -67,11 +73,13 @@ func (model *ModelInfo) Validate() (err error) {
 						model.LastEntityId, entity.Name, entity.Id)
 				}
 				found = true
-				break
+			} else if lastId < entity.Id.getIdSafe() {
+				return fmt.Errorf("lastEntityId %s is lower than entity %s %s",
+					model.LastEntityId, entity.Name, entity.Id)
 			}
 		}
 
-		if !found {
+		if !found && !searchSliceUid(model.RetiredEntityUids, lastUid) {
 			return fmt.Errorf("lastEntityId %s doesn't match any entity", model.LastEntityId)
 		}
 	}

@@ -35,10 +35,25 @@ func mergeModelEntity(bindingEntity *Entity, modelEntity *modelinfo.Entity) (err
 		return err
 	}
 
+	// add all properties from the bindings to the model and update/rename the changed ones
 	for _, bindingProperty := range bindingEntity.Properties {
 		if modelProperty, err := getModelProperty(bindingProperty, modelEntity); err != nil {
 			return err
 		} else if err := mergeModelProperty(bindingProperty, modelProperty); err != nil {
+			return err
+		}
+	}
+
+	// remove the missing (removed) properties
+	removedProperties := make([]*modelinfo.Property, 0)
+	for _, modelProperty := range modelEntity.Properties {
+		if !bindingPropertyExists(modelProperty, bindingEntity) {
+			removedProperties = append(removedProperties, modelProperty)
+		}
+	}
+
+	for _, property := range removedProperties {
+		if err := modelEntity.RemoveProperty(property); err != nil {
 			return err
 		}
 	}
@@ -70,4 +85,14 @@ func mergeModelProperty(bindingProperty *Property, modelProperty *modelinfo.Prop
 	}
 
 	return nil
+}
+
+func bindingPropertyExists(modelProperty *modelinfo.Property, bindingEntity *Entity) bool {
+	for _, bindingProperty := range bindingEntity.Properties {
+		if bindingProperty.Name == modelProperty.Name {
+			return true
+		}
+	}
+
+	return false
 }

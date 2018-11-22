@@ -36,8 +36,8 @@ func (BBinding) ToObject(bytes []byte) interface{} {
 	table := fbutils.GetRootAsTable(bytes, flatbuffers.UOffsetT(0))
 
 	return &B{
-		Id:  table.OffsetAsUint64(4),
-		New: table.OffsetAsInt(8),
+		Id:  table.GetUint64Slot(4, 0),
+		New: int(table.GetUint32Slot(8, 0)),
 	}
 }
 

@@ -34,11 +34,16 @@ function postBuild {
 function test {
     echo "******** Testing ********"
     go test ./...
+}
 
+function generate {
+    echo "******** Generating ********"
+    go generate ./...
 }
 
 preBuild
 build
+generate
 test
 postBuild
 

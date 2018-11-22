@@ -77,7 +77,14 @@ func ({{$entity.Name}}Binding) ToObject(bytes []byte) interface{} {
 
 	return &{{$entity.Name}}{
 	{{- range $property := $entity.Properties}}
-		{{$property.Name}}: table.OffsetAs{{if eq $property.GoType "[]byte"}}ByteVector{{else}}{{$property.GoType | StringTitle}}{{end}}({{$property.FbvTableOffset}}),
+		{{$property.Name}}: {{if eq $property.GoType "bool"}} table.GetBoolSlot({{$property.FbvTableOffset}}, false)
+        {{- else if eq $property.GoType "int"}} int(table.GetUint32Slot({{$property.FbvTableOffset}}, 0))
+        {{- else if eq $property.GoType "uint"}} uint(table.GetUint32Slot({{$property.FbvTableOffset}}, 0))
+		{{- else if eq $property.GoType "rune"}} rune(table.GetInt32Slot({{$property.FbvTableOffset}}, 0))
+		{{- else if eq $property.GoType "string"}} table.GetStringSlot({{$property.FbvTableOffset}})
+        {{- else if eq $property.GoType "[]byte"}} table.GetByteVectorSlot({{$property.FbvTableOffset}})
+		{{- else}} table.Get{{$property.GoType | StringTitle}}Slot({{$property.FbvTableOffset}}, 0)
+        {{- end}},
 	{{- end}}
 	}
 }

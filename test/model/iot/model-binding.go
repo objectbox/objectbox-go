@@ -20,42 +20,12 @@ func (EventBinding) AddToModel(model *objectbox.Model) {
 	model.EntityLastPropertyId(3, 5907655274386702697)
 }
 
-func asEvent(entity interface{}) (*Event, error) {
-	ent, ok := entity.(*Event)
-	if !ok {
-		// Programming error, OK to panic
-		// TODO don't panic here, handle in the caller if necessary to panic
-		panic("Object has wrong type, expecting 'Event'")
-	}
-	return ent, nil
-}
-
-func asEvents(entities interface{}) ([]*Event, error) {
-	ent, ok := entities.([]*Event)
-	if !ok {
-		// Programming error, OK to panic
-		// TODO don't panic here, handle in the caller if necessary to panic
-		panic("Object has wrong type, expecting 'Event'")
-	}
-	return ent, nil
-}
-
 func (EventBinding) GetId(entity interface{}) (uint64, error) {
-	if ent, err := asEvent(entity); err != nil {
-		return 0, err
-	} else {
-		return ent.Id, nil
-	}
+	return entity.(*Event).Id, nil
 }
 
 func (EventBinding) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
-	ent, err := asEvent(entity)
-	if err != nil {
-		// TODO return error and panic in the caller if really, really necessary
-		panic(err)
-	}
-
-	// prepare the "offset" properties
+	ent := entity.(*Event)
 	var offsetDevice = fbutils.CreateStringOffset(fbb, ent.Device)
 
 	// build the FlatBuffers object
@@ -69,9 +39,9 @@ func (EventBinding) ToObject(bytes []byte) interface{} {
 	table := fbutils.GetRootAsTable(bytes, flatbuffers.UOffsetT(0))
 
 	return &Event{
-		Id:     table.OffsetAsUint64(4),
-		Device: table.OffsetAsString(6),
-		Date:   table.OffsetAsInt64(8),
+		Id:     table.GetUint64Slot(4, 0),
+		Device: table.GetStringSlot(6),
+		Date:   table.GetInt64Slot(8, 0),
 	}
 }
 
@@ -100,7 +70,7 @@ func (box *EventBox) Get(id uint64) (*Event, error) {
 	} else if entity == nil {
 		return nil, nil
 	}
-	return asEvent(entity)
+	return entity.(*Event), nil
 }
 
 func (box *EventBox) GetAll() ([]*Event, error) {
@@ -108,7 +78,7 @@ func (box *EventBox) GetAll() ([]*Event, error) {
 	if err != nil {
 		return nil, err
 	}
-	return asEvents(entities)
+	return entities.([]*Event), nil
 }
 
 func (box *EventBox) Remove(entity *Event) (err error) {
@@ -131,42 +101,12 @@ func (ReadingBinding) AddToModel(model *objectbox.Model) {
 	model.EntityLastPropertyId(7, 7102253623343671118)
 }
 
-func asReading(entity interface{}) (*Reading, error) {
-	ent, ok := entity.(*Reading)
-	if !ok {
-		// Programming error, OK to panic
-		// TODO don't panic here, handle in the caller if necessary to panic
-		panic("Object has wrong type, expecting 'Reading'")
-	}
-	return ent, nil
-}
-
-func asReadings(entities interface{}) ([]*Reading, error) {
-	ent, ok := entities.([]*Reading)
-	if !ok {
-		// Programming error, OK to panic
-		// TODO don't panic here, handle in the caller if necessary to panic
-		panic("Object has wrong type, expecting 'Reading'")
-	}
-	return ent, nil
-}
-
 func (ReadingBinding) GetId(entity interface{}) (uint64, error) {
-	if ent, err := asReading(entity); err != nil {
-		return 0, err
-	} else {
-		return ent.Id, nil
-	}
+	return entity.(*Reading).Id, nil
 }
 
 func (ReadingBinding) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
-	ent, err := asReading(entity)
-	if err != nil {
-		// TODO return error and panic in the caller if really, really necessary
-		panic(err)
-	}
-
-	// prepare the "offset" properties
+	ent := entity.(*Reading)
 	var offsetValueName = fbutils.CreateStringOffset(fbb, ent.ValueName)
 	var offsetValueString = fbutils.CreateStringOffset(fbb, ent.ValueString)
 
@@ -185,13 +125,13 @@ func (ReadingBinding) ToObject(bytes []byte) interface{} {
 	table := fbutils.GetRootAsTable(bytes, flatbuffers.UOffsetT(0))
 
 	return &Reading{
-		Id:            table.OffsetAsUint64(4),
-		Date:          table.OffsetAsInt64(6),
-		EventId:       table.OffsetAsUint64(8),
-		ValueName:     table.OffsetAsString(10),
-		ValueString:   table.OffsetAsString(12),
-		ValueInteger:  table.OffsetAsInt64(14),
-		ValueFloating: table.OffsetAsFloat64(16),
+		Id:            table.GetUint64Slot(4, 0),
+		Date:          table.GetInt64Slot(6, 0),
+		EventId:       table.GetUint64Slot(8, 0),
+		ValueName:     table.GetStringSlot(10),
+		ValueString:   table.GetStringSlot(12),
+		ValueInteger:  table.GetInt64Slot(14, 0),
+		ValueFloating: table.GetFloat64Slot(16, 0),
 	}
 }
 
@@ -217,8 +157,10 @@ func (box *ReadingBox) Get(id uint64) (*Reading, error) {
 	entity, err := box.Box.Get(id)
 	if err != nil {
 		return nil, err
+	} else if entity == nil {
+		return nil, nil
 	}
-	return asReading(entity)
+	return entity.(*Reading), nil
 }
 
 func (box *ReadingBox) GetAll() ([]*Reading, error) {
@@ -226,7 +168,7 @@ func (box *ReadingBox) GetAll() ([]*Reading, error) {
 	if err != nil {
 		return nil, err
 	}
-	return asReadings(entities)
+	return entities.([]*Reading), nil
 }
 
 func (box *ReadingBox) Remove(entity *Reading) (err error) {

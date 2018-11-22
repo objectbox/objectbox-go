@@ -21,42 +21,12 @@ func (TaskBinding) AddToModel(model *objectbox.Model) {
 	model.EntityLastPropertyId(4, 8083684673086871702)
 }
 
-func asTask(entity interface{}) (*Task, error) {
-	ent, ok := entity.(*Task)
-	if !ok {
-		// Programming error, OK to panic
-		// TODO don't panic here, handle in the caller if necessary to panic
-		panic("Object has wrong type, expecting 'Task'")
-	}
-	return ent, nil
-}
-
-func asTasks(entities interface{}) ([]Task, error) {
-	ent, ok := entities.([]Task)
-	if !ok {
-		// Programming error, OK to panic
-		// TODO don't panic here, handle in the caller if necessary to panic
-		panic("Object has wrong type, expecting 'Task'")
-	}
-	return ent, nil
-}
-
 func (TaskBinding) GetId(entity interface{}) (uint64, error) {
-	if ent, err := asTask(entity); err != nil {
-		return 0, err
-	} else {
-		return ent.Id, nil
-	}
+	return entity.(*Task).Id, nil
 }
 
 func (TaskBinding) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
-	ent, err := asTask(entity)
-	if err != nil {
-		// TODO return error and panic in the caller if really, really necessary
-		panic(err)
-	}
-
-	// prepare the "offset" properties
+	ent := entity.(*Task)
 	var offsetText = fbutils.CreateStringOffset(fbb, ent.Text)
 
 	// build the FlatBuffers object
@@ -71,19 +41,19 @@ func (TaskBinding) ToObject(bytes []byte) interface{} {
 	table := fbutils.GetRootAsTable(bytes, flatbuffers.UOffsetT(0))
 
 	return &Task{
-		Id:           table.OffsetAsUint64(4),
-		Text:         table.OffsetAsString(6),
-		DateCreated:  table.OffsetAsInt64(8),
-		DateFinished: table.OffsetAsInt64(10),
+		Id:           table.GetUint64Slot(4, 0),
+		Text:         table.GetStringSlot(6),
+		DateCreated:  table.GetInt64Slot(8, 0),
+		DateFinished: table.GetInt64Slot(10, 0),
 	}
 }
 
 func (TaskBinding) MakeSlice(capacity int) interface{} {
-	return make([]Task, 0, capacity)
+	return make([]*Task, 0, capacity)
 }
 
 func (TaskBinding) AppendToSlice(slice interface{}, entity interface{}) interface{} {
-	return append(slice.([]Task), *entity.(*Task))
+	return append(slice.([]*Task), entity.(*Task))
 }
 
 type TaskBox struct {
@@ -100,19 +70,20 @@ func (box *TaskBox) Get(id uint64) (*Task, error) {
 	entity, err := box.Box.Get(id)
 	if err != nil {
 		return nil, err
+	} else if entity == nil {
+		return nil, nil
 	}
-	return asTask(entity)
+	return entity.(*Task), nil
 }
 
-func (box *TaskBox) GetAll() ([]Task, error) {
+func (box *TaskBox) GetAll() ([]*Task, error) {
 	entities, err := box.Box.GetAll()
 	if err != nil {
 		return nil, err
 	}
-	return asTasks(entities)
+	return entities.([]*Task), nil
 }
 
-// TODO
-// func (box *TaskBox) Remove(entity *Task) (err error) {
-// 	   return box.Box.Remove(entity.Id)
-// }
+func (box *TaskBox) Remove(entity *Task) (err error) {
+	return box.Box.Remove(entity.Id)
+}

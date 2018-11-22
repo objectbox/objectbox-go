@@ -54,13 +54,13 @@ func (TaskBinding) ToObject(bytes []byte) interface{} {
 	table := fbutils.GetRootAsTable(bytes, flatbuffers.UOffsetT(0))
 
 	return &Task{
-		Id:     table.OffsetAsUint64(4),
-		Uid:    table.OffsetAsString(6),
-		Name:   table.OffsetAsString(8),
-		Place:  table.OffsetAsString(10),
-		Source: table.OffsetAsString(12),
-		Text:   table.OffsetAsString(14),
-		Date:   table.OffsetAsUint64(16),
+		Id:     table.GetUint64Slot(4, 0),
+		Uid:    table.GetStringSlot(6),
+		Name:   table.GetStringSlot(8),
+		Place:  table.GetStringSlot(10),
+		Source: table.GetStringSlot(12),
+		Text:   table.GetStringSlot(14),
+		Date:   table.GetUint64Slot(16, 0),
 	}
 }
 

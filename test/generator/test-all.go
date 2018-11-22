@@ -32,8 +32,8 @@ func generateAllDirs(t *testing.T, overwriteExpected bool) {
 		var dir = path.Join(datadir, folder.Name())
 
 		modelInfoFile := path.Join(dir, "objectbox-model-info.json")
-		modelInfoExpectedFile := modelInfoFile[0:len(modelInfoFile)-len(path.Ext(modelInfoFile))] + ".expected.json"
-		modelInfoOriginalFile := modelInfoFile[0:len(modelInfoFile)-len(path.Ext(modelInfoFile))] + ".original.json"
+		modelInfoExpectedFile := modelInfoFile[0:len(modelInfoFile)-len(path.Ext(modelInfoFile))] + ".expected"
+		modelInfoInitialFile := modelInfoFile[0:len(modelInfoFile)-len(path.Ext(modelInfoFile))] + ".initial"
 
 		// run the generation twice, first time with deleting old modelInfo
 		for i := 0; i <= 1; i++ {
@@ -41,8 +41,8 @@ func generateAllDirs(t *testing.T, overwriteExpected bool) {
 				os.Remove(modelInfoFile)
 			}
 
-			if fileExists(modelInfoOriginalFile) {
-				assert.NoErr(t, copyFile(modelInfoOriginalFile, modelInfoFile))
+			if fileExists(modelInfoInitialFile) {
+				assert.NoErr(t, copyFile(modelInfoInitialFile, modelInfoFile))
 			}
 
 			generateAllFiles(t, overwriteExpected, dir, modelInfoFile)
@@ -74,14 +74,14 @@ func generateAllFiles(t *testing.T, overwriteExpected bool, dir string, modelInf
 	assert.NoErr(t, err)
 	for _, sourceFile := range inputFiles {
 		// skip generated files & "expected results" files
-		if strings.HasSuffix(sourceFile, "binding.go") || strings.HasSuffix(sourceFile, "expected.go") {
+		if strings.HasSuffix(sourceFile, "binding.go") || strings.HasSuffix(sourceFile, "expected") {
 			continue
 		}
 
 		err = generator.Process(sourceFile, modelInfoFile)
 
 		// handle negative test
-		var shouldFail = strings.HasPrefix(path.Base(sourceFile), "!")
+		var shouldFail = strings.HasPrefix(path.Base(sourceFile), "_")
 		if shouldFail {
 			if err == nil {
 				assert.Failf(t, "Unexpected PASS on a negative test %s", sourceFile)
@@ -92,7 +92,7 @@ func generateAllFiles(t *testing.T, overwriteExpected bool, dir string, modelInf
 
 		assert.NoErr(t, err)
 		var bindingFile = generator.BindingFileName(sourceFile)
-		var expectedFile = bindingFile[0:len(bindingFile)-3] + ".expected.go"
+		var expectedFile = bindingFile[0:len(bindingFile)-3] + ".expected"
 
 		bindingContents, err := ioutil.ReadFile(bindingFile)
 		assert.NoErr(t, err)

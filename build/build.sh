@@ -33,8 +33,8 @@ function postBuild {
 
 function test {
     echo "******** Testing ********"
-    cd $cwd/test
-    go test
+    cd $cwd/test            && go test -v
+    cd $cwd/test/generator  && go test -v
     cd $cwd
 
 }

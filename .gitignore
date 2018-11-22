@@ -9,3 +9,5 @@
 # DB files
 data.mdb
 lock.mdb
+
+build-artifacts

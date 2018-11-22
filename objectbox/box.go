@@ -27,7 +27,7 @@ type Box struct {
 	fbbInUseAtomic uint32
 }
 
-func (box *Box) Destroy() (err error) {
+func (box *Box) Close() (err error) {
 	rc := C.obx_box_close(box.box)
 	box.box = nil
 	if rc != 0 {

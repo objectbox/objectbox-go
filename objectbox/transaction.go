@@ -18,7 +18,7 @@ type Transaction struct {
 	objectBox *ObjectBox
 }
 
-func (txn *Transaction) Destroy() (err error) {
+func (txn *Transaction) Close() (err error) {
 	rc := C.obx_txn_close(txn.txn)
 	txn.txn = nil
 	if rc != 0 {

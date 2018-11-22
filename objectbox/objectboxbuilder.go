@@ -8,9 +8,7 @@ package objectbox
 import "C"
 
 import (
-	"fmt"
 	"strconv"
-	"unsafe"
 )
 
 type ObjectBoxBuilder struct {
@@ -94,9 +92,10 @@ func (builder *ObjectBoxBuilder) Build() (objectBox *ObjectBox, err error) {
 	}
 	builder.model.LastEntityId(builder.lastEntityId, builder.lastEntityUid)
 
-	fmt.Println("Ignoring DB name: " + builder.name)
-	cname := C.CString(builder.name)
-	defer C.free(unsafe.Pointer(cname))
+	// TODO implement or remove
+	//fmt.Println("Ignoring DB name: " + builder.name)
+	//cname := C.CString(builder.name)
+	//defer C.free(unsafe.Pointer(cname))
 
 	objectBox = &ObjectBox{}
 	objectBox.store = C.obx_store_open(builder.model.model, nil)

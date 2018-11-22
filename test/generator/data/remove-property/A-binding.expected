@@ -47,7 +47,7 @@ func (ABinding) GetId(entity interface{}) (uint64, error) {
 }
 
 func (ABinding) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
-	ent, err := asA(entity)
+	_, err := asA(entity)
 	if err != nil {
 		// TODO return error and panic in the caller if really, really necessary
 		panic(err)

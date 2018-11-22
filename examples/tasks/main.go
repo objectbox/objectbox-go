@@ -16,10 +16,10 @@ import (
 func main() {
 	// load objectbox
 	ob := initObjectBox()
-	defer ob.Destroy()
+	defer ob.Close()
 
 	box := model.BoxForTask(ob)
-	defer box.Destroy()
+	defer box.Close()
 
 	runInteractiveShell(box)
 }

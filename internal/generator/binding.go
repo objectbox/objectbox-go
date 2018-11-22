@@ -339,6 +339,17 @@ func (property *Property) setObFlags(f ast.Field) error {
 	return nil
 }
 
+// used from the binding template to avoid "variable declared and not used"
+func (entity *Entity) HasNonIdProperty() bool {
+	for _, prop := range entity.Properties {
+		if prop != entity.IdProperty {
+			return true
+		}
+	}
+
+	return false
+}
+
 // calculates flatbuffers vTableOffset
 // called from the template
 func (property *Property) FbvTableOffset() uint16 {

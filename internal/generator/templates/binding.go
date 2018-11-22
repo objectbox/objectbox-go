@@ -68,7 +68,7 @@ func ({{$entity.Name}}Binding) GetId(entity interface{}) (uint64, error) {
 }
 
 func ({{$entity.Name}}Binding) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
-    ent, err := as{{$entity.Name}}(entity)
+    {{if $entity.HasNonIdProperty}}ent{{else}}_{{end}}, err := as{{$entity.Name}}(entity)
     if err != nil {
         // TODO return error and panic in the caller if really, really necessary
         panic(err)

@@ -33,3 +33,32 @@ func TestObjectBoxEvents(t *testing.T) {
 	assert.NoErr(t, err)
 	assert.EqInt(t, 2, len(all.([]Event)))
 }
+
+func TestObjectBoxReadings(t *testing.T) {
+	objectBox := CreateObjectBox()
+	box := objectBox.Box(2)
+	box.RemoveAll()
+	reading := Reading{
+		ValueName:    "Temperature",
+		ValueInteger: 77,
+	}
+	objectId, err := box.Put(&reading)
+	assert.NoErr(t, err)
+	t.Logf("Added object ID %v", objectId)
+
+	reading.ValueInteger = 100
+	objectId, err = box.Put(&reading)
+	assert.NoErr(t, err)
+	t.Logf("Added 2nd object ID %v", objectId)
+
+	objectRead, err := box.Get(objectId)
+	assert.NoErr(t, err)
+	readingRead := objectRead.(*Reading)
+	if objectId != readingRead.Id || reading.ValueInteger != readingRead.ValueInteger {
+		t.Fatalf("Event data error: %v vs. %v", reading, readingRead)
+	}
+
+	all, err := box.GetAll()
+	assert.NoErr(t, err)
+	assert.EqInt(t, 2, len(all.([]Reading)))
+}

@@ -12,11 +12,18 @@ import (
 )
 
 type ObjectBoxBuilder struct {
-	name          string
-	model         *Model
-	Err           error
+	name  string
+	model *Model
+	Err   error
+
 	lastEntityId  TypeId
 	lastEntityUid uint64
+
+	lastIndexId  TypeId
+	lastIndexUid uint64
+
+	lastRelationId  TypeId
+	lastRelationUid uint64
 
 	bindingsById   map[TypeId]ObjectBinding
 	bindingsByName map[string]ObjectBinding
@@ -52,8 +59,8 @@ func (builder *ObjectBoxBuilder) Name(name string) *ObjectBoxBuilder {
 
 func (builder *ObjectBoxBuilder) RegisterBinding(binding ObjectBinding) {
 	binding.AddToModel(builder.model)
-	id := builder.model.lastEntityId
-	name := builder.model.lastEntityName
+	id := builder.model.previousEntityId
+	name := builder.model.previousEntityName
 	if id == 0 {
 		panic("No type ID; did you forget to add an entity to the model?")
 	}
@@ -78,6 +85,18 @@ func (builder *ObjectBoxBuilder) LastEntityId(id TypeId, uid uint64) *ObjectBoxB
 	return builder
 }
 
+func (builder *ObjectBoxBuilder) LastIndexId(id TypeId, uid uint64) *ObjectBoxBuilder {
+	builder.lastIndexId = id
+	builder.lastIndexUid = uid
+	return builder
+}
+
+func (builder *ObjectBoxBuilder) LastRelationId(id TypeId, uid uint64) *ObjectBoxBuilder {
+	builder.lastRelationId = id
+	builder.lastRelationUid = uid
+	return builder
+}
+
 func (builder *ObjectBoxBuilder) Build() (objectBox *ObjectBox, err error) {
 	if builder.model.Err != nil {
 		err = builder.model.Err
@@ -91,6 +110,13 @@ func (builder *ObjectBoxBuilder) Build() (objectBox *ObjectBox, err error) {
 		panic("Configuration error: last entity ID/UID must be set")
 	}
 	builder.model.LastEntityId(builder.lastEntityId, builder.lastEntityUid)
+
+	if builder.lastIndexId != 0 {
+		builder.model.LastIndexId(builder.lastIndexId, builder.lastIndexUid)
+	}
+	if builder.lastRelationId != 0 {
+		builder.model.LastRelationId(builder.lastRelationId, builder.lastRelationUid)
+	}
 
 	// TODO implement or remove
 	//fmt.Println("Ignoring DB name: " + builder.name)

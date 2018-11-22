@@ -61,10 +61,10 @@ const (
 )
 
 type Model struct {
-	model          *C.OBX_model
-	lastEntityName string
-	lastEntityId   TypeId
-	Err            error
+	model              *C.OBX_model
+	previousEntityName string
+	previousEntityId   TypeId
+	Err                error
 }
 
 func NewModel() (model *Model, err error) {
@@ -84,6 +84,20 @@ func (model *Model) LastEntityId(id TypeId, uid uint64) {
 	C.obx_model_last_entity_id(model.model, C.obx_schema_id(id), C.obx_uid(uid))
 }
 
+func (model *Model) LastIndexId(id TypeId, uid uint64) {
+	if model.Err != nil {
+		return
+	}
+	C.obx_model_last_index_id(model.model, C.obx_schema_id(id), C.obx_uid(uid))
+}
+
+func (model *Model) LastRelationId(id TypeId, uid uint64) {
+	if model.Err != nil {
+		return
+	}
+	C.obx_model_last_relation_id(model.model, C.obx_schema_id(id), C.obx_uid(uid))
+}
+
 func (model *Model) Entity(name string, id TypeId, uid uint64) (err error) {
 	if model.Err != nil {
 		return model.Err
@@ -97,8 +111,8 @@ func (model *Model) Entity(name string, id TypeId, uid uint64) (err error) {
 		model.Err = err
 		return
 	}
-	model.lastEntityName = name
-	model.lastEntityId = id
+	model.previousEntityName = name
+	model.previousEntityId = id
 	return
 }
 
@@ -134,6 +148,32 @@ func (model *Model) PropertyFlags(propertyFlags int) (err error) {
 		return model.Err
 	}
 	rc := C.obx_model_property_flags(model.model, C.OBPropertyFlags(propertyFlags))
+	if rc != 0 {
+		err = createError()
+		model.Err = err
+	}
+	return
+}
+
+func (model *Model) PropertyIndex(id TypeId, uid uint64) (err error) {
+	if model.Err != nil {
+		return model.Err
+	}
+	rc := C.obx_model_property_index_id(model.model, C.obx_schema_id(id), C.obx_uid(uid))
+	if rc != 0 {
+		err = createError()
+		model.Err = err
+	}
+	return
+}
+
+func (model *Model) PropertyRelation(targetEntityName string, indexId TypeId, indexUid uint64) (err error) {
+	if model.Err != nil {
+		return model.Err
+	}
+	cname := C.CString(targetEntityName)
+	defer C.free(unsafe.Pointer(cname))
+	rc := C.obx_model_property_relation(model.model, cname, C.obx_schema_id(indexId), C.obx_uid(indexUid))
 	if rc != 0 {
 		err = createError()
 		model.Err = err

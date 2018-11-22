@@ -5,7 +5,6 @@ import (
 	. "github.com/objectbox/objectbox-go/objectbox"
 	. "github.com/objectbox/objectbox-go/test/model/iot/flat"
 	"github.com/objectbox/objectbox-go/test/model/iot/object"
-	"strconv"
 )
 
 // This file could be generated in the future
@@ -16,28 +15,21 @@ func (ReadingBinding) AddToModel(model *Model) {
 	model.Entity("Reading", 2, 10002)
 	model.Property("id", PropertyType_Long, 1, 10002001)
 	model.PropertyFlags(PropertyFlags_ID)
-	model.Property("eventId", PropertyType_Long, 2, 10002002)
-	//model.Property("eventId", PropertyType_Relation, 2, 10002002)
-	//model.PropertyFlags(PropertyFlags_INDEXED)
+	model.Property("eventId", PropertyType_Relation, 2, 10002002)
+	model.PropertyFlags(PropertyFlags_INDEXED)
+	model.PropertyRelation("Event", 1, 20002002)
 	model.Property("date", PropertyType_Date, 3, 10002003)
 	model.Property("valueName", PropertyType_String, 4, 10002004)
 	model.Property("valueString", PropertyType_String, 5, 10002005)
 	model.Property("valueInteger", PropertyType_Long, 6, 10002006)
+	model.PropertyFlags(PropertyFlags_INDEXED)
+	model.PropertyIndex(2, 20002006)
 	model.Property("valueFloating", PropertyType_Double, 7, 10002007)
 	model.EntityLastPropertyId(7, 10002007)
 }
 
 func (ReadingBinding) GetId(entity interface{}) (id uint64, err error) {
-	reading, ok := entity.(*object.Reading)
-	if !ok {
-		// Programming error, OK to panic
-		panic("Object has wrong type")
-	}
-	idString := string(reading.Id)
-	if idString == "" {
-		return 0, nil
-	}
-	return strconv.ParseUint(idString, 10, 64)
+	return entity.(*object.Reading).Id, nil
 }
 
 func (ReadingBinding) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
@@ -68,6 +60,8 @@ func flattenModelReading(reading *object.Reading, fbb *flatbuffers.Builder, id u
 	if offsetValueString != Unavailable {
 		ReadingAddValueString(fbb, offsetValueString)
 	}
+	ReadingAddValueInteger(fbb, reading.ValueInteger)
+	ReadingAddValueFloating(fbb, reading.ValueFloating)
 }
 
 func (ReadingBinding) ToObject(bytes []byte) interface{} {
@@ -92,7 +86,7 @@ func toModelReading(src *Reading) *object.Reading {
 	return &object.Reading{
 		Id:            src.Id(),
 		Date:          src.Date(),
-		ValueName:     string(src.ValueString()),
+		ValueName:     string(src.ValueName()),
 		ValueString:   string(src.ValueString()),
 		ValueInteger:  src.ValueInteger(),
 		ValueFloating: src.ValueFloating(),

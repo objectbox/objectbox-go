@@ -21,12 +21,7 @@ func (EventBinding) AddToModel(model *Model) {
 }
 
 func (EventBinding) GetId(entity interface{}) (id uint64, err error) {
-	event, ok := entity.(*object.Event)
-	if !ok {
-		// Programming error, OK to panic
-		panic("Object has wrong type")
-	}
-	return event.Id, nil
+	return entity.(*object.Event).Id, nil
 }
 
 func (EventBinding) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {

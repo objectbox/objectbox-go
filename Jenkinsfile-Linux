@@ -1,0 +1,55 @@
+long buildNumber = env.BUILD_NUMBER as Long
+boolean isMaster = BRANCH_NAME == 'master'
+boolean isPublish = BRANCH_NAME == 'publish'
+String buildName = 'Linux'
+String gradleArgs = '-Dorg.gradle.daemon=false --stacktrace --settings-file settings-linux.gradle'
+String uploadArchivesArgs = "$gradleArgs -PpreferredRepo=local uploadArchives"
+def COLOR_MAP = ['SUCCESS': 'good', 'FAILURE': 'danger', 'UNSTABLE': 'danger', 'ABORTED': 'danger']
+
+// https://jenkins.io/doc/book/pipeline/syntax/
+pipeline {
+    agent {
+    node {
+        label 'linux'
+        }
+    }
+    environment {
+        GOPATH = "${env.WORKSPACE}/go"
+        LD_LIBRARY_PATH = "${WORKSPACE}/lib"  // We assume it was empty
+        CGO_LDFLAGS = "-L${WORKSPACE}/lib  -Wl,-rpath -Wl,${WORKSPACE}/lib"   // Used by the compiler
+    }
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '500', artifactNumToKeepStr: '500'))
+        timeout(time: 6, unit: 'HOURS') // If build hangs (regular build should be much quicker)
+    }
+
+    stages {
+        stage('init') {
+            steps {
+                sh 'git submodule update --init --recursive'
+                sh 'go get github.com/google/flatbuffers/go'
+            }
+        }
+        stage('get-obx-binary') {
+            steps {
+                sh 'wget -N https://raw.githubusercontent.com/objectbox/objectbox-c/master/download.sh'
+                sh 'chmod +x download.sh'
+                sh './download.sh --quiet'
+            }
+        }
+
+        stage('build') {
+            steps {
+                // Go expects things to be in very specific locations (within $GOPATH)
+                sh 'mkdir -p ${GOPATH}/src/github.com/objectbox && cd  ${GOPATH}/src/github.com/objectbox && ln -sv $WORKSPACE objectbox-go'
+
+                sh 'cd ${GOPATH}/src/github.com/objectbox/objectbox-go/objectbox && go build && go install'
+            }
+        }
+        stage('test') {
+            steps {
+                sh 'cd test && go test'
+            }
+        }
+    }
+}

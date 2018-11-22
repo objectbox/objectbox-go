@@ -44,7 +44,7 @@ func (txn *Transaction) Commit() (err error) {
 }
 
 func (txn *Transaction) createCursor(typeId TypeId, binding ObjectBinding) (*Cursor, error) {
-	ccursor := C.obx_cursor_create(txn.txn, C.uint(typeId))
+	ccursor := C.obx_cursor_create(txn.txn, C.obx_schema_id(typeId))
 	if ccursor == nil {
 		return nil, createError()
 	}

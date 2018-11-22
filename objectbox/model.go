@@ -81,7 +81,7 @@ func (model *Model) LastEntityId(id TypeId, uid uint64) {
 	if model.Err != nil {
 		return
 	}
-	C.obx_model_last_entity_id(model.model, C.uint(id), C.ulong(uid))
+	C.obx_model_last_entity_id(model.model, C.obx_schema_id(id), C.obx_uid(uid))
 }
 
 func (model *Model) Entity(name string, id TypeId, uid uint64) (err error) {
@@ -91,7 +91,7 @@ func (model *Model) Entity(name string, id TypeId, uid uint64) (err error) {
 	cname := C.CString(name)
 	defer C.free(unsafe.Pointer(cname))
 
-	rc := C.obx_model_entity(model.model, cname, C.uint(id), C.ulong(uid))
+	rc := C.obx_model_entity(model.model, cname, C.obx_schema_id(id), C.obx_uid(uid))
 	if rc != 0 {
 		err = createError()
 		model.Err = err
@@ -106,7 +106,7 @@ func (model *Model) EntityLastPropertyId(id TypeId, uid uint64) (err error) {
 	if model.Err != nil {
 		return model.Err
 	}
-	rc := C.obx_model_entity_last_property_id(model.model, C.uint(id), C.ulong(uid))
+	rc := C.obx_model_entity_last_property_id(model.model, C.obx_schema_id(id), C.obx_uid(uid))
 	if rc != 0 {
 		err = createError()
 		model.Err = err
@@ -121,7 +121,7 @@ func (model *Model) Property(name string, propertyType int, id TypeId, uid uint6
 	cname := C.CString(name)
 	defer C.free(unsafe.Pointer(cname))
 
-	rc := C.obx_model_property(model.model, cname, C.OBPropertyType(propertyType), C.uint(id), C.ulong(uid))
+	rc := C.obx_model_property(model.model, cname, C.OBPropertyType(propertyType), C.obx_schema_id(id), C.obx_uid(uid))
 	if rc != 0 {
 		err = createError()
 		model.Err = err

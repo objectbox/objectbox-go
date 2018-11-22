@@ -13,8 +13,8 @@ func TestQueryBuilder(t *testing.T) {
 	box := objectBox.Box(1)
 	box.RemoveAll()
 
-	qb, err := objectBox.Query(1)
-	assert.NoErr(t, err)
+	qb := objectBox.Query(1)
+	assert.NoErr(t, qb.Err)
 	query, err := qb.BuildAndClose()
 	assert.NoErr(t, err)
 	defer query.Close()
@@ -69,8 +69,8 @@ func TestQueryBuilder_StringEq(t *testing.T) {
 
 	iot.PutEvents(objectBox, 3)
 
-	qb, err := objectBox.Query(1)
-	assert.NoErr(t, err)
+	qb := objectBox.Query(1)
+	assert.NoErr(t, qb.Err)
 	defer qb.Close()
 	qb.StringEq(2, "device 2", false)
 	query, err := qb.Build()
@@ -83,6 +83,14 @@ func TestQueryBuilder_StringEq(t *testing.T) {
 		events := slice.([]*iot.Event)
 		assert.EqInt(t, 1, len(events))
 		assert.EqString(t, "device 2", events[0].Device)
+
+		query.SetParamString(2, "device 1")
+		slice, err = query.Find(cursor)
+		assert.NoErr(t, err)
+		events = slice.([]object.Event)
+		assert.EqInt(t, 1, len(events))
+		assert.EqString(t, "device 1", events[0].Device)
+
 		return
 	})
 }
@@ -96,8 +104,8 @@ func TestQueryBuilder_IntBetween(t *testing.T) {
 
 	events := iot.PutEvents(objectBox, 6)
 
-	qb, err := objectBox.Query(1)
-	assert.NoErr(t, err)
+	qb := objectBox.Query(1)
+	assert.NoErr(t, qb.Err)
 	defer qb.Close()
 	start := events[2].Date
 	end := events[4].Date

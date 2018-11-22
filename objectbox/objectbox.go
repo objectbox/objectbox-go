@@ -87,6 +87,7 @@ func (ob *ObjectBox) RunInTxn(readOnly bool, txnFun TxnFun) (err error) {
 		txn, err = ob.BeginTxn()
 	}
 	if err != nil {
+		runtime.UnlockOSThread()
 		return
 	}
 
@@ -173,7 +174,7 @@ func (ob *ObjectBox) Box(typeId TypeId) *Box {
 
 func (ob *ObjectBox) BoxOrError(typeId TypeId) (*Box, error) {
 	binding := ob.getBindingById(typeId)
-	cbox := C.obx_box_create(ob.store, C.uint(typeId))
+	cbox := C.obx_box_create(ob.store, C.obx_schema_id(typeId))
 	if cbox == nil {
 		return nil, createError()
 	}
@@ -193,15 +194,17 @@ func (ob *ObjectBox) AwaitAsyncCompletion() *ObjectBox {
 	return ob
 }
 
-func (ob *ObjectBox) Query(typeId TypeId) (*QueryBuilder, error) {
-	qb := C.obx_qb_create(ob.store, C.uint(typeId))
+func (ob *ObjectBox) Query(typeId TypeId) *QueryBuilder {
+	qb := C.obx_qb_create(ob.store, C.obx_schema_id(typeId))
+	var err error = nil
 	if qb == nil {
-		return nil, createError()
+		err = createError()
 	}
 	return &QueryBuilder{
 		objectBox: ob,
 		cqb:       qb,
-	}, nil
+		Err:       err,
+	}
 }
 
 func (bytesArray *BytesArray) Free() {

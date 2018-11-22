@@ -39,42 +39,13 @@ func ({{$entity.Name}}Binding) AddToModel(model *objectbox.Model) {
     model.EntityLastPropertyId({{$entity.LastPropertyId.GetId}}, {{$entity.LastPropertyId.GetUid}})
 }
 
-func as{{$entity.Name}}(entity interface{}) (*{{$entity.Name}}, error) {
-    ent, ok := entity.(*{{$entity.Name}})
-    if !ok {
-        // Programming error, OK to panic
-        // TODO don't panic here, handle in the caller if necessary to panic
-        panic("Object has wrong type, expecting '{{$entity.Name}}'")
-    }
-    return ent, nil
-}
-
-func as{{$entity.Name}}s(entities interface{}) ([]*{{$entity.Name}}, error) {
-    ent, ok := entities.([]*{{$entity.Name}})
-    if !ok {
-        // Programming error, OK to panic
-        // TODO don't panic here, handle in the caller if necessary to panic
-        panic("Object has wrong type, expecting '{{$entity.Name}}'")
-    }
-    return ent, nil
-}
-
 func ({{$entity.Name}}Binding) GetId(entity interface{}) (uint64, error) {
-	if ent, err := as{{$entity.Name}}(entity); err != nil {
-	    return 0, err
-	} else {
-	    return ent.{{$entity.IdProperty.Name}}, nil
-	}
+	return entity.(*{{$entity.Name}}).{{$entity.IdProperty.Name}}, nil
 }
 
 func ({{$entity.Name}}Binding) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
-    {{if $entity.HasNonIdProperty}}ent{{else}}_{{end}}, err := as{{$entity.Name}}(entity)
-    if err != nil {
-        // TODO return error and panic in the caller if really, really necessary
-        panic(err)
-	}
+    {{if $entity.HasNonIdProperty}}ent := entity.(*{{$entity.Name}}){{end -}}
 
-    // prepare the "offset" properties
     {{- range $property := $entity.Properties}}
         {{- if eq $property.FbType "UOffsetT"}}
             {{- if eq $property.GoType "string"}}
@@ -136,7 +107,7 @@ func (box *{{$entity.Name}}Box) Get(id uint64) (*{{$entity.Name}}, error) {
 	} else if entity == nil {
 		return nil, nil
 	}
-	return as{{$entity.Name}}(entity)
+	return entity.(*{{$entity.Name}}), nil
 }
 
 func (box *{{$entity.Name}}Box) GetAll() ([]*{{$entity.Name}}, error) {
@@ -144,7 +115,7 @@ func (box *{{$entity.Name}}Box) GetAll() ([]*{{$entity.Name}}, error) {
 	if err != nil {
 		return nil, err
 	}
-	return as{{$entity.Name}}s(entities)
+	return entities.([]*{{$entity.Name}}), nil
 }
 
 func (box *{{$entity.Name}}Box) Remove(entity *{{$entity.Name}}) (err error) {

@@ -36,42 +36,12 @@ func (TypefulBinding) AddToModel(model *objectbox.Model) {
 	model.EntityLastPropertyId(19, 7373105480197164748)
 }
 
-func asTypeful(entity interface{}) (*Typeful, error) {
-	ent, ok := entity.(*Typeful)
-	if !ok {
-		// Programming error, OK to panic
-		// TODO don't panic here, handle in the caller if necessary to panic
-		panic("Object has wrong type, expecting 'Typeful'")
-	}
-	return ent, nil
-}
-
-func asTypefuls(entities interface{}) ([]*Typeful, error) {
-	ent, ok := entities.([]*Typeful)
-	if !ok {
-		// Programming error, OK to panic
-		// TODO don't panic here, handle in the caller if necessary to panic
-		panic("Object has wrong type, expecting 'Typeful'")
-	}
-	return ent, nil
-}
-
 func (TypefulBinding) GetId(entity interface{}) (uint64, error) {
-	if ent, err := asTypeful(entity); err != nil {
-		return 0, err
-	} else {
-		return ent.Id, nil
-	}
+	return entity.(*Typeful).Id, nil
 }
 
 func (TypefulBinding) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
-	ent, err := asTypeful(entity)
-	if err != nil {
-		// TODO return error and panic in the caller if really, really necessary
-		panic(err)
-	}
-
-	// prepare the "offset" properties
+	ent := entity.(*Typeful)
 	var offsetString = fbutils.CreateStringOffset(fbb, ent.String)
 	var offsetByteVector = fbutils.CreateByteVectorOffset(fbb, ent.ByteVector)
 
@@ -149,7 +119,7 @@ func (box *TypefulBox) Get(id uint64) (*Typeful, error) {
 	} else if entity == nil {
 		return nil, nil
 	}
-	return asTypeful(entity)
+	return entity.(*Typeful), nil
 }
 
 func (box *TypefulBox) GetAll() ([]*Typeful, error) {
@@ -157,7 +127,7 @@ func (box *TypefulBox) GetAll() ([]*Typeful, error) {
 	if err != nil {
 		return nil, err
 	}
-	return asTypefuls(entities)
+	return entities.([]*Typeful), nil
 }
 
 func (box *TypefulBox) Remove(entity *Typeful) (err error) {

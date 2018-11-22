@@ -19,42 +19,12 @@ func (CBinding) AddToModel(model *objectbox.Model) {
 	model.EntityLastPropertyId(3, 2661732831099943416)
 }
 
-func asC(entity interface{}) (*C, error) {
-	ent, ok := entity.(*C)
-	if !ok {
-		// Programming error, OK to panic
-		// TODO don't panic here, handle in the caller if necessary to panic
-		panic("Object has wrong type, expecting 'C'")
-	}
-	return ent, nil
-}
-
-func asCs(entities interface{}) ([]*C, error) {
-	ent, ok := entities.([]*C)
-	if !ok {
-		// Programming error, OK to panic
-		// TODO don't panic here, handle in the caller if necessary to panic
-		panic("Object has wrong type, expecting 'C'")
-	}
-	return ent, nil
-}
-
 func (CBinding) GetId(entity interface{}) (uint64, error) {
-	if ent, err := asC(entity); err != nil {
-		return 0, err
-	} else {
-		return ent.Id, nil
-	}
+	return entity.(*C).Id, nil
 }
 
 func (CBinding) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
-	ent, err := asC(entity)
-	if err != nil {
-		// TODO return error and panic in the caller if really, really necessary
-		panic(err)
-	}
-
-	// prepare the "offset" properties
+	ent := entity.(*C)
 
 	// build the FlatBuffers object
 	fbb.StartObject(3)
@@ -96,7 +66,7 @@ func (box *CBox) Get(id uint64) (*C, error) {
 	} else if entity == nil {
 		return nil, nil
 	}
-	return asC(entity)
+	return entity.(*C), nil
 }
 
 func (box *CBox) GetAll() ([]*C, error) {
@@ -104,7 +74,7 @@ func (box *CBox) GetAll() ([]*C, error) {
 	if err != nil {
 		return nil, err
 	}
-	return asCs(entities)
+	return entities.([]*C), nil
 }
 
 func (box *CBox) Remove(entity *C) (err error) {

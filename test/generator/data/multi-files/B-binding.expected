@@ -20,42 +20,12 @@ func (BBinding) AddToModel(model *objectbox.Model) {
 	model.EntityLastPropertyId(3, 1774932891286980153)
 }
 
-func asB(entity interface{}) (*B, error) {
-	ent, ok := entity.(*B)
-	if !ok {
-		// Programming error, OK to panic
-		// TODO don't panic here, handle in the caller if necessary to panic
-		panic("Object has wrong type, expecting 'B'")
-	}
-	return ent, nil
-}
-
-func asBs(entities interface{}) ([]*B, error) {
-	ent, ok := entities.([]*B)
-	if !ok {
-		// Programming error, OK to panic
-		// TODO don't panic here, handle in the caller if necessary to panic
-		panic("Object has wrong type, expecting 'B'")
-	}
-	return ent, nil
-}
-
 func (BBinding) GetId(entity interface{}) (uint64, error) {
-	if ent, err := asB(entity); err != nil {
-		return 0, err
-	} else {
-		return ent.Id, nil
-	}
+	return entity.(*B).Id, nil
 }
 
 func (BBinding) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
-	ent, err := asB(entity)
-	if err != nil {
-		// TODO return error and panic in the caller if really, really necessary
-		panic(err)
-	}
-
-	// prepare the "offset" properties
+	ent := entity.(*B)
 	var offsetName = fbutils.CreateStringOffset(fbb, ent.Name)
 	var offsetInfo = fbutils.CreateStringOffset(fbb, ent.Info)
 
@@ -101,7 +71,7 @@ func (box *BBox) Get(id uint64) (*B, error) {
 	} else if entity == nil {
 		return nil, nil
 	}
-	return asB(entity)
+	return entity.(*B), nil
 }
 
 func (box *BBox) GetAll() ([]*B, error) {
@@ -109,7 +79,7 @@ func (box *BBox) GetAll() ([]*B, error) {
 	if err != nil {
 		return nil, err
 	}
-	return asBs(entities)
+	return entities.([]*B), nil
 }
 
 func (box *BBox) Remove(entity *B) (err error) {

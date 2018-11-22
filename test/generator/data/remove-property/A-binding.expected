@@ -18,42 +18,11 @@ func (ABinding) AddToModel(model *objectbox.Model) {
 	model.EntityLastPropertyId(2, 6050128673802995827)
 }
 
-func asA(entity interface{}) (*A, error) {
-	ent, ok := entity.(*A)
-	if !ok {
-		// Programming error, OK to panic
-		// TODO don't panic here, handle in the caller if necessary to panic
-		panic("Object has wrong type, expecting 'A'")
-	}
-	return ent, nil
-}
-
-func asAs(entities interface{}) ([]*A, error) {
-	ent, ok := entities.([]*A)
-	if !ok {
-		// Programming error, OK to panic
-		// TODO don't panic here, handle in the caller if necessary to panic
-		panic("Object has wrong type, expecting 'A'")
-	}
-	return ent, nil
-}
-
 func (ABinding) GetId(entity interface{}) (uint64, error) {
-	if ent, err := asA(entity); err != nil {
-		return 0, err
-	} else {
-		return ent.Id, nil
-	}
+	return entity.(*A).Id, nil
 }
 
 func (ABinding) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
-	_, err := asA(entity)
-	if err != nil {
-		// TODO return error and panic in the caller if really, really necessary
-		panic(err)
-	}
-
-	// prepare the "offset" properties
 
 	// build the FlatBuffers object
 	fbb.StartObject(2)
@@ -93,7 +62,7 @@ func (box *ABox) Get(id uint64) (*A, error) {
 	} else if entity == nil {
 		return nil, nil
 	}
-	return asA(entity)
+	return entity.(*A), nil
 }
 
 func (box *ABox) GetAll() ([]*A, error) {
@@ -101,7 +70,7 @@ func (box *ABox) GetAll() ([]*A, error) {
 	if err != nil {
 		return nil, err
 	}
-	return asAs(entities)
+	return entities.([]*A), nil
 }
 
 func (box *ABox) Remove(entity *A) (err error) {

@@ -61,10 +61,10 @@ const (
 )
 
 type Model struct {
-	model          *C.OBX_model
-	lastEntityName string
-	lastEntityId   TypeId
-	Err            error
+	model              *C.OBX_model
+	previousEntityName string
+	previousEntityId   TypeId
+	Err                error
 }
 
 func NewModel() (model *Model, err error) {
@@ -84,59 +84,93 @@ func (model *Model) LastEntityId(id TypeId, uid uint64) {
 	C.obx_model_last_entity_id(model.model, C.obx_schema_id(id), C.obx_uid(uid))
 }
 
-func (model *Model) Entity(name string, id TypeId, uid uint64) (err error) {
+func (model *Model) LastIndexId(id TypeId, uid uint64) {
 	if model.Err != nil {
-		return model.Err
+		return
+	}
+	C.obx_model_last_index_id(model.model, C.obx_schema_id(id), C.obx_uid(uid))
+}
+
+func (model *Model) LastRelationId(id TypeId, uid uint64) {
+	if model.Err != nil {
+		return
+	}
+	C.obx_model_last_relation_id(model.model, C.obx_schema_id(id), C.obx_uid(uid))
+}
+
+func (model *Model) Entity(name string, id TypeId, uid uint64) {
+	if model.Err != nil {
+		return
 	}
 	cname := C.CString(name)
 	defer C.free(unsafe.Pointer(cname))
 
 	rc := C.obx_model_entity(model.model, cname, C.obx_schema_id(id), C.obx_uid(uid))
 	if rc != 0 {
-		err = createError()
-		model.Err = err
+		model.Err = createError()
 		return
 	}
-	model.lastEntityName = name
-	model.lastEntityId = id
+	model.previousEntityName = name
+	model.previousEntityId = id
 	return
 }
 
-func (model *Model) EntityLastPropertyId(id TypeId, uid uint64) (err error) {
+func (model *Model) EntityLastPropertyId(id TypeId, uid uint64) {
 	if model.Err != nil {
-		return model.Err
+		return
 	}
 	rc := C.obx_model_entity_last_property_id(model.model, C.obx_schema_id(id), C.obx_uid(uid))
 	if rc != 0 {
-		err = createError()
-		model.Err = err
+		model.Err = createError()
 	}
 	return
 }
 
-func (model *Model) Property(name string, propertyType int, id TypeId, uid uint64) (err error) {
+func (model *Model) Property(name string, propertyType int, id TypeId, uid uint64) {
 	if model.Err != nil {
-		return model.Err
+		return
 	}
 	cname := C.CString(name)
 	defer C.free(unsafe.Pointer(cname))
 
 	rc := C.obx_model_property(model.model, cname, C.OBPropertyType(propertyType), C.obx_schema_id(id), C.obx_uid(uid))
 	if rc != 0 {
-		err = createError()
-		model.Err = err
+		model.Err = createError()
 	}
 	return
 }
 
-func (model *Model) PropertyFlags(propertyFlags int) (err error) {
+func (model *Model) PropertyFlags(propertyFlags int) {
 	if model.Err != nil {
-		return model.Err
+		return
 	}
 	rc := C.obx_model_property_flags(model.model, C.OBPropertyFlags(propertyFlags))
 	if rc != 0 {
-		err = createError()
-		model.Err = err
+		model.Err = createError()
+	}
+	return
+}
+
+func (model *Model) PropertyIndex(id TypeId, uid uint64) {
+	if model.Err != nil {
+		return
+	}
+	rc := C.obx_model_property_index_id(model.model, C.obx_schema_id(id), C.obx_uid(uid))
+	if rc != 0 {
+		model.Err = createError()
+	}
+	return
+}
+
+func (model *Model) PropertyRelation(targetEntityName string, indexId TypeId, indexUid uint64) {
+	if model.Err != nil {
+		return
+	}
+	cname := C.CString(targetEntityName)
+	defer C.free(unsafe.Pointer(cname))
+	rc := C.obx_model_property_relation(model.model, cname, C.obx_schema_id(indexId), C.obx_uid(indexUid))
+	if rc != 0 {
+		model.Err = createError()
 	}
 	return
 }

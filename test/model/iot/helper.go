@@ -9,7 +9,7 @@ import (
 )
 
 func CreateObjectBox() *ObjectBox {
-	builder := NewObjectBoxBuilder().Name("iot-test").LastEntityId(2, 10002)
+	builder := NewObjectBoxBuilder().Name("db-iot-test").LastEntityId(2, 10002)
 	builder.LastIndexId(2, 20002006)
 	//objectBox.SetDebugFlags(DebugFlags_LOG_ASYNC_QUEUE)
 	builder.RegisterBinding(binding.EventBinding{})

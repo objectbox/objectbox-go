@@ -9,7 +9,7 @@ import (
 func TestObjectBoxEvents(t *testing.T) {
 	objectBox := CreateObjectBox()
 	box := objectBox.Box(1)
-	box.RemoveAll()
+	assert.NoErr(t, box.RemoveAll())
 	event := Event{
 		Device: "my device",
 	}
@@ -37,7 +37,7 @@ func TestObjectBoxEvents(t *testing.T) {
 func TestObjectBoxReadings(t *testing.T) {
 	objectBox := CreateObjectBox()
 	box := objectBox.Box(2)
-	box.RemoveAll()
+	assert.NoErr(t, box.RemoveAll())
 	reading := Reading{
 		ValueName:    "Temperature",
 		ValueInteger: 77,

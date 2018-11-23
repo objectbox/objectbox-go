@@ -192,9 +192,24 @@ func (binding *Binding) createEntityFromAst(node ast.Node) (err error) {
 	}
 
 	if entity.IdProperty == nil {
-		// TODO what if ID is not defined? what about GetId function?
-		// at the moment we don't allow this; ID is required
-		return fmt.Errorf("field annotated `id` is missing on entity %s", entity.Name)
+		// try to find an ID property by name
+		for _, property := range entity.Properties {
+			if strings.ToLower(property.Name) == "id" && strings.ToLower(property.GoType) == "uint64" {
+				if entity.IdProperty == nil {
+					entity.IdProperty = property
+					property.addObFlag("ID")
+				} else {
+					// fail in case multiple fields match this condition
+					return fmt.Errorf(
+						"id field is missing on entity %s - annotate a field with `id` tag", entity.Name)
+				}
+			}
+		}
+
+		if entity.IdProperty == nil {
+			return fmt.Errorf("id field is missing on entity %s - either annotate a field with `id` tag "+
+				"or use a uint64 field named 'Id/id/ID'", entity.Name)
+		}
 	}
 
 	binding.Entities = append(binding.Entities, entity)

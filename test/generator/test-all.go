@@ -2,7 +2,6 @@ package generator
 
 import (
 	"bytes"
-	"fmt"
 	"io/ioutil"
 	"math/rand"
 	"os"
@@ -27,8 +26,6 @@ func generateAllDirs(t *testing.T, overwriteExpected bool) {
 			continue
 		}
 
-		fmt.Println("Testing " + folder.Name())
-
 		var dir = path.Join(datadir, folder.Name())
 
 		modelInfoFile := path.Join(dir, "objectbox-model-info.json")
@@ -38,7 +35,10 @@ func generateAllDirs(t *testing.T, overwriteExpected bool) {
 		// run the generation twice, first time with deleting old modelInfo
 		for i := 0; i <= 1; i++ {
 			if i == 0 {
+				t.Logf("Testing %s without model info JSON", folder.Name())
 				os.Remove(modelInfoFile)
+			} else {
+				t.Logf("Testing %s with previous model info JSON", folder.Name())
 			}
 
 			if fileExists(modelInfoInitialFile) {
@@ -77,6 +77,7 @@ func generateAllFiles(t *testing.T, overwriteExpected bool, dir string, modelInf
 		if strings.HasSuffix(sourceFile, "binding.go") || strings.HasSuffix(sourceFile, "expected") {
 			continue
 		}
+		t.Logf("  %s", path.Base(sourceFile))
 
 		err = generator.Process(sourceFile, modelInfoFile)
 
@@ -86,7 +87,7 @@ func generateAllFiles(t *testing.T, overwriteExpected bool, dir string, modelInf
 			if err == nil {
 				assert.Failf(t, "Unexpected PASS on a negative test %s", sourceFile)
 			} else {
-				return
+				continue
 			}
 		}
 

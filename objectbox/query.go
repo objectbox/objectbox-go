@@ -24,7 +24,7 @@ func (query *Query) Close() (err error) {
 }
 
 func (query *Query) Find() (slice interface{}, err error) {
-	err = query.objectBox.RunWithCursor(query.typeId, true, func(cursor *Cursor) error {
+	err = query.objectBox.runWithCursor(query.typeId, true, func(cursor *Cursor) error {
 		var errInner error
 		slice, errInner = query.find(cursor)
 		return errInner
@@ -43,7 +43,7 @@ func (query *Query) find(cursor *Cursor) (slice interface{}, err error) {
 
 // Won't be public in the future
 func (query *Query) FindBytes() (bytesArray *BytesArray, err error) {
-	err = query.objectBox.RunWithCursor(query.typeId, true, func(cursor *Cursor) error {
+	err = query.objectBox.runWithCursor(query.typeId, true, func(cursor *Cursor) error {
 		var errInner error
 		bytesArray, errInner = query.findBytes(cursor)
 		return errInner

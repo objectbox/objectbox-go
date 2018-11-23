@@ -132,7 +132,7 @@ func (ob ObjectBox) getBindingByName(typeName string) ObjectBinding {
 	return binding
 }
 
-func (ob *ObjectBox) RunWithCursor(typeId TypeId, readOnly bool, cursorFun CursorFun) (err error) {
+func (ob *ObjectBox) runWithCursor(typeId TypeId, readOnly bool, cursorFun CursorFun) (err error) {
 	binding := ob.getBindingById(typeId)
 	return ob.RunInTxn(readOnly, func(txn *Transaction) (err error) {
 		cursor, err := txn.createCursor(typeId, binding)

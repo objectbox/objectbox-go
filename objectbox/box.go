@@ -83,7 +83,7 @@ func (box *Box) finishFbbAndPutAsync(fbb *flatbuffers.Builder, id uint64, checkF
 }
 
 func (box *Box) Put(object interface{}) (id uint64, err error) {
-	err = box.objectBox.RunWithCursor(box.typeId, false, func(cursor *Cursor) error {
+	err = box.objectBox.runWithCursor(box.typeId, false, func(cursor *Cursor) error {
 		var errInner error
 		id, errInner = cursor.Put(object)
 		return errInner
@@ -92,19 +92,19 @@ func (box *Box) Put(object interface{}) (id uint64, err error) {
 }
 
 func (box *Box) Remove(id uint64) (err error) {
-	return box.objectBox.RunWithCursor(box.typeId, false, func(cursor *Cursor) error {
+	return box.objectBox.runWithCursor(box.typeId, false, func(cursor *Cursor) error {
 		return cursor.Remove(id)
 	})
 }
 
 func (box *Box) RemoveAll() (err error) {
-	return box.objectBox.RunWithCursor(box.typeId, false, func(cursor *Cursor) error {
+	return box.objectBox.runWithCursor(box.typeId, false, func(cursor *Cursor) error {
 		return cursor.RemoveAll()
 	})
 }
 
 func (box *Box) Count() (count uint64, err error) {
-	err = box.objectBox.RunWithCursor(box.typeId, true, func(cursor *Cursor) error {
+	err = box.objectBox.runWithCursor(box.typeId, true, func(cursor *Cursor) error {
 		var errInner error
 		count, errInner = cursor.Count()
 		return errInner
@@ -113,7 +113,7 @@ func (box *Box) Count() (count uint64, err error) {
 }
 
 func (box *Box) Get(id uint64) (object interface{}, err error) {
-	err = box.objectBox.RunWithCursor(box.typeId, true, func(cursor *Cursor) error {
+	err = box.objectBox.runWithCursor(box.typeId, true, func(cursor *Cursor) error {
 		var errInner error
 		object, errInner = cursor.Get(id)
 		return errInner
@@ -122,7 +122,7 @@ func (box *Box) Get(id uint64) (object interface{}, err error) {
 }
 
 func (box *Box) GetAll() (slice interface{}, err error) {
-	err = box.objectBox.RunWithCursor(box.typeId, true, func(cursor *Cursor) error {
+	err = box.objectBox.runWithCursor(box.typeId, true, func(cursor *Cursor) error {
 		var errInner error
 		slice, errInner = cursor.GetAll()
 		return errInner

@@ -16,7 +16,8 @@ func TestTransactionInsert(t *testing.T) {
 
 	var insert = uint64(1000000)
 
-	assert.NoErr(t, ob.RunInTxn(false, func(tx *objectbox.Transaction) (err error) {
+	testObx := objectbox.InternalTestAccessObjectBox{ObjectBox: ob}
+	assert.NoErr(t, testObx.RunInTxn(false, func(tx *objectbox.Transaction) (err error) {
 		cursor, err := tx.CursorForName("Event")
 		assert.NoErr(t, err)
 

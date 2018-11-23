@@ -62,7 +62,7 @@ func (ob *ObjectBox) Close() {
 	}
 }
 
-func (ob *ObjectBox) BeginTxn() (txn *Transaction, err error) {
+func (ob *ObjectBox) beginTxn() (txn *Transaction, err error) {
 	var ctxn = C.obx_txn_begin(ob.store)
 	if ctxn == nil {
 		return nil, createError()
@@ -70,7 +70,7 @@ func (ob *ObjectBox) BeginTxn() (txn *Transaction, err error) {
 	return &Transaction{ctxn, ob}, nil
 }
 
-func (ob *ObjectBox) BeginTxnRead() (txn *Transaction, err error) {
+func (ob *ObjectBox) beginTxnRead() (txn *Transaction, err error) {
 	var ctxn = C.obx_txn_begin_read(ob.store)
 	if ctxn == nil {
 		return nil, createError()
@@ -78,13 +78,13 @@ func (ob *ObjectBox) BeginTxnRead() (txn *Transaction, err error) {
 	return &Transaction{ctxn, ob}, nil
 }
 
-func (ob *ObjectBox) RunInTxn(readOnly bool, txnFun TxnFun) (err error) {
+func (ob *ObjectBox) runInTxn(readOnly bool, txnFun TxnFun) (err error) {
 	runtime.LockOSThread()
 	var txn *Transaction
 	if readOnly {
-		txn, err = ob.BeginTxnRead()
+		txn, err = ob.beginTxnRead()
 	} else {
-		txn, err = ob.BeginTxn()
+		txn, err = ob.beginTxn()
 	}
 	if err != nil {
 		runtime.UnlockOSThread()
@@ -134,7 +134,7 @@ func (ob ObjectBox) getBindingByName(typeName string) ObjectBinding {
 
 func (ob *ObjectBox) runWithCursor(typeId TypeId, readOnly bool, cursorFun CursorFun) (err error) {
 	binding := ob.getBindingById(typeId)
-	return ob.RunInTxn(readOnly, func(txn *Transaction) (err error) {
+	return ob.runInTxn(readOnly, func(txn *Transaction) (err error) {
 		cursor, err := txn.createCursor(typeId, binding)
 		if err != nil {
 			return

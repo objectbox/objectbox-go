@@ -41,6 +41,16 @@ func (str *IdUid) GetUid() (uid, error) {
 	return str.getComponent(1, 64)
 }
 
+func (str *IdUid) Get() (id, uid, error) {
+	if id, err := str.GetId(); err != nil {
+		return 0, 0, err
+	} else if uid, err := str.GetUid(); err != nil {
+		return 0, 0, err
+	} else {
+		return id, uid, nil
+	}
+}
+
 func (str IdUid) getComponent(n, bitsize int) (uint64, error) {
 	if len(str) == 0 {
 		return 0, fmt.Errorf("is undefined")

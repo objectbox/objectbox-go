@@ -41,8 +41,19 @@ type Property struct {
 	ObFlags     []string
 	GoType      string
 	FbType      string
+	Relation    *Relation
+	Index       *Index
 
 	entity *Entity
+}
+
+type Relation struct {
+	Target string
+}
+
+type Index struct {
+	Id  id
+	Uid uid
 }
 
 type Annotation struct {
@@ -301,13 +312,31 @@ func (property *Property) setType(t ast.Expr) error {
 		}
 	}
 
-	// TODO relation
+	if property.Annotations["link"] != nil {
+		if property.ObType != "Long" {
+			return fmt.Errorf("invalid underlying type (%s) for relation field", property.ObType)
+		} else {
+			property.ObType = "Relation"
+		}
+		property.Relation = &Relation{
+			Target: property.Annotations["link"].Value,
+		}
+	}
 
 	return nil
 }
 
 func (property *Property) addObFlag(flag string) {
 	property.ObFlags = append(property.ObFlags, flag)
+}
+
+func (property *Property) setIndex() error {
+	if property.Index != nil {
+		return fmt.Errorf("index is already defined")
+	} else {
+		property.Index = &Index{}
+		return nil
+	}
 }
 
 func (property *Property) setObFlags(f ast.Field) error {
@@ -330,10 +359,24 @@ func (property *Property) setObFlags(f ast.Field) error {
 		default:
 			return fmt.Errorf("unknown index type %s", property.Annotations["index"].Value)
 		}
+
+		if err := property.setIndex(); err != nil {
+			return err
+		}
 	}
 
 	if property.Annotations["unique"] != nil {
 		property.addObFlag("UNIQUE")
+
+		if err := property.setIndex(); err != nil {
+			return err
+		}
+	}
+
+	if property.Relation != nil {
+		if err := property.setIndex(); err != nil {
+			return err
+		}
 	}
 
 	return nil

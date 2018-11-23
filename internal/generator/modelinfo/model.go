@@ -48,7 +48,7 @@ func (model *ModelInfo) Validate() (err error) {
 		if entity.model == nil {
 			entity.model = model
 		} else if entity.model != model {
-			return fmt.Errorf("entity %s %s has incorrect model reference", entity.Name, entity.Id)
+			return fmt.Errorf("entity %s %s has incorrect parent model reference", entity.Name, entity.Id)
 		}
 
 		err = entity.Validate()
@@ -86,7 +86,7 @@ func (model *ModelInfo) Validate() (err error) {
 
 	if len(model.LastIndexId) > 0 {
 		if err = model.LastIndexId.Validate(); err != nil {
-			return fmt.Errorf("lastEntityId: %s", err)
+			return fmt.Errorf("lastIndexId: %s", err)
 		}
 	}
 
@@ -132,7 +132,6 @@ func (model *ModelInfo) CreateEntity() (*Entity, error) {
 		id = model.LastEntityId.getIdSafe() + 1
 	}
 
-	// generate a unique UID
 	uniqueUid, err := model.generateUid()
 
 	if err != nil {
@@ -163,6 +162,22 @@ func (model *ModelInfo) generateUid() (result uid, err error) {
 	}
 
 	return result, err
+}
+
+func (model *ModelInfo) createIndex() (IdUid, error) {
+	var id id = 1
+	if len(model.LastIndexId) > 0 {
+		id = model.LastIndexId.getIdSafe() + 1
+	}
+
+	uniqueUid, err := model.generateUid()
+
+	if err != nil {
+		return "", err
+	}
+
+	model.LastIndexId = CreateIdUid(id, uniqueUid)
+	return model.LastIndexId, nil
 }
 
 // recursively checks whether given UID is present in the model

@@ -21,7 +21,6 @@ type Typeful struct {
 	Float32    float32
 	Float64    float64
 	Date       uint64 `date`
-	// TODO Relation uint64 ``
 	// TODO Complex64  complex64
 	// TODO Complex128 complex128
 }

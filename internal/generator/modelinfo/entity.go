@@ -24,6 +24,10 @@ func CreateEntity(model *ModelInfo, id id, uid uid) *Entity {
 
 // performs initial validation of loaded data so that it doesn't have to be checked in each function
 func (entity *Entity) Validate() (err error) {
+	if entity.model == nil {
+		return fmt.Errorf("undefined parent model")
+	}
+
 	if err = entity.Id.Validate(); err != nil {
 		return err
 	}
@@ -42,6 +46,13 @@ func (entity *Entity) Validate() (err error) {
 
 		var found = false
 		for _, property := range entity.Properties {
+			if property.entity == nil {
+				property.entity = entity
+			} else if property.entity != entity {
+				return fmt.Errorf("property %s %s has incorrect parent entity reference",
+					property.Name, property.Id)
+			}
+
 			if lastId == property.Id.getIdSafe() {
 				if lastUid != property.Id.getUidSafe() {
 					return fmt.Errorf("lastPropertyId %s doesn't match property %s %s",
@@ -100,14 +111,13 @@ func (entity *Entity) CreateProperty() (*Property, error) {
 		id = entity.LastPropertyId.getIdSafe() + 1
 	}
 
-	// generate a unique UID
 	uniqueUid, err := entity.model.generateUid()
 
 	if err != nil {
 		return nil, err
 	}
 
-	var property = CreateProperty(id, uniqueUid)
+	var property = CreateProperty(entity, id, uniqueUid)
 
 	entity.Properties = append(entity.Properties, property)
 	entity.LastPropertyId = property.Id
@@ -125,6 +135,13 @@ func (entity *Entity) RemoveProperty(property *Property) error {
 
 	if indexToRemove < 0 {
 		return fmt.Errorf("can't remove property %s %s - not found", property.Name, property.Id)
+	}
+
+	// remove index from the property
+	if property.IndexId != nil {
+		if err := property.RemoveIndex(); err != nil {
+			return err
+		}
 	}
 
 	// remove from list

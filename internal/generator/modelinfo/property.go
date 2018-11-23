@@ -6,16 +6,23 @@ type Property struct {
 	Id      IdUid  `json:"id"`
 	Name    string `json:"name"`
 	IndexId *IdUid `json:"indexId,omitempty"`
+
+	entity *Entity
 }
 
-func CreateProperty(id id, uid uid) *Property {
+func CreateProperty(entity *Entity, id id, uid uid) *Property {
 	return &Property{
-		Id: CreateIdUid(id, uid),
+		entity: entity,
+		Id:     CreateIdUid(id, uid),
 	}
 }
 
 // performs initial validation of loaded data so that it doesn't have to be checked in each function
 func (property *Property) Validate() error {
+	if property.entity == nil {
+		return fmt.Errorf("undefined parent entity")
+	}
+
 	if err := property.Id.Validate(); err != nil {
 		return err
 	}
@@ -29,6 +36,31 @@ func (property *Property) Validate() error {
 	if len(property.Name) == 0 {
 		return fmt.Errorf("name is undefined")
 	}
+
+	return nil
+}
+
+func (property *Property) CreateIndex() error {
+	if property.IndexId != nil {
+		return fmt.Errorf("can't create an index - it already exists")
+	}
+
+	if indexId, err := property.entity.model.createIndex(); err != nil {
+		return err
+	} else {
+		property.IndexId = &indexId
+		return nil
+	}
+}
+
+func (property *Property) RemoveIndex() error {
+	if property.IndexId == nil {
+		return fmt.Errorf("can't remove index - it's not defined")
+	}
+
+	property.entity.model.RetiredIndexUids = append(property.entity.model.RetiredIndexUids, property.IndexId.getUidSafe())
+
+	property.IndexId = nil
 
 	return nil
 }

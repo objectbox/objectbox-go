@@ -9,12 +9,16 @@ import "C"
 
 import (
 	"strconv"
+	"unsafe"
 )
 
 type ObjectBoxBuilder struct {
-	name  string
 	model *Model
 	Err   error
+
+	name        string
+	maxSizeInKb uint64
+	maxReaders  uint
 
 	lastEntityId  TypeId
 	lastEntityUid uint64
@@ -54,6 +58,16 @@ func NewObjectBoxBuilder() (builder *ObjectBoxBuilder) {
 
 func (builder *ObjectBoxBuilder) Name(name string) *ObjectBoxBuilder {
 	builder.name = name
+	return builder
+}
+
+func (builder *ObjectBoxBuilder) MaxSizeInKb(maxSizeInKb uint64) *ObjectBoxBuilder {
+	builder.maxSizeInKb = maxSizeInKb
+	return builder
+}
+
+func (builder *ObjectBoxBuilder) MaxReaders(maxReaders uint) *ObjectBoxBuilder {
+	builder.maxReaders = maxReaders
 	return builder
 }
 
@@ -118,13 +132,17 @@ func (builder *ObjectBoxBuilder) Build() (objectBox *ObjectBox, err error) {
 		builder.model.LastRelationId(builder.lastRelationId, builder.lastRelationUid)
 	}
 
-	// TODO implement or remove
-	//fmt.Println("Ignoring DB name: " + builder.name)
-	//cname := C.CString(builder.name)
-	//defer C.free(unsafe.Pointer(cname))
+	coptions := C.struct_OBX_store_options{}
+	if builder.name != "" {
+		cname := C.CString(builder.name)
+		defer C.free(unsafe.Pointer(cname))
+		coptions.directory = cname
+	}
+	coptions.maxReaders = C.uint(builder.maxReaders)            // Zero is the default on both sides
+	coptions.maxDbSizeInKByte = C.uint64_t(builder.maxSizeInKb) // Zero is the default on both sides
 
 	objectBox = &ObjectBox{}
-	objectBox.store = C.obx_store_open(builder.model.model, nil)
+	objectBox.store = C.obx_store_open(builder.model.model, &coptions)
 	if objectBox.store == nil {
 		objectBox = nil
 		err = createError()

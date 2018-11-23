@@ -25,7 +25,7 @@ go get github.com/objectbox/objectbox-go
 wget https://raw.githubusercontent.com/objectbox/objectbox-c/master/download.sh
 bash ./download.sh
 
-go install $GOPATH/src/github.com/objectbox/objectbox-go/cmd/objectbox-bindings/
+go install $GOPATH/src/github.com/objectbox/objectbox-go/cmd/objectbox-gogen/
 ```
 
 See [installation docs](https://golang.objectbox.io/install) for more details and further instructions.

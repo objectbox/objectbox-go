@@ -1,6 +1,6 @@
 package iot
 
-//go:generate objectbox-bindings
+//go:generate objectbox-gogen
 
 type Event struct {
 	Id     uint64 `id`

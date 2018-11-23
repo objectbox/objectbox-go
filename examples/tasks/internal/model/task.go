@@ -1,6 +1,6 @@
 package model
 
-//go:generate objectbox-bindings
+//go:generate objectbox-gogen
 
 type Task struct {
 	Id           uint64 `id`

@@ -24,7 +24,7 @@ type Box struct {
 	// Must be used in combination with fbbInUseAtomic
 	fbb *flatbuffers.Builder
 
-	// Values 0 (unused) or 1 (in use); use only with CompareAndSwapInt32
+	// Values 0 (fbb available) or 1 (fbb in use); use only with CompareAndSwapInt32
 	fbbInUseAtomic uint32
 }
 
@@ -45,6 +45,21 @@ func (box *Box) idForPut(idCandidate uint64) (id uint64, err error) {
 	return
 }
 
+// Puts the given object asynchronously (using another, internal, thread) for better performance.
+//
+// There are two main use cases:
+//
+// 1) "Put & Forget:" you gain faster puts as you don't have to wait for the transaction to finish.
+//
+// 2) Many small transactions: if your write load is typically a lot of individual puts that happen in parallel,
+// this will merge small transactions into bigger ones. This results in a significant gain in overall throughput.
+//
+//
+// In situations with (extremely) high async load, this method may be throttled (~1ms) or delayed (<1s).
+// In the unlikely event that the object could not be enqueued after delaying, an error will be returned.
+//
+// Note that this method does not give you hard durability guarantees like the synchronous Put provides.
+// There is a small time window (typically 3 ms) in which the data may not have been committed durably yet.
 func (box *Box) PutAsync(object interface{}) (id uint64, err error) {
 	idFromObject, err := box.binding.GetId(object)
 	if err != nil {

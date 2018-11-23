@@ -8,6 +8,7 @@ package objectbox
 import "C"
 
 import (
+	"reflect"
 	"sync/atomic"
 	"unsafe"
 
@@ -87,6 +88,33 @@ func (box *Box) Put(object interface{}) (id uint64, err error) {
 		var errInner error
 		id, errInner = cursor.Put(object)
 		return errInner
+	})
+	return
+}
+
+// The given argument must be a slice of the object type this Box represents (usually pointers to objects actually).
+// Returns: IDs of the put objects (in the same order).
+// Note: The slice may be empty or even nil; in both cases, an empty IDs slice and no error is returned.
+func (box *Box) PutAll(slice interface{}) (ids []uint64, err error) {
+	if slice == nil {
+		return []uint64{}, nil
+	}
+	// TODO Check if reflect is fast; we could go via ObjectBinding and concrete types otherwise
+	sliceValue := reflect.ValueOf(slice)
+	count := sliceValue.Len()
+	if count == 0 {
+		return []uint64{}, nil
+	}
+	err = box.objectBox.runWithCursor(box.typeId, false, func(cursor *Cursor) error {
+		ids = make([]uint64, count)
+		for i := 0; i < count; i++ {
+			id, errPut := cursor.Put(sliceValue.Index(i).Interface())
+			if errPut != nil {
+				return errPut
+			}
+			ids[i] = id
+		}
+		return nil
 	})
 	return
 }

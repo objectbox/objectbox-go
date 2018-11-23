@@ -10,7 +10,6 @@ import (
 func TestAsync(t *testing.T) {
 	objectBox := iot.CreateObjectBox()
 	box := iot.BoxForEvent(objectBox)
-
 	err := box.RemoveAll()
 	assert.NoErr(t, err)
 
@@ -18,9 +17,7 @@ func TestAsync(t *testing.T) {
 		Device: "my device",
 	}
 	objectId, err := box.PutAsync(&event)
-	if err != nil {
-		t.Fatalf("Could not add event: %v", err)
-	}
+	assert.NoErr(t, err)
 
 	objectBox.AwaitAsyncCompletion()
 
@@ -29,9 +26,7 @@ func TestAsync(t *testing.T) {
 	assert.Eq(t, uint64(1), count)
 
 	eventRead, err := box.Get(objectId)
-	if err != nil {
-		t.Fatalf("Could not get back event by ID: %v", err)
-	}
+	assert.NoErr(t, err)
 	if objectId != eventRead.Id || event.Device != eventRead.Device {
 		t.Fatalf("Event data error: %v vs. %v", event, eventRead)
 	}
@@ -48,5 +43,44 @@ func TestAsync(t *testing.T) {
 	count, err = box.Count()
 	assert.NoErr(t, err)
 	assert.Eq(t, uint64(0), count)
+}
+
+func TestPutAll(t *testing.T) {
+	objectBox := iot.CreateObjectBox()
+	box := iot.BoxForEvent(objectBox)
+	err := box.RemoveAll()
+	assert.NoErr(t, err)
+
+	event1 := iot.Event{
+		Device: "Pi 3B",
+	}
+	event2 := iot.Event{
+		Device: "Pi Zero",
+	}
+	events := []*iot.Event{&event1, &event2}
+	objectIds, err := box.PutAll(events)
+	assert.NoErr(t, err)
+
+	count, err := box.Count()
+	assert.NoErr(t, err)
+	assert.Eq(t, uint64(2), count)
+
+	eventRead, err := box.Get(objectIds[0])
+	assert.NoErr(t, err)
+	assert.EqString(t, "Pi 3B", eventRead.Device)
+
+	eventRead, err = box.Get(objectIds[1])
+	assert.NoErr(t, err)
+	assert.EqString(t, "Pi Zero", eventRead.Device)
+
+	// And passing nil & empty slice
+	objectIds, err = box.PutAll(nil)
+	assert.NoErr(t, err)
+	assert.EqInt(t, len(objectIds), 0)
+	//noinspection GoPreferNilSlice
+	noEvents := []*iot.Event{}
+	objectIds, err = box.PutAll(noEvents)
+	assert.NoErr(t, err)
+	assert.EqInt(t, len(objectIds), 0)
 
 }

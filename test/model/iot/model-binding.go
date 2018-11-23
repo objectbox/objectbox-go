@@ -8,17 +8,17 @@ import (
 	"github.com/objectbox/objectbox-go/objectbox/fbutils"
 )
 
-type eventEntityInfo struct {
+type event_ struct {
 	Id  objectbox.TypeId
 	Uid uint64
 }
 
-var EventBinding = eventEntityInfo{
+var EventBinding = event_{
 	Id:  1,
 	Uid: 1468539308767086854,
 }
 
-func (eventEntityInfo) AddToModel(model *objectbox.Model) {
+func (event_) AddToModel(model *objectbox.Model) {
 	model.Entity("Event", 1, 1468539308767086854)
 	model.Property("Id", objectbox.PropertyType_Long, 1, 3098166604415018001)
 	model.PropertyFlags(objectbox.PropertyFlags_ID)
@@ -27,11 +27,11 @@ func (eventEntityInfo) AddToModel(model *objectbox.Model) {
 	model.EntityLastPropertyId(3, 5907655274386702697)
 }
 
-func (eventEntityInfo) GetId(entity interface{}) (uint64, error) {
+func (event_) GetId(entity interface{}) (uint64, error) {
 	return entity.(*Event).Id, nil
 }
 
-func (eventEntityInfo) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
+func (event_) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
 	ent := entity.(*Event)
 	var offsetDevice = fbutils.CreateStringOffset(fbb, ent.Device)
 
@@ -42,7 +42,7 @@ func (eventEntityInfo) Flatten(entity interface{}, fbb *flatbuffers.Builder, id 
 	fbb.PrependInt64Slot(2, ent.Date, 0)
 }
 
-func (eventEntityInfo) ToObject(bytes []byte) interface{} {
+func (event_) ToObject(bytes []byte) interface{} {
 	table := &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
@@ -55,11 +55,11 @@ func (eventEntityInfo) ToObject(bytes []byte) interface{} {
 	}
 }
 
-func (eventEntityInfo) MakeSlice(capacity int) interface{} {
+func (event_) MakeSlice(capacity int) interface{} {
 	return make([]*Event, 0, capacity)
 }
 
-func (eventEntityInfo) AppendToSlice(slice interface{}, entity interface{}) interface{} {
+func (event_) AppendToSlice(slice interface{}, entity interface{}) interface{} {
 	return append(slice.([]*Event), entity.(*Event))
 }
 
@@ -95,17 +95,17 @@ func (box *EventBox) Remove(entity *Event) (err error) {
 	return box.Box.Remove(entity.Id)
 }
 
-type readingEntityInfo struct {
+type reading_ struct {
 	Id  objectbox.TypeId
 	Uid uint64
 }
 
-var ReadingBinding = readingEntityInfo{
+var ReadingBinding = reading_{
 	Id:  2,
 	Uid: 5284076134434938613,
 }
 
-func (readingEntityInfo) AddToModel(model *objectbox.Model) {
+func (reading_) AddToModel(model *objectbox.Model) {
 	model.Entity("Reading", 2, 5284076134434938613)
 	model.Property("Id", objectbox.PropertyType_Long, 1, 3968063745680890327)
 	model.PropertyFlags(objectbox.PropertyFlags_ID)
@@ -118,11 +118,11 @@ func (readingEntityInfo) AddToModel(model *objectbox.Model) {
 	model.EntityLastPropertyId(7, 7102253623343671118)
 }
 
-func (readingEntityInfo) GetId(entity interface{}) (uint64, error) {
+func (reading_) GetId(entity interface{}) (uint64, error) {
 	return entity.(*Reading).Id, nil
 }
 
-func (readingEntityInfo) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
+func (reading_) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
 	ent := entity.(*Reading)
 	var offsetValueName = fbutils.CreateStringOffset(fbb, ent.ValueName)
 	var offsetValueString = fbutils.CreateStringOffset(fbb, ent.ValueString)
@@ -138,7 +138,7 @@ func (readingEntityInfo) Flatten(entity interface{}, fbb *flatbuffers.Builder, i
 	fbb.PrependFloat64Slot(6, ent.ValueFloating, 0)
 }
 
-func (readingEntityInfo) ToObject(bytes []byte) interface{} {
+func (reading_) ToObject(bytes []byte) interface{} {
 	table := &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
@@ -155,11 +155,11 @@ func (readingEntityInfo) ToObject(bytes []byte) interface{} {
 	}
 }
 
-func (readingEntityInfo) MakeSlice(capacity int) interface{} {
+func (reading_) MakeSlice(capacity int) interface{} {
 	return make([]*Reading, 0, capacity)
 }
 
-func (readingEntityInfo) AppendToSlice(slice interface{}, entity interface{}) interface{} {
+func (reading_) AppendToSlice(slice interface{}, entity interface{}) interface{} {
 	return append(slice.([]*Reading), entity.(*Reading))
 }
 

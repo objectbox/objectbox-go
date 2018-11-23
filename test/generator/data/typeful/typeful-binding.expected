@@ -8,17 +8,17 @@ import (
 	"github.com/objectbox/objectbox-go/objectbox/fbutils"
 )
 
-type typefulEntityInfo struct {
+type typeful_ struct {
 	Id  objectbox.TypeId
 	Uid uint64
 }
 
-var TypefulBinding = typefulEntityInfo{
+var TypefulBinding = typeful_{
 	Id:  1,
 	Uid: 8717895732742165505,
 }
 
-func (typefulEntityInfo) AddToModel(model *objectbox.Model) {
+func (typeful_) AddToModel(model *objectbox.Model) {
 	model.Entity("Typeful", 1, 8717895732742165505)
 	model.Property("Id", objectbox.PropertyType_Long, 1, 2259404117704393152)
 	model.PropertyFlags(objectbox.PropertyFlags_ID)
@@ -43,11 +43,11 @@ func (typefulEntityInfo) AddToModel(model *objectbox.Model) {
 	model.EntityLastPropertyId(19, 7373105480197164748)
 }
 
-func (typefulEntityInfo) GetId(entity interface{}) (uint64, error) {
+func (typeful_) GetId(entity interface{}) (uint64, error) {
 	return entity.(*Typeful).Id, nil
 }
 
-func (typefulEntityInfo) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
+func (typeful_) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
 	ent := entity.(*Typeful)
 	var offsetString = fbutils.CreateStringOffset(fbb, ent.String)
 	var offsetByteVector = fbutils.CreateByteVectorOffset(fbb, ent.ByteVector)
@@ -75,7 +75,7 @@ func (typefulEntityInfo) Flatten(entity interface{}, fbb *flatbuffers.Builder, i
 	fbb.PrependUint64Slot(18, ent.Date, 0)
 }
 
-func (typefulEntityInfo) ToObject(bytes []byte) interface{} {
+func (typeful_) ToObject(bytes []byte) interface{} {
 	table := &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
@@ -104,11 +104,11 @@ func (typefulEntityInfo) ToObject(bytes []byte) interface{} {
 	}
 }
 
-func (typefulEntityInfo) MakeSlice(capacity int) interface{} {
+func (typeful_) MakeSlice(capacity int) interface{} {
 	return make([]*Typeful, 0, capacity)
 }
 
-func (typefulEntityInfo) AppendToSlice(slice interface{}, entity interface{}) interface{} {
+func (typeful_) AppendToSlice(slice interface{}, entity interface{}) interface{} {
 	return append(slice.([]*Typeful), entity.(*Typeful))
 }
 

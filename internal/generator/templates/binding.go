@@ -26,17 +26,17 @@ import (
 
 {{range $entity := .Entities -}}
 {{$entityNameCamel := $entity.Name | StringCamel -}}
-type {{$entityNameCamel}}EntityInfo struct {
+type {{$entityNameCamel}}_ struct {
 	Id objectbox.TypeId
 	Uid uint64
 }
 
-var {{$entity.Name}}Binding = {{$entityNameCamel}}EntityInfo {
+var {{$entity.Name}}Binding = {{$entityNameCamel}}_ {
 	Id: {{$entity.Id}}, 
 	Uid: {{$entity.Uid}},
 }
 
-func ({{$entityNameCamel}}EntityInfo) AddToModel(model *objectbox.Model) {
+func ({{$entityNameCamel}}_) AddToModel(model *objectbox.Model) {
     model.Entity("{{$entity.Name}}", {{$entity.Id}}, {{$entity.Uid}})
     {{range $property := $entity.Properties -}}
     model.Property("{{$property.ObName}}", objectbox.PropertyType_{{$property.ObType}}, {{$property.Id}}, {{$property.Uid}})
@@ -54,11 +54,11 @@ func ({{$entityNameCamel}}EntityInfo) AddToModel(model *objectbox.Model) {
     model.EntityLastPropertyId({{$entity.LastPropertyId.GetId}}, {{$entity.LastPropertyId.GetUid}})
 }
 
-func ({{$entityNameCamel}}EntityInfo) GetId(entity interface{}) (uint64, error) {
+func ({{$entityNameCamel}}_) GetId(entity interface{}) (uint64, error) {
 	return entity.(*{{$entity.Name}}).{{$entity.IdProperty.Name}}, nil
 }
 
-func ({{$entityNameCamel}}EntityInfo) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
+func ({{$entityNameCamel}}_) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
     {{if $entity.HasNonIdProperty}}ent := entity.(*{{$entity.Name}}){{end -}}
 
     {{- range $property := $entity.Properties}}
@@ -87,7 +87,7 @@ func ({{$entityNameCamel}}EntityInfo) Flatten(entity interface{}, fbb *flatbuffe
     {{end -}}
 }
 
-func ({{$entityNameCamel}}EntityInfo) ToObject(bytes []byte) interface{} {
+func ({{$entityNameCamel}}_) ToObject(bytes []byte) interface{} {
 	table := &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
@@ -107,11 +107,11 @@ func ({{$entityNameCamel}}EntityInfo) ToObject(bytes []byte) interface{} {
 	}
 }
 
-func ({{$entityNameCamel}}EntityInfo) MakeSlice(capacity int) interface{} {
+func ({{$entityNameCamel}}_) MakeSlice(capacity int) interface{} {
 	return make([]*{{$entity.Name}}, 0, capacity)
 }
 
-func ({{$entityNameCamel}}EntityInfo) AppendToSlice(slice interface{}, entity interface{}) interface{} {
+func ({{$entityNameCamel}}_) AppendToSlice(slice interface{}, entity interface{}) interface{} {
 	return append(slice.([]*{{$entity.Name}}), entity.(*{{$entity.Name}}))
 }
 

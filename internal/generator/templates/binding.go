@@ -21,7 +21,7 @@ package {{.Package}}
 import (
 	"github.com/google/flatbuffers/go"
 	"github.com/objectbox/objectbox-go/objectbox"
-	"github.com/objectbox/objectbox-go/objectbox/fbutils"
+	{{if .UsesFbUtils}}"github.com/objectbox/objectbox-go/objectbox/fbutils"{{end}}
 )
 
 {{range $entity := .Entities -}}
@@ -88,7 +88,10 @@ func ({{$entityNameCamel}}EntityInfo) Flatten(entity interface{}, fbb *flatbuffe
 }
 
 func ({{$entityNameCamel}}EntityInfo) ToObject(bytes []byte) interface{} {
-	table := fbutils.GetRootAsTable(bytes, flatbuffers.UOffsetT(0))
+	table := &flatbuffers.Table{
+		Bytes: bytes,
+		Pos:   flatbuffers.GetUOffsetT(bytes),
+	}
 
 	return &{{$entity.Name}}{
 	{{- range $property := $entity.Properties}}
@@ -96,8 +99,8 @@ func ({{$entityNameCamel}}EntityInfo) ToObject(bytes []byte) interface{} {
         {{- else if eq $property.GoType "int"}} int(table.GetUint32Slot({{$property.FbvTableOffset}}, 0))
         {{- else if eq $property.GoType "uint"}} uint(table.GetUint32Slot({{$property.FbvTableOffset}}, 0))
 		{{- else if eq $property.GoType "rune"}} rune(table.GetInt32Slot({{$property.FbvTableOffset}}, 0))
-		{{- else if eq $property.GoType "string"}} table.GetStringSlot({{$property.FbvTableOffset}})
-        {{- else if eq $property.GoType "[]byte"}} table.GetByteVectorSlot({{$property.FbvTableOffset}})
+		{{- else if eq $property.GoType "string"}} fbutils.GetStringSlot(table, {{$property.FbvTableOffset}})
+        {{- else if eq $property.GoType "[]byte"}} fbutils.GetByteVectorSlot(table, {{$property.FbvTableOffset}})
 		{{- else}} table.Get{{$property.GoType | StringTitle}}Slot({{$property.FbvTableOffset}}, 0)
         {{- end}},
 	{{- end}}

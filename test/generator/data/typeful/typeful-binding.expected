@@ -76,7 +76,10 @@ func (typefulEntityInfo) Flatten(entity interface{}, fbb *flatbuffers.Builder, i
 }
 
 func (typefulEntityInfo) ToObject(bytes []byte) interface{} {
-	table := fbutils.GetRootAsTable(bytes, flatbuffers.UOffsetT(0))
+	table := &flatbuffers.Table{
+		Bytes: bytes,
+		Pos:   flatbuffers.GetUOffsetT(bytes),
+	}
 
 	return &Typeful{
 		Id:         table.GetUint64Slot(4, 0),
@@ -91,9 +94,9 @@ func (typefulEntityInfo) ToObject(bytes []byte) interface{} {
 		Uint32:     table.GetUint32Slot(22, 0),
 		Uint64:     table.GetUint64Slot(24, 0),
 		Bool:       table.GetBoolSlot(26, false),
-		String:     table.GetStringSlot(28),
+		String:     fbutils.GetStringSlot(table, 28),
 		Byte:       table.GetByteSlot(30, 0),
-		ByteVector: table.GetByteVectorSlot(32),
+		ByteVector: fbutils.GetByteVectorSlot(table, 32),
 		Rune:       rune(table.GetInt32Slot(34, 0)),
 		Float32:    table.GetFloat32Slot(36, 0),
 		Float64:    table.GetFloat64Slot(38, 0),

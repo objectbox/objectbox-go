@@ -43,11 +43,14 @@ func (eventEntityInfo) Flatten(entity interface{}, fbb *flatbuffers.Builder, id 
 }
 
 func (eventEntityInfo) ToObject(bytes []byte) interface{} {
-	table := fbutils.GetRootAsTable(bytes, flatbuffers.UOffsetT(0))
+	table := &flatbuffers.Table{
+		Bytes: bytes,
+		Pos:   flatbuffers.GetUOffsetT(bytes),
+	}
 
 	return &Event{
 		Id:     table.GetUint64Slot(4, 0),
-		Device: table.GetStringSlot(6),
+		Device: fbutils.GetStringSlot(table, 6),
 		Date:   table.GetInt64Slot(8, 0),
 	}
 }
@@ -136,14 +139,17 @@ func (readingEntityInfo) Flatten(entity interface{}, fbb *flatbuffers.Builder, i
 }
 
 func (readingEntityInfo) ToObject(bytes []byte) interface{} {
-	table := fbutils.GetRootAsTable(bytes, flatbuffers.UOffsetT(0))
+	table := &flatbuffers.Table{
+		Bytes: bytes,
+		Pos:   flatbuffers.GetUOffsetT(bytes),
+	}
 
 	return &Reading{
 		Id:            table.GetUint64Slot(4, 0),
 		Date:          table.GetInt64Slot(6, 0),
 		EventId:       table.GetUint64Slot(8, 0),
-		ValueName:     table.GetStringSlot(10),
-		ValueString:   table.GetStringSlot(12),
+		ValueName:     fbutils.GetStringSlot(table, 10),
+		ValueString:   fbutils.GetStringSlot(table, 12),
 		ValueInteger:  table.GetInt64Slot(14, 0),
 		ValueFloating: table.GetFloat64Slot(16, 0),
 	}

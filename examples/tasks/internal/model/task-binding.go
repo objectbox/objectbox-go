@@ -45,11 +45,14 @@ func (taskEntityInfo) Flatten(entity interface{}, fbb *flatbuffers.Builder, id u
 }
 
 func (taskEntityInfo) ToObject(bytes []byte) interface{} {
-	table := fbutils.GetRootAsTable(bytes, flatbuffers.UOffsetT(0))
+	table := &flatbuffers.Table{
+		Bytes: bytes,
+		Pos:   flatbuffers.GetUOffsetT(bytes),
+	}
 
 	return &Task{
 		Id:           table.GetUint64Slot(4, 0),
-		Text:         table.GetStringSlot(6),
+		Text:         fbutils.GetStringSlot(table, 6),
 		DateCreated:  table.GetInt64Slot(8, 0),
 		DateFinished: table.GetInt64Slot(10, 0),
 	}

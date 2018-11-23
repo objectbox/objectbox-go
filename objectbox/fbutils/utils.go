@@ -3,10 +3,6 @@ package fbutils
 
 import "github.com/google/flatbuffers/go"
 
-type Table struct {
-	*flatbuffers.Table
-}
-
 func CreateStringOffset(fbb *flatbuffers.Builder, value string) flatbuffers.UOffsetT {
 	if len(value) > 0 {
 		return fbb.CreateString(value)
@@ -23,26 +19,16 @@ func CreateByteVectorOffset(fbb *flatbuffers.Builder, value []byte) flatbuffers.
 	}
 }
 
-func GetRootAsTable(buf []byte, offset flatbuffers.UOffsetT) *Table {
-	n := flatbuffers.GetUOffsetT(buf[offset:])
-	return &Table{
-		&flatbuffers.Table{
-			Bytes: buf,
-			Pos:   n + offset,
-		},
-	}
-}
-
 // Define some Get*Slot methods that are missing in the FlatBuffers table
 
-func (table *Table) GetStringSlot(slot flatbuffers.VOffsetT) string {
+func GetStringSlot(table *flatbuffers.Table, slot flatbuffers.VOffsetT) string {
 	if o := flatbuffers.UOffsetT(table.Offset(slot)); o != 0 {
 		return table.String(o + table.Pos)
 	}
 	return ""
 }
 
-func (table *Table) GetByteVectorSlot(slot flatbuffers.VOffsetT) []byte {
+func GetByteVectorSlot(table *flatbuffers.Table, slot flatbuffers.VOffsetT) []byte {
 	if o := flatbuffers.UOffsetT(table.Offset(slot)); o != 0 {
 		return table.ByteVector(o + table.Pos)
 	}

@@ -16,6 +16,7 @@ import (
 type QueryBuilder struct {
 	objectBox *ObjectBox
 	cqb       *C.OBX_query_builder
+	typeId    TypeId
 
 	// Currently unused
 	cLastCondition C.obx_qb_cond
@@ -69,7 +70,11 @@ func (qb *QueryBuilder) Build() (query *Query, err error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Query{cquery: cquery}, nil
+	return &Query{
+		objectBox: qb.objectBox,
+		cquery:    cquery,
+		typeId:    qb.typeId,
+	}, nil
 }
 
 func (qb *QueryBuilder) checkForCError() {

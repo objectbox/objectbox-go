@@ -19,16 +19,13 @@ func TestQueryBuilder(t *testing.T) {
 	assert.NoErr(t, err)
 	defer query.Close()
 
-	objectBox.RunWithCursor(1, true, func(cursor *objectbox.Cursor) (err error) {
-		bytesArray, err := query.FindBytes(cursor)
-		assert.NoErr(t, err)
-		assert.EqInt(t, 0, len(bytesArray.BytesArray))
+	bytesArray, err := query.FindBytes()
+	assert.NoErr(t, err)
+	assert.EqInt(t, 0, len(bytesArray.BytesArray))
 
-		slice, err := query.Find(cursor)
-		assert.NoErr(t, err)
-		assert.EqInt(t, 0, len(slice.([]*iot.Event)))
-		return
-	})
+	slice, err := query.Find()
+	assert.NoErr(t, err)
+	assert.EqInt(t, 0, len(slice.([]*iot.Event)))
 
 	event := iot.Event{
 		Device: "dev1",
@@ -40,26 +37,24 @@ func TestQueryBuilder(t *testing.T) {
 	id2, err := box.Put(&event)
 	assert.NoErr(t, err)
 
-	objectBox.RunWithCursor(1, true, func(cursor *objectbox.Cursor) (err error) {
-		bytesArray, err := query.FindBytes(cursor)
-		assert.NoErr(t, err)
-		assert.EqInt(t, 2, len(bytesArray.BytesArray))
+	bytesArray, err = query.FindBytes()
+	assert.NoErr(t, err)
+	assert.EqInt(t, 2, len(bytesArray.BytesArray))
 
-		slice, err := query.Find(cursor)
-		assert.NoErr(t, err)
-		events := slice.([]*iot.Event)
-		if len(events) != 2 {
-			t.Fatalf("unexpected size")
-		}
+	slice, err = query.Find()
+	assert.NoErr(t, err)
+	events := slice.([]*iot.Event)
+	if len(events) != 2 {
+		t.Fatalf("unexpected size")
+	}
 
-		assert.Eq(t, id1, events[0].Id)
-		assert.EqString(t, "dev1", events[0].Device)
+	assert.Eq(t, id1, events[0].Id)
+	assert.EqString(t, "dev1", events[0].Device)
 
-		assert.Eq(t, id2, events[1].Id)
-		assert.EqString(t, "dev2", events[1].Device)
+	assert.Eq(t, id2, events[1].Id)
+	assert.EqString(t, "dev2", events[1].Device)
 
-		return
-	})
+	return
 }
 
 func TestQueryBuilder_StringEq(t *testing.T) {
@@ -77,22 +72,19 @@ func TestQueryBuilder_StringEq(t *testing.T) {
 	assert.NoErr(t, err)
 	defer query.Close()
 
-	objectBox.RunWithCursor(1, true, func(cursor *objectbox.Cursor) (err error) {
-		slice, err := query.Find(cursor)
-		assert.NoErr(t, err)
-		events := slice.([]*iot.Event)
-		assert.EqInt(t, 1, len(events))
-		assert.EqString(t, "device 2", events[0].Device)
+	slice, err := query.Find()
+	assert.NoErr(t, err)
+	events := slice.([]*iot.Event)
+	assert.EqInt(t, 1, len(events))
+	assert.EqString(t, "device 2", events[0].Device)
 
-		query.SetParamString(2, "device 1")
-		slice, err = query.Find(cursor)
-		assert.NoErr(t, err)
-		events = slice.([]*iot.Event)
-		assert.EqInt(t, 1, len(events))
-		assert.EqString(t, "device 1", events[0].Device)
+	query.SetParamString(2, "device 1")
+	slice, err = query.Find()
+	assert.NoErr(t, err)
+	events = slice.([]*iot.Event)
+	assert.EqInt(t, 1, len(events))
+	assert.EqString(t, "device 1", events[0].Device)
 
-		return
-	})
 }
 
 func TestQueryBuilder_IntBetween(t *testing.T) {
@@ -114,14 +106,11 @@ func TestQueryBuilder_IntBetween(t *testing.T) {
 	assert.NoErr(t, err)
 	defer query.Close()
 
-	objectBox.RunWithCursor(1, true, func(cursor *objectbox.Cursor) (err error) {
-		slice, err := query.Find(cursor)
-		assert.NoErr(t, err)
-		events := slice.([]*iot.Event)
-		assert.EqInt(t, 3, len(events))
-		assert.Eq(t, start, events[0].Date)
-		assert.Eq(t, start+1, events[1].Date)
-		assert.Eq(t, end, events[2].Date)
-		return
-	})
+	slice, err := query.Find()
+	assert.NoErr(t, err)
+	events = slice.([]*iot.Event)
+	assert.EqInt(t, 3, len(events))
+	assert.Eq(t, start, events[0].Date)
+	assert.Eq(t, start+1, events[1].Date)
+	assert.Eq(t, end, events[2].Date)
 }

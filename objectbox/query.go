@@ -9,7 +9,9 @@ import "C"
 import "unsafe"
 
 type Query struct {
-	cquery *C.OBX_query
+	cquery    *C.OBX_query
+	typeId    TypeId
+	objectBox *ObjectBox
 }
 
 func (query *Query) Close() (err error) {
@@ -21,8 +23,17 @@ func (query *Query) Close() (err error) {
 	return
 }
 
-func (query *Query) Find(cursor *Cursor) (slice interface{}, err error) {
-	bytesArray, err := query.FindBytes(cursor)
+func (query *Query) Find() (slice interface{}, err error) {
+	err = query.objectBox.RunWithCursor(query.typeId, true, func(cursor *Cursor) error {
+		var errInner error
+		slice, errInner = query.find(cursor)
+		return errInner
+	})
+	return
+}
+
+func (query *Query) find(cursor *Cursor) (slice interface{}, err error) {
+	bytesArray, err := query.findBytes(cursor)
 	if err != nil {
 		return
 	}
@@ -30,7 +41,17 @@ func (query *Query) Find(cursor *Cursor) (slice interface{}, err error) {
 	return cursor.bytesArrayToObjects(bytesArray), nil
 }
 
-func (query *Query) FindBytes(cursor *Cursor) (bytesArray *BytesArray, err error) {
+// Won't be public in the future
+func (query *Query) FindBytes() (bytesArray *BytesArray, err error) {
+	err = query.objectBox.RunWithCursor(query.typeId, true, func(cursor *Cursor) error {
+		var errInner error
+		bytesArray, errInner = query.findBytes(cursor)
+		return errInner
+	})
+	return
+}
+
+func (query *Query) findBytes(cursor *Cursor) (bytesArray *BytesArray, err error) {
 	cBytesArray := C.obx_query_find(query.cquery, cursor.cursor)
 	if cBytesArray == nil {
 		err = createError()

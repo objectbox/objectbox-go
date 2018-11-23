@@ -201,6 +201,7 @@ func (ob *ObjectBox) Query(typeId TypeId) *QueryBuilder {
 		err = createError()
 	}
 	return &QueryBuilder{
+		typeId:    typeId,
 		objectBox: ob,
 		cqb:       qb,
 		Err:       err,

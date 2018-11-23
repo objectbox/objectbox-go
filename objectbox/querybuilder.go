@@ -12,7 +12,7 @@ import (
 	"unsafe"
 )
 
-// Allows fluent construction of queries; just check QueryBuilder.Err or err from Build()
+// Allows construction of queries; just check QueryBuilder.Err or err from Build()
 type QueryBuilder struct {
 	objectBox *ObjectBox
 	cqb       *C.OBX_query_builder

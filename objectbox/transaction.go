@@ -13,6 +13,7 @@ import (
 	"github.com/google/flatbuffers/go"
 )
 
+// Internal class; won't be publicly exposed in a future version!
 type Transaction struct {
 	txn       *C.OBX_txn
 	objectBox *ObjectBox

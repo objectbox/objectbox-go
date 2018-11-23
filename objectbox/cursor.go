@@ -14,6 +14,7 @@ import (
 	"github.com/google/flatbuffers/go"
 )
 
+// Internal class; won't be publicly exposed in a future version!
 type Cursor struct {
 	cursor  *C.OBX_cursor
 	binding ObjectBinding

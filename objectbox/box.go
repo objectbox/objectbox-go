@@ -36,7 +36,7 @@ func (box *Box) Close() (err error) {
 	return
 }
 
-func (box *Box) IdForPut(idCandidate uint64) (id uint64, err error) {
+func (box *Box) idForPut(idCandidate uint64) (id uint64, err error) {
 	id = uint64(C.obx_box_id_for_put(box.box, C.obx_id(idCandidate)))
 	if id == 0 {
 		err = createError()
@@ -50,7 +50,7 @@ func (box *Box) PutAsync(object interface{}) (id uint64, err error) {
 		return
 	}
 	checkForPreviousValue := idFromObject != 0
-	id, err = box.IdForPut(idFromObject)
+	id, err = box.idForPut(idFromObject)
 	if err != nil {
 		return
 	}

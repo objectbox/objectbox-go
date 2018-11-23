@@ -60,6 +60,7 @@ const (
 	PropertyFlags_INDEX_HASH64 = 4096
 )
 
+// Usually only used by the automatically generated artifacts of ObjectBox generator
 type Model struct {
 	model              *C.OBX_model
 	previousEntityName string

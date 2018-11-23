@@ -13,6 +13,7 @@ func CreateObjectBox() *ObjectBox {
 	builder.RegisterBinding(EventBinding)
 	builder.RegisterBinding(ReadingBinding)
 	builder.LastEntityId(ReadingBinding.Id, ReadingBinding.Uid)
+	builder.LastIndexId(1, 3297791712577314158)
 	objectBox, err := builder.Build()
 	if err != nil {
 		panic(err)

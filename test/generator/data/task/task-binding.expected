@@ -23,7 +23,7 @@ func (task_) AddToModel(model *objectbox.Model) {
 	model.Property("Id", objectbox.PropertyType_Long, 1, 2259404117704393152)
 	model.PropertyFlags(objectbox.PropertyFlags_ID)
 	model.Property("Uid", objectbox.PropertyType_String, 2, 6050128673802995827)
-	model.PropertyFlags(objectbox.PropertyFlags_INDEXED)
+	model.PropertyFlags(objectbox.PropertyFlags_UNIQUE)
 	model.PropertyIndex(1, 501233450539197794)
 	model.Property("Name", objectbox.PropertyType_String, 3, 3390393562759376202)
 	model.Property("Place", objectbox.PropertyType_String, 4, 2669985732393126063)

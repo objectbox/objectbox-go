@@ -4,6 +4,7 @@ package iot
 
 type Event struct {
 	Id     uint64 `id`
+	Uid    string `unique`
 	Device string
 	Date   int64 `date`
 }

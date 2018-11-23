@@ -2,7 +2,7 @@ package object
 
 type Task struct {
 	Id       uint64 `id`
-	Uid      string `index`
+	Uid      string `unique`
 	Name     string // TODO value index is not supported by the native-c binding at the moment `index:"value"`
 	Place    string `index:"hash"`
 	Source   string `index:"hash64"`

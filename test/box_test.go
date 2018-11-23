@@ -45,6 +45,29 @@ func TestAsync(t *testing.T) {
 	assert.Eq(t, uint64(0), count)
 }
 
+func TestUnique(t *testing.T) {
+	objectBox := iot.CreateObjectBox()
+	box := iot.BoxForEvent(objectBox)
+	err := box.RemoveAll()
+	assert.NoErr(t, err)
+
+	event := iot.Event{
+		Device: "my device",
+		Uid:    "a",
+	}
+	_, err = box.Put(&event)
+	assert.NoErr(t, err)
+
+	_, err = box.Put(&event)
+	if err == nil {
+		assert.Failf(t, "put() passed instead of an expected unique constraint violation")
+	}
+
+	count, err := box.Count()
+	assert.NoErr(t, err)
+	assert.Eq(t, uint64(1), count)
+}
+
 func TestPutAll(t *testing.T) {
 	objectBox := iot.CreateObjectBox()
 	box := iot.BoxForEvent(objectBox)
@@ -82,5 +105,4 @@ func TestPutAll(t *testing.T) {
 	objectIds, err = box.PutAll(noEvents)
 	assert.NoErr(t, err)
 	assert.EqInt(t, len(objectIds), 0)
-
 }

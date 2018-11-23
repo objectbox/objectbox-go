@@ -8,7 +8,7 @@
     {
       "id": "1:1468539308767086854",
       "name": "Event",
-      "lastPropertyId": "3:5907655274386702697",
+      "lastPropertyId": "4:472416569173577818",
       "properties": [
         {
           "id": "1:3098166604415018001",
@@ -21,6 +21,11 @@
         {
           "id": "3:5907655274386702697",
           "name": "Date"
+        },
+        {
+          "id": "4:472416569173577818",
+          "name": "Uid",
+          "indexId": "1:3297791712577314158"
         }
       ]
     },
@@ -61,7 +66,7 @@
     }
   ],
   "lastEntityId": "2:5284076134434938613",
-  "lastIndexId": "",
+  "lastIndexId": "1:3297791712577314158",
   "retiredEntityUids": [],
   "retiredIndexUids": [],
   "retiredPropertyUids": []

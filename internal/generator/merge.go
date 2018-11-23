@@ -27,11 +27,7 @@ func getModelEntity(bindingEntity *Entity, modelInfo *modelinfo.ModelInfo) (*mod
 func mergeModelEntity(bindingEntity *Entity, modelEntity *modelinfo.Entity) (err error) {
 	modelEntity.Name = bindingEntity.Name
 
-	if bindingEntity.Id, err = modelEntity.Id.GetId(); err != nil {
-		return err
-	}
-
-	if bindingEntity.Uid, err = modelEntity.Id.GetUid(); err != nil {
+	if bindingEntity.Id, bindingEntity.Uid, err = modelEntity.Id.Get(); err != nil {
 		return err
 	}
 
@@ -76,12 +72,29 @@ func getModelProperty(bindingProperty *Property, modelEntity *modelinfo.Entity) 
 func mergeModelProperty(bindingProperty *Property, modelProperty *modelinfo.Property) (err error) {
 	modelProperty.Name = bindingProperty.Name
 
-	if bindingProperty.Id, err = modelProperty.Id.GetId(); err != nil {
+	if bindingProperty.Id, bindingProperty.Uid, err = modelProperty.Id.Get(); err != nil {
 		return err
 	}
 
-	if bindingProperty.Uid, err = modelProperty.Id.GetUid(); err != nil {
-		return err
+	if bindingProperty.Index == nil {
+		// if there shouldn't be an index
+		if modelProperty.IndexId != nil {
+			// if there originally was an index, remove it
+			if err = modelProperty.RemoveIndex(); err != nil {
+				return err
+			}
+		}
+	} else {
+		// if there should be an index, create it (or reuse an existing one)
+		if modelProperty.IndexId == nil {
+			if err = modelProperty.CreateIndex(); err != nil {
+				return err
+			}
+		}
+
+		if bindingProperty.Index.Id, bindingProperty.Index.Uid, err = modelProperty.IndexId.Get(); err != nil {
+			return err
+		}
 	}
 
 	return nil

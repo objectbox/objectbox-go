@@ -24,14 +24,19 @@ func (taskEntityInfo) AddToModel(model *objectbox.Model) {
 	model.PropertyFlags(objectbox.PropertyFlags_ID)
 	model.Property("Uid", objectbox.PropertyType_String, 2, 6050128673802995827)
 	model.PropertyFlags(objectbox.PropertyFlags_INDEXED)
-	model.Property("Name", objectbox.PropertyType_String, 3, 501233450539197794)
-	model.Property("Place", objectbox.PropertyType_String, 4, 3390393562759376202)
+	model.PropertyIndex(1, 501233450539197794)
+	model.Property("Name", objectbox.PropertyType_String, 3, 3390393562759376202)
+	model.Property("Place", objectbox.PropertyType_String, 4, 2669985732393126063)
 	model.PropertyFlags(objectbox.PropertyFlags_INDEXED | objectbox.PropertyFlags_INDEX_HASH)
-	model.Property("Source", objectbox.PropertyType_String, 5, 2669985732393126063)
+	model.PropertyIndex(2, 1774932891286980153)
+	model.Property("Source", objectbox.PropertyType_String, 5, 6044372234677422456)
 	model.PropertyFlags(objectbox.PropertyFlags_INDEXED | objectbox.PropertyFlags_INDEX_HASH64)
-	model.Property("text", objectbox.PropertyType_String, 6, 1774932891286980153)
-	model.Property("Date", objectbox.PropertyType_Date, 7, 6044372234677422456)
-	model.EntityLastPropertyId(7, 6044372234677422456)
+	model.PropertyIndex(3, 8274930044578894929)
+	model.Property("text", objectbox.PropertyType_String, 6, 1543572285742637646)
+	model.Property("Date", objectbox.PropertyType_Date, 7, 2661732831099943416)
+	model.Property("GroupId", objectbox.PropertyType_Relation, 8, 8325060299420976708)
+	model.PropertyRelation("Group", 4, 7837839688282259259)
+	model.EntityLastPropertyId(8, 8325060299420976708)
 }
 
 func (taskEntityInfo) GetId(entity interface{}) (uint64, error) {
@@ -47,7 +52,7 @@ func (taskEntityInfo) Flatten(entity interface{}, fbb *flatbuffers.Builder, id u
 	var offsetText = fbutils.CreateStringOffset(fbb, ent.Text)
 
 	// build the FlatBuffers object
-	fbb.StartObject(7)
+	fbb.StartObject(8)
 	fbb.PrependUint64Slot(0, id, 0)
 	fbb.PrependUOffsetTSlot(1, offsetUid, 0)
 	fbb.PrependUOffsetTSlot(2, offsetName, 0)
@@ -55,19 +60,21 @@ func (taskEntityInfo) Flatten(entity interface{}, fbb *flatbuffers.Builder, id u
 	fbb.PrependUOffsetTSlot(4, offsetSource, 0)
 	fbb.PrependUOffsetTSlot(5, offsetText, 0)
 	fbb.PrependUint64Slot(6, ent.Date, 0)
+	fbb.PrependUint64Slot(7, ent.GroupId, 0)
 }
 
 func (taskEntityInfo) ToObject(bytes []byte) interface{} {
 	table := fbutils.GetRootAsTable(bytes, flatbuffers.UOffsetT(0))
 
 	return &Task{
-		Id:     table.GetUint64Slot(4, 0),
-		Uid:    table.GetStringSlot(6),
-		Name:   table.GetStringSlot(8),
-		Place:  table.GetStringSlot(10),
-		Source: table.GetStringSlot(12),
-		Text:   table.GetStringSlot(14),
-		Date:   table.GetUint64Slot(16, 0),
+		Id:      table.GetUint64Slot(4, 0),
+		Uid:     table.GetStringSlot(6),
+		Name:    table.GetStringSlot(8),
+		Place:   table.GetStringSlot(10),
+		Source:  table.GetStringSlot(12),
+		Text:    table.GetStringSlot(14),
+		Date:    table.GetUint64Slot(16, 0),
+		GroupId: table.GetUint64Slot(18, 0),
 	}
 }
 
@@ -108,5 +115,81 @@ func (box *TaskBox) GetAll() ([]*Task, error) {
 }
 
 func (box *TaskBox) Remove(entity *Task) (err error) {
+	return box.Box.Remove(entity.Id)
+}
+
+type groupEntityInfo struct {
+	Id  objectbox.TypeId
+	Uid uint64
+}
+
+var GroupBinding = groupEntityInfo{
+	Id:  2,
+	Uid: 2518412263346885298,
+}
+
+func (groupEntityInfo) AddToModel(model *objectbox.Model) {
+	model.Entity("Group", 2, 2518412263346885298)
+	model.Property("Id", objectbox.PropertyType_Long, 1, 5617773211005988520)
+	model.PropertyFlags(objectbox.PropertyFlags_ID)
+	model.EntityLastPropertyId(1, 5617773211005988520)
+}
+
+func (groupEntityInfo) GetId(entity interface{}) (uint64, error) {
+	return entity.(*Group).Id, nil
+}
+
+func (groupEntityInfo) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
+
+	// build the FlatBuffers object
+	fbb.StartObject(1)
+	fbb.PrependUint64Slot(0, id, 0)
+}
+
+func (groupEntityInfo) ToObject(bytes []byte) interface{} {
+	table := fbutils.GetRootAsTable(bytes, flatbuffers.UOffsetT(0))
+
+	return &Group{
+		Id: table.GetUint64Slot(4, 0),
+	}
+}
+
+func (groupEntityInfo) MakeSlice(capacity int) interface{} {
+	return make([]*Group, 0, capacity)
+}
+
+func (groupEntityInfo) AppendToSlice(slice interface{}, entity interface{}) interface{} {
+	return append(slice.([]*Group), entity.(*Group))
+}
+
+type GroupBox struct {
+	*objectbox.Box
+}
+
+func BoxForGroup(ob *objectbox.ObjectBox) *GroupBox {
+	return &GroupBox{
+		Box: ob.Box(2),
+	}
+}
+
+func (box *GroupBox) Get(id uint64) (*Group, error) {
+	entity, err := box.Box.Get(id)
+	if err != nil {
+		return nil, err
+	} else if entity == nil {
+		return nil, nil
+	}
+	return entity.(*Group), nil
+}
+
+func (box *GroupBox) GetAll() ([]*Group, error) {
+	entities, err := box.Box.GetAll()
+	if err != nil {
+		return nil, err
+	}
+	return entities.([]*Group), nil
+}
+
+func (box *GroupBox) Remove(entity *Group) (err error) {
 	return box.Box.Remove(entity.Id)
 }

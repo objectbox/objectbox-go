@@ -47,6 +47,9 @@ func ({{$entityNameCamel}}EntityInfo) AddToModel(model *objectbox.Model) {
         {{- end}})
         {{- /* TODO model.PropertyIndexId() && model.PropertyRelation() */}}
     {{end -}}
+	{{if $property.Relation}}model.PropertyRelation("{{$property.Relation.Target}}", {{$property.Index.Id}}, {{$property.Index.Uid}})
+	{{else if $property.Index}}model.PropertyIndex({{$property.Index.Id}}, {{$property.Index.Uid}})
+    {{end -}}
     {{end -}}
     model.EntityLastPropertyId({{$entity.LastPropertyId.GetId}}, {{$entity.LastPropertyId.GetUid}})
 }

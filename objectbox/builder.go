@@ -12,7 +12,7 @@ import (
 	"unsafe"
 )
 
-type ObjectBoxBuilder struct {
+type Builder struct {
 	model *Model
 	Err   error
 
@@ -33,7 +33,7 @@ type ObjectBoxBuilder struct {
 	bindingsByName map[string]ObjectBinding
 }
 
-func NewObjectBoxBuilder() (builder *ObjectBoxBuilder) {
+func NewObjectBoxBuilder() (builder *Builder) {
 	if !C.obx_version_is_at_least(0, 3, 0) {
 		var version string
 		msg := C.obx_version_string()
@@ -49,29 +49,29 @@ func NewObjectBoxBuilder() (builder *ObjectBoxBuilder) {
 	if err != nil {
 		panic("Could not create model: " + err.Error())
 	}
-	builder = &ObjectBoxBuilder{}
+	builder = &Builder{}
 	builder.model = model
 	builder.bindingsById = make(map[TypeId]ObjectBinding)
 	builder.bindingsByName = make(map[string]ObjectBinding)
 	return
 }
 
-func (builder *ObjectBoxBuilder) Name(name string) *ObjectBoxBuilder {
+func (builder *Builder) Name(name string) *Builder {
 	builder.name = name
 	return builder
 }
 
-func (builder *ObjectBoxBuilder) MaxSizeInKb(maxSizeInKb uint64) *ObjectBoxBuilder {
+func (builder *Builder) MaxSizeInKb(maxSizeInKb uint64) *Builder {
 	builder.maxSizeInKb = maxSizeInKb
 	return builder
 }
 
-func (builder *ObjectBoxBuilder) MaxReaders(maxReaders uint) *ObjectBoxBuilder {
+func (builder *Builder) MaxReaders(maxReaders uint) *Builder {
 	builder.maxReaders = maxReaders
 	return builder
 }
 
-func (builder *ObjectBoxBuilder) RegisterBinding(binding ObjectBinding) {
+func (builder *Builder) RegisterBinding(binding ObjectBinding) {
 	binding.AddToModel(builder.model)
 	id := builder.model.previousEntityId
 	name := builder.model.previousEntityName
@@ -93,25 +93,25 @@ func (builder *ObjectBoxBuilder) RegisterBinding(binding ObjectBinding) {
 	builder.bindingsByName[name] = binding
 }
 
-func (builder *ObjectBoxBuilder) LastEntityId(id TypeId, uid uint64) *ObjectBoxBuilder {
+func (builder *Builder) LastEntityId(id TypeId, uid uint64) *Builder {
 	builder.lastEntityId = id
 	builder.lastEntityUid = uid
 	return builder
 }
 
-func (builder *ObjectBoxBuilder) LastIndexId(id TypeId, uid uint64) *ObjectBoxBuilder {
+func (builder *Builder) LastIndexId(id TypeId, uid uint64) *Builder {
 	builder.lastIndexId = id
 	builder.lastIndexUid = uid
 	return builder
 }
 
-func (builder *ObjectBoxBuilder) LastRelationId(id TypeId, uid uint64) *ObjectBoxBuilder {
+func (builder *Builder) LastRelationId(id TypeId, uid uint64) *Builder {
 	builder.lastRelationId = id
 	builder.lastRelationUid = uid
 	return builder
 }
 
-func (builder *ObjectBoxBuilder) Build() (objectBox *ObjectBox, err error) {
+func (builder *Builder) Build() (objectBox *ObjectBox, err error) {
 	if builder.model.Err != nil {
 		err = builder.model.Err
 		return

@@ -17,7 +17,7 @@ import (
 // generateAllDirs walks through the "data" and generates bindings for each subdirectory
 // set overwriteExpected to TRUE to update all ".expected" files with the generated content
 func generateAllDirs(t *testing.T, overwriteExpected bool) {
-	var datadir = "data"
+	var datadir = "testdata"
 	folders, err := ioutil.ReadDir(datadir)
 	assert.NoErr(t, err)
 

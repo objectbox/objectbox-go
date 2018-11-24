@@ -30,6 +30,11 @@ go install $GOPATH/src/github.com/objectbox/objectbox-go/cmd/objectbox-gogen/
 
 See [installation docs](https://golang.objectbox.io/install) for more details and further instructions.
 
+Additionally, you can run tests to validate your installation
+```bash
+go test github.com/objectbox/objectbox-go/...
+```
+
 Docs
 ----
 Documentation is still on-going work.

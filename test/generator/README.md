@@ -1,5 +1,5 @@
-## The [data](data) folder
-All directories under the [data](data) folder are considered separate test suites and are executed by the `TestAll`
+## The [testdata](testdata) folder
+All directories under the [testdata](testdata) folder are considered separate test suites and are executed by the `TestAll`
 The following rules apply:
 * each folder should define entities (a ".go" file)
 * each entity should have a special "-binding.expected" file with the expected content of the generated bindings

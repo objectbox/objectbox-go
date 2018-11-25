@@ -24,7 +24,7 @@ func (query *Query) Close() (err error) {
 }
 
 func (query *Query) Find() (slice interface{}, err error) {
-	err = query.objectBox.runWithCursor(query.typeId, true, func(cursor *Cursor) error {
+	err = query.objectBox.runWithCursor(query.typeId, true, func(cursor *cursor) error {
 		var errInner error
 		slice, errInner = query.find(cursor)
 		return errInner
@@ -32,7 +32,7 @@ func (query *Query) Find() (slice interface{}, err error) {
 	return
 }
 
-func (query *Query) find(cursor *Cursor) (slice interface{}, err error) {
+func (query *Query) find(cursor *cursor) (slice interface{}, err error) {
 	bytesArray, err := query.findBytes(cursor)
 	if err != nil {
 		return
@@ -43,7 +43,7 @@ func (query *Query) find(cursor *Cursor) (slice interface{}, err error) {
 
 // Won't be public in the future
 func (query *Query) FindBytes() (bytesArray *BytesArray, err error) {
-	err = query.objectBox.runWithCursor(query.typeId, true, func(cursor *Cursor) error {
+	err = query.objectBox.runWithCursor(query.typeId, true, func(cursor *cursor) error {
 		var errInner error
 		bytesArray, errInner = query.findBytes(cursor)
 		return errInner
@@ -51,29 +51,28 @@ func (query *Query) FindBytes() (bytesArray *BytesArray, err error) {
 	return
 }
 
-func (query *Query) findBytes(cursor *Cursor) (bytesArray *BytesArray, err error) {
+func (query *Query) findBytes(cursor *cursor) (*BytesArray, error) {
 	cBytesArray := C.obx_query_find(query.cquery, cursor.cursor)
 	if cBytesArray == nil {
-		err = createError()
-		return
+		return nil, createError()
 	}
 	return cBytesArrayToGo(cBytesArray), nil
 }
 
-func (query *Query) SetParamString(propertyId TypeId, value string) (err error) {
+func (query *Query) SetParamString(propertyId TypeId, value string) error {
 	cvalue := C.CString(value)
 	defer C.free(unsafe.Pointer(cvalue))
 	rc := C.obx_query_string_param(query.cquery, C.obx_schema_id(propertyId), cvalue)
 	if rc != 0 {
 		return createError()
 	}
-	return
+	return nil
 }
 
-func (query *Query) SetParamInt(propertyId TypeId, value int64) (err error) {
+func (query *Query) SetParamInt(propertyId TypeId, value int64) error {
 	rc := C.obx_query_int_param(query.cquery, C.obx_schema_id(propertyId), C.int64_t(value))
 	if rc != 0 {
 		return createError()
 	}
-	return
+	return nil
 }

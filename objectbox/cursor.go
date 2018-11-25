@@ -15,39 +15,38 @@ import (
 )
 
 // Internal class; won't be publicly exposed in a future version!
-type Cursor struct {
+type cursor struct {
 	cursor  *C.OBX_cursor
 	binding ObjectBinding
 	fbb     *flatbuffers.Builder
 }
 
-func (cursor *Cursor) Close() (err error) {
+func (cursor *cursor) Close() error {
 	rc := C.obx_cursor_close(cursor.cursor)
 	cursor.cursor = nil
 	if rc != 0 {
-		err = createError()
+		return createError()
 	}
-	return
+	return nil
 }
 
-func (cursor *Cursor) Get(id uint64) (object interface{}, err error) {
-	bytes, err := cursor.GetBytes(id)
+func (cursor *cursor) Get(id uint64) (object interface{}, err error) {
+	bytes, err := cursor.getBytes(id)
 	if bytes == nil || err != nil {
 		return
 	}
 	return cursor.binding.ToObject(bytes), nil
 }
 
-func (cursor *Cursor) GetAll() (slice interface{}, err error) {
+func (cursor *cursor) GetAll() (slice interface{}, err error) {
 	cBytesArray := C.obx_cursor_get_all(cursor.cursor)
 	if cBytesArray == nil {
-		err = createError()
-		return
+		return nil, createError()
 	}
 	return cursor.cBytesArrayToObjects(cBytesArray), nil
 }
 
-func (cursor *Cursor) GetBytes(id uint64) (bytes []byte, err error) {
+func (cursor *cursor) getBytes(id uint64) (bytes []byte, err error) {
 	var data *C.void
 	var dataSize C.size_t
 	dataPtr := unsafe.Pointer(data) // Need ptr to an unsafe ptr here
@@ -62,7 +61,7 @@ func (cursor *Cursor) GetBytes(id uint64) (bytes []byte, err error) {
 	return
 }
 
-func (cursor *Cursor) First() (bytes []byte, err error) {
+func (cursor *cursor) First() (bytes []byte, err error) {
 	var data *C.void
 	var dataSize C.size_t
 	dataPtr := unsafe.Pointer(data) // Need ptr to an unsafe ptr here
@@ -77,7 +76,7 @@ func (cursor *Cursor) First() (bytes []byte, err error) {
 	return
 }
 
-func (cursor *Cursor) Next() (bytes []byte, err error) {
+func (cursor *cursor) Next() (bytes []byte, err error) {
 	var data *C.void
 	var dataSize C.size_t
 	dataPtr := unsafe.Pointer(data) // Need ptr to an unsafe ptr here
@@ -92,7 +91,7 @@ func (cursor *Cursor) Next() (bytes []byte, err error) {
 	return
 }
 
-func (cursor *Cursor) Count() (count uint64, err error) {
+func (cursor *cursor) Count() (count uint64, err error) {
 	var cCount C.uint64_t
 	rc := C.obx_cursor_count(cursor.cursor, &cCount)
 	if rc != 0 {
@@ -102,7 +101,7 @@ func (cursor *Cursor) Count() (count uint64, err error) {
 	return uint64(cCount), nil
 }
 
-func (cursor *Cursor) Put(object interface{}) (id uint64, err error) {
+func (cursor *cursor) Put(object interface{}) (id uint64, err error) {
 	idFromObject, err := cursor.binding.GetId(object)
 	if err != nil {
 		return
@@ -116,7 +115,7 @@ func (cursor *Cursor) Put(object interface{}) (id uint64, err error) {
 	return id, cursor.finishInternalFbbAndPut(id, checkForPreviousValue)
 }
 
-func (cursor *Cursor) finishInternalFbbAndPut(id uint64, checkForPreviousObject bool) (err error) {
+func (cursor *cursor) finishInternalFbbAndPut(id uint64, checkForPreviousObject bool) (err error) {
 	fbb := cursor.fbb
 	fbb.Finish(fbb.EndObject())
 	bytes := fbb.FinishedBytes()
@@ -133,7 +132,7 @@ func (cursor *Cursor) finishInternalFbbAndPut(id uint64, checkForPreviousObject 
 	return
 }
 
-func (cursor *Cursor) IdForPut(idCandidate uint64) (id uint64, err error) {
+func (cursor *cursor) IdForPut(idCandidate uint64) (id uint64, err error) {
 	id = uint64(C.obx_cursor_id_for_put(cursor.cursor, C.obx_id(idCandidate)))
 	if id == 0 {
 		err = createError()
@@ -141,7 +140,7 @@ func (cursor *Cursor) IdForPut(idCandidate uint64) (id uint64, err error) {
 	return
 }
 
-func (cursor *Cursor) Remove(id uint64) (err error) {
+func (cursor *cursor) Remove(id uint64) (err error) {
 	rc := C.obx_cursor_remove(cursor.cursor, C.obx_id(id))
 	if rc != 0 {
 		err = createError()
@@ -149,7 +148,7 @@ func (cursor *Cursor) Remove(id uint64) (err error) {
 	return
 }
 
-func (cursor *Cursor) RemoveAll() (err error) {
+func (cursor *cursor) RemoveAll() (err error) {
 	rc := C.obx_cursor_remove_all(cursor.cursor)
 	if rc != 0 {
 		err = createError()
@@ -157,13 +156,13 @@ func (cursor *Cursor) RemoveAll() (err error) {
 	return
 }
 
-func (cursor *Cursor) cBytesArrayToObjects(cBytesArray *C.OBX_bytes_array) (slice interface{}) {
+func (cursor *cursor) cBytesArrayToObjects(cBytesArray *C.OBX_bytes_array) (slice interface{}) {
 	bytesArray := cBytesArrayToGo(cBytesArray)
 	defer bytesArray.Free()
 	return cursor.bytesArrayToObjects(bytesArray)
 }
 
-func (cursor *Cursor) bytesArrayToObjects(bytesArray *BytesArray) (slice interface{}) {
+func (cursor *cursor) bytesArrayToObjects(bytesArray *BytesArray) (slice interface{}) {
 	slice = cursor.binding.MakeSlice(len(bytesArray.BytesArray))
 	for _, bytesData := range bytesArray.BytesArray {
 		object := cursor.binding.ToObject(bytesData)
@@ -172,7 +171,7 @@ func (cursor *Cursor) bytesArrayToObjects(bytesArray *BytesArray) (slice interfa
 	return
 }
 
-func cBytesArrayToGo(cBytesArray *C.OBX_bytes_array) (bytesArray *BytesArray) {
+func cBytesArrayToGo(cBytesArray *C.OBX_bytes_array) *BytesArray {
 	size := int(cBytesArray.count)
 	plainBytesArray := make([][]byte, size)
 	if size > 0 {
@@ -182,7 +181,7 @@ func cBytesArrayToGo(cBytesArray *C.OBX_bytes_array) (bytesArray *BytesArray) {
 		// Raul measured both variants and did notice a visible perf impact (Go 1.11.2)
 		var goBytesArray []C.OBX_bytes
 		header := (*reflect.SliceHeader)(unsafe.Pointer(&goBytesArray))
-		*header = reflect.SliceHeader{uintptr(unsafe.Pointer(cBytesArray.bytes)), size, size}
+		*header = reflect.SliceHeader{Data: uintptr(unsafe.Pointer(cBytesArray.bytes)), Len: size, Cap: size}
 		for i := 0; i < size; i++ {
 			cBytes := goBytesArray[i]
 			dataBytes := C.GoBytes(cBytes.data, C.int(cBytes.size))

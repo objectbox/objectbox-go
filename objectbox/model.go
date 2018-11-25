@@ -68,14 +68,13 @@ type Model struct {
 	Err                error
 }
 
-func NewModel() (model *Model, err error) {
-	model = &Model{}
+func NewModel() (*Model, error) {
+	model := &Model{}
 	model.model = C.obx_model_create()
 	if model.model == nil {
-		model = nil
-		err = createError()
+		return nil, createError()
 	}
-	return
+	return model, nil
 }
 
 func (model *Model) LastEntityId(id TypeId, uid uint64) {

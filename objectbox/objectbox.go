@@ -17,8 +17,6 @@ import (
 	"github.com/google/flatbuffers/go"
 )
 
-const Unavailable = flatbuffers.UOffsetT(0)
-
 //noinspection GoUnusedConst
 const (
 	DebugFlags_LOG_TRANSACTIONS_READ  = 1
@@ -51,8 +49,8 @@ type BytesArray struct {
 	cBytesArray *C.OBX_bytes_array
 }
 
-type TxnFun func(transaction *Transaction) (err error)
-type CursorFun func(cursor *Cursor) (err error)
+type txnFun func(transaction *Transaction) error
+type cursorFun func(cursor *cursor) error
 
 func (ob *ObjectBox) Close() {
 	storeToClose := ob.store
@@ -62,7 +60,7 @@ func (ob *ObjectBox) Close() {
 	}
 }
 
-func (ob *ObjectBox) beginTxn() (txn *Transaction, err error) {
+func (ob *ObjectBox) beginTxn() (*Transaction, error) {
 	var ctxn = C.obx_txn_begin(ob.store)
 	if ctxn == nil {
 		return nil, createError()
@@ -70,7 +68,7 @@ func (ob *ObjectBox) beginTxn() (txn *Transaction, err error) {
 	return &Transaction{ctxn, ob}, nil
 }
 
-func (ob *ObjectBox) beginTxnRead() (txn *Transaction, err error) {
+func (ob *ObjectBox) beginTxnRead() (*Transaction, error) {
 	var ctxn = C.obx_txn_begin_read(ob.store)
 	if ctxn == nil {
 		return nil, createError()
@@ -78,7 +76,7 @@ func (ob *ObjectBox) beginTxnRead() (txn *Transaction, err error) {
 	return &Transaction{ctxn, ob}, nil
 }
 
-func (ob *ObjectBox) runInTxn(readOnly bool, txnFun TxnFun) (err error) {
+func (ob *ObjectBox) runInTxn(readOnly bool, txnFun txnFun) (err error) {
 	runtime.LockOSThread()
 	var txn *Transaction
 	if readOnly {
@@ -132,12 +130,12 @@ func (ob ObjectBox) getBindingByName(typeName string) ObjectBinding {
 	return binding
 }
 
-func (ob *ObjectBox) runWithCursor(typeId TypeId, readOnly bool, cursorFun CursorFun) (err error) {
+func (ob *ObjectBox) runWithCursor(typeId TypeId, readOnly bool, cursorFun cursorFun) error {
 	binding := ob.getBindingById(typeId)
-	return ob.runInTxn(readOnly, func(txn *Transaction) (err error) {
+	return ob.runInTxn(readOnly, func(txn *Transaction) error {
 		cursor, err := txn.createCursor(typeId, binding)
 		if err != nil {
-			return
+			return err
 		}
 		//fmt.Println(">>> START C")
 		//os.Stdout.Sync()
@@ -151,16 +149,16 @@ func (ob *ObjectBox) runWithCursor(typeId TypeId, readOnly bool, cursorFun Curso
 		if err == nil {
 			err = err2
 		}
-		return
+		return err
 	})
 }
 
-func (ob *ObjectBox) SetDebugFlags(flags uint) (err error) {
+func (ob *ObjectBox) SetDebugFlags(flags uint) error {
 	rc := C.obx_store_debug_flags(ob.store, C.OBDebugFlags(flags))
 	if rc != 0 {
-		err = createError()
+		return createError()
 	}
-	return
+	return nil
 }
 
 // Returns a Box, panics on error (see BoxOrError)

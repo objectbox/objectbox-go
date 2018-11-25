@@ -25,16 +25,16 @@ type QueryBuilder struct {
 	Err error
 }
 
-func (qb *QueryBuilder) Close() (err error) {
+func (qb *QueryBuilder) Close() error {
 	toClose := qb.cqb
 	if toClose != nil {
 		qb.cqb = nil
 		rc := C.obx_qb_close(toClose)
 		if rc != 0 {
-			err = createError()
+			return createError()
 		}
 	}
-	return
+	return nil
 }
 
 func (qb *QueryBuilder) StringEq(propertyId TypeId, value string, caseSensitive bool) {
@@ -61,7 +61,7 @@ func (qb *QueryBuilder) IntBetween(propertyId TypeId, value1 int64, value2 int64
 	return
 }
 
-func (qb *QueryBuilder) Build() (query *Query, err error) {
+func (qb *QueryBuilder) Build() (*Query, error) {
 	qb.checkForCError()
 	if qb.Err != nil {
 		return nil, qb.Err
@@ -91,8 +91,9 @@ func (qb *QueryBuilder) checkForCError() {
 	}
 }
 
-func (qb *QueryBuilder) BuildAndClose() (query *Query, err error) {
-	err = qb.Err
+func (qb *QueryBuilder) BuildAndClose() (*Query, error) {
+	var query *Query
+	var err = qb.Err
 	if err == nil {
 		query, err = qb.Build()
 	}
@@ -101,5 +102,5 @@ func (qb *QueryBuilder) BuildAndClose() (query *Query, err error) {
 		query.Close()
 		return nil, err2
 	}
-	return
+	return query, err
 }

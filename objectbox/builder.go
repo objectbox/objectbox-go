@@ -33,7 +33,7 @@ type Builder struct {
 	bindingsByName map[string]ObjectBinding
 }
 
-func NewObjectBoxBuilder() (builder *Builder) {
+func NewObjectBoxBuilder() *Builder {
 	if !C.obx_version_is_at_least(0, 3, 0) {
 		var version string
 		msg := C.obx_version_string()
@@ -49,11 +49,11 @@ func NewObjectBoxBuilder() (builder *Builder) {
 	if err != nil {
 		panic("Could not create model: " + err.Error())
 	}
-	builder = &Builder{}
-	builder.model = model
-	builder.bindingsById = make(map[TypeId]ObjectBinding)
-	builder.bindingsByName = make(map[string]ObjectBinding)
-	return
+	return &Builder{
+		model:          model,
+		bindingsById:   make(map[TypeId]ObjectBinding),
+		bindingsByName: make(map[string]ObjectBinding),
+	}
 }
 
 func (builder *Builder) Name(name string) *Builder {
@@ -111,14 +111,12 @@ func (builder *Builder) LastRelationId(id TypeId, uid uint64) *Builder {
 	return builder
 }
 
-func (builder *Builder) Build() (objectBox *ObjectBox, err error) {
+func (builder *Builder) Build() (*ObjectBox, error) {
 	if builder.model.Err != nil {
-		err = builder.model.Err
-		return
+		return nil, builder.model.Err
 	}
 	if builder.Err != nil {
-		err = builder.Err
-		return
+		return nil, builder.Err
 	}
 	if builder.lastEntityId == 0 || builder.lastEntityUid == 0 {
 		panic("Configuration error: last entity ID/UID must be set")
@@ -132,24 +130,23 @@ func (builder *Builder) Build() (objectBox *ObjectBox, err error) {
 		builder.model.LastRelationId(builder.lastRelationId, builder.lastRelationUid)
 	}
 
-	coptions := C.struct_OBX_store_options{}
+	cOptions := C.struct_OBX_store_options{}
 	if builder.name != "" {
 		cname := C.CString(builder.name)
 		defer C.free(unsafe.Pointer(cname))
-		coptions.directory = cname
+		cOptions.directory = cname
 	}
-	coptions.maxReaders = C.uint(builder.maxReaders)            // Zero is the default on both sides
-	coptions.maxDbSizeInKByte = C.uint64_t(builder.maxSizeInKb) // Zero is the default on both sides
+	cOptions.maxReaders = C.uint(builder.maxReaders)            // Zero is the default on both sides
+	cOptions.maxDbSizeInKByte = C.uint64_t(builder.maxSizeInKb) // Zero is the default on both sides
 
-	objectBox = &ObjectBox{}
-	objectBox.store = C.obx_store_open(builder.model.model, &coptions)
+	objectBox := &ObjectBox{}
+	objectBox.store = C.obx_store_open(builder.model.model, &cOptions)
 	if objectBox.store == nil {
-		objectBox = nil
-		err = createError()
+		return nil, createError()
 	}
-	if err == nil {
-		objectBox.bindingsById = builder.bindingsById
-		objectBox.bindingsByName = builder.bindingsByName
-	}
-	return
+
+	objectBox.bindingsById = builder.bindingsById
+	objectBox.bindingsByName = builder.bindingsByName
+
+	return objectBox, nil
 }

@@ -5,6 +5,6 @@ type InternalTestAccessObjectBox struct {
 	ObjectBox *ObjectBox
 }
 
-func (obx *InternalTestAccessObjectBox) RunInTxn(readOnly bool, txnFun TxnFun) (err error) {
+func (obx *InternalTestAccessObjectBox) RunInTxn(readOnly bool, txnFun txnFun) (err error) {
 	return obx.ObjectBox.runInTxn(readOnly, txnFun)
 }

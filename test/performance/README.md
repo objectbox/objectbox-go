@@ -5,7 +5,7 @@ To get good numbers, close all programs before running, build & run outside of I
 
 ```bash
 cd /tmp
-go build /home/ivan/go/src/github.com/objectbox/objectbox-go/test/performance/
+go build github.com/objectbox/objectbox-go/test/performance/
 ./performance
 ```
 

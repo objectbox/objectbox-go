@@ -33,5 +33,10 @@ func main() {
 		log.Printf("%d/%d finished", i+1, *runs)
 	}
 
-	executor.PrintTimes()
+	executor.PrintTimes([]string{
+		"PutAll",
+		"ReadAll",
+		"UpdateAll",
+		"RemoveAll",
+	})
 }

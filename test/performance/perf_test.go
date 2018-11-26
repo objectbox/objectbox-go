@@ -29,7 +29,8 @@ func TestPerformanceSimple(t *testing.T) {
 	executor.PutAll(inserts)
 
 	items := executor.ReadAll(count)
+	executor.ChangeValues(items)
 	executor.UpdateAll(items)
 
-	executor.PrintTimes()
+	executor.PrintTimes([]string{})
 }

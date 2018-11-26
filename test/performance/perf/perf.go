@@ -46,25 +46,28 @@ func (perf *Executor) trackTime(start time.Time) {
 	elapsed := time.Since(start)
 
 	pc, _, _, _ := runtime.Caller(1)
-	fun := path.Ext(runtime.FuncForPC(pc).Name())
-	//if perf.logTimes {
-	//	//log.Printf("%s took %s", f.Name()), elapsed)
-	//} else {
-	//	// TODO
-	//}
-
+	fun := path.Ext(runtime.FuncForPC(pc).Name())[1:]
 	perf.times[fun] = append(perf.times[fun], elapsed)
 }
 
-func (perf *Executor) PrintTimes() {
+func (perf *Executor) PrintTimes(functions []string) {
 	// print the whole data as a table
 	fmt.Println("Function\tRuns\tAverage ms\tAll times")
-	for fun, times := range perf.times {
+
+	if len(functions) == 0 {
+		for fun, _ := range perf.times {
+			functions = append(functions, fun)
+		}
+	}
+
+	for _, fun := range functions {
+		times := perf.times[fun]
+
 		sum := int64(0)
 		for _, duration := range times {
 			sum += duration.Nanoseconds()
 		}
-		fmt.Printf("%s\t%d\t%f", fun[1:], len(times), float64(sum/int64(len(times)))/1000000)
+		fmt.Printf("%s\t%d\t%f", fun, len(times), float64(sum/int64(len(times)))/1000000)
 
 		for _, duration := range times {
 			fmt.Printf("\t%f", float64(duration.Nanoseconds())/1000000)
@@ -129,12 +132,17 @@ func (perf *Executor) ReadAll(count int) []*Entity {
 	}
 }
 
-func (perf *Executor) UpdateAll(items []*Entity) {
+func (perf *Executor) ChangeValues(items []*Entity) {
 	defer perf.trackTime(time.Now())
 
-	for _, item := range items {
-		item.Int64 = item.Int64 * 2
+	count := len(items)
+	for i := 0; i < count; i++ {
+		items[i].Int64 = items[i].Int64 * 2
 	}
+}
+
+func (perf *Executor) UpdateAll(items []*Entity) {
+	defer perf.trackTime(time.Now())
 
 	if _, err := perf.box.PutAll(items); err != nil {
 		panic(err)

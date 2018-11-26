@@ -8,6 +8,8 @@ package objectbox
 import "C"
 
 import (
+	"fmt"
+	"strconv"
 	"unsafe"
 )
 
@@ -65,41 +67,62 @@ type Model struct {
 	model              *C.OBX_model
 	previousEntityName string
 	previousEntityId   TypeId
-	Err                error
+	Error              error
+
+	bindingsById   map[TypeId]ObjectBinding
+	bindingsByName map[string]ObjectBinding
+
+	lastEntityId  TypeId
+	lastEntityUid uint64
+
+	lastIndexId  TypeId
+	lastIndexUid uint64
+
+	lastRelationId  TypeId
+	lastRelationUid uint64
 }
 
 func NewModel() (*Model, error) {
-	model := &Model{}
-	model.model = C.obx_model_create()
-	if model.model == nil {
+	cModel := C.obx_model_create()
+	if cModel == nil {
 		return nil, createError()
 	}
-	return model, nil
+	return &Model{
+		model:          cModel,
+		bindingsById:   make(map[TypeId]ObjectBinding),
+		bindingsByName: make(map[string]ObjectBinding),
+	}, nil
 }
 
 func (model *Model) LastEntityId(id TypeId, uid uint64) {
-	if model.Err != nil {
+	if model.Error != nil {
 		return
 	}
+	model.lastEntityId = id
+	model.lastEntityUid = uid
 	C.obx_model_last_entity_id(model.model, C.obx_schema_id(id), C.obx_uid(uid))
 }
 
 func (model *Model) LastIndexId(id TypeId, uid uint64) {
-	if model.Err != nil {
+	if model.Error != nil {
 		return
 	}
+	model.lastIndexId = id
+	model.lastIndexUid = uid
 	C.obx_model_last_index_id(model.model, C.obx_schema_id(id), C.obx_uid(uid))
 }
 
 func (model *Model) LastRelationId(id TypeId, uid uint64) {
-	if model.Err != nil {
+	if model.Error != nil {
 		return
 	}
+	model.lastRelationId = id
+	model.lastRelationUid = uid
 	C.obx_model_last_relation_id(model.model, C.obx_schema_id(id), C.obx_uid(uid))
 }
 
 func (model *Model) Entity(name string, id TypeId, uid uint64) {
-	if model.Err != nil {
+	if model.Error != nil {
 		return
 	}
 	cname := C.CString(name)
@@ -107,7 +130,7 @@ func (model *Model) Entity(name string, id TypeId, uid uint64) {
 
 	rc := C.obx_model_entity(model.model, cname, C.obx_schema_id(id), C.obx_uid(uid))
 	if rc != 0 {
-		model.Err = createError()
+		model.Error = createError()
 		return
 	}
 	model.previousEntityName = name
@@ -116,18 +139,18 @@ func (model *Model) Entity(name string, id TypeId, uid uint64) {
 }
 
 func (model *Model) EntityLastPropertyId(id TypeId, uid uint64) {
-	if model.Err != nil {
+	if model.Error != nil {
 		return
 	}
 	rc := C.obx_model_entity_last_property_id(model.model, C.obx_schema_id(id), C.obx_uid(uid))
 	if rc != 0 {
-		model.Err = createError()
+		model.Error = createError()
 	}
 	return
 }
 
 func (model *Model) Property(name string, propertyType int, id TypeId, uid uint64) {
-	if model.Err != nil {
+	if model.Error != nil {
 		return
 	}
 	cname := C.CString(name)
@@ -135,42 +158,76 @@ func (model *Model) Property(name string, propertyType int, id TypeId, uid uint6
 
 	rc := C.obx_model_property(model.model, cname, C.OBPropertyType(propertyType), C.obx_schema_id(id), C.obx_uid(uid))
 	if rc != 0 {
-		model.Err = createError()
+		model.Error = createError()
 	}
 	return
 }
 
 func (model *Model) PropertyFlags(propertyFlags int) {
-	if model.Err != nil {
+	if model.Error != nil {
 		return
 	}
 	rc := C.obx_model_property_flags(model.model, C.OBPropertyFlags(propertyFlags))
 	if rc != 0 {
-		model.Err = createError()
+		model.Error = createError()
 	}
 	return
 }
 
 func (model *Model) PropertyIndex(id TypeId, uid uint64) {
-	if model.Err != nil {
+	if model.Error != nil {
 		return
 	}
 	rc := C.obx_model_property_index_id(model.model, C.obx_schema_id(id), C.obx_uid(uid))
 	if rc != 0 {
-		model.Err = createError()
+		model.Error = createError()
 	}
 	return
 }
 
 func (model *Model) PropertyRelation(targetEntityName string, indexId TypeId, indexUid uint64) {
-	if model.Err != nil {
+	if model.Error != nil {
 		return
 	}
 	cname := C.CString(targetEntityName)
 	defer C.free(unsafe.Pointer(cname))
 	rc := C.obx_model_property_relation(model.model, cname, C.obx_schema_id(indexId), C.obx_uid(indexUid))
 	if rc != 0 {
-		model.Err = createError()
+		model.Error = createError()
 	}
 	return
+}
+
+func (model *Model) RegisterBinding(binding ObjectBinding) {
+	binding.AddToModel(model)
+	id := model.previousEntityId
+	name := model.previousEntityName
+	if id == 0 {
+		panic("No type ID; did you forget to add an entity to the model?")
+	}
+	if name == "" {
+		panic("No type name")
+	}
+	existingBinding := model.bindingsById[id]
+	if existingBinding != nil {
+		panic("Already registered a binding for ID " + strconv.Itoa(int(id)))
+	}
+	existingBinding = model.bindingsByName[name]
+	if existingBinding != nil {
+		panic("Already registered a binding for name " + name)
+	}
+	model.bindingsById[id] = binding
+	model.bindingsByName[name] = binding
+}
+
+func (model *Model) validate() error {
+	if model.Error != nil {
+		return model.Error
+	}
+
+	if model.lastEntityId == 0 || model.lastEntityUid == 0 {
+		return fmt.Errorf("last entity ID/UID is missing")
+	}
+
+	return nil
 }

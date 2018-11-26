@@ -11,6 +11,9 @@ func mergeBindingWithModelInfo(binding *Binding, modelInfo *modelinfo.ModelInfo)
 		}
 	}
 
+	// NOTE this is not ideal as there could be models across multiple packages
+	modelInfo.Package = binding.Package
+
 	return nil
 }
 

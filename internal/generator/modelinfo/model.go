@@ -22,6 +22,9 @@ type ModelInfo struct {
 	RetiredPropertyUids []uid `json:"retiredPropertyUids"`
 
 	file *os.File // file handle, locked while the model is open
+
+	// Model Template
+	Package string `json:"-"`
 }
 
 func createModelInfo() *ModelInfo {

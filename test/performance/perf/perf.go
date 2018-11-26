@@ -26,10 +26,7 @@ func CreateExecutor(dbName string) *Executor {
 func (perf *Executor) initObjectBox(dbName string) {
 	defer perf.trackTime(time.Now())
 
-	builder := objectbox.NewObjectBoxBuilder().Name(dbName)
-	builder.RegisterBinding(EntityBinding)
-	builder.LastEntityId(EntityBinding.Id, EntityBinding.Uid)
-	objectBox, err := builder.Build()
+	objectBox, err := objectbox.NewObjectBoxBuilder().Name(dbName).Model(CreateObjectBoxModel()).Build()
 	if err != nil {
 		panic(err)
 	}

@@ -10,7 +10,7 @@ import (
 
 func main() {
 	var dbName = flag.String("db", "db", "database directory")
-	var count = flag.Int("count", 1000000, "number of objects")
+	var count = flag.Int("count", 100000, "number of objects")
 	var runs = flag.Int("runs", 30, "number of times the tests should be executed")
 	flag.Parse()
 

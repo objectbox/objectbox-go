@@ -28,9 +28,12 @@ func generateAllDirs(t *testing.T, overwriteExpected bool) {
 
 		var dir = path.Join(datadir, folder.Name())
 
-		modelInfoFile := path.Join(dir, "objectbox-model-info.json")
-		modelInfoExpectedFile := modelInfoFile[0:len(modelInfoFile)-len(path.Ext(modelInfoFile))] + ".expected"
-		modelInfoInitialFile := modelInfoFile[0:len(modelInfoFile)-len(path.Ext(modelInfoFile))] + ".initial"
+		modelInfoFile := generator.ModelInfoFile(dir)
+		modelInfoExpectedFile := modelInfoFile + ".expected"
+		modelInfoInitialFile := modelInfoFile + ".initial"
+
+		modelFile := generator.ModelFile(modelInfoFile)
+		modelExpectedFile := modelFile + ".expected"
 
 		// run the generation twice, first time with deleting old modelInfo
 		for i := 0; i <= 1; i++ {
@@ -47,21 +50,30 @@ func generateAllDirs(t *testing.T, overwriteExpected bool) {
 
 			generateAllFiles(t, overwriteExpected, dir, modelInfoFile)
 
-			modelInfoFileContents, err := ioutil.ReadFile(modelInfoFile)
-			assert.NoErr(t, err)
-
-			if overwriteExpected {
-				assert.NoErr(t, copyFile(modelInfoFile, modelInfoExpectedFile))
-			}
-
-			modelInfoFileExpectedContents, err := ioutil.ReadFile(modelInfoExpectedFile)
-			assert.NoErr(t, err)
-
-			if 0 != bytes.Compare(modelInfoFileContents, modelInfoFileExpectedContents) {
-				assert.Failf(t, "Generated model info file %s is not the same as %s",
-					modelInfoFile, modelInfoExpectedFile)
-			}
+			assertSameFile(t, modelInfoFile, modelInfoExpectedFile, overwriteExpected)
+			assertSameFile(t, modelFile, modelExpectedFile, overwriteExpected)
 		}
+	}
+}
+
+func assertSameFile(t *testing.T, file string, expectedFile string, overwriteExpected bool) {
+	if !fileExists(expectedFile) {
+		assert.Eq(t, false, fileExists(file))
+		return
+	}
+
+	content, err := ioutil.ReadFile(file)
+	assert.NoErr(t, err)
+
+	if overwriteExpected {
+		assert.NoErr(t, copyFile(file, expectedFile))
+	}
+
+	contentExpected, err := ioutil.ReadFile(expectedFile)
+	assert.NoErr(t, err)
+
+	if 0 != bytes.Compare(content, contentExpected) {
+		assert.Failf(t, "generated file %s is not the same as %s", file, expectedFile)
 	}
 }
 
@@ -69,14 +81,20 @@ func generateAllFiles(t *testing.T, overwriteExpected bool, dir string, modelInf
 	// NOTE test-only - avoid changes caused by random numbers by fixing them to the same seed all the time
 	rand.Seed(0)
 
+	var modelFile = generator.ModelFile(modelInfoFile)
+
 	// process all *.go files in the directory
 	inputFiles, err := filepath.Glob(path.Join(dir, "*.go"))
 	assert.NoErr(t, err)
 	for _, sourceFile := range inputFiles {
 		// skip generated files & "expected results" files
-		if strings.HasSuffix(sourceFile, "binding.go") || strings.HasSuffix(sourceFile, "expected") {
+		if strings.HasSuffix(sourceFile, "binding.go") ||
+			strings.HasSuffix(sourceFile, "expected") ||
+			strings.HasSuffix(sourceFile, "initial") ||
+			sourceFile == modelFile {
 			continue
 		}
+
 		t.Logf("  %s", path.Base(sourceFile))
 
 		err = generator.Process(sourceFile, modelInfoFile)
@@ -92,21 +110,9 @@ func generateAllFiles(t *testing.T, overwriteExpected bool, dir string, modelInf
 		}
 
 		assert.NoErr(t, err)
-		var bindingFile = generator.BindingFileName(sourceFile)
+
+		var bindingFile = generator.BindingFile(sourceFile)
 		var expectedFile = bindingFile[0:len(bindingFile)-3] + ".expected"
-
-		bindingContents, err := ioutil.ReadFile(bindingFile)
-		assert.NoErr(t, err)
-
-		if overwriteExpected {
-			assert.NoErr(t, copyFile(bindingFile, expectedFile))
-		}
-
-		expectedContents, err := ioutil.ReadFile(expectedFile)
-		assert.NoErr(t, err)
-
-		if 0 != bytes.Compare(bindingContents, expectedContents) {
-			assert.Failf(t, "Generated binding file %s is not the same as %s", bindingFile, expectedFile)
-		}
+		assertSameFile(t, bindingFile, expectedFile, overwriteExpected)
 	}
 }

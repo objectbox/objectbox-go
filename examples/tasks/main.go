@@ -74,10 +74,7 @@ func runInteractiveShell(box *model.TaskBox) {
 }
 
 func initObjectBox() *objectbox.ObjectBox {
-	builder := objectbox.NewObjectBoxBuilder()
-	builder.RegisterBinding(model.TaskBinding)
-	builder.LastEntityId(model.TaskBinding.Id, model.TaskBinding.Uid)
-	objectBox, err := builder.Build()
+	objectBox, err := objectbox.NewObjectBoxBuilder().Model(model.CreateObjectBoxModel()).Build()
 	if err != nil {
 		panic(err)
 	}

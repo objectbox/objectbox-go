@@ -3,25 +3,19 @@ package iot
 import (
 	"strconv"
 
-	. "github.com/objectbox/objectbox-go/objectbox"
+	"github.com/objectbox/objectbox-go/objectbox"
 	"github.com/objectbox/objectbox-go/test/assert"
 )
 
-func CreateObjectBox() *ObjectBox {
-	builder := NewObjectBoxBuilder().Name("iot-test")
-	//objectBox.SetDebugFlags(DebugFlags_LOG_ASYNC_QUEUE)
-	builder.RegisterBinding(EventBinding)
-	builder.RegisterBinding(ReadingBinding)
-	builder.LastEntityId(ReadingBinding.Id, ReadingBinding.Uid)
-	builder.LastIndexId(1, 3297791712577314158)
-	objectBox, err := builder.Build()
+func CreateObjectBox() *objectbox.ObjectBox {
+	objectBox, err := objectbox.NewObjectBoxBuilder().Name("iot-test").Model(CreateObjectBoxModel()).Build()
 	if err != nil {
 		panic(err)
 	}
 	return objectBox
 }
 
-func PutEvent(ob *ObjectBox, device string, date int64) *Event {
+func PutEvent(ob *objectbox.ObjectBox, device string, date int64) *Event {
 	event := Event{Device: device, Date: date}
 	id, err := ob.Box(1).Put(&event)
 	assert.NoErr(nil, err)
@@ -29,7 +23,7 @@ func PutEvent(ob *ObjectBox, device string, date int64) *Event {
 	return &event
 }
 
-func PutEvents(ob *ObjectBox, count int) []*Event {
+func PutEvents(ob *objectbox.ObjectBox, count int) []*Event {
 	// TODO TX
 	events := make([]*Event, 0, count)
 	for i := 1; i <= count; i++ {

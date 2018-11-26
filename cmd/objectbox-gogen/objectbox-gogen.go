@@ -31,7 +31,7 @@ func stopOnError(err error) {
 	}
 }
 
-func getArgs() (file string, line uint, modelFile string) {
+func getArgs() (file string, line uint, modelInfoFile string) {
 	var hasAll = true
 	line = 0
 
@@ -49,10 +49,10 @@ func getArgs() (file string, line uint, modelFile string) {
 		}
 	}
 
-	modelFile = *flag.String("persist", "", "path to the model information persistence file")
+	modelInfoFile = *flag.String("persist", "", "path to the model information persistence file")
 
-	if len(modelFile) == 0 {
-		modelFile = path.Join(path.Dir(file), "objectbox-model-info.json")
+	if len(modelInfoFile) == 0 {
+		modelInfoFile = generator.ModelInfoFile(path.Dir(file))
 	}
 
 	if !hasAll {

@@ -12,7 +12,7 @@ import (
 	"unsafe"
 )
 
-// Allows construction of queries; just check QueryBuilder.Err or err from Build()
+// Allows construction of queries; just check QueryBuilder.Error or err from Build()
 type QueryBuilder struct {
 	objectBox *ObjectBox
 	cqb       *C.OBX_query_builder
@@ -44,7 +44,7 @@ func (qb *QueryBuilder) StringEq(propertyId TypeId, value string, caseSensitive 
 	cvalue := C.CString(value)
 	defer C.free(unsafe.Pointer(cvalue))
 	qb.cLastCondition = C.obx_qb_string_equal(qb.cqb, C.obx_schema_id(propertyId), cvalue, C.bool(caseSensitive))
-	qb.checkForCError() // Mirror C error early to Err
+	qb.checkForCError() // Mirror C error early to Error
 
 	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
 	return
@@ -55,7 +55,7 @@ func (qb *QueryBuilder) IntBetween(propertyId TypeId, value1 int64, value2 int64
 		return
 	}
 	qb.cLastCondition = C.obx_qb_int_between(qb.cqb, C.obx_schema_id(propertyId), C.int64_t(value1), C.int64_t(value2))
-	qb.checkForCError() // Mirror C error early to Err
+	qb.checkForCError() // Mirror C error early to Error
 
 	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
 	return

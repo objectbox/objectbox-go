@@ -50,7 +50,7 @@ The following methods demonstrate some of the API capabilities:
  
 ### Changing the data model
 When the model is changed, you need to run `go generate` inside the model folder so that the generated bindings are updated.
-For convenience, the auto-generated files `task-binding.go` and `objectbox-model-info.json` are already generated for this example.
+For convenience, the auto-generated files `task-binding.go` and `objectbox-model.json` are already generated for this example.
 
 You may want to change the data model to expend the example or to start your own data model for a new app.
 Here's what you have to do:

@@ -30,6 +30,7 @@ func main() {
 		items := executor.ReadAll(*count)
 		executor.UpdateAll(items)
 		executor.RemoveAll()
+		log.Printf("%d/%d finished", i+1, *runs)
 	}
 
 	executor.PrintTimes()

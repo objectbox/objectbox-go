@@ -21,11 +21,13 @@ and install the two prerequisites - pre-compiled library and a bindings generato
 
 ```bash
 go get github.com/objectbox/objectbox-go
+go get github.com/google/flatbuffers/go
 
+mkdir objectboxlib && cd objectboxlib
 wget https://raw.githubusercontent.com/objectbox/objectbox-c/master/download.sh
-bash ./download.sh
+bash download.sh
 
-go install $GOPATH/src/github.com/objectbox/objectbox-go/cmd/objectbox-gogen/
+go install github.com/objectbox/objectbox-go/cmd/objectbox-gogen/
 ```
 
 See [installation docs](https://golang.objectbox.io/install) for more details and further instructions.

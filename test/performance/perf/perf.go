@@ -1,7 +1,7 @@
 package perf
 
 import (
-	"log"
+	"fmt"
 	"path"
 	"runtime"
 	"time"
@@ -57,14 +57,19 @@ func (perf *Executor) trackTime(start time.Time) {
 }
 
 func (perf *Executor) PrintTimes() {
+	// print the whole data as a table
+	fmt.Println("Function\tRuns\tAverage ms\tAll times")
 	for fun, times := range perf.times {
 		sum := int64(0)
 		for _, duration := range times {
 			sum += duration.Nanoseconds()
 		}
+		fmt.Printf("%s\t%d\t%f", fun[1:], len(times), float64(sum/int64(len(times)))/1000000)
 
-		avgDuration := time.Duration(sum / int64(len(times)))
-		log.Printf("%s has been executed %d times and took %s on average", fun, len(times), avgDuration)
+		for _, duration := range times {
+			fmt.Printf("\t%f", float64(duration.Nanoseconds())/1000000)
+		}
+		fmt.Println()
 	}
 }
 
@@ -76,12 +81,27 @@ func (perf *Executor) RemoveAll() {
 	}
 }
 
-func (perf *Executor) PutAsync(count int) {
+func (perf *Executor) PrepareData(count int) []*Entity {
 	defer perf.trackTime(time.Now())
 
-	var proto = &Entity{}
+	var result = make([]*Entity, count)
 	for i := 0; i < count; i++ {
-		if _, err := perf.box.PutAsync(proto); err != nil {
+		result[i] = &Entity{
+			String:  fmt.Sprintf("Entity no. %d", i),
+			Float64: float64(i),
+			Int32:   int32(i),
+			Int64:   int64(i),
+		}
+	}
+
+	return result
+}
+
+func (perf *Executor) PutAsync(items []*Entity) {
+	defer perf.trackTime(time.Now())
+
+	for _, item := range items {
+		if _, err := perf.box.PutAsync(item); err != nil {
 			panic(err)
 		}
 	}
@@ -89,15 +109,8 @@ func (perf *Executor) PutAsync(count int) {
 	perf.ob.AwaitAsyncCompletion()
 }
 
-func (perf *Executor) PutAll(count int) {
+func (perf *Executor) PutAll(items []*Entity) {
 	defer perf.trackTime(time.Now())
-
-	items := make([]*Entity, count)
-
-	var proto = &Entity{}
-	for i := 0; i < count; i++ {
-		items[i] = proto
-	}
 
 	if _, err := perf.box.PutAll(items); err != nil {
 		panic(err)
@@ -119,10 +132,8 @@ func (perf *Executor) ReadAll(count int) []*Entity {
 func (perf *Executor) UpdateAll(items []*Entity) {
 	defer perf.trackTime(time.Now())
 
-	// NOTE this takes about 20% of the function time
-	var newValue = uint32(1)
 	for _, item := range items {
-		item.Value = newValue
+		item.Int64 = item.Int64 * 2
 	}
 
 	if _, err := perf.box.PutAll(items); err != nil {

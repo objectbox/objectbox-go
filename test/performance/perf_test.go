@@ -21,10 +21,12 @@ func TestPerformanceSimple(t *testing.T) {
 	executor := perf.CreateExecutor(dbName)
 	defer executor.Close()
 
-	executor.PutAsync(count)
+	inserts := executor.PrepareData(count)
+
+	executor.PutAsync(inserts)
 	executor.RemoveAll()
 
-	executor.PutAll(count)
+	executor.PutAll(inserts)
 
 	items := executor.ReadAll(count)
 	executor.UpdateAll(items)

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"os"
 
@@ -8,22 +9,25 @@ import (
 )
 
 func main() {
-	var dbName = "db"
-	var count = 100000
-	var runs = 30
+	var dbName = flag.String("db", "db", "database directory")
+	var count = flag.Int("count", 1000000, "number of objects")
+	var runs = flag.Int("runs", 30, "number of times the tests should be executed")
+	flag.Parse()
 
-	log.Printf("running the test %d times with %d objects", runs, count)
+	log.Printf("running the test %d times with %d objects", *runs, *count)
 
 	// remove old database in case it already exists (and remove it after the test as well)
-	os.RemoveAll(dbName)
-	defer os.RemoveAll(dbName)
+	os.RemoveAll(*dbName)
+	defer os.RemoveAll(*dbName)
 
-	executor := perf.CreateExecutor(dbName)
+	executor := perf.CreateExecutor(*dbName)
 	defer executor.Close()
 
-	for i := 0; i < runs; i++ {
-		executor.PutAll(count)
-		items := executor.ReadAll(count)
+	inserts := executor.PrepareData(*count)
+
+	for i := 0; i < *runs; i++ {
+		executor.PutAll(inserts)
+		items := executor.ReadAll(*count)
 		executor.UpdateAll(items)
 		executor.RemoveAll()
 	}

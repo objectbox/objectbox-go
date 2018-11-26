@@ -5,6 +5,7 @@ package perf
 import (
 	"github.com/google/flatbuffers/go"
 	"github.com/objectbox/objectbox-go/objectbox"
+	"github.com/objectbox/objectbox-go/objectbox/fbutils"
 )
 
 type entity_ struct {
@@ -14,15 +15,18 @@ type entity_ struct {
 
 var EntityBinding = entity_{
 	Id:  1,
-	Uid: 4559643677707543969,
+	Uid: 1737161401460991620,
 }
 
 func (entity_) AddToModel(model *objectbox.Model) {
-	model.Entity("Entity", 1, 4559643677707543969)
-	model.Property("Id", objectbox.PropertyType_Long, 1, 2382573669497447768)
+	model.Entity("Entity", 1, 1737161401460991620)
+	model.Property("Id", objectbox.PropertyType_Long, 1, 7373286741377356014)
 	model.PropertyFlags(objectbox.PropertyFlags_ID)
-	model.Property("Value", objectbox.PropertyType_Int, 2, 7382906424583112256)
-	model.EntityLastPropertyId(2, 7382906424583112256)
+	model.Property("Int32", objectbox.PropertyType_Int, 2, 4837914178321008766)
+	model.Property("Int64", objectbox.PropertyType_Long, 3, 3841825182616422591)
+	model.Property("String", objectbox.PropertyType_String, 4, 6473251296493454829)
+	model.Property("Float64", objectbox.PropertyType_Double, 5, 8933082277725371577)
+	model.EntityLastPropertyId(5, 8933082277725371577)
 }
 
 func (entity_) GetId(entity interface{}) (uint64, error) {
@@ -31,11 +35,15 @@ func (entity_) GetId(entity interface{}) (uint64, error) {
 
 func (entity_) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
 	ent := entity.(*Entity)
+	var offsetString = fbutils.CreateStringOffset(fbb, ent.String)
 
 	// build the FlatBuffers object
-	fbb.StartObject(2)
+	fbb.StartObject(5)
 	fbb.PrependUint64Slot(0, id, 0)
-	fbb.PrependUint32Slot(1, ent.Value, 0)
+	fbb.PrependInt32Slot(1, ent.Int32, 0)
+	fbb.PrependInt64Slot(2, ent.Int64, 0)
+	fbb.PrependUOffsetTSlot(3, offsetString, 0)
+	fbb.PrependFloat64Slot(4, ent.Float64, 0)
 }
 
 func (entity_) ToObject(bytes []byte) interface{} {
@@ -45,8 +53,11 @@ func (entity_) ToObject(bytes []byte) interface{} {
 	}
 
 	return &Entity{
-		Id:    table.GetUint64Slot(4, 0),
-		Value: table.GetUint32Slot(6, 0),
+		Id:      table.GetUint64Slot(4, 0),
+		Int32:   table.GetInt32Slot(6, 0),
+		Int64:   table.GetInt64Slot(8, 0),
+		String:  fbutils.GetStringSlot(table, 10),
+		Float64: table.GetFloat64Slot(12, 0),
 	}
 }
 

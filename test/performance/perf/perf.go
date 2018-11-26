@@ -70,7 +70,10 @@ func (perf *Executor) PrintTimes() {
 
 func (perf *Executor) RemoveAll() {
 	defer perf.trackTime(time.Now())
-	perf.box.RemoveAll()
+	err := perf.box.RemoveAll()
+	if err != nil {
+		panic(err)
+	}
 }
 
 func (perf *Executor) PutAsync(count int) {

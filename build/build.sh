@@ -30,7 +30,8 @@ function postBuild {
 
 function test {
     echo "******** Testing ********"
-    ./build/test.sh
+    # ./build/test.sh
+    go test ./...
 }
 
 function generate {

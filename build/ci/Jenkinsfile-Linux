@@ -15,7 +15,7 @@ pipeline {
     }
     environment {
         REPO_NAME = "github.com/objectbox/objectbox-go"
-        GOPATH = "${env.WORKSPACE}/go"
+        GOPATH = "${env.WORKSPACE}/_go"
         LD_LIBRARY_PATH = "${WORKSPACE}/lib"  // We assume it was empty
         CGO_LDFLAGS = "-L${WORKSPACE}/lib  -Wl,-rpath -Wl,${WORKSPACE}/lib"   // Used by the compiler
     }

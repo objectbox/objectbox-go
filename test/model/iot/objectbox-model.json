@@ -44,7 +44,8 @@
         },
         {
           "id": "3:1403806151574554320",
-          "name": "EventId"
+          "name": "EventId",
+          "indexId": "2:2642563953244304959"
         },
         {
           "id": "4:5626221656121286670",
@@ -66,7 +67,7 @@
     }
   ],
   "lastEntityId": "2:5284076134434938613",
-  "lastIndexId": "1:3297791712577314158",
+  "lastIndexId": "2:2642563953244304959",
   "retiredEntityUids": [],
   "retiredIndexUids": [],
   "retiredPropertyUids": []

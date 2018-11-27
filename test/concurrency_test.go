@@ -33,7 +33,7 @@ func TestConcurrentPutAsync(t *testing.T) {
 }
 
 func concurrentInsert(t *testing.T, count, concurrency int, putAsync bool) {
-	objectBox := iot.CreateObjectBox()
+	objectBox := iot.LoadEmptyTestObjectBox()
 	defer objectBox.Close()
 	box := iot.BoxForEvent(objectBox)
 	defer box.Close()

@@ -26,7 +26,7 @@ import (
 )
 
 func TestTransactionInsert(t *testing.T) {
-	ob := iot.CreateObjectBox()
+	ob := iot.LoadEmptyTestObjectBox()
 	defer ob.Close()
 
 	assert.NoErr(t, ob.Box(1).RemoveAll())

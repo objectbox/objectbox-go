@@ -30,7 +30,7 @@ type Reading struct {
 	Date int64  `date`
 
 	/// to-one relation
-	EventId uint64
+	EventId uint64 `link:"Event"`
 
 	ValueName string
 

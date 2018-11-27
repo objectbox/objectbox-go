@@ -23,7 +23,7 @@ import (
 )
 
 func TestObjectBoxEvents(t *testing.T) {
-	objectBox := CreateObjectBox()
+	objectBox := LoadEmptyTestObjectBox()
 
 	box := BoxForEvent(objectBox)
 	assert.NoErr(t, box.RemoveAll())
@@ -52,7 +52,7 @@ func TestObjectBoxEvents(t *testing.T) {
 }
 
 func TestObjectBoxReadings(t *testing.T) {
-	objectBox := CreateObjectBox()
+	objectBox := LoadEmptyTestObjectBox()
 	box := BoxForReading(objectBox)
 	assert.NoErr(t, box.RemoveAll())
 	reading := Reading{

@@ -17,14 +17,20 @@
 package iot
 
 import (
+	"os"
 	"strconv"
 
 	"github.com/objectbox/objectbox-go/objectbox"
 	"github.com/objectbox/objectbox-go/test/assert"
 )
 
-func CreateObjectBox() *objectbox.ObjectBox {
-	objectBox, err := objectbox.NewBuilder().Directory("iot-test").Model(ObjectBoxModel()).Build()
+func LoadEmptyTestObjectBox() *objectbox.ObjectBox {
+	var dbName = "iot-test"
+
+	// remove database beforehand - only used in tests
+	os.RemoveAll(dbName)
+
+	objectBox, err := objectbox.NewBuilder().Directory(dbName).Model(ObjectBoxModel()).Build()
 	if err != nil {
 		panic(err)
 	}

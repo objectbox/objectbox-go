@@ -30,7 +30,7 @@ import (
 	"github.com/google/flatbuffers/go"
 )
 
-// Internal class; won't be publicly exposed in a future version!
+// Internal: won't be publicly exposed in a future version!
 type cursor struct {
 	cursor  *C.OBX_cursor
 	binding ObjectBinding
@@ -174,7 +174,7 @@ func (cursor *cursor) RemoveAll() (err error) {
 
 func (cursor *cursor) cBytesArrayToObjects(cBytesArray *C.OBX_bytes_array) (slice interface{}) {
 	bytesArray := cBytesArrayToGo(cBytesArray)
-	defer bytesArray.Free()
+	defer bytesArray.free()
 	return cursor.bytesArrayToObjects(bytesArray)
 }
 

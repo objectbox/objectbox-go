@@ -29,7 +29,7 @@ import (
 	"github.com/google/flatbuffers/go"
 )
 
-// Internal class; won't be publicly exposed in a future version!
+// Internal: won't be publicly exposed in a future version!
 type Transaction struct {
 	txn       *C.OBX_txn
 	objectBox *ObjectBox
@@ -68,7 +68,7 @@ func (txn *Transaction) createCursor(typeId TypeId, binding ObjectBinding) (*cur
 	return &cursor{ccursor, binding, flatbuffers.NewBuilder(512)}, nil
 }
 
-// internal, won't be available in future versions
+// Internal: won't be available in future versions
 func (txn *Transaction) CursorForName(entitySchemaName string) (*cursor, error) {
 	binding := txn.objectBox.getBindingByName(entitySchemaName)
 	cname := C.CString(entitySchemaName)

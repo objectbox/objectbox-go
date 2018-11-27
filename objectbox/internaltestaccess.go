@@ -16,7 +16,7 @@
 
 package objectbox
 
-// Reserved for internal unit tests only
+// Internal: Reserved for internal unit tests only and won't be exposed in the future
 type InternalTestAccessObjectBox struct {
 	ObjectBox *ObjectBox
 }

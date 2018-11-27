@@ -24,6 +24,7 @@ package objectbox
 import "C"
 import "unsafe"
 
+// WIP: Query interface is subject to change with full ObjectBox queries support
 type Query struct {
 	cquery    *C.OBX_query
 	typeId    TypeId
@@ -53,11 +54,11 @@ func (query *Query) find(cursor *cursor) (slice interface{}, err error) {
 	if err != nil {
 		return
 	}
-	defer bytesArray.Free()
+	defer bytesArray.free()
 	return cursor.bytesArrayToObjects(bytesArray), nil
 }
 
-// Won't be public in the future
+// Deprecated: Won't be public in the future
 func (query *Query) FindBytes() (bytesArray *BytesArray, err error) {
 	err = query.objectBox.runWithCursor(query.typeId, true, func(cursor *cursor) error {
 		var errInner error

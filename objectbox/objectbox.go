@@ -59,6 +59,7 @@ type ObjectBox struct {
 	bindingsByName map[string]ObjectBinding
 }
 
+// Internal: Won't be public in the future
 type BytesArray struct {
 	BytesArray  [][]byte
 	cBytesArray *C.OBX_bytes_array
@@ -67,6 +68,7 @@ type BytesArray struct {
 type txnFun func(transaction *Transaction) error
 type cursorFun func(cursor *cursor) error
 
+// Close fully closes the database and free's resources
 func (ob *ObjectBox) Close() {
 	storeToClose := ob.store
 	ob.store = nil
@@ -168,6 +170,8 @@ func (ob *ObjectBox) runWithCursor(typeId TypeId, readOnly bool, cursorFun curso
 	})
 }
 
+// SetDebugFlags configures debug logging of the ObjectBox core
+// see DebugFlags_* constants
 func (ob *ObjectBox) SetDebugFlags(flags uint) error {
 	rc := C.obx_store_debug_flags(ob.store, C.OBDebugFlags(flags))
 	if rc != 0 {
@@ -176,7 +180,8 @@ func (ob *ObjectBox) SetDebugFlags(flags uint) error {
 	return nil
 }
 
-// Returns a Box, panics on error (see BoxOrError)
+// Box opens an Entity Box which provides CRUD access to objects
+// panics on error (in case entity with the given ID doesn't exist)
 func (ob *ObjectBox) Box(typeId TypeId) *Box {
 	box, err := ob.BoxOrError(typeId)
 	if err != nil {
@@ -185,6 +190,7 @@ func (ob *ObjectBox) Box(typeId TypeId) *Box {
 	return box
 }
 
+// BoxOrError opens an Entity Box which provides CRUD access to objects of the given type
 func (ob *ObjectBox) BoxOrError(typeId TypeId) (*Box, error) {
 	binding := ob.getBindingById(typeId)
 	cbox := C.obx_box_create(ob.store, C.obx_schema_id(typeId))
@@ -200,6 +206,7 @@ func (ob *ObjectBox) BoxOrError(typeId TypeId) (*Box, error) {
 	}, nil
 }
 
+// AwaitAsyncCompletion blocks until all PutAsync insert have been processed
 func (ob *ObjectBox) AwaitAsyncCompletion() *ObjectBox {
 	if C.obx_store_await_async_completion(ob.store) != 0 {
 		fmt.Println(createError())
@@ -207,6 +214,8 @@ func (ob *ObjectBox) AwaitAsyncCompletion() *ObjectBox {
 	return ob
 }
 
+// Query starts to build a new Query
+// Deprecated: this function is subject to change due to necessary typeId argument
 func (ob *ObjectBox) Query(typeId TypeId) *QueryBuilder {
 	qb := C.obx_qb_create(ob.store, C.obx_schema_id(typeId))
 	var err error = nil
@@ -221,7 +230,7 @@ func (ob *ObjectBox) Query(typeId TypeId) *QueryBuilder {
 	}
 }
 
-func (bytesArray *BytesArray) Free() {
+func (bytesArray *BytesArray) free() {
 	cBytesArray := bytesArray.cBytesArray
 	if cBytesArray != nil {
 		bytesArray.cBytesArray = nil

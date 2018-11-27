@@ -77,7 +77,7 @@ const (
 	PropertyFlags_INDEX_HASH64 = 4096
 )
 
-// Usually only used by the automatically generated artifacts of ObjectBox generator
+// Model is used by the generated code to represent information about the ObjectBox database schema
 type Model struct {
 	model              *C.OBX_model
 	previousEntityName string

@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 set -eu
 
-cwd=$PWD
-buildDir=build-artifacts
+buildDir=${PWD}/build-artifacts
+
+PATH=$PATH:${buildDir}
 
 function preBuild {
     echo "******** Preparing build ********"
@@ -11,17 +12,11 @@ function preBuild {
 }
 
 function build {
-    echo ""
-    cd $buildDir
-
     echo "******** Building ********"
-    for CMD in `ls $cwd/cmd`; do
-        echo "building cmd/$CMD"
-        go build $cwd/cmd/$CMD
+    for CMD in `ls cmd`; do
+        echo "building cmd/${CMD}"
+        go build -o ${buildDir}/${CMD} ${PWD}/cmd/${CMD}
     done
-
-    echo ""
-    cd $cwd
 }
 
 function postBuild {
@@ -33,7 +28,7 @@ function postBuild {
 
 function test {
     echo "******** Testing ********"
-    go test ./...
+    ./build/test.sh
 }
 
 function generate {

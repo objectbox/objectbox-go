@@ -9,11 +9,12 @@ def COLOR_MAP = ['SUCCESS': 'good', 'FAILURE': 'danger', 'UNSTABLE': 'danger', '
 // https://jenkins.io/doc/book/pipeline/syntax/
 pipeline {
     agent {
-    node {
-        label 'linux'
+        node {
+            label 'linux'
         }
     }
     environment {
+        REPO_NAME = "github.com/objectbox/objectbox-go"
         GOPATH = "${env.WORKSPACE}/go"
         LD_LIBRARY_PATH = "${WORKSPACE}/lib"  // We assume it was empty
         CGO_LDFLAGS = "-L${WORKSPACE}/lib  -Wl,-rpath -Wl,${WORKSPACE}/lib"   // Used by the compiler
@@ -26,11 +27,15 @@ pipeline {
     stages {
         stage('init') {
             steps {
-                sh 'git submodule update --init --recursive'
+                // Go expects things to be in very specific locations (within $GOPATH)
+                sh 'mkdir -p ${GOPATH}/src/$(dirname $REPO_NAME) && ln -svf $WORKSPACE $GOPATH/src/$REPO_NAME'
+
+                // TODO this should be done using some vendoring tool?
                 sh 'go get github.com/google/flatbuffers/go'
             }
         }
-        stage('get-obx-binary') {
+
+        stage('get-objectbox-lib') {
             steps {
                 sh 'wget -N https://raw.githubusercontent.com/objectbox/objectbox-c/master/download.sh'
                 sh 'chmod +x download.sh'
@@ -40,15 +45,7 @@ pipeline {
 
         stage('build') {
             steps {
-                // Go expects things to be in very specific locations (within $GOPATH)
-                sh 'mkdir -p ${GOPATH}/src/github.com/objectbox && cd  ${GOPATH}/src/github.com/objectbox && ln -sv $WORKSPACE objectbox-go'
-
-                sh 'cd ${GOPATH}/src/github.com/objectbox/objectbox-go/objectbox && go build && go install'
-            }
-        }
-        stage('test') {
-            steps {
-                sh 'cd test && go test'
+                sh './build/build.sh'
             }
         }
     }

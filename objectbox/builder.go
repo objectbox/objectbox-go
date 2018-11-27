@@ -38,8 +38,6 @@ type Builder struct {
 	maxReaders  uint
 }
 
-type modelLoaderFun func() (*Model, error)
-
 func NewBuilder() *Builder {
 	if !C.obx_version_is_at_least(0, 3, 0) {
 		var version string

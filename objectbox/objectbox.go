@@ -170,8 +170,8 @@ func (ob *ObjectBox) runWithCursor(typeId TypeId, readOnly bool, cursorFun curso
 	})
 }
 
-// SetDebugFlags configures debug logging of the ObjectBox core
-// see DebugFlags_* constants
+// SetDebugFlags configures debug logging of the ObjectBox core.
+// See DebugFlags_* constants
 func (ob *ObjectBox) SetDebugFlags(flags uint) error {
 	rc := C.obx_store_debug_flags(ob.store, C.OBDebugFlags(flags))
 	if rc != 0 {
@@ -181,6 +181,7 @@ func (ob *ObjectBox) SetDebugFlags(flags uint) error {
 }
 
 // Box opens an Entity Box which provides CRUD access to objects
+//
 // panics on error (in case entity with the given ID doesn't exist)
 func (ob *ObjectBox) Box(typeId TypeId) *Box {
 	box, err := ob.BoxOrError(typeId)
@@ -215,6 +216,7 @@ func (ob *ObjectBox) AwaitAsyncCompletion() *ObjectBox {
 }
 
 // Query starts to build a new Query
+//
 // Deprecated: this function is subject to change due to necessary typeId argument
 func (ob *ObjectBox) Query(typeId TypeId) *QueryBuilder {
 	qb := C.obx_qb_create(ob.store, C.obx_schema_id(typeId))

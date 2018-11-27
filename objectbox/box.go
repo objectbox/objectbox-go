@@ -45,7 +45,7 @@ type Box struct {
 	fbbInUseAtomic uint32
 }
 
-// Close fully closes the the Box connection and free's resources
+// Close fully closes the Box connection and free's resources
 func (box *Box) Close() (err error) {
 	rc := C.obx_box_close(box.box)
 	box.box = nil
@@ -116,8 +116,8 @@ func (box *Box) finishFbbAndPutAsync(fbb *flatbuffers.Builder, id uint64, checkF
 	return
 }
 
-// Put synchronously inserts/updates a single object
-// in case the ID is not given, it would be assigned automatically
+// Put synchronously inserts/updates a single object.
+// In case the ID is not given, it would be assigned automatically (auto-increment).
 func (box *Box) Put(object interface{}) (id uint64, err error) {
 	err = box.objectBox.runWithCursor(box.typeId, false, func(cursor *cursor) error {
 		var errInner error
@@ -127,9 +127,11 @@ func (box *Box) Put(object interface{}) (id uint64, err error) {
 	return
 }
 
-// The given argument must be a slice of the object type this Box represents (pointers to objects)
-// in case IDs are not set on the objects, they would be assigned automatically
+// The given argument must be a slice of the object type this Box represents (pointers to objects).
+// In case IDs are not set on the objects, they would be assigned automatically (auto-increment).
+//
 // Returns: IDs of the put objects (in the same order).
+//
 // Note: The slice may be empty or even nil; in both cases, an empty IDs slice and no error is returned.
 func (box *Box) PutAll(slice interface{}) (ids []uint64, err error) {
 	if slice == nil {
@@ -162,8 +164,8 @@ func (box *Box) Remove(id uint64) (err error) {
 	})
 }
 
-// RemoveAll removes all stored objects
-// it's much faster than removing objects one by one
+// RemoveAll removes all stored objects.
+// This is much faster than removing objects one by one in a loop.
 func (box *Box) RemoveAll() (err error) {
 	return box.objectBox.runWithCursor(box.typeId, false, func(cursor *cursor) error {
 		return cursor.RemoveAll()
@@ -180,9 +182,10 @@ func (box *Box) Count() (count uint64, err error) {
 	return
 }
 
-// Get reads a single object
-// it returns an interface that should be cast to the appropriate type
-// the cast is done automatically when using the generated BoxFor* code
+// Get reads a single object.
+//
+// Returns an interface that should be cast to the appropriate type.
+// The cast is done automatically when using the generated BoxFor* code
 func (box *Box) Get(id uint64) (object interface{}, err error) {
 	err = box.objectBox.runWithCursor(box.typeId, true, func(cursor *cursor) error {
 		var errInner error
@@ -193,8 +196,9 @@ func (box *Box) Get(id uint64) (object interface{}, err error) {
 }
 
 // Get reads a all stored objects
-// it returns a slice of objects that should be cast to the appropriate type
-// the cast is done automatically when using the generated BoxFor* code
+//
+// Returns a slice of objects that should be cast to the appropriate type.
+// The cast is done automatically when using the generated BoxFor* code
 func (box *Box) GetAll() (slice interface{}, err error) {
 	err = box.objectBox.runWithCursor(box.typeId, true, func(cursor *cursor) error {
 		var errInner error

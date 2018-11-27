@@ -29,6 +29,7 @@ import (
 )
 
 // Allows construction of queries; just check QueryBuilder.Error or err from Build()
+//
 // WIP: Query interface is subject to change with full ObjectBox queries support
 type QueryBuilder struct {
 	objectBox *ObjectBox

@@ -12,7 +12,8 @@ You can define your entity as a standard .go struct, with a comment signalling t
 	}
 
 
-Now, just init ObjectBox using the generated code (don't forget to errors in your real code, they are discarded here to keep the example concise)
+Now, just init ObjectBox using the generated code (don't forget to errors in your real code,
+they are discarded here to keep the example concise)
 
 	ob, _ := objectbox.NewBuilder().Model(ObjectBoxModel()).Build()
 	defer ob.Close()

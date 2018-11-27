@@ -73,7 +73,8 @@ func (builder *Builder) MaxReaders(maxReaders uint) *Builder {
 	return builder
 }
 
-// Model specifies schema for the database:
+// Model specifies schema for the database
+//
 // Pass the result of the generated function ObjectBoxModel as an argument: Model(ObjectBoxModel())
 func (builder *Builder) Model(model *Model) *Builder {
 	if builder.Error != nil {

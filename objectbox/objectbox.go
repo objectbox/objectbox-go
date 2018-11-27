@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-// Package objectbox provides a super-fast, light-weight object persistence framework.
 package objectbox
 
 /*

@@ -90,7 +90,7 @@ func runInteractiveShell(box *model.TaskBox) {
 }
 
 func initObjectBox() *objectbox.ObjectBox {
-	objectBox, err := objectbox.NewObjectBoxBuilder().Model(model.CreateObjectBoxModel()).Build()
+	objectBox, err := objectbox.NewBuilder().Model(model.ObjectBoxModel()).Build()
 	if err != nil {
 		panic(err)
 	}

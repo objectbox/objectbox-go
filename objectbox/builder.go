@@ -28,6 +28,7 @@ import (
 	"unsafe"
 )
 
+// Builder provides tools to fully configure and construct ObjectBox
 type Builder struct {
 	model *Model
 	Error error
@@ -37,7 +38,9 @@ type Builder struct {
 	maxReaders  uint
 }
 
-func NewObjectBoxBuilder() *Builder {
+type modelLoaderFun func() (*Model, error)
+
+func NewBuilder() *Builder {
 	if !C.obx_version_is_at_least(0, 3, 0) {
 		var version string
 		msg := C.obx_version_string()
@@ -52,11 +55,14 @@ func NewObjectBoxBuilder() *Builder {
 	return &Builder{}
 }
 
-func (builder *Builder) Name(name string) *Builder {
+// Directory configures the path where the database is stored
+func (builder *Builder) Directory(name string) *Builder {
 	builder.name = name
 	return builder
 }
 
+// MaxSizeInKb defines maximum size the database can take on disk
+// 0 (default) means no limit
 func (builder *Builder) MaxSizeInKb(maxSizeInKb uint64) *Builder {
 	builder.maxSizeInKb = maxSizeInKb
 	return builder
@@ -67,6 +73,8 @@ func (builder *Builder) MaxReaders(maxReaders uint) *Builder {
 	return builder
 }
 
+// Model specifies schema for the database
+// use generated function call ObjectBoxModel: Model(ObjectBoxModel())
 func (builder *Builder) Model(model *Model, err error) *Builder {
 	if err == nil {
 		err = model.validate()
@@ -78,6 +86,7 @@ func (builder *Builder) Model(model *Model, err error) *Builder {
 	} else {
 		builder.model = model
 	}
+
 	return builder
 }
 

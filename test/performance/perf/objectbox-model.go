@@ -6,7 +6,7 @@ import (
 	"github.com/objectbox/objectbox-go/objectbox"
 )
 
-func CreateObjectBoxModel() (*objectbox.Model, error) {
+func ObjectBoxModel() (*objectbox.Model, error) {
 	model, err := objectbox.NewModel()
 	if err != nil {
 		return nil, err

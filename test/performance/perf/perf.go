@@ -42,7 +42,7 @@ func CreateExecutor(dbName string) *Executor {
 func (perf *Executor) initObjectBox(dbName string) {
 	defer perf.trackTime(time.Now())
 
-	objectBox, err := objectbox.NewObjectBoxBuilder().Name(dbName).Model(CreateObjectBoxModel()).Build()
+	objectBox, err := objectbox.NewBuilder().Directory(dbName).Model(ObjectBoxModel()).Build()
 	if err != nil {
 		panic(err)
 	}

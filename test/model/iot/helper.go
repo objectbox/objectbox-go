@@ -24,7 +24,7 @@ import (
 )
 
 func CreateObjectBox() *objectbox.ObjectBox {
-	objectBox, err := objectbox.NewObjectBoxBuilder().Name("iot-test").Model(CreateObjectBoxModel()).Build()
+	objectBox, err := objectbox.NewBuilder().Directory("iot-test").Model(ObjectBoxModel()).Build()
 	if err != nil {
 		panic(err)
 	}

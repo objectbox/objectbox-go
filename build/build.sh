@@ -15,7 +15,9 @@ function build {
     echo "******** Building ********"
     for CMD in `ls cmd`; do
         echo "building cmd/${CMD}"
-        go build -o ${buildDir}/${CMD} ${PWD}/cmd/${CMD}
+        cd cmd/${CMD}
+        go build -o ${buildDir}/${CMD}
+        cd -
     done
 }
 

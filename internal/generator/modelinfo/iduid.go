@@ -8,7 +8,7 @@ import (
 
 type IdUid string
 
-func CreateIdUid(id id, uid uid) IdUid {
+func CreateIdUid(id Id, uid Uid) IdUid {
 	return IdUid(strconv.FormatInt(int64(id), 10) + ":" + strconv.FormatUint(uid, 10))
 }
 
@@ -29,19 +29,19 @@ func (str *IdUid) Validate() error {
 	return nil
 }
 
-func (str IdUid) GetId() (id, error) {
+func (str IdUid) GetId() (Id, error) {
 	if i, err := str.getComponent(0, 32); err != nil {
 		return 0, err
 	} else {
-		return id(i), nil
+		return Id(i), nil
 	}
 }
 
-func (str *IdUid) GetUid() (uid, error) {
+func (str *IdUid) GetUid() (Uid, error) {
 	return str.getComponent(1, 64)
 }
 
-func (str *IdUid) Get() (id, uid, error) {
+func (str *IdUid) Get() (Id, Uid, error) {
 	if id, err := str.GetId(); err != nil {
 		return 0, 0, err
 	} else if uid, err := str.GetUid(); err != nil {
@@ -66,12 +66,12 @@ func (str IdUid) getComponent(n, bitsize int) (uint64, error) {
 	}
 }
 
-func (str IdUid) getIdSafe() id {
+func (str IdUid) getIdSafe() Id {
 	i, _ := str.GetId()
 	return i
 }
 
-func (str IdUid) getUidSafe() uid {
+func (str IdUid) getUidSafe() Uid {
 	i, _ := str.GetUid()
 	return i
 }

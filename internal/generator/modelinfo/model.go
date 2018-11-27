@@ -7,8 +7,8 @@ import (
 	"strings"
 )
 
-type id = uint32
-type uid = uint64
+type Id = uint32
+type Uid = uint64
 
 type ModelInfo struct {
 	Comment      []string  `json:"comment"`
@@ -17,9 +17,9 @@ type ModelInfo struct {
 	LastIndexId  IdUid     `json:"lastIndexId"`
 	//ModelVersion        int
 	//Version             int
-	RetiredEntityUids   []uid `json:"retiredEntityUids"`
-	RetiredIndexUids    []uid `json:"retiredIndexUids"`
-	RetiredPropertyUids []uid `json:"retiredPropertyUids"`
+	RetiredEntityUids   []Uid `json:"retiredEntityUids"`
+	RetiredIndexUids    []Uid `json:"retiredIndexUids"`
+	RetiredPropertyUids []Uid `json:"retiredPropertyUids"`
 
 	file *os.File // file handle, locked while the model is open
 
@@ -35,9 +35,9 @@ func createModelInfo() *ModelInfo {
 			"If you have VCS merge conflicts, you must resolve them according to ObjectBox docs.",
 		},
 		Entities:            make([]*Entity, 0),
-		RetiredEntityUids:   make([]uid, 0),
-		RetiredIndexUids:    make([]uid, 0),
-		RetiredPropertyUids: make([]uid, 0),
+		RetiredEntityUids:   make([]Uid, 0),
+		RetiredIndexUids:    make([]Uid, 0),
+		RetiredPropertyUids: make([]Uid, 0),
 	}
 }
 
@@ -108,7 +108,7 @@ func (model *ModelInfo) Validate() (err error) {
 	return nil
 }
 
-func (model *ModelInfo) FindEntityByUid(uid uid) (*Entity, error) {
+func (model *ModelInfo) FindEntityByUid(uid Uid) (*Entity, error) {
 	for _, entity := range model.Entities {
 		entityUid, _ := entity.Id.GetUid()
 		if entityUid == uid {
@@ -130,7 +130,7 @@ func (model *ModelInfo) FindEntityByName(name string) (*Entity, error) {
 }
 
 func (model *ModelInfo) CreateEntity() (*Entity, error) {
-	var id id = 1
+	var id Id = 1
 	if len(model.Entities) > 0 {
 		id = model.LastEntityId.getIdSafe() + 1
 	}
@@ -149,11 +149,11 @@ func (model *ModelInfo) CreateEntity() (*Entity, error) {
 	return entity, nil
 }
 
-func (model *ModelInfo) generateUid() (result uid, err error) {
+func (model *ModelInfo) generateUid() (result Uid, err error) {
 	result = 0
 
 	for i := 0; i < 1000; i++ {
-		t := uid(rand.Int63())
+		t := Uid(rand.Int63())
 		if !model.containsUid(t) {
 			result = t
 			break
@@ -168,7 +168,7 @@ func (model *ModelInfo) generateUid() (result uid, err error) {
 }
 
 func (model *ModelInfo) createIndex() (IdUid, error) {
-	var id id = 1
+	var id Id = 1
 	if len(model.LastIndexId) > 0 {
 		id = model.LastIndexId.getIdSafe() + 1
 	}
@@ -184,7 +184,7 @@ func (model *ModelInfo) createIndex() (IdUid, error) {
 }
 
 // recursively checks whether given UID is present in the model
-func (model *ModelInfo) containsUid(searched uid) bool {
+func (model *ModelInfo) containsUid(searched Uid) bool {
 	if model.LastEntityId.getUidSafe() == searched {
 		return true
 	}
@@ -215,7 +215,7 @@ func (model *ModelInfo) containsUid(searched uid) bool {
 }
 
 // the passed slices are not too large so let's just do linear search
-func searchSliceUid(slice []uid, searched uid) bool {
+func searchSliceUid(slice []Uid, searched Uid) bool {
 	for _, i := range slice {
 		if i == searched {
 			return true

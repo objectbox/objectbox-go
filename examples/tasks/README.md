@@ -3,7 +3,7 @@ This example shows how to use the ObjectBox's GO API to create a simple console-
 
 To start the program just build & run the main.go, which launches an interactive console application
 
-```bash
+```
 Welcome to the ObjectBox tasks-list app example
 Available commands are: 
     ls [-a]        list tasks - unfinished or all (-a flag)

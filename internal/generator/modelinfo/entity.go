@@ -14,7 +14,7 @@ type Entity struct {
 	model *ModelInfo
 }
 
-func CreateEntity(model *ModelInfo, id id, uid uid) *Entity {
+func CreateEntity(model *ModelInfo, id Id, uid Uid) *Entity {
 	return &Entity{
 		model:      model,
 		Id:         CreateIdUid(id, uid),
@@ -84,7 +84,7 @@ func (entity *Entity) Validate() (err error) {
 	return nil
 }
 
-func (entity *Entity) FindPropertyByUid(uid uid) (*Property, error) {
+func (entity *Entity) FindPropertyByUid(uid Uid) (*Property, error) {
 	for _, property := range entity.Properties {
 		propertyUid, _ := property.Id.GetUid()
 		if propertyUid == uid {
@@ -106,7 +106,7 @@ func (entity *Entity) FindPropertyByName(name string) (*Property, error) {
 }
 
 func (entity *Entity) CreateProperty() (*Property, error) {
-	var id id = 1
+	var id Id = 1
 	if len(entity.Properties) > 0 {
 		id = entity.LastPropertyId.getIdSafe() + 1
 	}
@@ -154,7 +154,7 @@ func (entity *Entity) RemoveProperty(property *Property) error {
 }
 
 // recursively checks whether given UID is present in the model
-func (entity *Entity) containsUid(searched uid) bool {
+func (entity *Entity) containsUid(searched Uid) bool {
 	if entity.Id.getUidSafe() == searched {
 		return true
 	}

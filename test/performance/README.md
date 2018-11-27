@@ -9,10 +9,8 @@ go build github.com/objectbox/objectbox-go/test/performance/
 ./performance
 ```
 
-You can specify some parameters:
-```bash
-./performance -h
-
+You can specify some parameters, see `./performance -h`:
+```
 Usage of ./performance:
   -count int
     	number of objects (default 1000000)

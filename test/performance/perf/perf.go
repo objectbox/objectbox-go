@@ -55,7 +55,7 @@ func (perf *Executor) PrintTimes(functions []string) {
 	fmt.Println("Function\tRuns\tAverage ms\tAll times")
 
 	if len(functions) == 0 {
-		for fun, _ := range perf.times {
+		for fun := range perf.times {
 			functions = append(functions, fun)
 		}
 	}

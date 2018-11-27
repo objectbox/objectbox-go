@@ -10,7 +10,9 @@ import (
 
 func TestQueryBuilder(t *testing.T) {
 	objectBox := iot.CreateObjectBox()
-	box := objectBox.Box(1)
+	defer objectBox.Close()
+	box := iot.BoxForEvent(objectBox)
+	defer box.Close()
 	box.RemoveAll()
 
 	qb := objectBox.Query(1)
@@ -59,7 +61,9 @@ func TestQueryBuilder(t *testing.T) {
 
 func TestQueryBuilder_StringEq(t *testing.T) {
 	objectBox := iot.CreateObjectBox()
-	box := objectBox.Box(1)
+	defer objectBox.Close()
+	box := iot.BoxForEvent(objectBox)
+	defer box.Close()
 	box.RemoveAll()
 
 	iot.PutEvents(objectBox, 3)
@@ -89,7 +93,9 @@ func TestQueryBuilder_StringEq(t *testing.T) {
 
 func TestQueryBuilder_IntBetween(t *testing.T) {
 	objectBox := iot.CreateObjectBox()
-	box := objectBox.Box(1)
+	defer objectBox.Close()
+	box := iot.BoxForEvent(objectBox)
+	defer box.Close()
 	box.RemoveAll()
 
 	objectBox.SetDebugFlags(objectbox.DebugFlags_LOG_QUERIES | objectbox.DebugFlags_LOG_QUERY_PARAMETERS)

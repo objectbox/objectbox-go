@@ -10,7 +10,7 @@ type Property struct {
 	entity *Entity
 }
 
-func CreateProperty(entity *Entity, id id, uid uid) *Property {
+func CreateProperty(entity *Entity, id Id, uid Uid) *Property {
 	return &Property{
 		entity: entity,
 		Id:     CreateIdUid(id, uid),
@@ -66,7 +66,7 @@ func (property *Property) RemoveIndex() error {
 }
 
 // recursively checks whether given UID is present in the model
-func (property *Property) containsUid(searched uid) bool {
+func (property *Property) containsUid(searched Uid) bool {
 	if property.Id.getUidSafe() == searched {
 		return true
 	}

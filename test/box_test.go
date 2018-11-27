@@ -9,7 +9,9 @@ import (
 
 func TestAsync(t *testing.T) {
 	objectBox := iot.CreateObjectBox()
+	defer objectBox.Close()
 	box := iot.BoxForEvent(objectBox)
+	defer box.Close()
 	err := box.RemoveAll()
 	assert.NoErr(t, err)
 
@@ -47,7 +49,9 @@ func TestAsync(t *testing.T) {
 
 func TestUnique(t *testing.T) {
 	objectBox := iot.CreateObjectBox()
+	defer objectBox.Close()
 	box := iot.BoxForEvent(objectBox)
+	defer box.Close()
 	err := box.RemoveAll()
 	assert.NoErr(t, err)
 
@@ -70,7 +74,9 @@ func TestUnique(t *testing.T) {
 
 func TestPutAll(t *testing.T) {
 	objectBox := iot.CreateObjectBox()
+	defer objectBox.Close()
 	box := iot.BoxForEvent(objectBox)
+	defer box.Close()
 	err := box.RemoveAll()
 	assert.NoErr(t, err)
 

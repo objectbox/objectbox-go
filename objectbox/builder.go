@@ -75,14 +75,14 @@ func (builder *Builder) MaxReaders(maxReaders uint) *Builder {
 
 // Model specifies schema for the database
 // use generated function call ObjectBoxModel: Model(ObjectBoxModel())
-func (builder *Builder) Model(model *Model, err error) *Builder {
-	if err == nil {
-		err = model.validate()
+func (builder *Builder) Model(model *Model) *Builder {
+	if builder.Error != nil {
+		return builder
 	}
 
-	if err != nil {
+	builder.Error = model.validate()
+	if builder.Error != nil {
 		builder.model = nil
-		builder.Error = err
 	} else {
 		builder.model = model
 	}

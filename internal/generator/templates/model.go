@@ -29,11 +29,8 @@ import (
 	"github.com/objectbox/objectbox-go/objectbox"
 )
 
-func ObjectBoxModel() (*objectbox.Model, error) {
-	model, err := objectbox.NewModel()
-	if err != nil {
-		return nil, err
-	}
+func ObjectBoxModel() *objectbox.Model {
+	model := objectbox.NewModel()
 
 	{{range $entity := .Entities -}}
 	model.RegisterBinding({{$entity.Name}}Binding)
@@ -41,5 +38,5 @@ func ObjectBoxModel() (*objectbox.Model, error) {
 	model.LastEntityId({{.LastEntityId.GetId}}, {{.LastEntityId.GetUid}})
 	{{if .LastIndexId}}model.LastIndexId({{.LastIndexId.GetId}}, {{.LastIndexId.GetUid}}){{end}}
 
-	return model, nil
+	return model
 }`))

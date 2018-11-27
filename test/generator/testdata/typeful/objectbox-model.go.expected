@@ -6,14 +6,11 @@ import (
 	"github.com/objectbox/objectbox-go/objectbox"
 )
 
-func ObjectBoxModel() (*objectbox.Model, error) {
-	model, err := objectbox.NewModel()
-	if err != nil {
-		return nil, err
-	}
+func ObjectBoxModel() *objectbox.Model {
+	model := objectbox.NewModel()
 
 	model.RegisterBinding(TypefulBinding)
 	model.LastEntityId(1, 8717895732742165505)
 
-	return model, nil
+	return model
 }

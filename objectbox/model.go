@@ -25,7 +25,6 @@ import "C"
 
 import (
 	"fmt"
-	"strconv"
 	"unsafe"
 )
 
@@ -98,16 +97,18 @@ type Model struct {
 	lastRelationUid uint64
 }
 
-func NewModel() (*Model, error) {
+func NewModel() *Model {
 	cModel := C.obx_model_create()
+	var err error
 	if cModel == nil {
-		return nil, createError()
+		err = createError()
 	}
 	return &Model{
 		model:          cModel,
+		Error:          err,
 		bindingsById:   make(map[TypeId]ObjectBinding),
 		bindingsByName: make(map[string]ObjectBinding),
-	}, nil
+	}
 }
 
 func (model *Model) LastEntityId(id TypeId, uid uint64) {
@@ -215,23 +216,35 @@ func (model *Model) PropertyRelation(targetEntityName string, indexId TypeId, in
 }
 
 func (model *Model) RegisterBinding(binding ObjectBinding) {
+	if model.Error != nil {
+		return
+	}
+
 	binding.AddToModel(model)
+
 	id := model.previousEntityId
 	name := model.previousEntityName
+
 	if id == 0 {
-		panic("No type ID; did you forget to add an entity to the model?")
+		model.Error = fmt.Errorf("invalid binding - entity id is not set")
+		return
 	}
+
 	if name == "" {
-		panic("No type name")
+		model.Error = fmt.Errorf("invalid binding - entity name is not set")
+		return
 	}
-	existingBinding := model.bindingsById[id]
-	if existingBinding != nil {
-		panic("Already registered a binding for ID " + strconv.Itoa(int(id)))
+
+	if model.bindingsById[id] != nil {
+		model.Error = fmt.Errorf("duplicate binding - entity id %d is already registered", id)
+		return
 	}
-	existingBinding = model.bindingsByName[name]
-	if existingBinding != nil {
-		panic("Already registered a binding for name " + name)
+
+	if model.bindingsByName[name] != nil {
+		model.Error = fmt.Errorf("duplicate binding - entity name %s is already registered", name)
+		return
 	}
+
 	model.bindingsById[id] = binding
 	model.bindingsByName[name] = binding
 }

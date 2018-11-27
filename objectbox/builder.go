@@ -61,20 +61,20 @@ func (builder *Builder) Directory(name string) *Builder {
 	return builder
 }
 
-// MaxSizeInKb defines maximum size the database can take on disk
-// 0 (default) means no limit
+// MaxSizeInKb defines maximum size the database can take on disk (default: 1 GByte).
 func (builder *Builder) MaxSizeInKb(maxSizeInKb uint64) *Builder {
 	builder.maxSizeInKb = maxSizeInKb
 	return builder
 }
 
+// Maximum (concurrent) readers (default: 126). Increase only if you are getting errors (highly concurrent scenarios).
 func (builder *Builder) MaxReaders(maxReaders uint) *Builder {
 	builder.maxReaders = maxReaders
 	return builder
 }
 
-// Model specifies schema for the database
-// use the result of a generated function ObjectBoxModel as an argument: Model(ObjectBoxModel())
+// Model specifies schema for the database:
+// Pass the result of the generated function ObjectBoxModel as an argument: Model(ObjectBoxModel())
 func (builder *Builder) Model(model *Model) *Builder {
 	if builder.Error != nil {
 		return builder

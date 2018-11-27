@@ -24,7 +24,7 @@ go get github.com/objectbox/objectbox-go
 go get github.com/google/flatbuffers/go
 
 mkdir objectboxlib && cd objectboxlib
-wget https://raw.githubusercontent.com/objectbox/objectbox-c/master/download.sh
+curl https://raw.githubusercontent.com/objectbox/objectbox-c/master/download.sh > download.sh
 bash download.sh
 
 go install github.com/objectbox/objectbox-go/cmd/objectbox-gogen/

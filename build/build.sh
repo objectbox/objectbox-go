@@ -31,7 +31,7 @@ function postBuild {
 function test {
     echo "******** Testing ********"
     # ./build/test.sh
-    go test ./...
+    go test -race -v ./...
 }
 
 function generate {

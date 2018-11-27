@@ -21,7 +21,6 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -42,7 +41,7 @@ func generateAllDirs(t *testing.T, overwriteExpected bool) {
 			continue
 		}
 
-		var dir = path.Join(datadir, folder.Name())
+		var dir = filepath.Join(datadir, folder.Name())
 
 		modelInfoFile := generator.ModelInfoFile(dir)
 		modelInfoExpectedFile := modelInfoFile + ".expected"
@@ -100,7 +99,7 @@ func generateAllFiles(t *testing.T, overwriteExpected bool, dir string, modelInf
 	var modelFile = generator.ModelFile(modelInfoFile)
 
 	// process all *.go files in the directory
-	inputFiles, err := filepath.Glob(path.Join(dir, "*.go"))
+	inputFiles, err := filepath.Glob(filepath.Join(dir, "*.go"))
 	assert.NoErr(t, err)
 	for _, sourceFile := range inputFiles {
 		// skip generated files & "expected results" files
@@ -111,12 +110,12 @@ func generateAllFiles(t *testing.T, overwriteExpected bool, dir string, modelInf
 			continue
 		}
 
-		t.Logf("  %s", path.Base(sourceFile))
+		t.Logf("  %s", filepath.Base(sourceFile))
 
 		err = generator.Process(sourceFile, modelInfoFile)
 
 		// handle negative test
-		var shouldFail = strings.HasPrefix(path.Base(sourceFile), "_")
+		var shouldFail = strings.HasPrefix(filepath.Base(sourceFile), "_")
 		if shouldFail {
 			if err == nil {
 				assert.Failf(t, "Unexpected PASS on a negative test %s", sourceFile)

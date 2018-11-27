@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
-	"path"
+	"path/filepath"
 	"time"
 
 	"github.com/objectbox/objectbox-go/internal/generator"
@@ -68,7 +68,7 @@ func getArgs() (file string, line uint, modelInfoFile string) {
 	modelInfoFile = *flag.String("persist", "", "path to the model information persistence file")
 
 	if len(modelInfoFile) == 0 {
-		modelInfoFile = generator.ModelInfoFile(path.Dir(file))
+		modelInfoFile = generator.ModelInfoFile(filepath.Dir(file))
 	}
 
 	if !hasAll {

@@ -24,7 +24,7 @@ import (
 	"go/format"
 	"io/ioutil"
 	"os"
-	"path"
+	"path/filepath"
 
 	"github.com/objectbox/objectbox-go/internal/generator/templates"
 
@@ -32,16 +32,16 @@ import (
 )
 
 func BindingFile(sourceFile string) string {
-	var extension = path.Ext(sourceFile)
+	var extension = filepath.Ext(sourceFile)
 	return sourceFile[0:len(sourceFile)-len(extension)] + "-binding" + extension
 }
 
 func ModelInfoFile(dir string) string {
-	return path.Join(dir, "objectbox-model.json")
+	return filepath.Join(dir, "objectbox-model.json")
 }
 
 func ModelFile(modelInfoFile string) string {
-	var extension = path.Ext(modelInfoFile)
+	var extension = filepath.Ext(modelInfoFile)
 	return modelInfoFile[0:len(modelInfoFile)-len(extension)] + ".go"
 }
 

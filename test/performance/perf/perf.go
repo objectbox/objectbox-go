@@ -18,7 +18,7 @@ package perf
 
 import (
 	"fmt"
-	"path"
+	"path/filepath"
 	"runtime"
 	"time"
 
@@ -62,7 +62,7 @@ func (perf *Executor) trackTime(start time.Time) {
 	elapsed := time.Since(start)
 
 	pc, _, _, _ := runtime.Caller(1)
-	fun := path.Ext(runtime.FuncForPC(pc).Name())[1:]
+	fun := filepath.Ext(runtime.FuncForPC(pc).Name())[1:]
 	perf.times[fun] = append(perf.times[fun], elapsed)
 }
 

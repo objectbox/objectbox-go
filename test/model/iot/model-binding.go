@@ -27,7 +27,8 @@ func (event_) AddToModel(model *objectbox.Model) {
 	model.PropertyIndex(1, 3297791712577314158)
 	model.Property("Device", objectbox.PropertyType_String, 2, 1213411729427304641)
 	model.Property("Date", objectbox.PropertyType_Date, 3, 5907655274386702697)
-	model.EntityLastPropertyId(4, 472416569173577818)
+	model.Property("Picture", objectbox.PropertyType_ByteVector, 5, 6024563395733984005)
+	model.EntityLastPropertyId(5, 6024563395733984005)
 }
 
 func (event_) GetId(entity interface{}) (uint64, error) {
@@ -38,13 +39,15 @@ func (event_) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
 	ent := entity.(*Event)
 	var offsetUid = fbutils.CreateStringOffset(fbb, ent.Uid)
 	var offsetDevice = fbutils.CreateStringOffset(fbb, ent.Device)
+	var offsetPicture = fbutils.CreateByteVectorOffset(fbb, ent.Picture)
 
 	// build the FlatBuffers object
-	fbb.StartObject(4)
+	fbb.StartObject(5)
 	fbb.PrependUint64Slot(0, id, 0)
 	fbb.PrependUOffsetTSlot(3, offsetUid, 0)
 	fbb.PrependUOffsetTSlot(1, offsetDevice, 0)
 	fbb.PrependInt64Slot(2, ent.Date, 0)
+	fbb.PrependUOffsetTSlot(4, offsetPicture, 0)
 }
 
 func (event_) ToObject(bytes []byte) interface{} {
@@ -54,10 +57,11 @@ func (event_) ToObject(bytes []byte) interface{} {
 	}
 
 	return &Event{
-		Id:     table.GetUint64Slot(4, 0),
-		Uid:    fbutils.GetStringSlot(table, 10),
-		Device: fbutils.GetStringSlot(table, 6),
-		Date:   table.GetInt64Slot(8, 0),
+		Id:      table.GetUint64Slot(4, 0),
+		Uid:     fbutils.GetStringSlot(table, 10),
+		Device:  fbutils.GetStringSlot(table, 6),
+		Date:    table.GetInt64Slot(8, 0),
+		Picture: fbutils.GetByteVectorSlot(table, 12),
 	}
 }
 

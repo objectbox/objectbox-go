@@ -259,6 +259,40 @@ func (qb *QueryBuilder) NotNull(propertyId TypeId) {
 	return
 }
 
+func (qb *QueryBuilder) BytesEqual(propertyId TypeId, value []byte) {
+	if qb.Err != nil {
+		return
+	}
+
+	qb.cLastCondition = C.obx_qb_bytes_equal(qb.cqb, C.obx_schema_id(propertyId), unsafe.Pointer(&value[0]), C.size_t(len(value)))
+	qb.checkForCError() // Mirror C error early to Error
+
+	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
+	return
+}
+
+func (qb *QueryBuilder) BytesGreater(propertyId TypeId, value []byte, withEqual bool) {
+	if qb.Err != nil {
+		return
+	}
+	qb.cLastCondition = C.obx_qb_bytes_greater(qb.cqb, C.obx_schema_id(propertyId), unsafe.Pointer(&value[0]), C.size_t(len(value)), C.bool(withEqual))
+	qb.checkForCError() // Mirror C error early to Error
+
+	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
+	return
+}
+
+func (qb *QueryBuilder) BytesLess(propertyId TypeId, value []byte, withEqual bool) {
+	if qb.Err != nil {
+		return
+	}
+	qb.cLastCondition = C.obx_qb_bytes_less(qb.cqb, C.obx_schema_id(propertyId), unsafe.Pointer(&value[0]), C.size_t(len(value)), C.bool(withEqual))
+	qb.checkForCError() // Mirror C error early to Error
+
+	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
+	return
+}
+
 
 func (qb *QueryBuilder) Build() (*Query, error) {
 	qb.checkForCError()
@@ -306,13 +340,6 @@ func (qb *QueryBuilder) BuildAndClose() (*Query, error) {
 
 
 //// **************************
-
-
-//
-//
-//// obx_qb_cond obx_qb_string_less(OBX_query_builder* builder, obx_schema_id property_id, const char* value, bool case_sensitive, bool with_equal);
-
-//
 //// obx_qb_cond obx_qb_string_in(OBX_query_builder* builder, obx_schema_id property_id, const char* values[], int count, bool case_sensitive);
 //func (qb *QueryBuilder) StringIn(propertyId TypeId, values [] string, count int, caseSensitive bool) {
 //	if qb.Err != nil {
@@ -386,49 +413,3 @@ func (qb *QueryBuilder) BuildAndClose() (*Query, error) {
 //
 //
 
-//
-//// obx_qb_cond obx_qb_bytes_equal(OBX_query_builder* builder, obx_schema_id property_id, const void* value, size_t size);
-//func (qb *QueryBuilder) BytesEqual(propertyId TypeId, value []byte, size size_t) {
-//	if qb.Err != nil {
-//		return
-//	}
-//	qb.cLastCondition = C.obx_qb_cond
-//	obx_qb_bytes_equal(qb.cqb, C.obx_schema_id(propertyId))
-//	qb.checkForCError() // Mirror C error early to Error
-//
-//	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
-//	return
-//}
-//
-////  const void* value, size_t size, bool with_equal
-//// obx_qb_cond obx_qb_bytes_greater(OBX_query_builder* builder, obx_schema_id property_id, const void* value, size_t size, bool with_equal);
-//func (qb *QueryBuilder) BytesGreater(propertyId TypeId, value []byte, size size_t, with_equal bool) {
-//	if qb.Err != nil {
-//		return
-//	}
-//	qb.cLastCondition = C.obx_qb_cond
-//	obx_qb_bytes_greater(qb.cqb, C.obx_schema_id(propertyId))
-//	qb.checkForCError() // Mirror C error early to Error
-//
-//	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
-//	return
-//}
-//
-////  const void* value, size_t size, bool with_equal
-//// obx_qb_cond obx_qb_bytes_less(OBX_query_builder* builder, obx_schema_id property_id, const void* value, size_t size, bool with_equal);
-//func (qb *QueryBuilder) BytesLess(propertyId TypeId, value []byte, size size_t, with_equal bool) {
-//	if qb.Err != nil {
-//		return
-//	}
-//	qb.cLastCondition = C.obx_qb_cond
-//	obx_qb_bytes_less(qb.cqb, C.obx_schema_id(propertyId))
-//	qb.checkForCError() // Mirror C error early to Error
-//
-//	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
-//	return
-//}
-//
-//////
-//
-//
-//

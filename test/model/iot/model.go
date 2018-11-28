@@ -23,6 +23,7 @@ type Event struct {
 	Uid    string `unique`
 	Device string
 	Date   int64 `date`
+	Picture []byte
 }
 
 type Reading struct {

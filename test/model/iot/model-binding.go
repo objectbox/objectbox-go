@@ -127,7 +127,8 @@ func (reading_) AddToModel(model *objectbox.Model) {
 	model.Property("ValueInteger", objectbox.PropertyType_Long, 6, 1404333021836291657)
 	model.Property("ValueFloating", objectbox.PropertyType_Double, 7, 7102253623343671118)
 	model.Property("ValueInt32", objectbox.PropertyType_Int, 8, 7566830186276557216)
-	model.EntityLastPropertyId(8, 7566830186276557216)
+	model.Property("ValueFloating32", objectbox.PropertyType_Float, 9, 6040892611651481730)
+	model.EntityLastPropertyId(9, 6040892611651481730)
 }
 
 func (reading_) GetId(entity interface{}) (uint64, error) {
@@ -140,7 +141,7 @@ func (reading_) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64)
 	var offsetValueString = fbutils.CreateStringOffset(fbb, ent.ValueString)
 
 	// build the FlatBuffers object
-	fbb.StartObject(8)
+	fbb.StartObject(9)
 	fbb.PrependUint64Slot(0, id, 0)
 	fbb.PrependInt64Slot(1, ent.Date, 0)
 	fbb.PrependUint64Slot(2, ent.EventId, 0)
@@ -149,6 +150,7 @@ func (reading_) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64)
 	fbb.PrependInt64Slot(5, ent.ValueInteger, 0)
 	fbb.PrependFloat64Slot(6, ent.ValueFloating, 0)
 	fbb.PrependInt32Slot(7, ent.ValueInt32, 0)
+	fbb.PrependFloat32Slot(8, ent.ValueFloating32, 0)
 }
 
 func (reading_) ToObject(bytes []byte) interface{} {
@@ -158,14 +160,15 @@ func (reading_) ToObject(bytes []byte) interface{} {
 	}
 
 	return &Reading{
-		Id:            table.GetUint64Slot(4, 0),
-		Date:          table.GetInt64Slot(6, 0),
-		EventId:       table.GetUint64Slot(8, 0),
-		ValueName:     fbutils.GetStringSlot(table, 10),
-		ValueString:   fbutils.GetStringSlot(table, 12),
-		ValueInteger:  table.GetInt64Slot(14, 0),
-		ValueFloating: table.GetFloat64Slot(16, 0),
-		ValueInt32:    table.GetInt32Slot(18, 0),
+		Id:              table.GetUint64Slot(4, 0),
+		Date:            table.GetInt64Slot(6, 0),
+		EventId:         table.GetUint64Slot(8, 0),
+		ValueName:       fbutils.GetStringSlot(table, 10),
+		ValueString:     fbutils.GetStringSlot(table, 12),
+		ValueInteger:    table.GetInt64Slot(14, 0),
+		ValueFloating:   table.GetFloat64Slot(16, 0),
+		ValueInt32:      table.GetInt32Slot(18, 0),
+		ValueFloating32: table.GetFloat32Slot(20, 0),
 	}
 }
 

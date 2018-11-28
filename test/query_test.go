@@ -492,84 +492,79 @@ func TestQueryBuilder_IntLess(t *testing.T) {
 func TestQueryBuilder_DoubleLess(t *testing.T) {
 	objectBox := iot.LoadEmptyTestObjectBox()
 	defer objectBox.Close()
-	box := iot.BoxForEvent(objectBox)
+	box := iot.BoxForReading(objectBox)
 	defer box.Close()
 	box.RemoveAll()
 
 	objectBox.SetDebugFlags(objectbox.DebugFlags_LOG_QUERIES | objectbox.DebugFlags_LOG_QUERY_PARAMETERS)
 
-	//events := iot.PutEvents(objectBox, 6)
+	readings := iot.PutReadings(objectBox, 6)
 
-	qb := objectBox.Query(1)
+	qb := objectBox.Query(2)
 	assert.NoErr(t, qb.Err)
 	defer qb.Close()
 
-	//FIXME:
-	qb.DoubleLess(1, 2)
+	qb.DoubleLess(9, 10003)
 	query, err := qb.Build()
 	assert.NoErr(t, err)
 	defer query.Close()
-	//
-	//slice, err := query.Find()
-	//assert.NoErr(t, err)
-	//events = slice.([]*iot.Event)
-	//assert.EqInt(t, 1, len(events))
 
+	slice, err := query.Find()
+	assert.NoErr(t, err)
+	readings = slice.([]*iot.Reading)
+	assert.EqInt(t, 2, len(readings))
 }
 
 func TestQueryBuilder_DoubleGreater(t *testing.T) {
 	objectBox := iot.LoadEmptyTestObjectBox()
 	defer objectBox.Close()
-	box := iot.BoxForEvent(objectBox)
+	box := iot.BoxForReading(objectBox)
 	defer box.Close()
 	box.RemoveAll()
 
 	objectBox.SetDebugFlags(objectbox.DebugFlags_LOG_QUERIES | objectbox.DebugFlags_LOG_QUERY_PARAMETERS)
 
-	//events := iot.PutEvents(objectBox, 6)
+	readings := iot.PutReadings(objectBox, 6)
 
-	qb := objectBox.Query(1)
+	qb := objectBox.Query(2)
 	assert.NoErr(t, qb.Err)
 	defer qb.Close()
 
-	//FIXME:
-	qb.DoubleGreater(1, 2)
+	qb.DoubleGreater(9, 10003)
 	query, err := qb.Build()
 	assert.NoErr(t, err)
 	defer query.Close()
-	//
-	//slice, err := query.Find()
-	//assert.NoErr(t, err)
-	//events = slice.([]*iot.Event)
-	//assert.EqInt(t, 1, len(events))
 
+	slice, err := query.Find()
+	assert.NoErr(t, err)
+	readings = slice.([]*iot.Reading)
+	assert.EqInt(t, 3, len(readings))
 }
 
 func TestQueryBuilder_DoubleBetween(t *testing.T) {
 	objectBox := iot.LoadEmptyTestObjectBox()
 	defer objectBox.Close()
-	box := iot.BoxForEvent(objectBox)
+	box := iot.BoxForReading(objectBox)
 	defer box.Close()
 	box.RemoveAll()
 
 	objectBox.SetDebugFlags(objectbox.DebugFlags_LOG_QUERIES | objectbox.DebugFlags_LOG_QUERY_PARAMETERS)
 
-	//events := iot.PutEvents(objectBox, 6)
+	readings := iot.PutReadings(objectBox, 6)
 
-	qb := objectBox.Query(1)
+	qb := objectBox.Query(2)
 	assert.NoErr(t, qb.Err)
 	defer qb.Close()
 
-	//FIXME:
-	qb.DoubleBetween(1, 2, 3)
+	qb.DoubleBetween(9, 10003, 10005)
 	query, err := qb.Build()
 	assert.NoErr(t, err)
 	defer query.Close()
-	//
-	//slice, err := query.Find()
-	//assert.NoErr(t, err)
-	//events = slice.([]*iot.Event)
-	//assert.EqInt(t, 1, len(events))
+
+	slice, err := query.Find()
+	assert.NoErr(t, err)
+	readings = slice.([]*iot.Reading)
+	assert.EqInt(t, 3, len(readings))
 }
 
 func TestQueryBuilder_BytesEqual(t *testing.T) {
@@ -588,7 +583,6 @@ func TestQueryBuilder_BytesEqual(t *testing.T) {
 	defer qb.Close()
 
 	bytes := []byte { 1, 2, 3}
-	// FIXME finish
 	qb.BytesEqual(5, bytes)
 	query, err := qb.Build()
 	assert.NoErr(t, err)
@@ -618,7 +612,6 @@ func TestQueryBuilder_BytesGreater(t *testing.T) {
 	defer qb.Close()
 
 	bytes := []byte { 1, 2, 3}
-	// FIXME finish
 	qb.BytesGreater(5, bytes, false)
 	query, err := qb.Build()
 	assert.NoErr(t, err)
@@ -648,7 +641,6 @@ func TestQueryBuilder_BytesLess(t *testing.T) {
 	defer qb.Close()
 
 	bytes := []byte { 1, 2, 3}
-	// FIXME finish
 	qb.BytesLess(5, bytes, false)
 	query, err := qb.Build()
 	assert.NoErr(t, err)
@@ -671,8 +663,7 @@ func TestQueryBuilder_Int64In(t *testing.T) {
 
 	objectBox.SetDebugFlags(objectbox.DebugFlags_LOG_QUERIES | objectbox.DebugFlags_LOG_QUERY_PARAMETERS)
 
-	readings :=
-		iot.PutReadings(objectBox, 6)
+	readings := iot.PutReadings(objectBox, 6)
 
 	qb := objectBox.Query(2)
 	assert.NoErr(t, qb.Err)

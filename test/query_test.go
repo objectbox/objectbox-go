@@ -139,8 +139,10 @@ func TestQueryBuilder_IntBetween(t *testing.T) {
 
 
 func TestQueryBuilder_Null(t *testing.T) {
-	objectBox := iot.CreateObjectBox()
-	box := objectBox.Box(1)
+	objectBox := iot.LoadEmptyTestObjectBox()
+	defer objectBox.Close()
+	box := iot.BoxForEvent(objectBox)
+	defer box.Close()
 	box.RemoveAll()
 
 	objectBox.SetDebugFlags(objectbox.DebugFlags_LOG_QUERIES | objectbox.DebugFlags_LOG_QUERY_PARAMETERS)
@@ -164,8 +166,10 @@ func TestQueryBuilder_Null(t *testing.T) {
 
 
 func TestQueryBuilder_NotNull(t *testing.T) {
-	objectBox := iot.CreateObjectBox()
-	box := objectBox.Box(1)
+	objectBox := iot.LoadEmptyTestObjectBox()
+	defer objectBox.Close()
+	box := iot.BoxForEvent(objectBox)
+	defer box.Close()
 	box.RemoveAll()
 
 	objectBox.SetDebugFlags(objectbox.DebugFlags_LOG_QUERIES | objectbox.DebugFlags_LOG_QUERY_PARAMETERS)

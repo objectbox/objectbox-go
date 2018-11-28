@@ -106,6 +106,99 @@ func TestQueryBuilder_StringEq(t *testing.T) {
 	assert.EqString(t, "device 1", events[0].Device)
 }
 
+func TestQueryBuilder_StringContains(t *testing.T) {
+	objectBox := iot.LoadEmptyTestObjectBox()
+	defer objectBox.Close()
+	box := iot.BoxForEvent(objectBox)
+	defer box.Close()
+	box.RemoveAll()
+
+	iot.PutEvents(objectBox, 3)
+
+	qb := objectBox.Query(1)
+	assert.NoErr(t, qb.Err)
+	defer qb.Close()
+	qb.StringContains(2, "device 2", false)
+	query, err := qb.Build()
+	assert.NoErr(t, err)
+	defer query.Close()
+
+	slice, err := query.Find()
+	assert.NoErr(t, err)
+	events := slice.([]*iot.Event)
+	assert.EqInt(t, 1, len(events))
+	assert.EqString(t, "device 2", events[0].Device)
+
+	query.SetParamString(2, "device 1")
+	slice, err = query.Find()
+	assert.NoErr(t, err)
+	events = slice.([]*iot.Event)
+	assert.EqInt(t, 1, len(events))
+	assert.EqString(t, "device 1", events[0].Device)
+}
+
+func TestQueryBuilder_StringStartsWith(t *testing.T) {
+	objectBox := iot.LoadEmptyTestObjectBox()
+	defer objectBox.Close()
+	box := iot.BoxForEvent(objectBox)
+	defer box.Close()
+	box.RemoveAll()
+
+	iot.PutEvents(objectBox, 3)
+
+	qb := objectBox.Query(1)
+	assert.NoErr(t, qb.Err)
+	defer qb.Close()
+	qb.StringStartsWith(2, "device 2", false)
+	query, err := qb.Build()
+	assert.NoErr(t, err)
+	defer query.Close()
+
+	slice, err := query.Find()
+	assert.NoErr(t, err)
+	events := slice.([]*iot.Event)
+	assert.EqInt(t, 1, len(events))
+	assert.EqString(t, "device 2", events[0].Device)
+
+	query.SetParamString(2, "device 1")
+	slice, err = query.Find()
+	assert.NoErr(t, err)
+	events = slice.([]*iot.Event)
+	assert.EqInt(t, 1, len(events))
+	assert.EqString(t, "device 1", events[0].Device)
+}
+
+func TestQueryBuilder_StringEndsWith(t *testing.T) {
+	objectBox := iot.LoadEmptyTestObjectBox()
+	defer objectBox.Close()
+	box := iot.BoxForEvent(objectBox)
+	defer box.Close()
+	box.RemoveAll()
+
+	iot.PutEvents(objectBox, 3)
+
+	qb := objectBox.Query(1)
+	assert.NoErr(t, qb.Err)
+	defer qb.Close()
+	qb.StringEndsWith(2, "device 2", false)
+	query, err := qb.Build()
+	assert.NoErr(t, err)
+	defer query.Close()
+
+	slice, err := query.Find()
+	assert.NoErr(t, err)
+	events := slice.([]*iot.Event)
+	assert.EqInt(t, 1, len(events))
+	assert.EqString(t, "device 2", events[0].Device)
+
+	query.SetParamString(2, "device 1")
+	slice, err = query.Find()
+	assert.NoErr(t, err)
+	events = slice.([]*iot.Event)
+	assert.EqInt(t, 1, len(events))
+	assert.EqString(t, "device 1", events[0].Device)
+}
+
 func TestQueryBuilder_StringNotEq(t *testing.T) {
 	objectBox := iot.LoadEmptyTestObjectBox()
 	defer objectBox.Close()
@@ -118,7 +211,7 @@ func TestQueryBuilder_StringNotEq(t *testing.T) {
 	qb := objectBox.Query(1)
 	assert.NoErr(t, qb.Err)
 	defer qb.Close()
-	qb.StringNotEq(2, "device 2", false)
+	qb.StringNotEq(2, "device 3", false)
 	query, err := qb.Build()
 	assert.NoErr(t, err)
 	defer query.Close()
@@ -401,4 +494,6 @@ func TestQueryBuilder_DoubleBetween(t *testing.T) {
 	//assert.EqInt(t, 1, len(events))
 
 }
+
+
 

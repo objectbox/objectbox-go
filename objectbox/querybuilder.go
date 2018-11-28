@@ -68,6 +68,45 @@ func (qb *QueryBuilder) StringEq(propertyId TypeId, value string, caseSensitive 
 	return
 }
 
+func (qb *QueryBuilder) StringContains(propertyId TypeId, value string, caseSensitive bool) {
+	if qb.Err != nil {
+		return
+	}
+	cvalue := C.CString(value)
+	defer C.free(unsafe.Pointer(cvalue))
+	qb.cLastCondition = C.obx_qb_string_contains(qb.cqb, C.obx_schema_id(propertyId), cvalue, C.bool(caseSensitive))
+	qb.checkForCError() // Mirror C error early to Error
+
+	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
+	return
+}
+
+func (qb *QueryBuilder) StringStartsWith(propertyId TypeId, value string, caseSensitive bool) {
+	if qb.Err != nil {
+		return
+	}
+	cvalue := C.CString(value)
+	defer C.free(unsafe.Pointer(cvalue))
+	qb.cLastCondition = C.obx_qb_string_starts_with(qb.cqb, C.obx_schema_id(propertyId), cvalue, C.bool(caseSensitive))
+	qb.checkForCError() // Mirror C error early to Error
+
+	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
+	return
+}
+
+func (qb *QueryBuilder) StringEndsWith(propertyId TypeId, value string, caseSensitive bool) {
+	if qb.Err != nil {
+		return
+	}
+	cvalue := C.CString(value)
+	defer C.free(unsafe.Pointer(cvalue))
+	qb.cLastCondition = C.obx_qb_string_ends_with(qb.cqb, C.obx_schema_id(propertyId), cvalue, C.bool(caseSensitive))
+	qb.checkForCError() // Mirror C error early to Error
+
+	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
+	return
+}
+
 func (qb *QueryBuilder) IntBetween(propertyId TypeId, value1 int64, value2 int64) {
 	if qb.Err != nil {
 		return
@@ -245,45 +284,6 @@ func (qb *QueryBuilder) BuildAndClose() (*Query, error) {
 //// **************************
 
 
-//// obx_qb_cond obx_qb_string_contains(OBX_query_builder* builder, obx_schema_id property_id, string value, bool case_sensitive);
-//func (qb *QueryBuilder) StringContains(propertyId TypeId, value string, case_sensitive bool) {
-//	if qb.Err != nil {
-//		return
-//	}
-//	qb.cLastCondition = obx_qb_string_contains(qb.cqb, C.obx_schema_id(propertyId))
-//	qb.checkForCError() // Mirror C error early to Error
-//
-//	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
-//	return
-//}
-//
-////  const char* value, bool case_sensitive
-//// obx_qb_cond obx_qb_string_starts_with(OBX_query_builder* builder, obx_schema_id property_id, const char* value, bool case_sensitive);
-//func (qb *QueryBuilder) StringStartsWith(propertyId TypeId, value string, case_sensitive bool) {
-//	if qb.Err != nil {
-//		return
-//	}
-//	qb.cLastCondition = C.obx_qb_cond
-//	obx_qb_string_starts_with(qb.cqb, C.obx_schema_id(propertyId))
-//	qb.checkForCError() // Mirror C error early to Error
-//
-//	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
-//	return
-//}
-//
-////  const char* value, bool case_sensitive
-//// obx_qb_cond obx_qb_string_ends_with(OBX_query_builder* builder, obx_schema_id property_id, const char* value, bool case_sensitive);
-//func (qb *QueryBuilder) StringEndsWith(propertyId TypeId, value string, case_sensitive bool) {
-//	if qb.Err != nil {
-//		return
-//	}
-//	qb.cLastCondition = C.obx_qb_cond
-//	obx_qb_string_ends_with(qb.cqb, C.obx_schema_id(propertyId))
-//	qb.checkForCError() // Mirror C error early to Error
-//
-//	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
-//	return
-//}
 //
 //
 ////  const char* value, bool case_sensitive, bool with_equal

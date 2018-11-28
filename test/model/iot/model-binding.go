@@ -8,17 +8,31 @@ import (
 	"github.com/objectbox/objectbox-go/objectbox/fbutils"
 )
 
-type event_ struct {
+type event_EntityInfo struct {
 	Id  objectbox.TypeId
 	Uid uint64
 }
 
-var EventBinding = event_{
+var EventBinding = event_EntityInfo{
 	Id:  1,
 	Uid: 1468539308767086854,
 }
 
-func (event_) AddToModel(model *objectbox.Model) {
+var Event_ = struct {
+	Id      uint32
+	Uid     uint32
+	Device  uint32
+	Date    uint32
+	Picture uint32
+}{
+	Id:      1,
+	Uid:     4,
+	Device:  2,
+	Date:    3,
+	Picture: 5,
+}
+
+func (event_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("Event", 1, 1468539308767086854)
 	model.Property("Id", objectbox.PropertyType_Long, 1, 3098166604415018001)
 	model.PropertyFlags(objectbox.PropertyFlags_ID)
@@ -31,11 +45,11 @@ func (event_) AddToModel(model *objectbox.Model) {
 	model.EntityLastPropertyId(5, 6024563395733984005)
 }
 
-func (event_) GetId(entity interface{}) (uint64, error) {
+func (event_EntityInfo) GetId(entity interface{}) (uint64, error) {
 	return entity.(*Event).Id, nil
 }
 
-func (event_) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
+func (event_EntityInfo) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
 	ent := entity.(*Event)
 	var offsetUid = fbutils.CreateStringOffset(fbb, ent.Uid)
 	var offsetDevice = fbutils.CreateStringOffset(fbb, ent.Device)
@@ -50,7 +64,7 @@ func (event_) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
 	fbb.PrependUOffsetTSlot(4, offsetPicture, 0)
 }
 
-func (event_) ToObject(bytes []byte) interface{} {
+func (event_EntityInfo) ToObject(bytes []byte) interface{} {
 	table := &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
@@ -65,11 +79,11 @@ func (event_) ToObject(bytes []byte) interface{} {
 	}
 }
 
-func (event_) MakeSlice(capacity int) interface{} {
+func (event_EntityInfo) MakeSlice(capacity int) interface{} {
 	return make([]*Event, 0, capacity)
 }
 
-func (event_) AppendToSlice(slice interface{}, entity interface{}) interface{} {
+func (event_EntityInfo) AppendToSlice(slice interface{}, entity interface{}) interface{} {
 	return append(slice.([]*Event), entity.(*Event))
 }
 
@@ -105,17 +119,37 @@ func (box *EventBox) Remove(entity *Event) (err error) {
 	return box.Box.Remove(entity.Id)
 }
 
-type reading_ struct {
+type reading_EntityInfo struct {
 	Id  objectbox.TypeId
 	Uid uint64
 }
 
-var ReadingBinding = reading_{
+var ReadingBinding = reading_EntityInfo{
 	Id:  2,
 	Uid: 5284076134434938613,
 }
 
-func (reading_) AddToModel(model *objectbox.Model) {
+var Reading_ = struct {
+	Id            uint32
+	Date          uint32
+	EventId       uint32
+	ValueName     uint32
+	ValueString   uint32
+	ValueInteger  uint32
+	ValueFloating uint32
+	ValueInt32    uint32
+}{
+	Id:            1,
+	Date:          2,
+	EventId:       3,
+	ValueName:     4,
+	ValueString:   5,
+	ValueInteger:  6,
+	ValueFloating: 7,
+	ValueInt32:    8,
+}
+
+func (reading_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("Reading", 2, 5284076134434938613)
 	model.Property("Id", objectbox.PropertyType_Long, 1, 3968063745680890327)
 	model.PropertyFlags(objectbox.PropertyFlags_ID)
@@ -131,11 +165,11 @@ func (reading_) AddToModel(model *objectbox.Model) {
 	model.EntityLastPropertyId(9, 6040892611651481730)
 }
 
-func (reading_) GetId(entity interface{}) (uint64, error) {
+func (reading_EntityInfo) GetId(entity interface{}) (uint64, error) {
 	return entity.(*Reading).Id, nil
 }
 
-func (reading_) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
+func (reading_EntityInfo) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
 	ent := entity.(*Reading)
 	var offsetValueName = fbutils.CreateStringOffset(fbb, ent.ValueName)
 	var offsetValueString = fbutils.CreateStringOffset(fbb, ent.ValueString)
@@ -153,7 +187,7 @@ func (reading_) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64)
 	fbb.PrependFloat32Slot(8, ent.ValueFloating32, 0)
 }
 
-func (reading_) ToObject(bytes []byte) interface{} {
+func (reading_EntityInfo) ToObject(bytes []byte) interface{} {
 	table := &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
@@ -172,11 +206,11 @@ func (reading_) ToObject(bytes []byte) interface{} {
 	}
 }
 
-func (reading_) MakeSlice(capacity int) interface{} {
+func (reading_EntityInfo) MakeSlice(capacity int) interface{} {
 	return make([]*Reading, 0, capacity)
 }
 
-func (reading_) AppendToSlice(slice interface{}, entity interface{}) interface{} {
+func (reading_EntityInfo) AppendToSlice(slice interface{}, entity interface{}) interface{} {
 	return append(slice.([]*Reading), entity.(*Reading))
 }
 

@@ -8,17 +8,29 @@ import (
 	"github.com/objectbox/objectbox-go/objectbox/fbutils"
 )
 
-type task_ struct {
+type task_EntityInfo struct {
 	Id  objectbox.TypeId
 	Uid uint64
 }
 
-var TaskBinding = task_{
+var TaskBinding = task_EntityInfo{
 	Id:  1,
 	Uid: 1306759095002958910,
 }
 
-func (task_) AddToModel(model *objectbox.Model) {
+var Task_ = struct {
+	Id           uint32
+	Text         uint32
+	DateCreated  uint32
+	DateFinished uint32
+}{
+	Id:           1,
+	Text:         2,
+	DateCreated:  3,
+	DateFinished: 4,
+}
+
+func (task_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("Task", 1, 1306759095002958910)
 	model.Property("Id", objectbox.PropertyType_Long, 1, 2193439623591184445)
 	model.PropertyFlags(objectbox.PropertyFlags_ID)
@@ -28,11 +40,11 @@ func (task_) AddToModel(model *objectbox.Model) {
 	model.EntityLastPropertyId(4, 8083684673086871702)
 }
 
-func (task_) GetId(entity interface{}) (uint64, error) {
+func (task_EntityInfo) GetId(entity interface{}) (uint64, error) {
 	return entity.(*Task).Id, nil
 }
 
-func (task_) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
+func (task_EntityInfo) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
 	ent := entity.(*Task)
 	var offsetText = fbutils.CreateStringOffset(fbb, ent.Text)
 
@@ -44,7 +56,7 @@ func (task_) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
 	fbb.PrependInt64Slot(3, ent.DateFinished, 0)
 }
 
-func (task_) ToObject(bytes []byte) interface{} {
+func (task_EntityInfo) ToObject(bytes []byte) interface{} {
 	table := &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
@@ -58,11 +70,11 @@ func (task_) ToObject(bytes []byte) interface{} {
 	}
 }
 
-func (task_) MakeSlice(capacity int) interface{} {
+func (task_EntityInfo) MakeSlice(capacity int) interface{} {
 	return make([]*Task, 0, capacity)
 }
 
-func (task_) AppendToSlice(slice interface{}, entity interface{}) interface{} {
+func (task_EntityInfo) AppendToSlice(slice interface{}, entity interface{}) interface{} {
 	return append(slice.([]*Task), entity.(*Task))
 }
 

@@ -116,6 +116,17 @@ func (qb *QueryBuilder) StringGreater(propertyId TypeId, value string, caseSensi
 	return
 }
 
+func (qb *QueryBuilder) IntEqual(propertyId TypeId, value int64) {
+	if qb.Err != nil {
+		return
+	}
+	qb.cLastCondition = C.obx_qb_int_equal(qb.cqb, C.obx_schema_id(propertyId), C.int64_t(value))
+	qb.checkForCError() // Mirror C error early to Error
+
+	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
+	return
+}
+
 func (qb *QueryBuilder) NotNull(propertyId TypeId) {
 	if qb.Err != nil {
 		return
@@ -245,18 +256,7 @@ func (qb *QueryBuilder) BuildAndClose() (*Query, error) {
 //	return
 //}
 //
-//// obx_qb_cond obx_qb_int_equal(OBX_query_builder* builder, obx_schema_id property_id, int64_t value);
-//func (qb *QueryBuilder) IntEqual(propertyId TypeId, value int64) {
-//	if qb.Err != nil {
-//		return
-//	}
-//	qb.cLastCondition = C.obx_qb_cond
-//	obx_qb_int_equal(qb.cqb, C.obx_schema_id(propertyId), value)
-//	qb.checkForCError() // Mirror C error early to Error
-//
-//	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
-//	return
-//}
+
 //
 //// obx_qb_cond obx_qb_int_not_equal(OBX_query_builder* builder, obx_schema_id property_id, int64 value);
 //func (qb *QueryBuilder) IntNotEqual(propertyId TypeId, value int64) {

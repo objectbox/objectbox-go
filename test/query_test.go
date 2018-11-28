@@ -213,3 +213,30 @@ func TestQueryBuilder_NotNull(t *testing.T) {
 	assert.EqInt(t, 6, len(events))
 
 }
+
+
+func TestQueryBuilder_StringGreater(t *testing.T) {
+	objectBox := iot.LoadEmptyTestObjectBox()
+	defer objectBox.Close()
+	box := iot.BoxForEvent(objectBox)
+	defer box.Close()
+	box.RemoveAll()
+
+	objectBox.SetDebugFlags(objectbox.DebugFlags_LOG_QUERIES | objectbox.DebugFlags_LOG_QUERY_PARAMETERS)
+
+	events := iot.PutEvents(objectBox, 6)
+
+	qb := objectBox.Query(1)
+	assert.NoErr(t, qb.Err)
+	defer qb.Close()
+	qb.StringGreater(2, "device 2",  false, false)
+	query, err := qb.Build()
+	assert.NoErr(t, err)
+	defer query.Close()
+
+	slice, err := query.Find()
+	assert.NoErr(t, err)
+	events = slice.([]*iot.Event)
+	assert.EqInt(t, 4, len(events))
+
+}

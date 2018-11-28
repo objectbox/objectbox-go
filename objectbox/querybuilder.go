@@ -20,6 +20,21 @@ package objectbox
 #cgo LDFLAGS: -lobjectbox
 #include <stdlib.h>
 #include "objectbox.h"
+
+
+static char**newCharArray(int size) {
+        return calloc(sizeof(char*), size);
+}
+
+static void setArrayString(const char **array, size_t index, const char *value) {
+        array[index] = value;
+}
+
+static void freeCharArray(char **a, int size) {
+        for (size_t i = 0; i < size; i++)
+                free(a[i]);
+        free(a);
+}
 */
 import "C"
 import (
@@ -62,6 +77,24 @@ func (qb *QueryBuilder) StringEq(propertyId TypeId, value string, caseSensitive 
 	cvalue := C.CString(value)
 	defer C.free(unsafe.Pointer(cvalue))
 	qb.cLastCondition = C.obx_qb_string_equal(qb.cqb, C.obx_schema_id(propertyId), cvalue, C.bool(caseSensitive))
+	qb.checkForCError() // Mirror C error early to Error
+
+	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
+	return
+}
+
+func (qb *QueryBuilder) StringIn(propertyId TypeId, values [] string, caseSensitive bool) {
+	if qb.Err != nil {
+		return
+	}
+
+	cStringArray := C.newCharArray(C.int(len(values)))
+	defer C.freeCharArray(cStringArray, C.int(len(values)))
+	for i, s := range values {
+		C.setArrayString(cStringArray, C.size_t(i), C.CString(s))
+	}
+
+	qb.cLastCondition = C.obx_qb_string_in(qb.cqb, C.obx_schema_id(propertyId), cStringArray, C.int(len(values)), C.bool(caseSensitive))
 	qb.checkForCError() // Mirror C error early to Error
 
 	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
@@ -340,22 +373,7 @@ func (qb *QueryBuilder) BuildAndClose() (*Query, error) {
 
 
 //// **************************
-//// obx_qb_cond obx_qb_string_in(OBX_query_builder* builder, obx_schema_id property_id, const char* values[], int count, bool case_sensitive);
-//func (qb *QueryBuilder) StringIn(propertyId TypeId, values [] string, count int, caseSensitive bool) {
-//	if qb.Err != nil {
-//		return
-//	}
-//	cvalue := C.CString(value)
-//	defer C.free(unsafe.Pointer(cvalue))
-//	qb.cLastCondition = C.obx_qb_string_in(qb.cqb, C.obx_schema_id(propertyId), C.size_t(count), C.bool(caseSensitive))
-//	qb.checkForCError() // Mirror C error early to Error
-//
-//	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
-//	return
-//}
-//
 
-//
 //// obx_qb_cond obx_qb_int64_in(OBX_query_builder* builder, obx_schema_id property_id, const int64  values[], int count);
 //func (qb *QueryBuilder) Int64In(propertyId TypeId, values [] int64, count int) {
 //	if qb.Err != nil {

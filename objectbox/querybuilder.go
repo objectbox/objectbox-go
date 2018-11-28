@@ -127,6 +127,17 @@ func (qb *QueryBuilder) IntEqual(propertyId TypeId, value int64) {
 	return
 }
 
+func (qb *QueryBuilder) DoubleGreater(propertyId TypeId, value float64) {
+	if qb.Err != nil {
+		return
+	}
+	qb.cLastCondition = C.obx_qb_double_greater(qb.cqb, C.obx_schema_id(propertyId), C.double(value))
+	qb.checkForCError() // Mirror C error early to Error
+
+	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
+	return
+}
+
 func (qb *QueryBuilder) NotNull(propertyId TypeId) {
 	if qb.Err != nil {
 		return
@@ -352,19 +363,6 @@ func (qb *QueryBuilder) BuildAndClose() (*Query, error) {
 //	return
 //}
 //
-////  double value
-//// obx_qb_cond obx_qb_double_greater(OBX_query_builder* builder, obx_schema_id property_id, double value);
-//func (qb *QueryBuilder) DoubleGreater(propertyId TypeId, value double) {
-//	if qb.Err != nil {
-//		return
-//	}
-//	qb.cLastCondition = C.obx_qb_cond
-//	obx_qb_double_greater(qb.cqb, C.obx_schema_id(propertyId))
-//	qb.checkForCError() // Mirror C error early to Error
-//
-//	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
-//	return
-//}
 //
 ////  double value
 //// obx_qb_cond obx_qb_double_less(OBX_query_builder* builder, obx_schema_id property_id, double value);

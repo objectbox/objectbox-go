@@ -29,7 +29,7 @@ func TestTransactionInsert(t *testing.T) {
 	ob := iot.LoadEmptyTestObjectBox()
 	defer ob.Close()
 
-	assert.NoErr(t, ob.Box(1).RemoveAll())
+	assert.NoErr(t, iot.BoxForEvent(ob).RemoveAll())
 
 	var insert = uint64(1000000)
 
@@ -45,7 +45,7 @@ func TestTransactionInsert(t *testing.T) {
 		return nil
 	}))
 
-	count, err := ob.Box(1).Count()
+	count, err := iot.BoxForEvent(ob).Count()
 	assert.NoErr(t, err)
 
 	assert.Eq(t, insert, count)

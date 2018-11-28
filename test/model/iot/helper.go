@@ -39,7 +39,7 @@ func LoadEmptyTestObjectBox() *objectbox.ObjectBox {
 
 func PutEvent(ob *objectbox.ObjectBox, device string, date int64) *Event {
 	event := Event{Device: device, Date: date}
-	id, err := ob.Box(1).Put(&event)
+	id, err := BoxForEvent(ob).Put(&event)
 	assert.NoErr(nil, err)
 	event.Id = id
 	return &event
@@ -47,7 +47,7 @@ func PutEvent(ob *objectbox.ObjectBox, device string, date int64) *Event {
 
 func PutReading(ob *objectbox.ObjectBox, name string, ValueString string, ValueInteger int64, ValueFloating float64, ValueInt32 int32, ValueFloating32 float32) *Reading {
 	event := Reading{ValueName: name, ValueString: ValueString, ValueInteger: ValueInteger, ValueFloating: ValueFloating, ValueInt32: ValueInt32, ValueFloating32: ValueFloating32}
-	id, err := ob.Box(2).Put(&event)
+	id, err := BoxForReading(ob).Put(&event)
 	assert.NoErr(nil, err)
 	event.Id = id
 	return &event

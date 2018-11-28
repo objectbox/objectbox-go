@@ -159,3 +159,284 @@ func (qb *QueryBuilder) BuildAndClose() (*Query, error) {
 	}
 	return query, err
 }
+
+
+//// **************************
+
+
+//// obx_qb_cond obx_qb_string_contains(OBX_query_builder* builder, obx_schema_id property_id, string value, bool case_sensitive);
+//func (qb *QueryBuilder) StringContains(propertyId TypeId, value string, case_sensitive bool) {
+//	if qb.Err != nil {
+//		return
+//	}
+//	qb.cLastCondition = obx_qb_string_contains(qb.cqb, C.obx_schema_id(propertyId))
+//	qb.checkForCError() // Mirror C error early to Error
+//
+//	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
+//	return
+//}
+//
+////  const char* value, bool case_sensitive
+//// obx_qb_cond obx_qb_string_starts_with(OBX_query_builder* builder, obx_schema_id property_id, const char* value, bool case_sensitive);
+//func (qb *QueryBuilder) StringStartsWith(propertyId TypeId, value string, case_sensitive bool) {
+//	if qb.Err != nil {
+//		return
+//	}
+//	qb.cLastCondition = C.obx_qb_cond
+//	obx_qb_string_starts_with(qb.cqb, C.obx_schema_id(propertyId))
+//	qb.checkForCError() // Mirror C error early to Error
+//
+//	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
+//	return
+//}
+//
+////  const char* value, bool case_sensitive
+//// obx_qb_cond obx_qb_string_ends_with(OBX_query_builder* builder, obx_schema_id property_id, const char* value, bool case_sensitive);
+//func (qb *QueryBuilder) StringEndsWith(propertyId TypeId, value string, case_sensitive bool) {
+//	if qb.Err != nil {
+//		return
+//	}
+//	qb.cLastCondition = C.obx_qb_cond
+//	obx_qb_string_ends_with(qb.cqb, C.obx_schema_id(propertyId))
+//	qb.checkForCError() // Mirror C error early to Error
+//
+//	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
+//	return
+//}
+//
+////  const char* value, bool case_sensitive, bool with_equal
+//// obx_qb_cond obx_qb_string_greater(OBX_query_builder* builder, obx_schema_id property_id, const char* value, bool case_sensitive, bool with_equal);
+//func (qb *QueryBuilder) StringGreater(propertyId TypeId, value string, case_sensitive bool, with_equal bool) {
+//	if qb.Err != nil {
+//		return
+//	}
+//	qb.cLastCondition = C.obx_qb_cond
+//	obx_qb_string_greater(qb.cqb, C.obx_schema_id(propertyId))
+//	qb.checkForCError() // Mirror C error early to Error
+//
+//	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
+//	return
+//}
+//
+////  const char* value, bool case_sensitive, bool with_equal
+//// obx_qb_cond obx_qb_string_less(OBX_query_builder* builder, obx_schema_id property_id, const char* value, bool case_sensitive, bool with_equal);
+//func (qb *QueryBuilder) StringLess(propertyId TypeId, value string, case_sensitive bool, with_equal bool) {
+//	if qb.Err != nil {
+//		return
+//	}
+//	qb.cLastCondition = C.obx_qb_cond
+//	obx_qb_string_less(qb.cqb, C.obx_schema_id(propertyId))
+//	qb.checkForCError() // Mirror C error early to Error
+//
+//	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
+//	return
+//}
+//
+////  const char* values[], int count, bool case_sensitive
+//// obx_qb_cond obx_qb_string_in(OBX_query_builder* builder, obx_schema_id property_id, const char* values[], int count, bool case_sensitive);
+//func (qb *QueryBuilder) StringIn(propertyId TypeId, values [] string, count int, case_sensitive bool) {
+//	if qb.Err != nil {
+//		return
+//	}
+//	qb.cLastCondition = C.obx_qb_cond
+//	obx_qb_string_in(qb.cqb, C.obx_schema_id(propertyId))
+//	qb.checkForCError() // Mirror C error early to Error
+//
+//	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
+//	return
+//}
+//
+//// obx_qb_cond obx_qb_int_equal(OBX_query_builder* builder, obx_schema_id property_id, int64_t value);
+//func (qb *QueryBuilder) IntEqual(propertyId TypeId, value int64) {
+//	if qb.Err != nil {
+//		return
+//	}
+//	qb.cLastCondition = C.obx_qb_cond
+//	obx_qb_int_equal(qb.cqb, C.obx_schema_id(propertyId), value)
+//	qb.checkForCError() // Mirror C error early to Error
+//
+//	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
+//	return
+//}
+//
+//// obx_qb_cond obx_qb_int_not_equal(OBX_query_builder* builder, obx_schema_id property_id, int64 value);
+//func (qb *QueryBuilder) IntNotEqual(propertyId TypeId, value int64) {
+//	if qb.Err != nil {
+//		return
+//	}
+//	qb.cLastCondition = C.obx_qb_cond
+//	obx_qb_int_not_equal(qb.cqb, C.obx_schema_id(propertyId))
+//	qb.checkForCError() // Mirror C error early to Error
+//
+//	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
+//	return
+//}
+//
+////  int64_t value
+//// obx_qb_cond obx_qb_int_greater(OBX_query_builder* builder, obx_schema_id property_id, int64  value);
+//func (qb *QueryBuilder) IntGreater(propertyId TypeId, value int64) {
+//	if qb.Err != nil {
+//		return
+//	}
+//	qb.cLastCondition = C.obx_qb_cond
+//	obx_qb_int_greater(qb.cqb, C.obx_schema_id(propertyId))
+//	qb.checkForCError() // Mirror C error early to Error
+//
+//	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
+//	return
+//}
+//
+//// obx_qb_cond obx_qb_int_less(OBX_query_builder* builder, obx_schema_id property_id, int64  value);
+//func (qb *QueryBuilder) IntLess(propertyId TypeId, value int64) {
+//	if qb.Err != nil {
+//		return
+//	}
+//	qb.cLastCondition = C.obx_qb_cond
+//	obx_qb_int_less(qb.cqb, C.obx_schema_id(propertyId))
+//	qb.checkForCError() // Mirror C error early to Error
+//
+//	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
+//	return
+//}
+//
+//// obx_qb_cond obx_qb_int64_in(OBX_query_builder* builder, obx_schema_id property_id, const int64  values[], int count);
+//func (qb *QueryBuilder) Int64In(propertyId TypeId, values [] int64, count int) {
+//	if qb.Err != nil {
+//		return
+//	}
+//	qb.cLastCondition = C.obx_qb_cond
+//	obx_qb_int64_in(qb.cqb, C.obx_schema_id(propertyId))
+//	qb.checkForCError() // Mirror C error early to Error
+//
+//	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
+//	return
+//}
+//
+////  const int64_t values[], int count
+//// obx_qb_cond obx_qb_int64_not_in(OBX_query_builder* builder, obx_schema_id property_id, const int64  values[], int count);
+//func (qb *QueryBuilder) Int64NotIn(propertyId TypeId, values [] int64, count int) {
+//	if qb.Err != nil {
+//		return
+//	}
+//	qb.cLastCondition = C.obx_qb_cond
+//	obx_qb_int64_not_in(qb.cqb, C.obx_schema_id(propertyId))
+//	qb.checkForCError() // Mirror C error early to Error
+//
+//	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
+//	return
+//}
+//
+//// obx_qb_cond obx_qb_int32_in(OBX_query_builder* builder, obx_schema_id property_id, const int32_t values[], int count);
+//func (qb *QueryBuilder) Int32In(propertyId TypeId, values [] int32_t, count int) {
+//	if qb.Err != nil {
+//		return
+//	}
+//	qb.cLastCondition = C.obx_qb_cond
+//	obx_qb_int32_in(qb.cqb, C.obx_schema_id(propertyId), values, count)
+//	qb.checkForCError() // Mirror C error early to Error
+//
+//	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
+//	return
+//}
+//
+////  const int32_t values[], int count
+//// obx_qb_cond obx_qb_int32_not_in(OBX_query_builder* builder, obx_schema_id property_id, const int32_t values[], int count);
+//func (qb *QueryBuilder) Int32NotIn(propertyId TypeId, values [] int32_t, count int) {
+//	if qb.Err != nil {
+//		return
+//	}
+//	qb.cLastCondition = C.obx_qb_cond
+//	obx_qb_int32_not_in(qb.cqb, C.obx_schema_id(propertyId))
+//	qb.checkForCError() // Mirror C error early to Error
+//
+//	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
+//	return
+//}
+//
+////  double value
+//// obx_qb_cond obx_qb_double_greater(OBX_query_builder* builder, obx_schema_id property_id, double value);
+//func (qb *QueryBuilder) DoubleGreater(propertyId TypeId, value double) {
+//	if qb.Err != nil {
+//		return
+//	}
+//	qb.cLastCondition = C.obx_qb_cond
+//	obx_qb_double_greater(qb.cqb, C.obx_schema_id(propertyId))
+//	qb.checkForCError() // Mirror C error early to Error
+//
+//	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
+//	return
+//}
+//
+////  double value
+//// obx_qb_cond obx_qb_double_less(OBX_query_builder* builder, obx_schema_id property_id, double value);
+//func (qb *QueryBuilder) DoubleLess(propertyId TypeId, value double) {
+//	if qb.Err != nil {
+//		return
+//	}
+//	qb.cLastCondition = C.obx_qb_cond
+//	obx_qb_double_less(qb.cqb, C.obx_schema_id(propertyId))
+//	qb.checkForCError() // Mirror C error early to Error
+//
+//	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
+//	return
+//}
+//
+////  double value_a, double value_b
+//// obx_qb_cond obx_qb_double_between(OBX_query_builder* builder, obx_schema_id property_id, double value_a, double value_b);
+//func (qb *QueryBuilder) DoubleBetween(propertyId TypeId, value_a double, value_b double) {
+//	if qb.Err != nil {
+//		return
+//	}
+//	qb.cLastCondition = C.obx_qb_cond
+//	obx_qb_double_between(qb.cqb, C.obx_schema_id(propertyId))
+//	qb.checkForCError() // Mirror C error early to Error
+//
+//	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
+//	return
+//}
+//
+//// obx_qb_cond obx_qb_bytes_equal(OBX_query_builder* builder, obx_schema_id property_id, const void* value, size_t size);
+//func (qb *QueryBuilder) BytesEqual(propertyId TypeId, value []byte, size size_t) {
+//	if qb.Err != nil {
+//		return
+//	}
+//	qb.cLastCondition = C.obx_qb_cond
+//	obx_qb_bytes_equal(qb.cqb, C.obx_schema_id(propertyId))
+//	qb.checkForCError() // Mirror C error early to Error
+//
+//	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
+//	return
+//}
+//
+////  const void* value, size_t size, bool with_equal
+//// obx_qb_cond obx_qb_bytes_greater(OBX_query_builder* builder, obx_schema_id property_id, const void* value, size_t size, bool with_equal);
+//func (qb *QueryBuilder) BytesGreater(propertyId TypeId, value []byte, size size_t, with_equal bool) {
+//	if qb.Err != nil {
+//		return
+//	}
+//	qb.cLastCondition = C.obx_qb_cond
+//	obx_qb_bytes_greater(qb.cqb, C.obx_schema_id(propertyId))
+//	qb.checkForCError() // Mirror C error early to Error
+//
+//	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
+//	return
+//}
+//
+////  const void* value, size_t size, bool with_equal
+//// obx_qb_cond obx_qb_bytes_less(OBX_query_builder* builder, obx_schema_id property_id, const void* value, size_t size, bool with_equal);
+//func (qb *QueryBuilder) BytesLess(propertyId TypeId, value []byte, size size_t, with_equal bool) {
+//	if qb.Err != nil {
+//		return
+//	}
+//	qb.cLastCondition = C.obx_qb_cond
+//	obx_qb_bytes_less(qb.cqb, C.obx_schema_id(propertyId))
+//	qb.checkForCError() // Mirror C error early to Error
+//
+//	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
+//	return
+//}
+//
+//////
+//
+//
+//

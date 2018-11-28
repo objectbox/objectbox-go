@@ -136,3 +136,53 @@ func TestQueryBuilder_IntBetween(t *testing.T) {
 	assert.Eq(t, start+1, events[1].Date)
 	assert.Eq(t, end, events[2].Date)
 }
+
+
+func TestQueryBuilder_Null(t *testing.T) {
+	objectBox := iot.CreateObjectBox()
+	box := objectBox.Box(1)
+	box.RemoveAll()
+
+	objectBox.SetDebugFlags(objectbox.DebugFlags_LOG_QUERIES | objectbox.DebugFlags_LOG_QUERY_PARAMETERS)
+
+	events := iot.PutEvents(objectBox, 6)
+
+	qb := objectBox.Query(1)
+	assert.NoErr(t, qb.Err)
+	defer qb.Close()
+	qb.Null(3)
+	query, err := qb.Build()
+	assert.NoErr(t, err)
+	defer query.Close()
+
+	slice, err := query.Find()
+	assert.NoErr(t, err)
+	events = slice.([]*iot.Event)
+	assert.EqInt(t, 0, len(events))
+
+}
+
+
+func TestQueryBuilder_NotNull(t *testing.T) {
+	objectBox := iot.CreateObjectBox()
+	box := objectBox.Box(1)
+	box.RemoveAll()
+
+	objectBox.SetDebugFlags(objectbox.DebugFlags_LOG_QUERIES | objectbox.DebugFlags_LOG_QUERY_PARAMETERS)
+
+	events := iot.PutEvents(objectBox, 6)
+
+	qb := objectBox.Query(1)
+	assert.NoErr(t, qb.Err)
+	defer qb.Close()
+	qb.NotNull(3)
+	query, err := qb.Build()
+	assert.NoErr(t, err)
+	defer query.Close()
+
+	slice, err := query.Find()
+	assert.NoErr(t, err)
+	events = slice.([]*iot.Event)
+	assert.EqInt(t, 6, len(events))
+
+}

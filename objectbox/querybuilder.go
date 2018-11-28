@@ -79,6 +79,31 @@ func (qb *QueryBuilder) IntBetween(propertyId TypeId, value1 int64, value2 int64
 	return
 }
 
+
+
+func (qb *QueryBuilder) Null(propertyId TypeId) {
+	if qb.Err != nil {
+		return
+	}
+	qb.cLastCondition = C.obx_qb_null(qb.cqb, C.obx_schema_id(propertyId))
+	qb.checkForCError() // Mirror C error early to Error
+
+	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
+	return
+}
+
+func (qb *QueryBuilder) NotNull(propertyId TypeId) {
+	if qb.Err != nil {
+		return
+	}
+	qb.cLastCondition = C.obx_qb_not_null(qb.cqb, C.obx_schema_id(propertyId))
+	qb.checkForCError() // Mirror C error early to Error
+
+	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
+	return
+}
+
+
 func (qb *QueryBuilder) Build() (*Query, error) {
 	qb.checkForCError()
 	if qb.Err != nil {

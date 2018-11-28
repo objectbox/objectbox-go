@@ -464,6 +464,34 @@ func TestQueryBuilder_IntLess(t *testing.T) {
 
 }
 
+func TestQueryBuilder_DoubleLess(t *testing.T) {
+	objectBox := iot.LoadEmptyTestObjectBox()
+	defer objectBox.Close()
+	box := iot.BoxForEvent(objectBox)
+	defer box.Close()
+	box.RemoveAll()
+
+	objectBox.SetDebugFlags(objectbox.DebugFlags_LOG_QUERIES | objectbox.DebugFlags_LOG_QUERY_PARAMETERS)
+
+	//events := iot.PutEvents(objectBox, 6)
+
+	qb := objectBox.Query(1)
+	assert.NoErr(t, qb.Err)
+	defer qb.Close()
+
+	//FIXME:
+	qb.DoubleLess(1, 2)
+	query, err := qb.Build()
+	assert.NoErr(t, err)
+	defer query.Close()
+	//
+	//slice, err := query.Find()
+	//assert.NoErr(t, err)
+	//events = slice.([]*iot.Event)
+	//assert.EqInt(t, 1, len(events))
+
+}
+
 func TestQueryBuilder_DoubleGreater(t *testing.T) {
 	objectBox := iot.LoadEmptyTestObjectBox()
 	defer objectBox.Close()

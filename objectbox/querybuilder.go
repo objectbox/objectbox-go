@@ -155,6 +155,19 @@ func (qb *QueryBuilder) StringGreater(propertyId TypeId, value string, caseSensi
 	return
 }
 
+func (qb *QueryBuilder) StringLess(propertyId TypeId, value string, caseSensitive bool, withEqual bool) {
+	if qb.Err != nil {
+		return
+	}
+	cvalue := C.CString(value)
+	defer C.free(unsafe.Pointer(cvalue))
+	qb.cLastCondition = C.obx_qb_string_less(qb.cqb, C.obx_schema_id(propertyId), cvalue, C.bool(caseSensitive), C.bool(withEqual))
+	qb.checkForCError() // Mirror C error early to Error
+
+	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
+	return
+}
+
 func (qb *QueryBuilder) IntEqual(propertyId TypeId, value int64) {
 	if qb.Err != nil {
 		return
@@ -286,28 +299,17 @@ func (qb *QueryBuilder) BuildAndClose() (*Query, error) {
 
 //
 //
-////  const char* value, bool case_sensitive, bool with_equal
 //// obx_qb_cond obx_qb_string_less(OBX_query_builder* builder, obx_schema_id property_id, const char* value, bool case_sensitive, bool with_equal);
-//func (qb *QueryBuilder) StringLess(propertyId TypeId, value string, case_sensitive bool, with_equal bool) {
-//	if qb.Err != nil {
-//		return
-//	}
-//	qb.cLastCondition = C.obx_qb_cond
-//	obx_qb_string_less(qb.cqb, C.obx_schema_id(propertyId))
-//	qb.checkForCError() // Mirror C error early to Error
+
 //
-//	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
-//	return
-//}
-//
-////  const char* values[], int count, bool case_sensitive
 //// obx_qb_cond obx_qb_string_in(OBX_query_builder* builder, obx_schema_id property_id, const char* values[], int count, bool case_sensitive);
-//func (qb *QueryBuilder) StringIn(propertyId TypeId, values [] string, count int, case_sensitive bool) {
+//func (qb *QueryBuilder) StringIn(propertyId TypeId, values [] string, count int, caseSensitive bool) {
 //	if qb.Err != nil {
 //		return
 //	}
-//	qb.cLastCondition = C.obx_qb_cond
-//	obx_qb_string_in(qb.cqb, C.obx_schema_id(propertyId))
+//	cvalue := C.CString(value)
+//	defer C.free(unsafe.Pointer(cvalue))
+//	qb.cLastCondition = C.obx_qb_string_in(qb.cqb, C.obx_schema_id(propertyId), C.size_t(count), C.bool(caseSensitive))
 //	qb.checkForCError() // Mirror C error early to Error
 //
 //	// TBD: depending on Go's query API, return either *QueryBuilder or query condition

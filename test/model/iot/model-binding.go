@@ -130,23 +130,25 @@ var ReadingBinding = reading_EntityInfo{
 }
 
 var Reading_ = struct {
-	Id            uint32
-	Date          uint32
-	EventId       uint32
-	ValueName     uint32
-	ValueString   uint32
-	ValueInteger  uint32
-	ValueFloating uint32
-	ValueInt32    uint32
+	Id              uint32
+	Date            uint32
+	EventId         uint32
+	ValueName       uint32
+	ValueString     uint32
+	ValueInteger    uint32
+	ValueFloating   uint32
+	ValueInt32      uint32
+	ValueFloating32 uint32
 }{
-	Id:            1,
-	Date:          2,
-	EventId:       3,
-	ValueName:     4,
-	ValueString:   5,
-	ValueInteger:  6,
-	ValueFloating: 7,
-	ValueInt32:    8,
+	Id:              1,
+	Date:            2,
+	EventId:         3,
+	ValueName:       4,
+	ValueString:     5,
+	ValueInteger:    6,
+	ValueFloating:   7,
+	ValueInt32:      8,
+	ValueFloating32: 9,
 }
 
 func (reading_EntityInfo) AddToModel(model *objectbox.Model) {

@@ -326,6 +326,49 @@ func (qb *QueryBuilder) BytesLess(propertyId TypeId, value []byte, withEqual boo
 	return
 }
 
+func (qb *QueryBuilder) Int64In(propertyId TypeId, values [] int64) {
+	if qb.Err != nil {
+		return
+	}
+	qb.cLastCondition = C.obx_qb_int64_in(qb.cqb, C.obx_schema_id(propertyId), (*C.int64_t)(unsafe.Pointer(&values[0])), C.int(len(values)))
+	qb.checkForCError() // Mirror C error early to Error
+
+	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
+	return
+}
+
+func (qb *QueryBuilder) Int64NotIn(propertyId TypeId, values [] int64) {
+	if qb.Err != nil {
+		return
+	}
+	qb.cLastCondition = C.obx_qb_int64_not_in(qb.cqb, C.obx_schema_id(propertyId), (*C.int64_t)(unsafe.Pointer(&values[0])), C.int(len(values)))
+	qb.checkForCError() // Mirror C error early to Error
+
+	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
+	return
+}
+
+func (qb *QueryBuilder) Int32In(propertyId TypeId, values [] int32) {
+	if qb.Err != nil {
+		return
+	}
+	qb.cLastCondition = C.obx_qb_int32_in(qb.cqb, C.obx_schema_id(propertyId), (*C.int32_t)(unsafe.Pointer(&values[0])), C.int(len(values)))
+	qb.checkForCError() // Mirror C error early to Error
+
+	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
+	return
+}
+
+func (qb *QueryBuilder) Int32NotIn(propertyId TypeId, values [] int32) {
+	if qb.Err != nil {
+		return
+	}
+	qb.cLastCondition = C.obx_qb_int32_not_in(qb.cqb, C.obx_schema_id(propertyId), (*C.int32_t)(unsafe.Pointer(&values[0])), C.int(len(values)))
+	qb.checkForCError() // Mirror C error early to Error
+
+	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
+	return
+}
 
 func (qb *QueryBuilder) Build() (*Query, error) {
 	qb.checkForCError()
@@ -370,64 +413,3 @@ func (qb *QueryBuilder) BuildAndClose() (*Query, error) {
 	}
 	return query, err
 }
-
-
-//// **************************
-
-//// obx_qb_cond obx_qb_int64_in(OBX_query_builder* builder, obx_schema_id property_id, const int64  values[], int count);
-//func (qb *QueryBuilder) Int64In(propertyId TypeId, values [] int64, count int) {
-//	if qb.Err != nil {
-//		return
-//	}
-//	qb.cLastCondition = C.obx_qb_cond
-//	obx_qb_int64_in(qb.cqb, C.obx_schema_id(propertyId))
-//	qb.checkForCError() // Mirror C error early to Error
-//
-//	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
-//	return
-//}
-//
-////  const int64_t values[], int count
-//// obx_qb_cond obx_qb_int64_not_in(OBX_query_builder* builder, obx_schema_id property_id, const int64  values[], int count);
-//func (qb *QueryBuilder) Int64NotIn(propertyId TypeId, values [] int64, count int) {
-//	if qb.Err != nil {
-//		return
-//	}
-//	qb.cLastCondition = C.obx_qb_cond
-//	obx_qb_int64_not_in(qb.cqb, C.obx_schema_id(propertyId))
-//	qb.checkForCError() // Mirror C error early to Error
-//
-//	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
-//	return
-//}
-//
-//// obx_qb_cond obx_qb_int32_in(OBX_query_builder* builder, obx_schema_id property_id, const int32_t values[], int count);
-//func (qb *QueryBuilder) Int32In(propertyId TypeId, values [] int32_t, count int) {
-//	if qb.Err != nil {
-//		return
-//	}
-//	qb.cLastCondition = C.obx_qb_cond
-//	obx_qb_int32_in(qb.cqb, C.obx_schema_id(propertyId), values, count)
-//	qb.checkForCError() // Mirror C error early to Error
-//
-//	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
-//	return
-//}
-//
-////  const int32_t values[], int count
-//// obx_qb_cond obx_qb_int32_not_in(OBX_query_builder* builder, obx_schema_id property_id, const int32_t values[], int count);
-//func (qb *QueryBuilder) Int32NotIn(propertyId TypeId, values [] int32_t, count int) {
-//	if qb.Err != nil {
-//		return
-//	}
-//	qb.cLastCondition = C.obx_qb_cond
-//	obx_qb_int32_not_in(qb.cqb, C.obx_schema_id(propertyId))
-//	qb.checkForCError() // Mirror C error early to Error
-//
-//	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
-//	return
-//}
-//
-//
-//
-

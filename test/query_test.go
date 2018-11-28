@@ -660,3 +660,119 @@ func TestQueryBuilder_BytesLess(t *testing.T) {
 	assert.EqInt(t, 0, len(events))
 
 }
+
+
+func TestQueryBuilder_Int64In(t *testing.T) {
+	objectBox := iot.LoadEmptyTestObjectBox()
+	defer objectBox.Close()
+	box := iot.BoxForReading(objectBox)
+	defer box.Close()
+	box.RemoveAll()
+
+	objectBox.SetDebugFlags(objectbox.DebugFlags_LOG_QUERIES | objectbox.DebugFlags_LOG_QUERY_PARAMETERS)
+
+	readings :=
+		iot.PutReadings(objectBox, 6)
+
+	qb := objectBox.Query(2)
+	assert.NoErr(t, qb.Err)
+	defer qb.Close()
+
+	values := []int64 { 10002, 10003}
+	qb.Int64In(6, values)
+	query, err := qb.Build()
+	assert.NoErr(t, err)
+	defer query.Close()
+
+	slice, err := query.Find()
+	assert.NoErr(t, err)
+	readings = slice.([]*iot.Reading)
+	assert.EqInt(t, 2, len(readings))
+
+}
+
+func TestQueryBuilder_Int64NotIn(t *testing.T) {
+	objectBox := iot.LoadEmptyTestObjectBox()
+	defer objectBox.Close()
+	box := iot.BoxForReading(objectBox)
+	defer box.Close()
+	box.RemoveAll()
+
+	objectBox.SetDebugFlags(objectbox.DebugFlags_LOG_QUERIES | objectbox.DebugFlags_LOG_QUERY_PARAMETERS)
+
+	readings :=
+		iot.PutReadings(objectBox, 6)
+
+	qb := objectBox.Query(2)
+	assert.NoErr(t, qb.Err)
+	defer qb.Close()
+
+	values := []int64 { 10002, 10003}
+	qb.Int64NotIn(6, values)
+	query, err := qb.Build()
+	assert.NoErr(t, err)
+	defer query.Close()
+
+	slice, err := query.Find()
+	assert.NoErr(t, err)
+	readings = slice.([]*iot.Reading)
+	assert.EqInt(t, 4, len(readings))
+
+}
+
+func TestQueryBuilder_Int32In(t *testing.T) {
+	objectBox := iot.LoadEmptyTestObjectBox()
+	defer objectBox.Close()
+	box := iot.BoxForReading(objectBox)
+	defer box.Close()
+	box.RemoveAll()
+
+	objectBox.SetDebugFlags(objectbox.DebugFlags_LOG_QUERIES | objectbox.DebugFlags_LOG_QUERY_PARAMETERS)
+
+	readings :=
+		iot.PutReadings(objectBox, 6)
+
+	qb := objectBox.Query(2)
+	assert.NoErr(t, qb.Err)
+	defer qb.Close()
+
+	values := []int32 { 10002}
+	qb.Int32In(8, values)
+	query, err := qb.Build()
+	assert.NoErr(t, err)
+	defer query.Close()
+
+	slice, err := query.Find()
+	assert.NoErr(t, err)
+	readings = slice.([]*iot.Reading)
+	assert.EqInt(t, 1, len(readings))
+}
+
+
+func TestQueryBuilder_Int32NotIn(t *testing.T) {
+	objectBox := iot.LoadEmptyTestObjectBox()
+	defer objectBox.Close()
+	box := iot.BoxForReading(objectBox)
+	defer box.Close()
+	box.RemoveAll()
+
+	objectBox.SetDebugFlags(objectbox.DebugFlags_LOG_QUERIES | objectbox.DebugFlags_LOG_QUERY_PARAMETERS)
+
+	readings :=
+		iot.PutReadings(objectBox, 6)
+
+	qb := objectBox.Query(2)
+	assert.NoErr(t, qb.Err)
+	defer qb.Close()
+
+	values := []int32 { 10002}
+	qb.Int32NotIn(8, values)
+	query, err := qb.Build()
+	assert.NoErr(t, err)
+	defer query.Close()
+
+	slice, err := query.Find()
+	assert.NoErr(t, err)
+	readings = slice.([]*iot.Reading)
+	assert.EqInt(t, 5, len(readings))
+}

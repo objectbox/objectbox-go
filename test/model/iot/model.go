@@ -43,4 +43,7 @@ type Reading struct {
 
 	/// Device sensor data value
 	ValueFloating float64
+
+	/// Device sensor data value
+	ValueInt32 int32
 }

@@ -45,6 +45,14 @@ func PutEvent(ob *objectbox.ObjectBox, device string, date int64) *Event {
 	return &event
 }
 
+func PutReading(ob *objectbox.ObjectBox, name string, ValueString string, theInt64 int64, theFloat64 float64, theInt32 int32) *Reading {
+	event := Reading{ValueName: name, ValueString: ValueString, ValueInteger: theInt64, ValueFloating: theFloat64, ValueInt32: theInt32}
+	id, err := ob.Box(2).Put(&event)
+	assert.NoErr(nil, err)
+	event.Id = id
+	return &event
+}
+
 func PutEvents(ob *objectbox.ObjectBox, count int) []*Event {
 	// TODO TX
 	events := make([]*Event, 0, count)
@@ -53,4 +61,14 @@ func PutEvents(ob *objectbox.ObjectBox, count int) []*Event {
 		events = append(events, event)
 	}
 	return events
+}
+
+func PutReadings(ob *objectbox.ObjectBox, count int) []*Reading {
+	// TODO TX
+	readings := make([]*Reading, 0, count)
+	for i := 1; i <= count; i++ {
+		reading := PutReading(ob, "reading"+strconv.Itoa(i), "string"+strconv.Itoa(i), int64(10000+i), float64(10000+i), int32(10000+i))
+		readings = append(readings, reading)
+	}
+	return readings
 }

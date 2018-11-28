@@ -126,7 +126,8 @@ func (reading_) AddToModel(model *objectbox.Model) {
 	model.Property("ValueString", objectbox.PropertyType_String, 5, 7303099924122013060)
 	model.Property("ValueInteger", objectbox.PropertyType_Long, 6, 1404333021836291657)
 	model.Property("ValueFloating", objectbox.PropertyType_Double, 7, 7102253623343671118)
-	model.EntityLastPropertyId(7, 7102253623343671118)
+	model.Property("ValueInt32", objectbox.PropertyType_Int, 8, 7566830186276557216)
+	model.EntityLastPropertyId(8, 7566830186276557216)
 }
 
 func (reading_) GetId(entity interface{}) (uint64, error) {
@@ -139,7 +140,7 @@ func (reading_) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64)
 	var offsetValueString = fbutils.CreateStringOffset(fbb, ent.ValueString)
 
 	// build the FlatBuffers object
-	fbb.StartObject(7)
+	fbb.StartObject(8)
 	fbb.PrependUint64Slot(0, id, 0)
 	fbb.PrependInt64Slot(1, ent.Date, 0)
 	fbb.PrependUint64Slot(2, ent.EventId, 0)
@@ -147,6 +148,7 @@ func (reading_) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64)
 	fbb.PrependUOffsetTSlot(4, offsetValueString, 0)
 	fbb.PrependInt64Slot(5, ent.ValueInteger, 0)
 	fbb.PrependFloat64Slot(6, ent.ValueFloating, 0)
+	fbb.PrependInt32Slot(7, ent.ValueInt32, 0)
 }
 
 func (reading_) ToObject(bytes []byte) interface{} {
@@ -163,6 +165,7 @@ func (reading_) ToObject(bytes []byte) interface{} {
 		ValueString:   fbutils.GetStringSlot(table, 12),
 		ValueInteger:  table.GetInt64Slot(14, 0),
 		ValueFloating: table.GetFloat64Slot(16, 0),
+		ValueInt32:    table.GetInt32Slot(18, 0),
 	}
 }
 

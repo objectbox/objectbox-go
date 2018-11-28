@@ -45,7 +45,7 @@ var {{$entity.Name}}Binding = {{$entityNameCamel}}_EntityInfo {
 
 var {{$entity.Name}}_ = struct {
 	{{range $property := $entity.Properties -}}
-    {{$property.Name}} uint32
+    {{$property.Name}} objectbox.TypeId
     {{end -}}
 }{
 	{{range $property := $entity.Properties -}}

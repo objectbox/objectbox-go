@@ -19,11 +19,11 @@ var EventBinding = event_EntityInfo{
 }
 
 var Event_ = struct {
-	Id      uint32
-	Uid     uint32
-	Device  uint32
-	Date    uint32
-	Picture uint32
+	Id      objectbox.TypeId
+	Uid     objectbox.TypeId
+	Device  objectbox.TypeId
+	Date    objectbox.TypeId
+	Picture objectbox.TypeId
 }{
 	Id:      1,
 	Uid:     4,
@@ -130,15 +130,15 @@ var ReadingBinding = reading_EntityInfo{
 }
 
 var Reading_ = struct {
-	Id              uint32
-	Date            uint32
-	EventId         uint32
-	ValueName       uint32
-	ValueString     uint32
-	ValueInteger    uint32
-	ValueFloating   uint32
-	ValueInt32      uint32
-	ValueFloating32 uint32
+	Id              objectbox.TypeId
+	Date            objectbox.TypeId
+	EventId         objectbox.TypeId
+	ValueName       objectbox.TypeId
+	ValueString     objectbox.TypeId
+	ValueInteger    objectbox.TypeId
+	ValueFloating   objectbox.TypeId
+	ValueInt32      objectbox.TypeId
+	ValueFloating32 objectbox.TypeId
 }{
 	Id:              1,
 	Date:            2,

@@ -18,8 +18,8 @@ var BBinding = b_EntityInfo{
 }
 
 var B_ = struct {
-	Id  uint32
-	New uint32
+	Id  objectbox.TypeId
+	New objectbox.TypeId
 }{
 	Id:  1,
 	New: 3,

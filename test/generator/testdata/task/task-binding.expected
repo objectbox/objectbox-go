@@ -19,14 +19,14 @@ var TaskBinding = task_EntityInfo{
 }
 
 var Task_ = struct {
-	Id      uint32
-	Uid     uint32
-	Name    uint32
-	Place   uint32
-	Source  uint32
-	Text    uint32
-	Date    uint32
-	GroupId uint32
+	Id      objectbox.TypeId
+	Uid     objectbox.TypeId
+	Name    objectbox.TypeId
+	Place   objectbox.TypeId
+	Source  objectbox.TypeId
+	Text    objectbox.TypeId
+	Date    objectbox.TypeId
+	GroupId objectbox.TypeId
 }{
 	Id:      1,
 	Uid:     2,
@@ -152,7 +152,7 @@ var GroupBinding = group_EntityInfo{
 }
 
 var Group_ = struct {
-	Id uint32
+	Id objectbox.TypeId
 }{
 	Id: 1,
 }

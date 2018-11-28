@@ -18,7 +18,7 @@ var ABinding = a_EntityInfo{
 }
 
 var A_ = struct {
-	Id uint32
+	Id objectbox.TypeId
 }{
 	Id: 1,
 }

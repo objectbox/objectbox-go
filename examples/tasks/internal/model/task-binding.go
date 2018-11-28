@@ -19,10 +19,10 @@ var TaskBinding = task_EntityInfo{
 }
 
 var Task_ = struct {
-	Id           uint32
-	Text         uint32
-	DateCreated  uint32
-	DateFinished uint32
+	Id           objectbox.TypeId
+	Text         objectbox.TypeId
+	DateCreated  objectbox.TypeId
+	DateFinished objectbox.TypeId
 }{
 	Id:           1,
 	Text:         2,

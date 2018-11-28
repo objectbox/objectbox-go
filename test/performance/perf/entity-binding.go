@@ -19,11 +19,11 @@ var EntityBinding = entity_EntityInfo{
 }
 
 var Entity_ = struct {
-	Id      uint32
-	Int32   uint32
-	Int64   uint32
-	String  uint32
-	Float64 uint32
+	Id      objectbox.TypeId
+	Int32   objectbox.TypeId
+	Int64   objectbox.TypeId
+	String  objectbox.TypeId
+	Float64 objectbox.TypeId
 }{
 	Id:      1,
 	Int32:   2,

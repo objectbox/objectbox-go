@@ -19,25 +19,25 @@ var TypefulBinding = typeful_EntityInfo{
 }
 
 var Typeful_ = struct {
-	Id         uint32
-	Int        uint32
-	Int8       uint32
-	Int16      uint32
-	Int32      uint32
-	Int64      uint32
-	Uint       uint32
-	Uint8      uint32
-	Uint16     uint32
-	Uint32     uint32
-	Uint64     uint32
-	Bool       uint32
-	String     uint32
-	Byte       uint32
-	ByteVector uint32
-	Rune       uint32
-	Float32    uint32
-	Float64    uint32
-	Date       uint32
+	Id         objectbox.TypeId
+	Int        objectbox.TypeId
+	Int8       objectbox.TypeId
+	Int16      objectbox.TypeId
+	Int32      objectbox.TypeId
+	Int64      objectbox.TypeId
+	Uint       objectbox.TypeId
+	Uint8      objectbox.TypeId
+	Uint16     objectbox.TypeId
+	Uint32     objectbox.TypeId
+	Uint64     objectbox.TypeId
+	Bool       objectbox.TypeId
+	String     objectbox.TypeId
+	Byte       objectbox.TypeId
+	ByteVector objectbox.TypeId
+	Rune       objectbox.TypeId
+	Float32    objectbox.TypeId
+	Float64    objectbox.TypeId
+	Date       objectbox.TypeId
 }{
 	Id:         1,
 	Int:        2,

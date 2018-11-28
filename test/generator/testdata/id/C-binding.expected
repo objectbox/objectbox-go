@@ -18,8 +18,8 @@ var CBinding = c_EntityInfo{
 }
 
 var C_ = struct {
-	Id         uint32
-	identifier uint32
+	Id         objectbox.TypeId
+	identifier objectbox.TypeId
 }{
 	Id:         1,
 	identifier: 2,

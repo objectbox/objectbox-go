@@ -104,6 +104,29 @@ func TestQueryBuilder_StringEq(t *testing.T) {
 	events = slice.([]*iot.Event)
 	assert.EqInt(t, 1, len(events))
 	assert.EqString(t, "device 1", events[0].Device)
+}
+
+func TestQueryBuilder_StringNotEq(t *testing.T) {
+	objectBox := iot.LoadEmptyTestObjectBox()
+	defer objectBox.Close()
+	box := iot.BoxForEvent(objectBox)
+	defer box.Close()
+	box.RemoveAll()
+
+	iot.PutEvents(objectBox, 3)
+
+	qb := objectBox.Query(1)
+	assert.NoErr(t, qb.Err)
+	defer qb.Close()
+	qb.StringNotEq(2, "device 2", false)
+	query, err := qb.Build()
+	assert.NoErr(t, err)
+	defer query.Close()
+
+	slice, err := query.Find()
+	assert.NoErr(t, err)
+	events := slice.([]*iot.Event)
+	assert.EqInt(t, 2, len(events))
 
 }
 

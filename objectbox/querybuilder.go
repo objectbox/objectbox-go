@@ -79,8 +79,6 @@ func (qb *QueryBuilder) IntBetween(propertyId TypeId, value1 int64, value2 int64
 	return
 }
 
-
-
 func (qb *QueryBuilder) Null(propertyId TypeId) {
 	if qb.Err != nil {
 		return
@@ -91,6 +89,20 @@ func (qb *QueryBuilder) Null(propertyId TypeId) {
 	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
 	return
 }
+
+func (qb *QueryBuilder) StringNotEq(propertyId TypeId, value string, caseSensitive bool) {
+	if qb.Err != nil {
+		return
+	}
+	cvalue := C.CString(value)
+	defer C.free(unsafe.Pointer(cvalue))
+	qb.cLastCondition = C.obx_qb_string_not_equal(qb.cqb, C.obx_schema_id(propertyId), cvalue, C.bool(caseSensitive))
+	qb.checkForCError() // Mirror C error early to Error
+
+	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
+	return
+}
+
 
 func (qb *QueryBuilder) NotNull(propertyId TypeId) {
 	if qb.Err != nil {

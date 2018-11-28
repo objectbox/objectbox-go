@@ -138,6 +138,17 @@ func (qb *QueryBuilder) DoubleGreater(propertyId TypeId, value float64) {
 	return
 }
 
+func (qb *QueryBuilder) DoubleBetween(propertyId TypeId, valueA float64, valueB float64) {
+	if qb.Err != nil {
+		return
+	}
+	qb.cLastCondition = C.obx_qb_double_between(qb.cqb, C.obx_schema_id(propertyId), C.double(valueA), C.double(valueB))
+	qb.checkForCError() // Mirror C error early to Error
+
+	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
+	return
+}
+
 func (qb *QueryBuilder) NotNull(propertyId TypeId) {
 	if qb.Err != nil {
 		return
@@ -378,19 +389,7 @@ func (qb *QueryBuilder) BuildAndClose() (*Query, error) {
 //	return
 //}
 //
-////  double value_a, double value_b
-//// obx_qb_cond obx_qb_double_between(OBX_query_builder* builder, obx_schema_id property_id, double value_a, double value_b);
-//func (qb *QueryBuilder) DoubleBetween(propertyId TypeId, value_a double, value_b double) {
-//	if qb.Err != nil {
-//		return
-//	}
-//	qb.cLastCondition = C.obx_qb_cond
-//	obx_qb_double_between(qb.cqb, C.obx_schema_id(propertyId))
-//	qb.checkForCError() // Mirror C error early to Error
-//
-//	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
-//	return
-//}
+
 //
 //// obx_qb_cond obx_qb_bytes_equal(OBX_query_builder* builder, obx_schema_id property_id, const void* value, size_t size);
 //func (qb *QueryBuilder) BytesEqual(propertyId TypeId, value []byte, size size_t) {

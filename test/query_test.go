@@ -75,6 +75,8 @@ func TestQueryBuilder(t *testing.T) {
 	return
 }
 
+// TODO refactor following conditions to table-like test
+
 func TestQueryBuilder_StringEq(t *testing.T) {
 	objectBox := iot.LoadEmptyTestObjectBox()
 	defer objectBox.Close()
@@ -419,7 +421,7 @@ func TestQueryBuilder_IntNotEqual(t *testing.T) {
 	qb := objectBox.Query(iot.EventBinding.Id)
 	assert.NoErr(t, qb.Err)
 	defer qb.Close()
-	qb.IntEqual(iot.Event_.Id, 5)
+	qb.IntNotEqual(iot.Event_.Id, 5)
 	query, err := qb.Build()
 	assert.NoErr(t, err)
 	defer query.Close()
@@ -427,7 +429,7 @@ func TestQueryBuilder_IntNotEqual(t *testing.T) {
 	slice, err := query.Find()
 	assert.NoErr(t, err)
 	events = slice.([]*iot.Event)
-	assert.EqInt(t, 1, len(events))
+	assert.EqInt(t, 5, len(events))
 
 }
 

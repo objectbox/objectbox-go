@@ -103,7 +103,7 @@ func generateAllFiles(t *testing.T, overwriteExpected bool, dir string, modelInf
 	assert.NoErr(t, err)
 	for _, sourceFile := range inputFiles {
 		// skip generated files & "expected results" files
-		if strings.HasSuffix(sourceFile, "binding.go") ||
+		if strings.HasSuffix(sourceFile, ".obx.go") ||
 			strings.HasSuffix(sourceFile, "expected") ||
 			strings.HasSuffix(sourceFile, "initial") ||
 			sourceFile == modelFile {
@@ -127,7 +127,7 @@ func generateAllFiles(t *testing.T, overwriteExpected bool, dir string, modelInf
 		assert.NoErr(t, err)
 
 		var bindingFile = generator.BindingFile(sourceFile)
-		var expectedFile = bindingFile[0:len(bindingFile)-3] + ".expected"
+		var expectedFile = bindingFile + ".expected"
 		assertSameFile(t, bindingFile, expectedFile, overwriteExpected)
 	}
 }

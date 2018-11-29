@@ -1,3 +1,3 @@
-*-binding.go
-*-model.json
-*-model.go
+*.obx.go
+objectbox-model.json
+objectbox-model.go

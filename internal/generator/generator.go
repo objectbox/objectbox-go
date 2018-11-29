@@ -26,14 +26,13 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/objectbox/objectbox-go/internal/generator/templates"
-
 	"github.com/objectbox/objectbox-go/internal/generator/modelinfo"
+	"github.com/objectbox/objectbox-go/internal/generator/templates"
 )
 
 func BindingFile(sourceFile string) string {
 	var extension = filepath.Ext(sourceFile)
-	return sourceFile[0:len(sourceFile)-len(extension)] + "-binding" + extension
+	return sourceFile[0:len(sourceFile)-len(extension)] + ".obx" + extension
 }
 
 func ModelInfoFile(dir string) string {

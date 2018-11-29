@@ -6,7 +6,7 @@ In this embedded mode, it runs within your application process.
 
 Some features
 -------------
-* Object storage based on [FlatBuffers](https://google.github.io/flatbuffers/)
+* Object storage: put and get native Go structs
 * Secondary indexes based on object properties
 * Simple CRUD API
 * Asynchronous puts
@@ -22,12 +22,12 @@ and install the two prerequisites - pre-compiled library and a bindings generato
 ```bash
 go get github.com/objectbox/objectbox-go
 go get github.com/google/flatbuffers/go
+go install github.com/objectbox/objectbox-go/cmd/objectbox-gogen/
 
 mkdir objectboxlib && cd objectboxlib
 curl https://raw.githubusercontent.com/objectbox/objectbox-c/master/download.sh > download.sh
 bash download.sh
 
-go install github.com/objectbox/objectbox-go/cmd/objectbox-gogen/
 ```
 
 See [installation docs](https://golang.objectbox.io/install) for more details and further instructions.
@@ -36,6 +36,23 @@ Additionally, you can run tests to validate your installation
 ```bash
 go test github.com/objectbox/objectbox-go/...
 ```
+
+Upgrading to a newer version
+----------------------------
+When you want to update, please re-run the entire installation process to ensure all components are updated:
+
+* ObjectBox itself (objectbox/objectbox-go)
+* Dependencies (flatbuffers)
+* libobjectbox
+* ObjectBox code generator
+
+This is important as diverging versions of any component might result in errors.
+  
+This repository also come with a `install.sh` script that can be used for installation and upgrading:
+
+ ```bash
+~/go/src/github.com/objectbox/objectbox-go/install.sh
+ ```
 
 Docs
 ----

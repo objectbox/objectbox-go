@@ -24,14 +24,14 @@ import (
 	"github.com/objectbox/objectbox-go/test/model/iot"
 )
 
-func TestNewQueries(t *testing.T) {
-	// XXX TEMPORARY CODE
-	var Event_Device = &objectbox.PropertyString{
-		Property: &objectbox.Property{
-			Id: iot.Event_.Device,
-		},
-	}
+// XXX TEMPORARY CODE
+var Event_Device = &objectbox.PropertyString{
+	Property: &objectbox.Property{
+		Id: iot.Event_.Device,
+	},
+}
 
+func TestQueryConditions(t *testing.T) {
 	objectBox := iot.LoadEmptyTestObjectBox()
 	defer objectBox.Close()
 	box := iot.BoxForEvent(objectBox)
@@ -39,9 +39,23 @@ func TestNewQueries(t *testing.T) {
 
 	box.RemoveAll()
 
-	data, err := box.Query(Event_Device.StartsWith("dev", true)).Find()
-	assert.NoErr(t, err)
-	assert.Eq(t, 0, len(data.([]*iot.Event)))
+	testCases := []struct {
+		expected string
+		query    *objectbox.Query
+	}{
+		{
+			"Device starts with \"dev\"",
+			box.Query(Event_Device.StartsWith("dev", true)),
+		},
+	}
+
+	for i, tc := range testCases {
+		if desc, err := tc.query.Describe(); err != nil {
+			assert.Failf(t, "error on %d {%s} - %s", i, tc.expected, err)
+		} else {
+			assert.Eq(t, tc.expected, desc)
+		}
+	}
 }
 
 //

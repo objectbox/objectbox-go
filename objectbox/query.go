@@ -55,7 +55,10 @@ func (query *Query) Describe() (string, error) {
 		defer query.cFree()
 	}
 
-	return "", nil
+	// no need to free, it's handled by the cQuery internally
+	cResult := C.obx_query_describe_parameters(query.cQuery)
+
+	return C.GoString(cResult), nil
 }
 
 // builds query JiT when it's needed for execution

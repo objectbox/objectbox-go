@@ -23,6 +23,7 @@ type Event struct {
 	Uid    string `unique`
 	Device string
 	Date   int64 `date`
+	Picture []byte
 }
 
 type Reading struct {
@@ -42,4 +43,10 @@ type Reading struct {
 
 	/// Device sensor data value
 	ValueFloating float64
+
+	/// Device sensor data value
+	ValueInt32 int32
+
+	/// Device sensor data value
+	ValueFloating32 float32
 }

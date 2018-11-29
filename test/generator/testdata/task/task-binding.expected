@@ -8,17 +8,37 @@ import (
 	"github.com/objectbox/objectbox-go/objectbox/fbutils"
 )
 
-type task_ struct {
+type task_EntityInfo struct {
 	Id  objectbox.TypeId
 	Uid uint64
 }
 
-var TaskBinding = task_{
+var TaskBinding = task_EntityInfo{
 	Id:  1,
 	Uid: 8717895732742165505,
 }
 
-func (task_) AddToModel(model *objectbox.Model) {
+var Task_ = struct {
+	Id      objectbox.TypeId
+	Uid     objectbox.TypeId
+	Name    objectbox.TypeId
+	Place   objectbox.TypeId
+	Source  objectbox.TypeId
+	Text    objectbox.TypeId
+	Date    objectbox.TypeId
+	GroupId objectbox.TypeId
+}{
+	Id:      1,
+	Uid:     2,
+	Name:    3,
+	Place:   4,
+	Source:  5,
+	Text:    6,
+	Date:    7,
+	GroupId: 8,
+}
+
+func (task_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("Task", 1, 8717895732742165505)
 	model.Property("Id", objectbox.PropertyType_Long, 1, 2259404117704393152)
 	model.PropertyFlags(objectbox.PropertyFlags_ID)
@@ -39,11 +59,11 @@ func (task_) AddToModel(model *objectbox.Model) {
 	model.EntityLastPropertyId(8, 8325060299420976708)
 }
 
-func (task_) GetId(entity interface{}) (uint64, error) {
+func (task_EntityInfo) GetId(entity interface{}) (uint64, error) {
 	return entity.(*Task).Id, nil
 }
 
-func (task_) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
+func (task_EntityInfo) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
 	ent := entity.(*Task)
 	var offsetUid = fbutils.CreateStringOffset(fbb, ent.Uid)
 	var offsetName = fbutils.CreateStringOffset(fbb, ent.Name)
@@ -63,7 +83,7 @@ func (task_) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
 	fbb.PrependUint64Slot(7, ent.GroupId, 0)
 }
 
-func (task_) ToObject(bytes []byte) interface{} {
+func (task_EntityInfo) ToObject(bytes []byte) interface{} {
 	table := &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
@@ -81,11 +101,11 @@ func (task_) ToObject(bytes []byte) interface{} {
 	}
 }
 
-func (task_) MakeSlice(capacity int) interface{} {
+func (task_EntityInfo) MakeSlice(capacity int) interface{} {
 	return make([]*Task, 0, capacity)
 }
 
-func (task_) AppendToSlice(slice interface{}, entity interface{}) interface{} {
+func (task_EntityInfo) AppendToSlice(slice interface{}, entity interface{}) interface{} {
 	return append(slice.([]*Task), entity.(*Task))
 }
 
@@ -121,35 +141,41 @@ func (box *TaskBox) Remove(entity *Task) (err error) {
 	return box.Box.Remove(entity.Id)
 }
 
-type group_ struct {
+type group_EntityInfo struct {
 	Id  objectbox.TypeId
 	Uid uint64
 }
 
-var GroupBinding = group_{
+var GroupBinding = group_EntityInfo{
 	Id:  2,
 	Uid: 2518412263346885298,
 }
 
-func (group_) AddToModel(model *objectbox.Model) {
+var Group_ = struct {
+	Id objectbox.TypeId
+}{
+	Id: 1,
+}
+
+func (group_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("Group", 2, 2518412263346885298)
 	model.Property("Id", objectbox.PropertyType_Long, 1, 5617773211005988520)
 	model.PropertyFlags(objectbox.PropertyFlags_ID)
 	model.EntityLastPropertyId(1, 5617773211005988520)
 }
 
-func (group_) GetId(entity interface{}) (uint64, error) {
+func (group_EntityInfo) GetId(entity interface{}) (uint64, error) {
 	return entity.(*Group).Id, nil
 }
 
-func (group_) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
+func (group_EntityInfo) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
 
 	// build the FlatBuffers object
 	fbb.StartObject(1)
 	fbb.PrependUint64Slot(0, id, 0)
 }
 
-func (group_) ToObject(bytes []byte) interface{} {
+func (group_EntityInfo) ToObject(bytes []byte) interface{} {
 	table := &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
@@ -160,11 +186,11 @@ func (group_) ToObject(bytes []byte) interface{} {
 	}
 }
 
-func (group_) MakeSlice(capacity int) interface{} {
+func (group_EntityInfo) MakeSlice(capacity int) interface{} {
 	return make([]*Group, 0, capacity)
 }
 
-func (group_) AppendToSlice(slice interface{}, entity interface{}) interface{} {
+func (group_EntityInfo) AppendToSlice(slice interface{}, entity interface{}) interface{} {
 	return append(slice.([]*Group), entity.(*Group))
 }
 

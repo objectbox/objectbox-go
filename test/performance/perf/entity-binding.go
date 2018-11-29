@@ -8,17 +8,31 @@ import (
 	"github.com/objectbox/objectbox-go/objectbox/fbutils"
 )
 
-type entity_ struct {
+type entity_EntityInfo struct {
 	Id  objectbox.TypeId
 	Uid uint64
 }
 
-var EntityBinding = entity_{
+var EntityBinding = entity_EntityInfo{
 	Id:  1,
 	Uid: 1737161401460991620,
 }
 
-func (entity_) AddToModel(model *objectbox.Model) {
+var Entity_ = struct {
+	Id      objectbox.TypeId
+	Int32   objectbox.TypeId
+	Int64   objectbox.TypeId
+	String  objectbox.TypeId
+	Float64 objectbox.TypeId
+}{
+	Id:      1,
+	Int32:   2,
+	Int64:   3,
+	String:  4,
+	Float64: 5,
+}
+
+func (entity_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("Entity", 1, 1737161401460991620)
 	model.Property("Id", objectbox.PropertyType_Long, 1, 7373286741377356014)
 	model.PropertyFlags(objectbox.PropertyFlags_ID)
@@ -29,11 +43,11 @@ func (entity_) AddToModel(model *objectbox.Model) {
 	model.EntityLastPropertyId(5, 8933082277725371577)
 }
 
-func (entity_) GetId(entity interface{}) (uint64, error) {
+func (entity_EntityInfo) GetId(entity interface{}) (uint64, error) {
 	return entity.(*Entity).Id, nil
 }
 
-func (entity_) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
+func (entity_EntityInfo) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
 	ent := entity.(*Entity)
 	var offsetString = fbutils.CreateStringOffset(fbb, ent.String)
 
@@ -46,7 +60,7 @@ func (entity_) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) 
 	fbb.PrependFloat64Slot(4, ent.Float64, 0)
 }
 
-func (entity_) ToObject(bytes []byte) interface{} {
+func (entity_EntityInfo) ToObject(bytes []byte) interface{} {
 	table := &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
@@ -61,11 +75,11 @@ func (entity_) ToObject(bytes []byte) interface{} {
 	}
 }
 
-func (entity_) MakeSlice(capacity int) interface{} {
+func (entity_EntityInfo) MakeSlice(capacity int) interface{} {
 	return make([]*Entity, 0, capacity)
 }
 
-func (entity_) AppendToSlice(slice interface{}, entity interface{}) interface{} {
+func (entity_EntityInfo) AppendToSlice(slice interface{}, entity interface{}) interface{} {
 	return append(slice.([]*Entity), entity.(*Entity))
 }
 

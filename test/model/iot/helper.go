@@ -39,7 +39,15 @@ func LoadEmptyTestObjectBox() *objectbox.ObjectBox {
 
 func PutEvent(ob *objectbox.ObjectBox, device string, date int64) *Event {
 	event := Event{Device: device, Date: date}
-	id, err := ob.Box(1).Put(&event)
+	id, err := BoxForEvent(ob).Put(&event)
+	assert.NoErr(nil, err)
+	event.Id = id
+	return &event
+}
+
+func PutReading(ob *objectbox.ObjectBox, name string, ValueString string, ValueInteger int64, ValueFloating float64, ValueInt32 int32, ValueFloating32 float32) *Reading {
+	event := Reading{ValueName: name, ValueString: ValueString, ValueInteger: ValueInteger, ValueFloating: ValueFloating, ValueInt32: ValueInt32, ValueFloating32: ValueFloating32}
+	id, err := BoxForReading(ob).Put(&event)
 	assert.NoErr(nil, err)
 	event.Id = id
 	return &event
@@ -53,4 +61,14 @@ func PutEvents(ob *objectbox.ObjectBox, count int) []*Event {
 		events = append(events, event)
 	}
 	return events
+}
+
+func PutReadings(ob *objectbox.ObjectBox, count int) []*Reading {
+	// TODO TX
+	readings := make([]*Reading, 0, count)
+	for i := 1; i <= count; i++ {
+		reading := PutReading(ob, "reading"+strconv.Itoa(i), "string"+strconv.Itoa(i), int64(10000+i), float64(10000+i), int32(10000+i), float32((10000 + i)))
+		readings = append(readings, reading)
+	}
+	return readings
 }

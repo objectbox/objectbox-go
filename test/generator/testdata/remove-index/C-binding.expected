@@ -7,17 +7,25 @@ import (
 	"github.com/objectbox/objectbox-go/objectbox"
 )
 
-type c_ struct {
+type c_EntityInfo struct {
 	Id  objectbox.TypeId
 	Uid uint64
 }
 
-var CBinding = c_{
+var CBinding = c_EntityInfo{
 	Id:  3,
 	Uid: 8274930044578894929,
 }
 
-func (c_) AddToModel(model *objectbox.Model) {
+var C_ = struct {
+	Id  objectbox.TypeId
+	New objectbox.TypeId
+}{
+	Id:  1,
+	New: 3,
+}
+
+func (c_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("C", 3, 8274930044578894929)
 	model.Property("Id", objectbox.PropertyType_Long, 1, 1543572285742637646)
 	model.PropertyFlags(objectbox.PropertyFlags_ID)
@@ -27,11 +35,11 @@ func (c_) AddToModel(model *objectbox.Model) {
 	model.EntityLastPropertyId(3, 5617773211005988520)
 }
 
-func (c_) GetId(entity interface{}) (uint64, error) {
+func (c_EntityInfo) GetId(entity interface{}) (uint64, error) {
 	return entity.(*C).Id, nil
 }
 
-func (c_) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
+func (c_EntityInfo) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
 	ent := entity.(*C)
 
 	// build the FlatBuffers object
@@ -40,7 +48,7 @@ func (c_) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
 	fbb.PrependInt32Slot(2, int32(ent.New), 0)
 }
 
-func (c_) ToObject(bytes []byte) interface{} {
+func (c_EntityInfo) ToObject(bytes []byte) interface{} {
 	table := &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
@@ -52,11 +60,11 @@ func (c_) ToObject(bytes []byte) interface{} {
 	}
 }
 
-func (c_) MakeSlice(capacity int) interface{} {
+func (c_EntityInfo) MakeSlice(capacity int) interface{} {
 	return make([]*C, 0, capacity)
 }
 
-func (c_) AppendToSlice(slice interface{}, entity interface{}) interface{} {
+func (c_EntityInfo) AppendToSlice(slice interface{}, entity interface{}) interface{} {
 	return append(slice.([]*C), entity.(*C))
 }
 

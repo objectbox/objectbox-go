@@ -28,7 +28,7 @@ func TestNewQueries(t *testing.T) {
 	// XXX TEMPORARY CODE
 	var Event_Device = &objectbox.PropertyString{
 		Property: &objectbox.Property{
-			iot.Event_.Device,
+			Id: iot.Event_.Device,
 		},
 	}
 

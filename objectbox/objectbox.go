@@ -221,7 +221,7 @@ func (ob *ObjectBox) AwaitAsyncCompletion() *ObjectBox {
 // Query starts to build a new Query
 //
 // Deprecated: this function is subject to change due to necessary typeId argument
-func (ob *ObjectBox) Query(typeId TypeId) *QueryBuilder {
+func (ob *ObjectBox) QueryBuilder(typeId TypeId) *QueryBuilder {
 	qb := C.obx_qb_create(ob.store, C.obx_schema_id(typeId))
 	var err error = nil
 	if qb == nil {

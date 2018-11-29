@@ -51,7 +51,7 @@ func TestQueryBuilder(t *testing.T) {
 	defer box.Close()
 	box.RemoveAll()
 
-	qb := objectBox.Query(iot.EventBinding.Id)
+	qb := objectBox.QueryBuilder(iot.EventBinding.Id)
 	assert.NoErr(t, qb.Err)
 	query, err := qb.BuildAndClose()
 	assert.NoErr(t, err)
@@ -106,7 +106,7 @@ func TestQueryBuilder_StringEq(t *testing.T) {
 
 	iot.PutEvents(objectBox, 3)
 
-	qb := objectBox.Query(iot.EventBinding.Id)
+	qb := objectBox.QueryBuilder(iot.EventBinding.Id)
 	assert.NoErr(t, qb.Err)
 	defer qb.Close()
 	qb.StringEq(iot.Event_.Device, "device 2", false)
@@ -119,13 +119,6 @@ func TestQueryBuilder_StringEq(t *testing.T) {
 	events := slice.([]*iot.Event)
 	assert.EqInt(t, 1, len(events))
 	assert.EqString(t, "device 2", events[0].Device)
-
-	query.SetParamString(iot.Event_.Device, "device 1")
-	slice, err = query.Find()
-	assert.NoErr(t, err)
-	events = slice.([]*iot.Event)
-	assert.EqInt(t, 1, len(events))
-	assert.EqString(t, "device 1", events[0].Device)
 }
 
 func TestQueryBuilder_StringIn(t *testing.T) {
@@ -137,7 +130,7 @@ func TestQueryBuilder_StringIn(t *testing.T) {
 
 	iot.PutEvents(objectBox, 3)
 
-	qb := objectBox.Query(iot.EventBinding.Id)
+	qb := objectBox.QueryBuilder(iot.EventBinding.Id)
 	assert.NoErr(t, qb.Err)
 	defer qb.Close()
 	values := []string{"device 2", "device 3"}
@@ -161,7 +154,7 @@ func TestQueryBuilder_StringContains(t *testing.T) {
 
 	iot.PutEvents(objectBox, 3)
 
-	qb := objectBox.Query(iot.EventBinding.Id)
+	qb := objectBox.QueryBuilder(iot.EventBinding.Id)
 	assert.NoErr(t, qb.Err)
 	defer qb.Close()
 	qb.StringContains(iot.Event_.Device, "device 2", false)
@@ -174,13 +167,6 @@ func TestQueryBuilder_StringContains(t *testing.T) {
 	events := slice.([]*iot.Event)
 	assert.EqInt(t, 1, len(events))
 	assert.EqString(t, "device 2", events[0].Device)
-
-	query.SetParamString(2, "device 1")
-	slice, err = query.Find()
-	assert.NoErr(t, err)
-	events = slice.([]*iot.Event)
-	assert.EqInt(t, 1, len(events))
-	assert.EqString(t, "device 1", events[0].Device)
 }
 
 func TestQueryBuilder_StringStartsWith(t *testing.T) {
@@ -192,7 +178,7 @@ func TestQueryBuilder_StringStartsWith(t *testing.T) {
 
 	iot.PutEvents(objectBox, 3)
 
-	qb := objectBox.Query(iot.EventBinding.Id)
+	qb := objectBox.QueryBuilder(iot.EventBinding.Id)
 	assert.NoErr(t, qb.Err)
 	defer qb.Close()
 	qb.StringStartsWith(iot.Event_.Device, "device 2", false)
@@ -205,13 +191,6 @@ func TestQueryBuilder_StringStartsWith(t *testing.T) {
 	events := slice.([]*iot.Event)
 	assert.EqInt(t, 1, len(events))
 	assert.EqString(t, "device 2", events[0].Device)
-
-	query.SetParamString(iot.Event_.Device, "device 1")
-	slice, err = query.Find()
-	assert.NoErr(t, err)
-	events = slice.([]*iot.Event)
-	assert.EqInt(t, 1, len(events))
-	assert.EqString(t, "device 1", events[0].Device)
 }
 
 func TestQueryBuilder_StringEndsWith(t *testing.T) {
@@ -223,7 +202,7 @@ func TestQueryBuilder_StringEndsWith(t *testing.T) {
 
 	iot.PutEvents(objectBox, 3)
 
-	qb := objectBox.Query(iot.EventBinding.Id)
+	qb := objectBox.QueryBuilder(iot.EventBinding.Id)
 	assert.NoErr(t, qb.Err)
 	defer qb.Close()
 	qb.StringEndsWith(iot.Event_.Device, "device 2", false)
@@ -236,13 +215,6 @@ func TestQueryBuilder_StringEndsWith(t *testing.T) {
 	events := slice.([]*iot.Event)
 	assert.EqInt(t, 1, len(events))
 	assert.EqString(t, "device 2", events[0].Device)
-
-	query.SetParamString(iot.Event_.Device, "device 1")
-	slice, err = query.Find()
-	assert.NoErr(t, err)
-	events = slice.([]*iot.Event)
-	assert.EqInt(t, 1, len(events))
-	assert.EqString(t, "device 1", events[0].Device)
 }
 
 func TestQueryBuilder_StringNotEq(t *testing.T) {
@@ -254,7 +226,7 @@ func TestQueryBuilder_StringNotEq(t *testing.T) {
 
 	iot.PutEvents(objectBox, 3)
 
-	qb := objectBox.Query(iot.EventBinding.Id)
+	qb := objectBox.QueryBuilder(iot.EventBinding.Id)
 	assert.NoErr(t, qb.Err)
 	defer qb.Close()
 	qb.StringNotEq(iot.Event_.Device, "device 3", false)
@@ -278,7 +250,7 @@ func TestQueryBuilder_StringLess(t *testing.T) {
 
 	iot.PutEvents(objectBox, 3)
 
-	qb := objectBox.Query(iot.EventBinding.Id)
+	qb := objectBox.QueryBuilder(iot.EventBinding.Id)
 	assert.NoErr(t, qb.Err)
 	defer qb.Close()
 	qb.StringLess(iot.Event_.Device, "device 3", false, false)
@@ -304,7 +276,7 @@ func TestQueryBuilder_IntBetween(t *testing.T) {
 
 	events := iot.PutEvents(objectBox, 6)
 
-	qb := objectBox.Query(iot.EventBinding.Id)
+	qb := objectBox.QueryBuilder(iot.EventBinding.Id)
 	assert.NoErr(t, qb.Err)
 	defer qb.Close()
 	start := events[2].Date
@@ -334,7 +306,7 @@ func TestQueryBuilder_Null(t *testing.T) {
 
 	events := iot.PutEvents(objectBox, 6)
 
-	qb := objectBox.Query(iot.EventBinding.Id)
+	qb := objectBox.QueryBuilder(iot.EventBinding.Id)
 	assert.NoErr(t, qb.Err)
 	defer qb.Close()
 	qb.Null(iot.Event_.Date)
@@ -360,7 +332,7 @@ func TestQueryBuilder_NotNull(t *testing.T) {
 
 	events := iot.PutEvents(objectBox, 6)
 
-	qb := objectBox.Query(iot.EventBinding.Id)
+	qb := objectBox.QueryBuilder(iot.EventBinding.Id)
 	assert.NoErr(t, qb.Err)
 	defer qb.Close()
 	qb.NotNull(iot.Event_.Date)
@@ -386,7 +358,7 @@ func TestQueryBuilder_StringGreater(t *testing.T) {
 
 	events := iot.PutEvents(objectBox, 6)
 
-	qb := objectBox.Query(iot.EventBinding.Id)
+	qb := objectBox.QueryBuilder(iot.EventBinding.Id)
 	assert.NoErr(t, qb.Err)
 	defer qb.Close()
 	qb.StringGreater(iot.Event_.Device, "device 2", false, false)
@@ -412,7 +384,7 @@ func TestQueryBuilder_IntEqual(t *testing.T) {
 
 	events := iot.PutEvents(objectBox, 6)
 
-	qb := objectBox.Query(iot.EventBinding.Id)
+	qb := objectBox.QueryBuilder(iot.EventBinding.Id)
 	assert.NoErr(t, qb.Err)
 	defer qb.Close()
 	qb.IntEqual(iot.Event_.Id, 5)
@@ -438,7 +410,7 @@ func TestQueryBuilder_IntNotEqual(t *testing.T) {
 
 	events := iot.PutEvents(objectBox, 6)
 
-	qb := objectBox.Query(iot.EventBinding.Id)
+	qb := objectBox.QueryBuilder(iot.EventBinding.Id)
 	assert.NoErr(t, qb.Err)
 	defer qb.Close()
 	qb.IntNotEqual(iot.Event_.Id, 5)
@@ -464,7 +436,7 @@ func TestQueryBuilder_IntGreater(t *testing.T) {
 
 	events := iot.PutEvents(objectBox, 6)
 
-	qb := objectBox.Query(iot.EventBinding.Id)
+	qb := objectBox.QueryBuilder(iot.EventBinding.Id)
 	assert.NoErr(t, qb.Err)
 	defer qb.Close()
 	qb.IntGreater(iot.Event_.Id, 5)
@@ -490,7 +462,7 @@ func TestQueryBuilder_IntLess(t *testing.T) {
 
 	events := iot.PutEvents(objectBox, 6)
 
-	qb := objectBox.Query(iot.EventBinding.Id)
+	qb := objectBox.QueryBuilder(iot.EventBinding.Id)
 	assert.NoErr(t, qb.Err)
 	defer qb.Close()
 	qb.IntLess(iot.Event_.Id, 5)
@@ -516,7 +488,7 @@ func TestQueryBuilder_DoubleLess(t *testing.T) {
 
 	readings := iot.PutReadings(objectBox, 6)
 
-	qb := objectBox.Query(iot.ReadingBinding.Id)
+	qb := objectBox.QueryBuilder(iot.ReadingBinding.Id)
 	assert.NoErr(t, qb.Err)
 	defer qb.Close()
 
@@ -542,7 +514,7 @@ func TestQueryBuilder_DoubleGreater(t *testing.T) {
 
 	readings := iot.PutReadings(objectBox, 6)
 
-	qb := objectBox.Query(iot.ReadingBinding.Id)
+	qb := objectBox.QueryBuilder(iot.ReadingBinding.Id)
 	assert.NoErr(t, qb.Err)
 	defer qb.Close()
 
@@ -568,7 +540,7 @@ func TestQueryBuilder_DoubleBetween(t *testing.T) {
 
 	readings := iot.PutReadings(objectBox, 6)
 
-	qb := objectBox.Query(iot.ReadingBinding.Id)
+	qb := objectBox.QueryBuilder(iot.ReadingBinding.Id)
 	assert.NoErr(t, qb.Err)
 	defer qb.Close()
 
@@ -594,7 +566,7 @@ func TestQueryBuilder_BytesEqual(t *testing.T) {
 
 	events := iot.PutEvents(objectBox, 6)
 
-	qb := objectBox.Query(iot.EventBinding.Id)
+	qb := objectBox.QueryBuilder(iot.EventBinding.Id)
 	assert.NoErr(t, qb.Err)
 	defer qb.Close()
 
@@ -622,7 +594,7 @@ func TestQueryBuilder_BytesGreater(t *testing.T) {
 
 	events := iot.PutEvents(objectBox, 6)
 
-	qb := objectBox.Query(iot.EventBinding.Id)
+	qb := objectBox.QueryBuilder(iot.EventBinding.Id)
 	assert.NoErr(t, qb.Err)
 	defer qb.Close()
 
@@ -650,7 +622,7 @@ func TestQueryBuilder_BytesLess(t *testing.T) {
 
 	events := iot.PutEvents(objectBox, 6)
 
-	qb := objectBox.Query(iot.EventBinding.Id)
+	qb := objectBox.QueryBuilder(iot.EventBinding.Id)
 	assert.NoErr(t, qb.Err)
 	defer qb.Close()
 
@@ -678,7 +650,7 @@ func TestQueryBuilder_Int64In(t *testing.T) {
 
 	readings := iot.PutReadings(objectBox, 6)
 
-	qb := objectBox.Query(iot.ReadingBinding.Id)
+	qb := objectBox.QueryBuilder(iot.ReadingBinding.Id)
 	assert.NoErr(t, qb.Err)
 	defer qb.Close()
 
@@ -707,7 +679,7 @@ func TestQueryBuilder_Int64NotIn(t *testing.T) {
 	readings :=
 		iot.PutReadings(objectBox, 6)
 
-	qb := objectBox.Query(iot.ReadingBinding.Id)
+	qb := objectBox.QueryBuilder(iot.ReadingBinding.Id)
 	assert.NoErr(t, qb.Err)
 	defer qb.Close()
 
@@ -736,7 +708,7 @@ func TestQueryBuilder_Int32In(t *testing.T) {
 	readings :=
 		iot.PutReadings(objectBox, 6)
 
-	qb := objectBox.Query(iot.ReadingBinding.Id)
+	qb := objectBox.QueryBuilder(iot.ReadingBinding.Id)
 	assert.NoErr(t, qb.Err)
 	defer qb.Close()
 
@@ -764,7 +736,7 @@ func TestQueryBuilder_Int32NotIn(t *testing.T) {
 	readings :=
 		iot.PutReadings(objectBox, 6)
 
-	qb := objectBox.Query(iot.ReadingBinding.Id)
+	qb := objectBox.QueryBuilder(iot.ReadingBinding.Id)
 	assert.NoErr(t, qb.Err)
 	defer qb.Close()
 

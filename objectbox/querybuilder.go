@@ -370,14 +370,13 @@ func (qb *QueryBuilder) Int32NotIn(propertyId TypeId, values []int32) {
 	return
 }
 
-func (qb *QueryBuilder) build(query *Query) error {
+func (qb *QueryBuilder) build() (*C.OBX_query, error) {
 	qb.checkForCError()
 	if qb.Err != nil {
-		return qb.Err
+		return nil, qb.Err
 	}
-	var err error
-	query.cquery, err = C.obx_query_create(qb.cqb)
-	return err
+	cQuery, err := C.obx_query_create(qb.cqb)
+	return cQuery, err
 }
 
 func (qb *QueryBuilder) Build() (*Query, error) {

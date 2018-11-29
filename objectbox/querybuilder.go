@@ -83,7 +83,7 @@ func (qb *QueryBuilder) StringEq(propertyId TypeId, value string, caseSensitive 
 	return
 }
 
-func (qb *QueryBuilder) StringIn(propertyId TypeId, values [] string, caseSensitive bool) {
+func (qb *QueryBuilder) StringIn(propertyId TypeId, values []string, caseSensitive bool) {
 	if qb.Err != nil {
 		return
 	}
@@ -326,7 +326,7 @@ func (qb *QueryBuilder) BytesLess(propertyId TypeId, value []byte, withEqual boo
 	return
 }
 
-func (qb *QueryBuilder) Int64In(propertyId TypeId, values [] int64) {
+func (qb *QueryBuilder) Int64In(propertyId TypeId, values []int64) {
 	if qb.Err != nil {
 		return
 	}
@@ -337,7 +337,7 @@ func (qb *QueryBuilder) Int64In(propertyId TypeId, values [] int64) {
 	return
 }
 
-func (qb *QueryBuilder) Int64NotIn(propertyId TypeId, values [] int64) {
+func (qb *QueryBuilder) Int64NotIn(propertyId TypeId, values []int64) {
 	if qb.Err != nil {
 		return
 	}
@@ -348,7 +348,7 @@ func (qb *QueryBuilder) Int64NotIn(propertyId TypeId, values [] int64) {
 	return
 }
 
-func (qb *QueryBuilder) Int32In(propertyId TypeId, values [] int32) {
+func (qb *QueryBuilder) Int32In(propertyId TypeId, values []int32) {
 	if qb.Err != nil {
 		return
 	}
@@ -359,7 +359,7 @@ func (qb *QueryBuilder) Int32In(propertyId TypeId, values [] int32) {
 	return
 }
 
-func (qb *QueryBuilder) Int32NotIn(propertyId TypeId, values [] int32) {
+func (qb *QueryBuilder) Int32NotIn(propertyId TypeId, values []int32) {
 	if qb.Err != nil {
 		return
 	}
@@ -368,6 +368,16 @@ func (qb *QueryBuilder) Int32NotIn(propertyId TypeId, values [] int32) {
 
 	// TBD: depending on Go's query API, return either *QueryBuilder or query condition
 	return
+}
+
+func (qb *QueryBuilder) build(query *Query) error {
+	qb.checkForCError()
+	if qb.Err != nil {
+		return qb.Err
+	}
+	var err error
+	query.cquery, err = C.obx_query_create(qb.cqb)
+	return err
 }
 
 func (qb *QueryBuilder) Build() (*Query, error) {

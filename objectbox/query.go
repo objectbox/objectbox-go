@@ -22,13 +22,16 @@ package objectbox
 #include "objectbox.h"
 */
 import "C"
-import "unsafe"
+import (
+	"unsafe"
+)
 
 // WIP: Query interface is subject to change with full ObjectBox queries support
 type Query struct {
 	cquery    *C.OBX_query
 	typeId    TypeId
 	objectBox *ObjectBox
+	condition Condition
 }
 
 func (query *Query) Close() (err error) {
@@ -40,7 +43,23 @@ func (query *Query) Close() (err error) {
 	return
 }
 
+// builds query JiT when it's needed for execution
+func (query *Query) build() error {
+	qb := query.objectBox.Query(query.typeId)
+	defer qb.Close()
+
+	if _, err := query.condition.build(qb); err != nil {
+		return err
+	}
+
+	return qb.build(query)
+}
+
 func (query *Query) Find() (slice interface{}, err error) {
+	if err = query.build(); err != nil {
+		return nil, err
+	}
+
 	err = query.objectBox.runWithCursor(query.typeId, true, func(cursor *cursor) error {
 		var errInner error
 		slice, errInner = query.find(cursor)
@@ -60,6 +79,10 @@ func (query *Query) find(cursor *cursor) (slice interface{}, err error) {
 
 // Deprecated: Won't be public in the future
 func (query *Query) FindBytes() (bytesArray *BytesArray, err error) {
+	if err = query.build(); err != nil {
+		return nil, err
+	}
+
 	err = query.objectBox.runWithCursor(query.typeId, true, func(cursor *cursor) error {
 		var errInner error
 		bytesArray, errInner = query.findBytes(cursor)
@@ -77,6 +100,8 @@ func (query *Query) findBytes(cursor *cursor) (*BytesArray, error) {
 }
 
 func (query *Query) SetParamString(propertyId TypeId, value string) error {
+	// TODO
+
 	cvalue := C.CString(value)
 	defer C.free(unsafe.Pointer(cvalue))
 	rc := C.obx_query_string_param(query.cquery, C.obx_schema_id(propertyId), cvalue)
@@ -87,6 +112,8 @@ func (query *Query) SetParamString(propertyId TypeId, value string) error {
 }
 
 func (query *Query) SetParamInt(propertyId TypeId, value int64) error {
+	// TODO
+
 	rc := C.obx_query_int_param(query.cquery, C.obx_schema_id(propertyId), C.int64_t(value))
 	if rc != 0 {
 		return createError()

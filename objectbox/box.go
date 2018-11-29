@@ -55,6 +55,24 @@ func (box *Box) Close() (err error) {
 	return
 }
 
+func (box *Box) Query(conditions ...Condition) *Query {
+	var condition Condition
+	if len(conditions) == 1 {
+		// optimize the most common case = a single condition
+		condition = conditions[0]
+	} else {
+		condition = &ConditionCombination{
+			conditions: conditions,
+		}
+	}
+
+	return &Query{
+		typeId:    box.typeId,
+		objectBox: box.objectBox,
+		condition: condition,
+	}
+}
+
 func (box *Box) idForPut(idCandidate uint64) (id uint64, err error) {
 	id = uint64(C.obx_box_id_for_put(box.box, C.obx_id(idCandidate)))
 	if id == 0 {

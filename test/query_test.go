@@ -24,6 +24,26 @@ import (
 	"github.com/objectbox/objectbox-go/test/model/iot"
 )
 
+func TestNewQueries(t *testing.T) {
+	// XXX TEMPORARY CODE
+	var Event_Device = &objectbox.PropertyString{
+		Property: &objectbox.Property{
+			iot.Event_.Device,
+		},
+	}
+
+	objectBox := iot.LoadEmptyTestObjectBox()
+	defer objectBox.Close()
+	box := iot.BoxForEvent(objectBox)
+	defer box.Close()
+
+	box.RemoveAll()
+
+	data, err := box.Query(Event_Device.StartsWith("dev", true)).Find()
+	assert.NoErr(t, err)
+	assert.Eq(t, 0, len(data.([]*iot.Event)))
+}
+
 func TestQueryBuilder(t *testing.T) {
 	objectBox := iot.LoadEmptyTestObjectBox()
 	defer objectBox.Close()

@@ -47,6 +47,7 @@ type TypeId uint32
 type ObjectBinding interface {
 	AddToModel(model *Model)
 	GetId(object interface{}) (id uint64, err error)
+	// TODO SetId never errs
 	SetId(object interface{}, id uint64) error
 	Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64)
 	ToObject(bytes []byte) interface{}

@@ -105,6 +105,7 @@ func (box *Box) PutAsync(object interface{}) (id uint64, err error) {
 
 	// update the id on the object
 	if idFromObject != id {
+		// TODO SetId never errs
 		if err = box.binding.SetId(object, id); err != nil {
 			return 0, err
 		}

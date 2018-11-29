@@ -85,36 +85,41 @@ func (typeful_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.EntityLastPropertyId(19, 7373105480197164748)
 }
 
-func (typeful_EntityInfo) GetId(entity interface{}) (uint64, error) {
-	return entity.(*Typeful).Id, nil
+func (typeful_EntityInfo) GetId(object interface{}) (uint64, error) {
+	return object.(*Typeful).Id, nil
 }
 
-func (typeful_EntityInfo) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
-	ent := entity.(*Typeful)
-	var offsetString = fbutils.CreateStringOffset(fbb, ent.String)
-	var offsetByteVector = fbutils.CreateByteVectorOffset(fbb, ent.ByteVector)
+func (typeful_EntityInfo) SetId(object interface{}, id uint64) error {
+	object.(*Typeful).Id = id
+	return nil
+}
+
+func (typeful_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
+	obj := object.(*Typeful)
+	var offsetString = fbutils.CreateStringOffset(fbb, obj.String)
+	var offsetByteVector = fbutils.CreateByteVectorOffset(fbb, obj.ByteVector)
 
 	// build the FlatBuffers object
 	fbb.StartObject(19)
 	fbb.PrependUint64Slot(0, id, 0)
-	fbb.PrependInt32Slot(1, int32(ent.Int), 0)
-	fbb.PrependInt8Slot(2, ent.Int8, 0)
-	fbb.PrependInt16Slot(3, ent.Int16, 0)
-	fbb.PrependInt32Slot(4, ent.Int32, 0)
-	fbb.PrependInt64Slot(5, ent.Int64, 0)
-	fbb.PrependUint32Slot(6, uint32(ent.Uint), 0)
-	fbb.PrependUint8Slot(7, ent.Uint8, 0)
-	fbb.PrependUint16Slot(8, ent.Uint16, 0)
-	fbb.PrependUint32Slot(9, ent.Uint32, 0)
-	fbb.PrependUint64Slot(10, ent.Uint64, 0)
-	fbb.PrependBoolSlot(11, ent.Bool, false)
+	fbb.PrependInt32Slot(1, int32(obj.Int), 0)
+	fbb.PrependInt8Slot(2, obj.Int8, 0)
+	fbb.PrependInt16Slot(3, obj.Int16, 0)
+	fbb.PrependInt32Slot(4, obj.Int32, 0)
+	fbb.PrependInt64Slot(5, obj.Int64, 0)
+	fbb.PrependUint32Slot(6, uint32(obj.Uint), 0)
+	fbb.PrependUint8Slot(7, obj.Uint8, 0)
+	fbb.PrependUint16Slot(8, obj.Uint16, 0)
+	fbb.PrependUint32Slot(9, obj.Uint32, 0)
+	fbb.PrependUint64Slot(10, obj.Uint64, 0)
+	fbb.PrependBoolSlot(11, obj.Bool, false)
 	fbb.PrependUOffsetTSlot(12, offsetString, 0)
-	fbb.PrependByteSlot(13, ent.Byte, 0)
+	fbb.PrependByteSlot(13, obj.Byte, 0)
 	fbb.PrependUOffsetTSlot(14, offsetByteVector, 0)
-	fbb.PrependInt32Slot(15, ent.Rune, 0)
-	fbb.PrependFloat32Slot(16, ent.Float32, 0)
-	fbb.PrependFloat64Slot(17, ent.Float64, 0)
-	fbb.PrependUint64Slot(18, ent.Date, 0)
+	fbb.PrependInt32Slot(15, obj.Rune, 0)
+	fbb.PrependFloat32Slot(16, obj.Float32, 0)
+	fbb.PrependFloat64Slot(17, obj.Float64, 0)
+	fbb.PrependUint64Slot(18, obj.Date, 0)
 }
 
 func (typeful_EntityInfo) ToObject(bytes []byte) interface{} {
@@ -150,8 +155,8 @@ func (typeful_EntityInfo) MakeSlice(capacity int) interface{} {
 	return make([]*Typeful, 0, capacity)
 }
 
-func (typeful_EntityInfo) AppendToSlice(slice interface{}, entity interface{}) interface{} {
-	return append(slice.([]*Typeful), entity.(*Typeful))
+func (typeful_EntityInfo) AppendToSlice(slice interface{}, object interface{}) interface{} {
+	return append(slice.([]*Typeful), object.(*Typeful))
 }
 
 type TypefulBox struct {
@@ -164,24 +169,36 @@ func BoxForTypeful(ob *objectbox.ObjectBox) *TypefulBox {
 	}
 }
 
+func (box *TypefulBox) Put(object *Typeful) (uint64, error) {
+	return box.Box.Put(object)
+}
+
+func (box *TypefulBox) PutAsync(object *Typeful) (uint64, error) {
+	return box.Box.PutAsync(object)
+}
+
+func (box *TypefulBox) PutAll(objects []*Typeful) ([]uint64, error) {
+	return box.Box.PutAll(objects)
+}
+
 func (box *TypefulBox) Get(id uint64) (*Typeful, error) {
-	entity, err := box.Box.Get(id)
+	object, err := box.Box.Get(id)
 	if err != nil {
 		return nil, err
-	} else if entity == nil {
+	} else if object == nil {
 		return nil, nil
 	}
-	return entity.(*Typeful), nil
+	return object.(*Typeful), nil
 }
 
 func (box *TypefulBox) GetAll() ([]*Typeful, error) {
-	entities, err := box.Box.GetAll()
+	objects, err := box.Box.GetAll()
 	if err != nil {
 		return nil, err
 	}
-	return entities.([]*Typeful), nil
+	return objects.([]*Typeful), nil
 }
 
-func (box *TypefulBox) Remove(entity *Typeful) (err error) {
-	return box.Box.Remove(entity.Id)
+func (box *TypefulBox) Remove(object *Typeful) (err error) {
+	return box.Box.Remove(object.Id)
 }

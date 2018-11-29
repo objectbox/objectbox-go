@@ -45,14 +45,14 @@ func TestQueryBuilder(t *testing.T) {
 	assert.NoErr(t, err)
 	assert.EqInt(t, 0, len(slice.([]*iot.Event)))
 
-	event := iot.Event{
+	id1, err := box.Put(&iot.Event{
 		Device: "dev1",
-	}
-	id1, err := box.Put(&event)
+	})
 	assert.NoErr(t, err)
 
-	event.Device = "dev2"
-	id2, err := box.Put(&event)
+	id2, err := box.Put(&iot.Event{
+		Device: "dev2",
+	})
 	assert.NoErr(t, err)
 
 	bytesArray, err = query.FindBytes()
@@ -106,7 +106,6 @@ func TestQueryBuilder_StringEq(t *testing.T) {
 	assert.EqString(t, "device 1", events[0].Device)
 }
 
-
 func TestQueryBuilder_StringIn(t *testing.T) {
 	objectBox := iot.LoadEmptyTestObjectBox()
 	defer objectBox.Close()
@@ -119,7 +118,7 @@ func TestQueryBuilder_StringIn(t *testing.T) {
 	qb := objectBox.Query(iot.EventBinding.Id)
 	assert.NoErr(t, qb.Err)
 	defer qb.Close()
-	values := []string { "device 2", "device 3" }
+	values := []string{"device 2", "device 3"}
 	qb.StringIn(iot.Event_.Device, values, false)
 	query, err := qb.Build()
 	assert.NoErr(t, err)
@@ -248,7 +247,6 @@ func TestQueryBuilder_StringNotEq(t *testing.T) {
 
 }
 
-
 func TestQueryBuilder_StringLess(t *testing.T) {
 	objectBox := iot.LoadEmptyTestObjectBox()
 	defer objectBox.Close()
@@ -303,7 +301,6 @@ func TestQueryBuilder_IntBetween(t *testing.T) {
 	assert.Eq(t, end, events[2].Date)
 }
 
-
 func TestQueryBuilder_Null(t *testing.T) {
 	objectBox := iot.LoadEmptyTestObjectBox()
 	defer objectBox.Close()
@@ -329,7 +326,6 @@ func TestQueryBuilder_Null(t *testing.T) {
 	assert.EqInt(t, 0, len(events))
 
 }
-
 
 func TestQueryBuilder_NotNull(t *testing.T) {
 	objectBox := iot.LoadEmptyTestObjectBox()
@@ -357,7 +353,6 @@ func TestQueryBuilder_NotNull(t *testing.T) {
 
 }
 
-
 func TestQueryBuilder_StringGreater(t *testing.T) {
 	objectBox := iot.LoadEmptyTestObjectBox()
 	defer objectBox.Close()
@@ -372,7 +367,7 @@ func TestQueryBuilder_StringGreater(t *testing.T) {
 	qb := objectBox.Query(iot.EventBinding.Id)
 	assert.NoErr(t, qb.Err)
 	defer qb.Close()
-	qb.StringGreater(iot.Event_.Device, "device 2",  false, false)
+	qb.StringGreater(iot.Event_.Device, "device 2", false, false)
 	query, err := qb.Build()
 	assert.NoErr(t, err)
 	defer query.Close()
@@ -461,7 +456,6 @@ func TestQueryBuilder_IntGreater(t *testing.T) {
 	assert.EqInt(t, 1, len(events))
 
 }
-
 
 func TestQueryBuilder_IntLess(t *testing.T) {
 	objectBox := iot.LoadEmptyTestObjectBox()
@@ -582,7 +576,7 @@ func TestQueryBuilder_BytesEqual(t *testing.T) {
 	assert.NoErr(t, qb.Err)
 	defer qb.Close()
 
-	bytes := []byte { 1, 2, 3}
+	bytes := []byte{1, 2, 3}
 	qb.BytesEqual(iot.Event_.Picture, bytes)
 	query, err := qb.Build()
 	assert.NoErr(t, err)
@@ -594,7 +588,6 @@ func TestQueryBuilder_BytesEqual(t *testing.T) {
 	assert.EqInt(t, 0, len(events))
 
 }
-
 
 func TestQueryBuilder_BytesGreater(t *testing.T) {
 	objectBox := iot.LoadEmptyTestObjectBox()
@@ -611,7 +604,7 @@ func TestQueryBuilder_BytesGreater(t *testing.T) {
 	assert.NoErr(t, qb.Err)
 	defer qb.Close()
 
-	bytes := []byte { 1, 2, 3}
+	bytes := []byte{1, 2, 3}
 	qb.BytesGreater(iot.Event_.Picture, bytes, false)
 	query, err := qb.Build()
 	assert.NoErr(t, err)
@@ -623,7 +616,6 @@ func TestQueryBuilder_BytesGreater(t *testing.T) {
 	assert.EqInt(t, 0, len(events))
 
 }
-
 
 func TestQueryBuilder_BytesLess(t *testing.T) {
 	objectBox := iot.LoadEmptyTestObjectBox()
@@ -640,7 +632,7 @@ func TestQueryBuilder_BytesLess(t *testing.T) {
 	assert.NoErr(t, qb.Err)
 	defer qb.Close()
 
-	bytes := []byte { 1, 2, 3}
+	bytes := []byte{1, 2, 3}
 	qb.BytesLess(iot.Event_.Picture, bytes, false)
 	query, err := qb.Build()
 	assert.NoErr(t, err)
@@ -652,7 +644,6 @@ func TestQueryBuilder_BytesLess(t *testing.T) {
 	assert.EqInt(t, 0, len(events))
 
 }
-
 
 func TestQueryBuilder_Int64In(t *testing.T) {
 	objectBox := iot.LoadEmptyTestObjectBox()
@@ -669,7 +660,7 @@ func TestQueryBuilder_Int64In(t *testing.T) {
 	assert.NoErr(t, qb.Err)
 	defer qb.Close()
 
-	values := []int64 { 10002, 10003}
+	values := []int64{10002, 10003}
 	qb.Int64In(iot.Reading_.ValueInteger, values)
 	query, err := qb.Build()
 	assert.NoErr(t, err)
@@ -698,7 +689,7 @@ func TestQueryBuilder_Int64NotIn(t *testing.T) {
 	assert.NoErr(t, qb.Err)
 	defer qb.Close()
 
-	values := []int64 { 10002, 10003}
+	values := []int64{10002, 10003}
 	qb.Int64NotIn(iot.Reading_.ValueInteger, values)
 	query, err := qb.Build()
 	assert.NoErr(t, err)
@@ -727,7 +718,7 @@ func TestQueryBuilder_Int32In(t *testing.T) {
 	assert.NoErr(t, qb.Err)
 	defer qb.Close()
 
-	values := []int32 { 10002}
+	values := []int32{10002}
 	qb.Int32In(iot.Reading_.ValueInt32, values)
 	query, err := qb.Build()
 	assert.NoErr(t, err)
@@ -738,7 +729,6 @@ func TestQueryBuilder_Int32In(t *testing.T) {
 	readings = slice.([]*iot.Reading)
 	assert.EqInt(t, 1, len(readings))
 }
-
 
 func TestQueryBuilder_Int32NotIn(t *testing.T) {
 	objectBox := iot.LoadEmptyTestObjectBox()
@@ -756,7 +746,7 @@ func TestQueryBuilder_Int32NotIn(t *testing.T) {
 	assert.NoErr(t, qb.Err)
 	defer qb.Close()
 
-	values := []int32 { 10002}
+	values := []int32{10002}
 	qb.Int32NotIn(iot.Reading_.ValueInt32, values)
 	query, err := qb.Build()
 	assert.NoErr(t, err)

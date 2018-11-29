@@ -33,17 +33,22 @@ func (b_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.EntityLastPropertyId(3, 1774932891286980153)
 }
 
-func (b_EntityInfo) GetId(entity interface{}) (uint64, error) {
-	return entity.(*B).Id, nil
+func (b_EntityInfo) GetId(object interface{}) (uint64, error) {
+	return object.(*B).Id, nil
 }
 
-func (b_EntityInfo) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
-	ent := entity.(*B)
+func (b_EntityInfo) SetId(object interface{}, id uint64) error {
+	object.(*B).Id = id
+	return nil
+}
+
+func (b_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
+	obj := object.(*B)
 
 	// build the FlatBuffers object
 	fbb.StartObject(3)
 	fbb.PrependUint64Slot(0, id, 0)
-	fbb.PrependInt32Slot(2, int32(ent.New), 0)
+	fbb.PrependInt32Slot(2, int32(obj.New), 0)
 }
 
 func (b_EntityInfo) ToObject(bytes []byte) interface{} {
@@ -62,8 +67,8 @@ func (b_EntityInfo) MakeSlice(capacity int) interface{} {
 	return make([]*B, 0, capacity)
 }
 
-func (b_EntityInfo) AppendToSlice(slice interface{}, entity interface{}) interface{} {
-	return append(slice.([]*B), entity.(*B))
+func (b_EntityInfo) AppendToSlice(slice interface{}, object interface{}) interface{} {
+	return append(slice.([]*B), object.(*B))
 }
 
 type BBox struct {
@@ -76,24 +81,36 @@ func BoxForB(ob *objectbox.ObjectBox) *BBox {
 	}
 }
 
+func (box *BBox) Put(object *B) (uint64, error) {
+	return box.Box.Put(object)
+}
+
+func (box *BBox) PutAsync(object *B) (uint64, error) {
+	return box.Box.PutAsync(object)
+}
+
+func (box *BBox) PutAll(objects []*B) ([]uint64, error) {
+	return box.Box.PutAll(objects)
+}
+
 func (box *BBox) Get(id uint64) (*B, error) {
-	entity, err := box.Box.Get(id)
+	object, err := box.Box.Get(id)
 	if err != nil {
 		return nil, err
-	} else if entity == nil {
+	} else if object == nil {
 		return nil, nil
 	}
-	return entity.(*B), nil
+	return object.(*B), nil
 }
 
 func (box *BBox) GetAll() ([]*B, error) {
-	entities, err := box.Box.GetAll()
+	objects, err := box.Box.GetAll()
 	if err != nil {
 		return nil, err
 	}
-	return entities.([]*B), nil
+	return objects.([]*B), nil
 }
 
-func (box *BBox) Remove(entity *B) (err error) {
-	return box.Box.Remove(entity.Id)
+func (box *BBox) Remove(object *B) (err error) {
+	return box.Box.Remove(object.Id)
 }

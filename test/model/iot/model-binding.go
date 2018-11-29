@@ -45,22 +45,27 @@ func (event_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.EntityLastPropertyId(5, 6024563395733984005)
 }
 
-func (event_EntityInfo) GetId(entity interface{}) (uint64, error) {
-	return entity.(*Event).Id, nil
+func (event_EntityInfo) GetId(object interface{}) (uint64, error) {
+	return object.(*Event).Id, nil
 }
 
-func (event_EntityInfo) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
-	ent := entity.(*Event)
-	var offsetUid = fbutils.CreateStringOffset(fbb, ent.Uid)
-	var offsetDevice = fbutils.CreateStringOffset(fbb, ent.Device)
-	var offsetPicture = fbutils.CreateByteVectorOffset(fbb, ent.Picture)
+func (event_EntityInfo) SetId(object interface{}, id uint64) error {
+	object.(*Event).Id = id
+	return nil
+}
+
+func (event_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
+	obj := object.(*Event)
+	var offsetUid = fbutils.CreateStringOffset(fbb, obj.Uid)
+	var offsetDevice = fbutils.CreateStringOffset(fbb, obj.Device)
+	var offsetPicture = fbutils.CreateByteVectorOffset(fbb, obj.Picture)
 
 	// build the FlatBuffers object
 	fbb.StartObject(5)
 	fbb.PrependUint64Slot(0, id, 0)
 	fbb.PrependUOffsetTSlot(3, offsetUid, 0)
 	fbb.PrependUOffsetTSlot(1, offsetDevice, 0)
-	fbb.PrependInt64Slot(2, ent.Date, 0)
+	fbb.PrependInt64Slot(2, obj.Date, 0)
 	fbb.PrependUOffsetTSlot(4, offsetPicture, 0)
 }
 
@@ -83,8 +88,8 @@ func (event_EntityInfo) MakeSlice(capacity int) interface{} {
 	return make([]*Event, 0, capacity)
 }
 
-func (event_EntityInfo) AppendToSlice(slice interface{}, entity interface{}) interface{} {
-	return append(slice.([]*Event), entity.(*Event))
+func (event_EntityInfo) AppendToSlice(slice interface{}, object interface{}) interface{} {
+	return append(slice.([]*Event), object.(*Event))
 }
 
 type EventBox struct {
@@ -97,26 +102,38 @@ func BoxForEvent(ob *objectbox.ObjectBox) *EventBox {
 	}
 }
 
+func (box *EventBox) Put(object *Event) (uint64, error) {
+	return box.Box.Put(object)
+}
+
+func (box *EventBox) PutAsync(object *Event) (uint64, error) {
+	return box.Box.PutAsync(object)
+}
+
+func (box *EventBox) PutAll(objects []*Event) ([]uint64, error) {
+	return box.Box.PutAll(objects)
+}
+
 func (box *EventBox) Get(id uint64) (*Event, error) {
-	entity, err := box.Box.Get(id)
+	object, err := box.Box.Get(id)
 	if err != nil {
 		return nil, err
-	} else if entity == nil {
+	} else if object == nil {
 		return nil, nil
 	}
-	return entity.(*Event), nil
+	return object.(*Event), nil
 }
 
 func (box *EventBox) GetAll() ([]*Event, error) {
-	entities, err := box.Box.GetAll()
+	objects, err := box.Box.GetAll()
 	if err != nil {
 		return nil, err
 	}
-	return entities.([]*Event), nil
+	return objects.([]*Event), nil
 }
 
-func (box *EventBox) Remove(entity *Event) (err error) {
-	return box.Box.Remove(entity.Id)
+func (box *EventBox) Remove(object *Event) (err error) {
+	return box.Box.Remove(object.Id)
 }
 
 type reading_EntityInfo struct {
@@ -167,26 +184,31 @@ func (reading_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.EntityLastPropertyId(9, 6040892611651481730)
 }
 
-func (reading_EntityInfo) GetId(entity interface{}) (uint64, error) {
-	return entity.(*Reading).Id, nil
+func (reading_EntityInfo) GetId(object interface{}) (uint64, error) {
+	return object.(*Reading).Id, nil
 }
 
-func (reading_EntityInfo) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
-	ent := entity.(*Reading)
-	var offsetValueName = fbutils.CreateStringOffset(fbb, ent.ValueName)
-	var offsetValueString = fbutils.CreateStringOffset(fbb, ent.ValueString)
+func (reading_EntityInfo) SetId(object interface{}, id uint64) error {
+	object.(*Reading).Id = id
+	return nil
+}
+
+func (reading_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
+	obj := object.(*Reading)
+	var offsetValueName = fbutils.CreateStringOffset(fbb, obj.ValueName)
+	var offsetValueString = fbutils.CreateStringOffset(fbb, obj.ValueString)
 
 	// build the FlatBuffers object
 	fbb.StartObject(9)
 	fbb.PrependUint64Slot(0, id, 0)
-	fbb.PrependInt64Slot(1, ent.Date, 0)
-	fbb.PrependUint64Slot(2, ent.EventId, 0)
+	fbb.PrependInt64Slot(1, obj.Date, 0)
+	fbb.PrependUint64Slot(2, obj.EventId, 0)
 	fbb.PrependUOffsetTSlot(3, offsetValueName, 0)
 	fbb.PrependUOffsetTSlot(4, offsetValueString, 0)
-	fbb.PrependInt64Slot(5, ent.ValueInteger, 0)
-	fbb.PrependFloat64Slot(6, ent.ValueFloating, 0)
-	fbb.PrependInt32Slot(7, ent.ValueInt32, 0)
-	fbb.PrependFloat32Slot(8, ent.ValueFloating32, 0)
+	fbb.PrependInt64Slot(5, obj.ValueInteger, 0)
+	fbb.PrependFloat64Slot(6, obj.ValueFloating, 0)
+	fbb.PrependInt32Slot(7, obj.ValueInt32, 0)
+	fbb.PrependFloat32Slot(8, obj.ValueFloating32, 0)
 }
 
 func (reading_EntityInfo) ToObject(bytes []byte) interface{} {
@@ -212,8 +234,8 @@ func (reading_EntityInfo) MakeSlice(capacity int) interface{} {
 	return make([]*Reading, 0, capacity)
 }
 
-func (reading_EntityInfo) AppendToSlice(slice interface{}, entity interface{}) interface{} {
-	return append(slice.([]*Reading), entity.(*Reading))
+func (reading_EntityInfo) AppendToSlice(slice interface{}, object interface{}) interface{} {
+	return append(slice.([]*Reading), object.(*Reading))
 }
 
 type ReadingBox struct {
@@ -226,24 +248,36 @@ func BoxForReading(ob *objectbox.ObjectBox) *ReadingBox {
 	}
 }
 
+func (box *ReadingBox) Put(object *Reading) (uint64, error) {
+	return box.Box.Put(object)
+}
+
+func (box *ReadingBox) PutAsync(object *Reading) (uint64, error) {
+	return box.Box.PutAsync(object)
+}
+
+func (box *ReadingBox) PutAll(objects []*Reading) ([]uint64, error) {
+	return box.Box.PutAll(objects)
+}
+
 func (box *ReadingBox) Get(id uint64) (*Reading, error) {
-	entity, err := box.Box.Get(id)
+	object, err := box.Box.Get(id)
 	if err != nil {
 		return nil, err
-	} else if entity == nil {
+	} else if object == nil {
 		return nil, nil
 	}
-	return entity.(*Reading), nil
+	return object.(*Reading), nil
 }
 
 func (box *ReadingBox) GetAll() ([]*Reading, error) {
-	entities, err := box.Box.GetAll()
+	objects, err := box.Box.GetAll()
 	if err != nil {
 		return nil, err
 	}
-	return entities.([]*Reading), nil
+	return objects.([]*Reading), nil
 }
 
-func (box *ReadingBox) Remove(entity *Reading) (err error) {
-	return box.Box.Remove(entity.Id)
+func (box *ReadingBox) Remove(object *Reading) (err error) {
+	return box.Box.Remove(object.Id)
 }

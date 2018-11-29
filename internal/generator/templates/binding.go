@@ -71,19 +71,24 @@ func ({{$entityNameCamel}}_EntityInfo) AddToModel(model *objectbox.Model) {
     model.EntityLastPropertyId({{$entity.LastPropertyId.GetId}}, {{$entity.LastPropertyId.GetUid}})
 }
 
-func ({{$entityNameCamel}}_EntityInfo) GetId(entity interface{}) (uint64, error) {
-	return entity.(*{{$entity.Name}}).{{$entity.IdProperty.Name}}, nil
+func ({{$entityNameCamel}}_EntityInfo) GetId(object interface{}) (uint64, error) {
+	return object.(*{{$entity.Name}}).{{$entity.IdProperty.Name}}, nil
 }
 
-func ({{$entityNameCamel}}_EntityInfo) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
-    {{if $entity.HasNonIdProperty}}ent := entity.(*{{$entity.Name}}){{end -}}
+func ({{$entityNameCamel}}_EntityInfo) SetId(object interface{}, id uint64) error {
+	object.(*{{$entity.Name}}).{{$entity.IdProperty.Name}} = id
+	return nil
+}
+
+func ({{$entityNameCamel}}_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
+    {{if $entity.HasNonIdProperty}}obj := object.(*{{$entity.Name}}){{end -}}
 
     {{- range $property := $entity.Properties}}
         {{- if eq $property.FbType "UOffsetT"}}
             {{- if eq $property.GoType "string"}}
-    var offset{{$property.Name}} = fbutils.CreateStringOffset(fbb, ent.{{$property.Name}})
+    var offset{{$property.Name}} = fbutils.CreateStringOffset(fbb, obj.{{$property.Name}})
             {{- else if eq $property.GoType "[]byte"}}
-    var offset{{$property.Name}} = fbutils.CreateByteVectorOffset(fbb, ent.{{$property.Name}})
+    var offset{{$property.Name}} = fbutils.CreateByteVectorOffset(fbb, obj.{{$property.Name}})
             {{- else -}}
             TODO offset creation for the {{$property.Name}}, type ${{$property.GoType}} is not implemented
             {{- end -}}
@@ -96,10 +101,10 @@ func ({{$entityNameCamel}}_EntityInfo) Flatten(entity interface{}, fbb *flatbuff
     fbb.Prepend{{$property.FbType}}Slot({{$property.FbSlot}},
         {{- if eq $property.FbType "UOffsetT"}} offset{{$property.Name}}, 0)
         {{- else if eq $property.Name $entity.IdProperty.Name}} id, 0)
-        {{- else if eq $property.GoType "bool"}} ent.{{$property.Name}}, false)
-        {{- else if eq $property.GoType "int"}} int32(ent.{{$property.Name}}), 0)
-        {{- else if eq $property.GoType "uint"}} uint32(ent.{{$property.Name}}), 0)
-        {{- else}} ent.{{$property.Name}}, 0)
+        {{- else if eq $property.GoType "bool"}} obj.{{$property.Name}}, false)
+        {{- else if eq $property.GoType "int"}} int32(obj.{{$property.Name}}), 0)
+        {{- else if eq $property.GoType "uint"}} uint32(obj.{{$property.Name}}), 0)
+        {{- else}} obj.{{$property.Name}}, 0)
         {{- end}}
     {{end -}}
 }
@@ -128,8 +133,8 @@ func ({{$entityNameCamel}}_EntityInfo) MakeSlice(capacity int) interface{} {
 	return make([]*{{$entity.Name}}, 0, capacity)
 }
 
-func ({{$entityNameCamel}}_EntityInfo) AppendToSlice(slice interface{}, entity interface{}) interface{} {
-	return append(slice.([]*{{$entity.Name}}), entity.(*{{$entity.Name}}))
+func ({{$entityNameCamel}}_EntityInfo) AppendToSlice(slice interface{}, object interface{}) interface{} {
+	return append(slice.([]*{{$entity.Name}}), object.(*{{$entity.Name}}))
 }
 
 type {{$entity.Name}}Box struct {
@@ -142,26 +147,38 @@ func BoxFor{{$entity.Name}}(ob *objectbox.ObjectBox) *{{$entity.Name}}Box {
 	}
 }
 
-func (box *{{$entity.Name}}Box) Get(id uint64) (*{{$entity.Name}}, error) {
-	entity, err := box.Box.Get(id)
+func (box *{{$entity.Name}}Box) Put(object *{{$entity.Name}}) ({{$entity.IdProperty.GoType}}, error) {
+	return box.Box.Put(object)
+}
+
+func (box *{{$entity.Name}}Box) PutAsync(object *{{$entity.Name}}) ({{$entity.IdProperty.GoType}}, error) {
+	return box.Box.PutAsync(object)
+}
+
+func (box *{{$entity.Name}}Box) PutAll(objects []*{{$entity.Name}}) ([]{{$entity.IdProperty.GoType}}, error) {
+	return box.Box.PutAll(objects)
+}
+
+func (box *{{$entity.Name}}Box) Get(id {{$entity.IdProperty.GoType}}) (*{{$entity.Name}}, error) {
+	object, err := box.Box.Get(id)
 	if err != nil {
 		return nil, err
-	} else if entity == nil {
+	} else if object == nil {
 		return nil, nil
 	}
-	return entity.(*{{$entity.Name}}), nil
+	return object.(*{{$entity.Name}}), nil
 }
 
 func (box *{{$entity.Name}}Box) GetAll() ([]*{{$entity.Name}}, error) {
-	entities, err := box.Box.GetAll()
+	objects, err := box.Box.GetAll()
 	if err != nil {
 		return nil, err
 	}
-	return entities.([]*{{$entity.Name}}), nil
+	return objects.([]*{{$entity.Name}}), nil
 }
 
-func (box *{{$entity.Name}}Box) Remove(entity *{{$entity.Name}}) (err error) {
-	return box.Box.Remove(entity.{{$entity.IdProperty.Name}})
+func (box *{{$entity.Name}}Box) Remove(object *{{$entity.Name}}) (err error) {
+	return box.Box.Remove(object.{{$entity.IdProperty.Name}})
 }
 
 {{end -}}`))

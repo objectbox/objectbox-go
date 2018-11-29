@@ -23,7 +23,7 @@ import (
 	"github.com/objectbox/objectbox-go/test/model/iot"
 )
 
-func TestAsync(t *testing.T) {
+func TestPutAsync(t *testing.T) {
 	objectBox := iot.LoadEmptyTestObjectBox()
 	defer objectBox.Close()
 	box := iot.BoxForEvent(objectBox)
@@ -36,6 +36,7 @@ func TestAsync(t *testing.T) {
 	}
 	objectId, err := box.PutAsync(&event)
 	assert.NoErr(t, err)
+	assert.Eq(t, objectId, event.Id)
 
 	objectBox.AwaitAsyncCompletion()
 
@@ -68,17 +69,20 @@ func TestUnique(t *testing.T) {
 	defer objectBox.Close()
 	box := iot.BoxForEvent(objectBox)
 	defer box.Close()
+
 	err := box.RemoveAll()
 	assert.NoErr(t, err)
 
-	event := iot.Event{
+	_, err = box.Put(&iot.Event{
 		Device: "my device",
-		Uid:    "a",
-	}
-	_, err = box.Put(&event)
+		Uid:    "duplicate-uid",
+	})
 	assert.NoErr(t, err)
 
-	_, err = box.Put(&event)
+	_, err = box.Put(&iot.Event{
+		Device: "my device 2",
+		Uid:    "duplicate-uid",
+	})
 	if err == nil {
 		assert.Failf(t, "put() passed instead of an expected unique constraint violation")
 	}
@@ -93,6 +97,7 @@ func TestPutAll(t *testing.T) {
 	defer objectBox.Close()
 	box := iot.BoxForEvent(objectBox)
 	defer box.Close()
+
 	err := box.RemoveAll()
 	assert.NoErr(t, err)
 
@@ -105,6 +110,10 @@ func TestPutAll(t *testing.T) {
 	events := []*iot.Event{&event1, &event2}
 	objectIds, err := box.PutAll(events)
 	assert.NoErr(t, err)
+	assert.Eq(t, uint64(1), objectIds[0])
+	assert.Eq(t, objectIds[0], events[0].Id)
+	assert.Eq(t, uint64(2), objectIds[1])
+	assert.Eq(t, objectIds[1], events[1].Id)
 
 	count, err := box.Count()
 	assert.NoErr(t, err)
@@ -127,4 +136,36 @@ func TestPutAll(t *testing.T) {
 	objectIds, err = box.PutAll(noEvents)
 	assert.NoErr(t, err)
 	assert.EqInt(t, len(objectIds), 0)
+}
+
+func TestPut(t *testing.T) {
+	objectBox := iot.LoadEmptyTestObjectBox()
+	defer objectBox.Close()
+	box := iot.BoxForEvent(objectBox)
+	defer box.Close()
+
+	assert.NoErr(t, box.RemoveAll())
+
+	event := iot.Event{
+		Device: "my device",
+	}
+	objectId, err := box.Put(&event)
+	assert.NoErr(t, err)
+	assert.Eq(t, objectId, event.Id)
+	t.Logf("Added object ID %v", objectId)
+
+	objectId2, err := box.Put(&iot.Event{
+		Device: "2nd device",
+	})
+	assert.NoErr(t, err)
+	t.Logf("Added 2nd object ID %v", objectId2)
+
+	// read the previous object and compare
+	eventRead, err := box.Get(objectId)
+	assert.NoErr(t, err)
+	assert.Eq(t, event, *eventRead)
+
+	all, err := box.GetAll()
+	assert.NoErr(t, err)
+	assert.EqInt(t, 2, len(all))
 }

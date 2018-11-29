@@ -43,21 +43,26 @@ func (entity_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.EntityLastPropertyId(5, 8933082277725371577)
 }
 
-func (entity_EntityInfo) GetId(entity interface{}) (uint64, error) {
-	return entity.(*Entity).Id, nil
+func (entity_EntityInfo) GetId(object interface{}) (uint64, error) {
+	return object.(*Entity).Id, nil
 }
 
-func (entity_EntityInfo) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
-	ent := entity.(*Entity)
-	var offsetString = fbutils.CreateStringOffset(fbb, ent.String)
+func (entity_EntityInfo) SetId(object interface{}, id uint64) error {
+	object.(*Entity).Id = id
+	return nil
+}
+
+func (entity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
+	obj := object.(*Entity)
+	var offsetString = fbutils.CreateStringOffset(fbb, obj.String)
 
 	// build the FlatBuffers object
 	fbb.StartObject(5)
 	fbb.PrependUint64Slot(0, id, 0)
-	fbb.PrependInt32Slot(1, ent.Int32, 0)
-	fbb.PrependInt64Slot(2, ent.Int64, 0)
+	fbb.PrependInt32Slot(1, obj.Int32, 0)
+	fbb.PrependInt64Slot(2, obj.Int64, 0)
 	fbb.PrependUOffsetTSlot(3, offsetString, 0)
-	fbb.PrependFloat64Slot(4, ent.Float64, 0)
+	fbb.PrependFloat64Slot(4, obj.Float64, 0)
 }
 
 func (entity_EntityInfo) ToObject(bytes []byte) interface{} {
@@ -79,8 +84,8 @@ func (entity_EntityInfo) MakeSlice(capacity int) interface{} {
 	return make([]*Entity, 0, capacity)
 }
 
-func (entity_EntityInfo) AppendToSlice(slice interface{}, entity interface{}) interface{} {
-	return append(slice.([]*Entity), entity.(*Entity))
+func (entity_EntityInfo) AppendToSlice(slice interface{}, object interface{}) interface{} {
+	return append(slice.([]*Entity), object.(*Entity))
 }
 
 type EntityBox struct {
@@ -93,24 +98,36 @@ func BoxForEntity(ob *objectbox.ObjectBox) *EntityBox {
 	}
 }
 
+func (box *EntityBox) Put(object *Entity) (uint64, error) {
+	return box.Box.Put(object)
+}
+
+func (box *EntityBox) PutAsync(object *Entity) (uint64, error) {
+	return box.Box.PutAsync(object)
+}
+
+func (box *EntityBox) PutAll(objects []*Entity) ([]uint64, error) {
+	return box.Box.PutAll(objects)
+}
+
 func (box *EntityBox) Get(id uint64) (*Entity, error) {
-	entity, err := box.Box.Get(id)
+	object, err := box.Box.Get(id)
 	if err != nil {
 		return nil, err
-	} else if entity == nil {
+	} else if object == nil {
 		return nil, nil
 	}
-	return entity.(*Entity), nil
+	return object.(*Entity), nil
 }
 
 func (box *EntityBox) GetAll() ([]*Entity, error) {
-	entities, err := box.Box.GetAll()
+	objects, err := box.Box.GetAll()
 	if err != nil {
 		return nil, err
 	}
-	return entities.([]*Entity), nil
+	return objects.([]*Entity), nil
 }
 
-func (box *EntityBox) Remove(entity *Entity) (err error) {
-	return box.Box.Remove(entity.Id)
+func (box *EntityBox) Remove(object *Entity) (err error) {
+	return box.Box.Remove(object.Id)
 }

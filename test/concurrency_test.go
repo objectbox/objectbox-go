@@ -41,10 +41,6 @@ func concurrentInsert(t *testing.T, count, concurrency int, putAsync bool) {
 	err := box.RemoveAll()
 	assert.NoErr(t, err)
 
-	event := iot.Event{
-		Device: "my device",
-	}
-
 	var countPart = count / concurrency
 	assert.EqInt(t, 0, count%concurrency)
 
@@ -62,6 +58,10 @@ func concurrentInsert(t *testing.T, count, concurrency int, putAsync bool) {
 			for i := countPart; i > 0; i-- {
 				var id uint64
 				var e error
+
+				event := iot.Event{
+					Device: "my device",
+				}
 
 				if putAsync {
 					id, e = box.PutAsync(&event)

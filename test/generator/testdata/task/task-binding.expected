@@ -59,17 +59,22 @@ func (task_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.EntityLastPropertyId(8, 8325060299420976708)
 }
 
-func (task_EntityInfo) GetId(entity interface{}) (uint64, error) {
-	return entity.(*Task).Id, nil
+func (task_EntityInfo) GetId(object interface{}) (uint64, error) {
+	return object.(*Task).Id, nil
 }
 
-func (task_EntityInfo) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
-	ent := entity.(*Task)
-	var offsetUid = fbutils.CreateStringOffset(fbb, ent.Uid)
-	var offsetName = fbutils.CreateStringOffset(fbb, ent.Name)
-	var offsetPlace = fbutils.CreateStringOffset(fbb, ent.Place)
-	var offsetSource = fbutils.CreateStringOffset(fbb, ent.Source)
-	var offsetText = fbutils.CreateStringOffset(fbb, ent.Text)
+func (task_EntityInfo) SetId(object interface{}, id uint64) error {
+	object.(*Task).Id = id
+	return nil
+}
+
+func (task_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
+	obj := object.(*Task)
+	var offsetUid = fbutils.CreateStringOffset(fbb, obj.Uid)
+	var offsetName = fbutils.CreateStringOffset(fbb, obj.Name)
+	var offsetPlace = fbutils.CreateStringOffset(fbb, obj.Place)
+	var offsetSource = fbutils.CreateStringOffset(fbb, obj.Source)
+	var offsetText = fbutils.CreateStringOffset(fbb, obj.Text)
 
 	// build the FlatBuffers object
 	fbb.StartObject(8)
@@ -79,8 +84,8 @@ func (task_EntityInfo) Flatten(entity interface{}, fbb *flatbuffers.Builder, id 
 	fbb.PrependUOffsetTSlot(3, offsetPlace, 0)
 	fbb.PrependUOffsetTSlot(4, offsetSource, 0)
 	fbb.PrependUOffsetTSlot(5, offsetText, 0)
-	fbb.PrependUint64Slot(6, ent.Date, 0)
-	fbb.PrependUint64Slot(7, ent.GroupId, 0)
+	fbb.PrependUint64Slot(6, obj.Date, 0)
+	fbb.PrependUint64Slot(7, obj.GroupId, 0)
 }
 
 func (task_EntityInfo) ToObject(bytes []byte) interface{} {
@@ -105,8 +110,8 @@ func (task_EntityInfo) MakeSlice(capacity int) interface{} {
 	return make([]*Task, 0, capacity)
 }
 
-func (task_EntityInfo) AppendToSlice(slice interface{}, entity interface{}) interface{} {
-	return append(slice.([]*Task), entity.(*Task))
+func (task_EntityInfo) AppendToSlice(slice interface{}, object interface{}) interface{} {
+	return append(slice.([]*Task), object.(*Task))
 }
 
 type TaskBox struct {
@@ -119,26 +124,38 @@ func BoxForTask(ob *objectbox.ObjectBox) *TaskBox {
 	}
 }
 
+func (box *TaskBox) Put(object *Task) (uint64, error) {
+	return box.Box.Put(object)
+}
+
+func (box *TaskBox) PutAsync(object *Task) (uint64, error) {
+	return box.Box.PutAsync(object)
+}
+
+func (box *TaskBox) PutAll(objects []*Task) ([]uint64, error) {
+	return box.Box.PutAll(objects)
+}
+
 func (box *TaskBox) Get(id uint64) (*Task, error) {
-	entity, err := box.Box.Get(id)
+	object, err := box.Box.Get(id)
 	if err != nil {
 		return nil, err
-	} else if entity == nil {
+	} else if object == nil {
 		return nil, nil
 	}
-	return entity.(*Task), nil
+	return object.(*Task), nil
 }
 
 func (box *TaskBox) GetAll() ([]*Task, error) {
-	entities, err := box.Box.GetAll()
+	objects, err := box.Box.GetAll()
 	if err != nil {
 		return nil, err
 	}
-	return entities.([]*Task), nil
+	return objects.([]*Task), nil
 }
 
-func (box *TaskBox) Remove(entity *Task) (err error) {
-	return box.Box.Remove(entity.Id)
+func (box *TaskBox) Remove(object *Task) (err error) {
+	return box.Box.Remove(object.Id)
 }
 
 type group_EntityInfo struct {
@@ -164,11 +181,16 @@ func (group_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.EntityLastPropertyId(1, 5617773211005988520)
 }
 
-func (group_EntityInfo) GetId(entity interface{}) (uint64, error) {
-	return entity.(*Group).Id, nil
+func (group_EntityInfo) GetId(object interface{}) (uint64, error) {
+	return object.(*Group).Id, nil
 }
 
-func (group_EntityInfo) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
+func (group_EntityInfo) SetId(object interface{}, id uint64) error {
+	object.(*Group).Id = id
+	return nil
+}
+
+func (group_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
 
 	// build the FlatBuffers object
 	fbb.StartObject(1)
@@ -190,8 +212,8 @@ func (group_EntityInfo) MakeSlice(capacity int) interface{} {
 	return make([]*Group, 0, capacity)
 }
 
-func (group_EntityInfo) AppendToSlice(slice interface{}, entity interface{}) interface{} {
-	return append(slice.([]*Group), entity.(*Group))
+func (group_EntityInfo) AppendToSlice(slice interface{}, object interface{}) interface{} {
+	return append(slice.([]*Group), object.(*Group))
 }
 
 type GroupBox struct {
@@ -204,24 +226,36 @@ func BoxForGroup(ob *objectbox.ObjectBox) *GroupBox {
 	}
 }
 
+func (box *GroupBox) Put(object *Group) (uint64, error) {
+	return box.Box.Put(object)
+}
+
+func (box *GroupBox) PutAsync(object *Group) (uint64, error) {
+	return box.Box.PutAsync(object)
+}
+
+func (box *GroupBox) PutAll(objects []*Group) ([]uint64, error) {
+	return box.Box.PutAll(objects)
+}
+
 func (box *GroupBox) Get(id uint64) (*Group, error) {
-	entity, err := box.Box.Get(id)
+	object, err := box.Box.Get(id)
 	if err != nil {
 		return nil, err
-	} else if entity == nil {
+	} else if object == nil {
 		return nil, nil
 	}
-	return entity.(*Group), nil
+	return object.(*Group), nil
 }
 
 func (box *GroupBox) GetAll() ([]*Group, error) {
-	entities, err := box.Box.GetAll()
+	objects, err := box.Box.GetAll()
 	if err != nil {
 		return nil, err
 	}
-	return entities.([]*Group), nil
+	return objects.([]*Group), nil
 }
 
-func (box *GroupBox) Remove(entity *Group) (err error) {
-	return box.Box.Remove(entity.Id)
+func (box *GroupBox) Remove(object *Group) (err error) {
+	return box.Box.Remove(object.Id)
 }

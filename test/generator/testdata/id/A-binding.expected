@@ -30,11 +30,16 @@ func (a_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.EntityLastPropertyId(1, 2259404117704393152)
 }
 
-func (a_EntityInfo) GetId(entity interface{}) (uint64, error) {
-	return entity.(*A).Id, nil
+func (a_EntityInfo) GetId(object interface{}) (uint64, error) {
+	return object.(*A).Id, nil
 }
 
-func (a_EntityInfo) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
+func (a_EntityInfo) SetId(object interface{}, id uint64) error {
+	object.(*A).Id = id
+	return nil
+}
+
+func (a_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
 
 	// build the FlatBuffers object
 	fbb.StartObject(1)
@@ -56,8 +61,8 @@ func (a_EntityInfo) MakeSlice(capacity int) interface{} {
 	return make([]*A, 0, capacity)
 }
 
-func (a_EntityInfo) AppendToSlice(slice interface{}, entity interface{}) interface{} {
-	return append(slice.([]*A), entity.(*A))
+func (a_EntityInfo) AppendToSlice(slice interface{}, object interface{}) interface{} {
+	return append(slice.([]*A), object.(*A))
 }
 
 type ABox struct {
@@ -70,24 +75,36 @@ func BoxForA(ob *objectbox.ObjectBox) *ABox {
 	}
 }
 
+func (box *ABox) Put(object *A) (uint64, error) {
+	return box.Box.Put(object)
+}
+
+func (box *ABox) PutAsync(object *A) (uint64, error) {
+	return box.Box.PutAsync(object)
+}
+
+func (box *ABox) PutAll(objects []*A) ([]uint64, error) {
+	return box.Box.PutAll(objects)
+}
+
 func (box *ABox) Get(id uint64) (*A, error) {
-	entity, err := box.Box.Get(id)
+	object, err := box.Box.Get(id)
 	if err != nil {
 		return nil, err
-	} else if entity == nil {
+	} else if object == nil {
 		return nil, nil
 	}
-	return entity.(*A), nil
+	return object.(*A), nil
 }
 
 func (box *ABox) GetAll() ([]*A, error) {
-	entities, err := box.Box.GetAll()
+	objects, err := box.Box.GetAll()
 	if err != nil {
 		return nil, err
 	}
-	return entities.([]*A), nil
+	return objects.([]*A), nil
 }
 
-func (box *ABox) Remove(entity *A) (err error) {
-	return box.Box.Remove(entity.Id)
+func (box *ABox) Remove(object *A) (err error) {
+	return box.Box.Remove(object.Id)
 }

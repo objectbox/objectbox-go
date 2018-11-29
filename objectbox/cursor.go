@@ -122,13 +122,27 @@ func (cursor *cursor) Put(object interface{}) (id uint64, err error) {
 	if err != nil {
 		return
 	}
-	checkForPreviousValue := idFromObject != 0
+
 	id, err = cursor.IdForPut(idFromObject)
 	if err != nil {
 		return
 	}
+
 	cursor.binding.Flatten(object, cursor.fbb, id)
-	return id, cursor.finishInternalFbbAndPut(id, checkForPreviousValue)
+
+	checkForPreviousValue := idFromObject != 0
+	if err = cursor.finishInternalFbbAndPut(id, checkForPreviousValue); err != nil {
+		return 0, err
+	}
+
+	// update the id on the object
+	if idFromObject != id {
+		if err = cursor.binding.SetId(object, id); err != nil {
+			return 0, err
+		}
+	}
+
+	return id, nil
 }
 
 func (cursor *cursor) finishInternalFbbAndPut(id uint64, checkForPreviousObject bool) (err error) {

@@ -83,7 +83,7 @@ func (box *Box) PutAsync(object interface{}) (id uint64, err error) {
 	if err != nil {
 		return
 	}
-	checkForPreviousValue := idFromObject != 0
+
 	id, err = box.idForPut(idFromObject)
 	if err != nil {
 		return
@@ -97,7 +97,20 @@ func (box *Box) PutAsync(object interface{}) (id uint64, err error) {
 		fbb = flatbuffers.NewBuilder(256)
 	}
 	box.binding.Flatten(object, fbb, id)
-	return id, box.finishFbbAndPutAsync(fbb, id, checkForPreviousValue)
+
+	checkForPreviousValue := idFromObject != 0
+	if err = box.finishFbbAndPutAsync(fbb, id, checkForPreviousValue); err != nil {
+		return 0, err
+	}
+
+	// update the id on the object
+	if idFromObject != id {
+		if err = box.binding.SetId(object, id); err != nil {
+			return 0, err
+		}
+	}
+
+	return id, nil
 }
 
 func (box *Box) finishFbbAndPutAsync(fbb *flatbuffers.Builder, id uint64, checkForPreviousObject bool) (err error) {
@@ -148,6 +161,7 @@ func (box *Box) PutAll(slice interface{}) (ids []uint64, err error) {
 		for i := 0; i < count; i++ {
 			id, errPut := cursor.Put(sliceValue.Index(i).Interface())
 			if errPut != nil {
+				// TODO restore original IDs assigned to already processed objects if the transaction fails
 				return errPut
 			}
 			ids[i] = id

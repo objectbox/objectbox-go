@@ -40,20 +40,25 @@ func (task_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.EntityLastPropertyId(4, 8083684673086871702)
 }
 
-func (task_EntityInfo) GetId(entity interface{}) (uint64, error) {
-	return entity.(*Task).Id, nil
+func (task_EntityInfo) GetId(object interface{}) (uint64, error) {
+	return object.(*Task).Id, nil
 }
 
-func (task_EntityInfo) Flatten(entity interface{}, fbb *flatbuffers.Builder, id uint64) {
-	ent := entity.(*Task)
-	var offsetText = fbutils.CreateStringOffset(fbb, ent.Text)
+func (task_EntityInfo) SetId(object interface{}, id uint64) error {
+	object.(*Task).Id = id
+	return nil
+}
+
+func (task_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
+	obj := object.(*Task)
+	var offsetText = fbutils.CreateStringOffset(fbb, obj.Text)
 
 	// build the FlatBuffers object
 	fbb.StartObject(4)
 	fbb.PrependUint64Slot(0, id, 0)
 	fbb.PrependUOffsetTSlot(1, offsetText, 0)
-	fbb.PrependInt64Slot(2, ent.DateCreated, 0)
-	fbb.PrependInt64Slot(3, ent.DateFinished, 0)
+	fbb.PrependInt64Slot(2, obj.DateCreated, 0)
+	fbb.PrependInt64Slot(3, obj.DateFinished, 0)
 }
 
 func (task_EntityInfo) ToObject(bytes []byte) interface{} {
@@ -74,8 +79,8 @@ func (task_EntityInfo) MakeSlice(capacity int) interface{} {
 	return make([]*Task, 0, capacity)
 }
 
-func (task_EntityInfo) AppendToSlice(slice interface{}, entity interface{}) interface{} {
-	return append(slice.([]*Task), entity.(*Task))
+func (task_EntityInfo) AppendToSlice(slice interface{}, object interface{}) interface{} {
+	return append(slice.([]*Task), object.(*Task))
 }
 
 type TaskBox struct {
@@ -88,24 +93,36 @@ func BoxForTask(ob *objectbox.ObjectBox) *TaskBox {
 	}
 }
 
+func (box *TaskBox) Put(object *Task) (uint64, error) {
+	return box.Box.Put(object)
+}
+
+func (box *TaskBox) PutAsync(object *Task) (uint64, error) {
+	return box.Box.PutAsync(object)
+}
+
+func (box *TaskBox) PutAll(objects []*Task) ([]uint64, error) {
+	return box.Box.PutAll(objects)
+}
+
 func (box *TaskBox) Get(id uint64) (*Task, error) {
-	entity, err := box.Box.Get(id)
+	object, err := box.Box.Get(id)
 	if err != nil {
 		return nil, err
-	} else if entity == nil {
+	} else if object == nil {
 		return nil, nil
 	}
-	return entity.(*Task), nil
+	return object.(*Task), nil
 }
 
 func (box *TaskBox) GetAll() ([]*Task, error) {
-	entities, err := box.Box.GetAll()
+	objects, err := box.Box.GetAll()
 	if err != nil {
 		return nil, err
 	}
-	return entities.([]*Task), nil
+	return objects.([]*Task), nil
 }
 
-func (box *TaskBox) Remove(entity *Task) (err error) {
-	return box.Box.Remove(entity.Id)
+func (box *TaskBox) Remove(object *Task) (err error) {
+	return box.Box.Remove(object.Id)
 }

@@ -18,11 +18,19 @@ var CBinding = c_EntityInfo{
 }
 
 var C_ = struct {
-	Id         objectbox.TypeId
-	identifier objectbox.TypeId
+	Id         *objectbox.PropertyUint64
+	identifier *objectbox.PropertyUint64
 }{
-	Id:         1,
-	identifier: 2,
+	Id: &objectbox.PropertyUint64{
+		Property: &objectbox.Property{
+			Id: 1,
+		},
+	},
+	identifier: &objectbox.PropertyUint64{
+		Property: &objectbox.Property{
+			Id: 2,
+		},
+	},
 }
 
 func (c_EntityInfo) AddToModel(model *objectbox.Model) {

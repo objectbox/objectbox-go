@@ -19,17 +19,37 @@ var EntityBinding = entity_EntityInfo{
 }
 
 var Entity_ = struct {
-	Id      objectbox.TypeId
-	Int32   objectbox.TypeId
-	Int64   objectbox.TypeId
-	String  objectbox.TypeId
-	Float64 objectbox.TypeId
+	Id      *objectbox.PropertyUint64
+	Int32   *objectbox.PropertyInt32
+	Int64   *objectbox.PropertyInt64
+	String  *objectbox.PropertyString
+	Float64 *objectbox.PropertyFloat64
 }{
-	Id:      1,
-	Int32:   2,
-	Int64:   3,
-	String:  4,
-	Float64: 5,
+	Id: &objectbox.PropertyUint64{
+		Property: &objectbox.Property{
+			Id: 1,
+		},
+	},
+	Int32: &objectbox.PropertyInt32{
+		Property: &objectbox.Property{
+			Id: 2,
+		},
+	},
+	Int64: &objectbox.PropertyInt64{
+		Property: &objectbox.Property{
+			Id: 3,
+		},
+	},
+	String: &objectbox.PropertyString{
+		Property: &objectbox.Property{
+			Id: 4,
+		},
+	},
+	Float64: &objectbox.PropertyFloat64{
+		Property: &objectbox.Property{
+			Id: 5,
+		},
+	},
 }
 
 func (entity_EntityInfo) AddToModel(model *objectbox.Model) {

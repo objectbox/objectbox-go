@@ -19,15 +19,31 @@ var TaskBinding = task_EntityInfo{
 }
 
 var Task_ = struct {
-	Id           objectbox.TypeId
-	Text         objectbox.TypeId
-	DateCreated  objectbox.TypeId
-	DateFinished objectbox.TypeId
+	Id           *objectbox.PropertyUint64
+	Text         *objectbox.PropertyString
+	DateCreated  *objectbox.PropertyInt64
+	DateFinished *objectbox.PropertyInt64
 }{
-	Id:           1,
-	Text:         2,
-	DateCreated:  3,
-	DateFinished: 4,
+	Id: &objectbox.PropertyUint64{
+		Property: &objectbox.Property{
+			Id: 1,
+		},
+	},
+	Text: &objectbox.PropertyString{
+		Property: &objectbox.Property{
+			Id: 2,
+		},
+	},
+	DateCreated: &objectbox.PropertyInt64{
+		Property: &objectbox.Property{
+			Id: 3,
+		},
+	},
+	DateFinished: &objectbox.PropertyInt64{
+		Property: &objectbox.Property{
+			Id: 4,
+		},
+	},
 }
 
 func (task_EntityInfo) AddToModel(model *objectbox.Model) {

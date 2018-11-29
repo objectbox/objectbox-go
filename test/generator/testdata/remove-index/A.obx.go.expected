@@ -18,9 +18,13 @@ var ABinding = a_EntityInfo{
 }
 
 var A_ = struct {
-	Id objectbox.TypeId
+	Id *objectbox.PropertyUint64
 }{
-	Id: 1,
+	Id: &objectbox.PropertyUint64{
+		Property: &objectbox.Property{
+			Id: 1,
+		},
+	},
 }
 
 func (a_EntityInfo) AddToModel(model *objectbox.Model) {

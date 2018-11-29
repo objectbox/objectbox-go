@@ -19,45 +19,121 @@ var TypefulBinding = typeful_EntityInfo{
 }
 
 var Typeful_ = struct {
-	Id         objectbox.TypeId
-	Int        objectbox.TypeId
-	Int8       objectbox.TypeId
-	Int16      objectbox.TypeId
-	Int32      objectbox.TypeId
-	Int64      objectbox.TypeId
-	Uint       objectbox.TypeId
-	Uint8      objectbox.TypeId
-	Uint16     objectbox.TypeId
-	Uint32     objectbox.TypeId
-	Uint64     objectbox.TypeId
-	Bool       objectbox.TypeId
-	String     objectbox.TypeId
-	Byte       objectbox.TypeId
-	ByteVector objectbox.TypeId
-	Rune       objectbox.TypeId
-	Float32    objectbox.TypeId
-	Float64    objectbox.TypeId
-	Date       objectbox.TypeId
+	Id         *objectbox.PropertyUint64
+	Int        *objectbox.PropertyInt
+	Int8       *objectbox.PropertyInt8
+	Int16      *objectbox.PropertyInt16
+	Int32      *objectbox.PropertyInt32
+	Int64      *objectbox.PropertyInt64
+	Uint       *objectbox.PropertyUint
+	Uint8      *objectbox.PropertyUint8
+	Uint16     *objectbox.PropertyUint16
+	Uint32     *objectbox.PropertyUint32
+	Uint64     *objectbox.PropertyUint64
+	Bool       *objectbox.PropertyBool
+	String     *objectbox.PropertyString
+	Byte       *objectbox.PropertyByte
+	ByteVector *objectbox.PropertyByteVector
+	Rune       *objectbox.PropertyRune
+	Float32    *objectbox.PropertyFloat32
+	Float64    *objectbox.PropertyFloat64
+	Date       *objectbox.PropertyUint64
 }{
-	Id:         1,
-	Int:        2,
-	Int8:       3,
-	Int16:      4,
-	Int32:      5,
-	Int64:      6,
-	Uint:       7,
-	Uint8:      8,
-	Uint16:     9,
-	Uint32:     10,
-	Uint64:     11,
-	Bool:       12,
-	String:     13,
-	Byte:       14,
-	ByteVector: 15,
-	Rune:       16,
-	Float32:    17,
-	Float64:    18,
-	Date:       19,
+	Id: &objectbox.PropertyUint64{
+		Property: &objectbox.Property{
+			Id: 1,
+		},
+	},
+	Int: &objectbox.PropertyInt{
+		Property: &objectbox.Property{
+			Id: 2,
+		},
+	},
+	Int8: &objectbox.PropertyInt8{
+		Property: &objectbox.Property{
+			Id: 3,
+		},
+	},
+	Int16: &objectbox.PropertyInt16{
+		Property: &objectbox.Property{
+			Id: 4,
+		},
+	},
+	Int32: &objectbox.PropertyInt32{
+		Property: &objectbox.Property{
+			Id: 5,
+		},
+	},
+	Int64: &objectbox.PropertyInt64{
+		Property: &objectbox.Property{
+			Id: 6,
+		},
+	},
+	Uint: &objectbox.PropertyUint{
+		Property: &objectbox.Property{
+			Id: 7,
+		},
+	},
+	Uint8: &objectbox.PropertyUint8{
+		Property: &objectbox.Property{
+			Id: 8,
+		},
+	},
+	Uint16: &objectbox.PropertyUint16{
+		Property: &objectbox.Property{
+			Id: 9,
+		},
+	},
+	Uint32: &objectbox.PropertyUint32{
+		Property: &objectbox.Property{
+			Id: 10,
+		},
+	},
+	Uint64: &objectbox.PropertyUint64{
+		Property: &objectbox.Property{
+			Id: 11,
+		},
+	},
+	Bool: &objectbox.PropertyBool{
+		Property: &objectbox.Property{
+			Id: 12,
+		},
+	},
+	String: &objectbox.PropertyString{
+		Property: &objectbox.Property{
+			Id: 13,
+		},
+	},
+	Byte: &objectbox.PropertyByte{
+		Property: &objectbox.Property{
+			Id: 14,
+		},
+	},
+	ByteVector: &objectbox.PropertyByteVector{
+		Property: &objectbox.Property{
+			Id: 15,
+		},
+	},
+	Rune: &objectbox.PropertyRune{
+		Property: &objectbox.Property{
+			Id: 16,
+		},
+	},
+	Float32: &objectbox.PropertyFloat32{
+		Property: &objectbox.Property{
+			Id: 17,
+		},
+	},
+	Float64: &objectbox.PropertyFloat64{
+		Property: &objectbox.Property{
+			Id: 18,
+		},
+	},
+	Date: &objectbox.PropertyUint64{
+		Property: &objectbox.Property{
+			Id: 19,
+		},
+	},
 }
 
 func (typeful_EntityInfo) AddToModel(model *objectbox.Model) {

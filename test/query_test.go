@@ -24,28 +24,19 @@ import (
 	"github.com/objectbox/objectbox-go/test/model/iot"
 )
 
-// XXX TEMPORARY CODE
-var Event_Device = &objectbox.PropertyString{
-	Property: &objectbox.Property{
-		Id: iot.Event_.Device,
-	},
-}
-
 func TestQueryConditions(t *testing.T) {
 	objectBox := iot.LoadEmptyTestObjectBox()
 	defer objectBox.Close()
 	box := iot.BoxForEvent(objectBox)
 	defer box.Close()
 
-	box.RemoveAll()
-
 	testCases := []struct {
 		expected string
 		query    *objectbox.Query
 	}{
 		{
-			"Device starts with \"dev\"",
-			box.Query(Event_Device.StartsWith("dev", true)),
+			`Device starts with "dev"`,
+			box.Query(iot.Event_.Device.StartsWith("dev", true)),
 		},
 	}
 

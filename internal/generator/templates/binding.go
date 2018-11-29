@@ -45,11 +45,15 @@ var {{$entity.Name}}Binding = {{$entityNameCamel}}_EntityInfo {
 
 var {{$entity.Name}}_ = struct {
 	{{range $property := $entity.Properties -}}
-    {{$property.Name}} objectbox.TypeId
+    {{$property.Name}} *objectbox.Property{{$property.GoType | TypeIdentifier}}
     {{end -}}
 }{
 	{{range $property := $entity.Properties -}}
-    {{$property.Name}}: {{$property.Id}},
+    {{$property.Name}}: &objectbox.Property{{$property.GoType | TypeIdentifier}}{
+		Property: &objectbox.Property{
+			Id: {{$property.Id}},
+		},
+	},
     {{end -}}
 }
 

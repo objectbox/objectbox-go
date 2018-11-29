@@ -19,13 +19,25 @@ var BBinding = b_EntityInfo{
 }
 
 var B_ = struct {
-	Id   objectbox.TypeId
-	Name objectbox.TypeId
-	Info objectbox.TypeId
+	Id   *objectbox.PropertyUint64
+	Name *objectbox.PropertyString
+	Info *objectbox.PropertyString
 }{
-	Id:   1,
-	Name: 2,
-	Info: 3,
+	Id: &objectbox.PropertyUint64{
+		Property: &objectbox.Property{
+			Id: 1,
+		},
+	},
+	Name: &objectbox.PropertyString{
+		Property: &objectbox.Property{
+			Id: 2,
+		},
+	},
+	Info: &objectbox.PropertyString{
+		Property: &objectbox.Property{
+			Id: 3,
+		},
+	},
 }
 
 func (b_EntityInfo) AddToModel(model *objectbox.Model) {

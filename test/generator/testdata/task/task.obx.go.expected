@@ -19,23 +19,55 @@ var TaskBinding = task_EntityInfo{
 }
 
 var Task_ = struct {
-	Id      objectbox.TypeId
-	Uid     objectbox.TypeId
-	Name    objectbox.TypeId
-	Place   objectbox.TypeId
-	Source  objectbox.TypeId
-	Text    objectbox.TypeId
-	Date    objectbox.TypeId
-	GroupId objectbox.TypeId
+	Id      *objectbox.PropertyUint64
+	Uid     *objectbox.PropertyString
+	Name    *objectbox.PropertyString
+	Place   *objectbox.PropertyString
+	Source  *objectbox.PropertyString
+	Text    *objectbox.PropertyString
+	Date    *objectbox.PropertyUint64
+	GroupId *objectbox.PropertyUint64
 }{
-	Id:      1,
-	Uid:     2,
-	Name:    3,
-	Place:   4,
-	Source:  5,
-	Text:    6,
-	Date:    7,
-	GroupId: 8,
+	Id: &objectbox.PropertyUint64{
+		Property: &objectbox.Property{
+			Id: 1,
+		},
+	},
+	Uid: &objectbox.PropertyString{
+		Property: &objectbox.Property{
+			Id: 2,
+		},
+	},
+	Name: &objectbox.PropertyString{
+		Property: &objectbox.Property{
+			Id: 3,
+		},
+	},
+	Place: &objectbox.PropertyString{
+		Property: &objectbox.Property{
+			Id: 4,
+		},
+	},
+	Source: &objectbox.PropertyString{
+		Property: &objectbox.Property{
+			Id: 5,
+		},
+	},
+	Text: &objectbox.PropertyString{
+		Property: &objectbox.Property{
+			Id: 6,
+		},
+	},
+	Date: &objectbox.PropertyUint64{
+		Property: &objectbox.Property{
+			Id: 7,
+		},
+	},
+	GroupId: &objectbox.PropertyUint64{
+		Property: &objectbox.Property{
+			Id: 8,
+		},
+	},
 }
 
 func (task_EntityInfo) AddToModel(model *objectbox.Model) {
@@ -169,9 +201,13 @@ var GroupBinding = group_EntityInfo{
 }
 
 var Group_ = struct {
-	Id objectbox.TypeId
+	Id *objectbox.PropertyUint64
 }{
-	Id: 1,
+	Id: &objectbox.PropertyUint64{
+		Property: &objectbox.Property{
+			Id: 1,
+		},
+	},
 }
 
 func (group_EntityInfo) AddToModel(model *objectbox.Model) {

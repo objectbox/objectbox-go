@@ -27,4 +27,11 @@ var funcMap = template.FuncMap{
 		result := strings.Title(s)
 		return strings.ToLower(result[0:1]) + result[1:]
 	},
+	"TypeIdentifier": func(s string) string {
+		if s == "[]byte" {
+			return "ByteVector"
+		} else {
+			return strings.Title(s)
+		}
+	},
 }

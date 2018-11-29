@@ -19,17 +19,37 @@ var EventBinding = event_EntityInfo{
 }
 
 var Event_ = struct {
-	Id      objectbox.TypeId
-	Uid     objectbox.TypeId
-	Device  objectbox.TypeId
-	Date    objectbox.TypeId
-	Picture objectbox.TypeId
+	Id      *objectbox.PropertyUint64
+	Uid     *objectbox.PropertyString
+	Device  *objectbox.PropertyString
+	Date    *objectbox.PropertyInt64
+	Picture *objectbox.PropertyByteVector
 }{
-	Id:      1,
-	Uid:     4,
-	Device:  2,
-	Date:    3,
-	Picture: 5,
+	Id: &objectbox.PropertyUint64{
+		Property: &objectbox.Property{
+			Id: 1,
+		},
+	},
+	Uid: &objectbox.PropertyString{
+		Property: &objectbox.Property{
+			Id: 4,
+		},
+	},
+	Device: &objectbox.PropertyString{
+		Property: &objectbox.Property{
+			Id: 2,
+		},
+	},
+	Date: &objectbox.PropertyInt64{
+		Property: &objectbox.Property{
+			Id: 3,
+		},
+	},
+	Picture: &objectbox.PropertyByteVector{
+		Property: &objectbox.Property{
+			Id: 5,
+		},
+	},
 }
 
 func (event_EntityInfo) AddToModel(model *objectbox.Model) {
@@ -147,25 +167,61 @@ var ReadingBinding = reading_EntityInfo{
 }
 
 var Reading_ = struct {
-	Id              objectbox.TypeId
-	Date            objectbox.TypeId
-	EventId         objectbox.TypeId
-	ValueName       objectbox.TypeId
-	ValueString     objectbox.TypeId
-	ValueInteger    objectbox.TypeId
-	ValueFloating   objectbox.TypeId
-	ValueInt32      objectbox.TypeId
-	ValueFloating32 objectbox.TypeId
+	Id              *objectbox.PropertyUint64
+	Date            *objectbox.PropertyInt64
+	EventId         *objectbox.PropertyUint64
+	ValueName       *objectbox.PropertyString
+	ValueString     *objectbox.PropertyString
+	ValueInteger    *objectbox.PropertyInt64
+	ValueFloating   *objectbox.PropertyFloat64
+	ValueInt32      *objectbox.PropertyInt32
+	ValueFloating32 *objectbox.PropertyFloat32
 }{
-	Id:              1,
-	Date:            2,
-	EventId:         3,
-	ValueName:       4,
-	ValueString:     5,
-	ValueInteger:    6,
-	ValueFloating:   7,
-	ValueInt32:      8,
-	ValueFloating32: 9,
+	Id: &objectbox.PropertyUint64{
+		Property: &objectbox.Property{
+			Id: 1,
+		},
+	},
+	Date: &objectbox.PropertyInt64{
+		Property: &objectbox.Property{
+			Id: 2,
+		},
+	},
+	EventId: &objectbox.PropertyUint64{
+		Property: &objectbox.Property{
+			Id: 3,
+		},
+	},
+	ValueName: &objectbox.PropertyString{
+		Property: &objectbox.Property{
+			Id: 4,
+		},
+	},
+	ValueString: &objectbox.PropertyString{
+		Property: &objectbox.Property{
+			Id: 5,
+		},
+	},
+	ValueInteger: &objectbox.PropertyInt64{
+		Property: &objectbox.Property{
+			Id: 6,
+		},
+	},
+	ValueFloating: &objectbox.PropertyFloat64{
+		Property: &objectbox.Property{
+			Id: 7,
+		},
+	},
+	ValueInt32: &objectbox.PropertyInt32{
+		Property: &objectbox.Property{
+			Id: 8,
+		},
+	},
+	ValueFloating32: &objectbox.PropertyFloat32{
+		Property: &objectbox.Property{
+			Id: 9,
+		},
+	},
 }
 
 func (reading_EntityInfo) AddToModel(model *objectbox.Model) {

@@ -23,56 +23,59 @@ package objectbox
 */
 import "C"
 
-// WIP: Query interface is subject to change with full ObjectBox queries support
+// Query provides a way to search stored objects
 type Query struct {
 	typeId    TypeId
 	objectBox *ObjectBox
 	condition Condition
-}
 
-// builds query JiT when it's needed for execution
-func (query *Query) build() (*cQuery, error) {
-	qb := query.objectBox.newQueryBuilder(query.typeId)
-	defer qb.Close()
-
-	var err error
-	if _, err = query.condition.build(qb); err != nil {
-		return nil, err
-	}
-
-	if cquery, err := qb.build(); err != nil {
-		return nil, err
-	} else {
-		return &cQuery{cquery}, nil
-	}
+	cQuery *C.OBX_query
 }
 
 func (query *Query) Find() (objects interface{}, err error) {
-	cQuery, err := query.build()
-	if err != nil {
+	if err = query.cBuild(); err != nil {
 		return nil, err
 	} else {
-		defer cQuery.close()
+		defer query.cFree()
 	}
 
 	err = query.objectBox.runWithCursor(query.typeId, true, func(cursor *cursor) error {
 		var errInner error
-		objects, errInner = cQuery.find(cursor)
+		objects, errInner = query.find(cursor)
 		return errInner
 	})
 
 	return
 }
 
-// WIP: Query interface is subject to change with full ObjectBox queries support
-type cQuery struct {
-	cquery *C.OBX_query
+func (query *Query) Describe() (string, error) {
+	if err := query.cBuild(); err != nil {
+		return "", err
+	} else {
+		defer query.cFree()
+	}
+
+	return "", nil
 }
 
-func (query *cQuery) close() (err error) {
-	if query.cquery != nil {
-		rc := C.obx_query_close(query.cquery)
-		query.cquery = nil
+// builds query JiT when it's needed for execution
+func (query *Query) cBuild() error {
+	qb := query.objectBox.newQueryBuilder(query.typeId)
+	defer qb.Close()
+
+	var err error
+	if _, err = query.condition.build(qb); err != nil {
+		return err
+	}
+
+	query.cQuery, err = qb.build()
+	return err
+}
+
+func (query *Query) cFree() (err error) {
+	if query.cQuery != nil {
+		rc := C.obx_query_close(query.cQuery)
+		query.cQuery = nil
 		if rc != 0 {
 			err = createError()
 		}
@@ -80,7 +83,7 @@ func (query *cQuery) close() (err error) {
 	return
 }
 
-func (query *cQuery) find(cursor *cursor) (slice interface{}, err error) {
+func (query *Query) find(cursor *cursor) (slice interface{}, err error) {
 	bytesArray, err := query.findBytes(cursor)
 	if err != nil {
 		return
@@ -89,8 +92,8 @@ func (query *cQuery) find(cursor *cursor) (slice interface{}, err error) {
 	return cursor.bytesArrayToObjects(bytesArray), nil
 }
 
-func (query *cQuery) findBytes(cursor *cursor) (*BytesArray, error) {
-	cBytesArray := C.obx_query_find(query.cquery, cursor.cursor)
+func (query *Query) findBytes(cursor *cursor) (*BytesArray, error) {
+	cBytesArray := C.obx_query_find(query.cQuery, cursor.cursor)
 	if cBytesArray == nil {
 		return nil, createError()
 	}

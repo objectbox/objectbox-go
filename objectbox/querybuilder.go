@@ -43,15 +43,13 @@ import (
 	"unsafe"
 )
 
-// Allows construction of queries; just check newQueryBuilder.Error or err from Build()
-//
-// WIP: Query interface is subject to change with full ObjectBox queries support
+// Allows construction of queries; just check queryBuilder.Error or err from Build()
 type queryBuilder struct {
 	objectBox *ObjectBox
 	cqb       *C.OBX_query_builder
 	typeId    TypeId
 
-	// Any error that occurred during a call to newQueryBuilder or its construction
+	// The first error that occurred during a any of the calls on the query builder
 	Err error
 }
 

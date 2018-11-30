@@ -142,3 +142,21 @@ func (box *TaskBox) GetAll() ([]*Task, error) {
 func (box *TaskBox) Remove(object *Task) (err error) {
 	return box.Box.Remove(object.Id)
 }
+
+func (box *TaskBox) Query(conditions ...objectbox.Condition) *TaskQuery {
+	return &TaskQuery{
+		box.Box.Query(conditions...),
+	}
+}
+
+type TaskQuery struct {
+	*objectbox.Query
+}
+
+func (query *TaskQuery) Find() ([]*Task, error) {
+	objects, err := query.Query.Find()
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*Task), nil
+}

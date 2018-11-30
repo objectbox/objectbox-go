@@ -19,10 +19,8 @@ package objectbox_test
 import (
 	"testing"
 
-	"github.com/objectbox/objectbox-go/test/model"
-
-	"github.com/objectbox/objectbox-go/objectbox"
 	"github.com/objectbox/objectbox-go/test/assert"
+	"github.com/objectbox/objectbox-go/test/model"
 )
 
 // tests all queries using the Describe method which serializes the query to string
@@ -45,7 +43,7 @@ func TestQueryDescribe(t *testing.T) {
 		// using short variable names because the IDE auto-fills (displays) them in the value initialization
 		c int    // expected Query.Count()
 		d string // expected Query.Describe()
-		q *objectbox.Query
+		q *model.EntityQuery
 	}{
 		{1, `String == "Val-1"`, box.Query(E.String.Equal(e.String, true))},
 		{2, `String == "Val-1"`, box.Query(E.String.Equal(e.String, false))},
@@ -229,8 +227,8 @@ func TestQueryDescribe(t *testing.T) {
 			assert.Failf(t, "case #%d {%s} - %s", i, desc, err)
 		} else if data == nil {
 			assert.Failf(t, "case #%d {%s} - data is nil", i, desc)
-		} else if len(data.([]*model.Entity)) != count {
-			assert.Failf(t, "case #%d {%s} - expected %d, but got %d len(data)", i, desc, count, len(data.([]*model.Entity)))
+		} else if len(data) != count {
+			assert.Failf(t, "case #%d {%s} - expected %d, but got %d len(data)", i, desc, count, len(data))
 		}
 
 	}

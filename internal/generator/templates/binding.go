@@ -185,4 +185,22 @@ func (box *{{$entity.Name}}Box) Remove(object *{{$entity.Name}}) (err error) {
 	return box.Box.Remove(object.{{$entity.IdProperty.Name}})
 }
 
+func (box *{{$entity.Name}}Box) Query(conditions ...objectbox.Condition) *{{$entity.Name}}Query {
+	return &{{$entity.Name}}Query{
+		box.Box.Query(conditions...),
+	}
+}
+
+type {{$entity.Name}}Query struct {
+	*objectbox.Query
+}
+
+func (query *{{$entity.Name}}Query) Find() ([]*{{$entity.Name}}, error) {
+	objects, err := query.Query.Find()
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*{{$entity.Name}}), nil
+}
+
 {{end -}}`))

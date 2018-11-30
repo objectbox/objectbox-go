@@ -151,3 +151,21 @@ func (box *EntityBox) GetAll() ([]*Entity, error) {
 func (box *EntityBox) Remove(object *Entity) (err error) {
 	return box.Box.Remove(object.Id)
 }
+
+func (box *EntityBox) Query(conditions ...objectbox.Condition) *EntityQuery {
+	return &EntityQuery{
+		box.Box.Query(conditions...),
+	}
+}
+
+type EntityQuery struct {
+	*objectbox.Query
+}
+
+func (query *EntityQuery) Find() ([]*Entity, error) {
+	objects, err := query.Query.Find()
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*Entity), nil
+}

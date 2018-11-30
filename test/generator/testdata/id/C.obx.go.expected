@@ -122,3 +122,21 @@ func (box *CBox) GetAll() ([]*C, error) {
 func (box *CBox) Remove(object *C) (err error) {
 	return box.Box.Remove(object.identifier)
 }
+
+func (box *CBox) Query(conditions ...objectbox.Condition) *CQuery {
+	return &CQuery{
+		box.Box.Query(conditions...),
+	}
+}
+
+type CQuery struct {
+	*objectbox.Query
+}
+
+func (query *CQuery) Find() ([]*C, error) {
+	objects, err := query.Query.Find()
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*C), nil
+}

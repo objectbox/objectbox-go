@@ -156,6 +156,24 @@ func (box *EventBox) Remove(object *Event) (err error) {
 	return box.Box.Remove(object.Id)
 }
 
+func (box *EventBox) Query(conditions ...objectbox.Condition) *EventQuery {
+	return &EventQuery{
+		box.Box.Query(conditions...),
+	}
+}
+
+type EventQuery struct {
+	*objectbox.Query
+}
+
+func (query *EventQuery) Find() ([]*Event, error) {
+	objects, err := query.Query.Find()
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*Event), nil
+}
+
 type reading_EntityInfo struct {
 	Id  objectbox.TypeId
 	Uid uint64
@@ -336,4 +354,22 @@ func (box *ReadingBox) GetAll() ([]*Reading, error) {
 
 func (box *ReadingBox) Remove(object *Reading) (err error) {
 	return box.Box.Remove(object.Id)
+}
+
+func (box *ReadingBox) Query(conditions ...objectbox.Condition) *ReadingQuery {
+	return &ReadingQuery{
+		box.Box.Query(conditions...),
+	}
+}
+
+type ReadingQuery struct {
+	*objectbox.Query
+}
+
+func (query *ReadingQuery) Find() ([]*Reading, error) {
+	objects, err := query.Query.Find()
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*Reading), nil
 }

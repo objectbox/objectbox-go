@@ -124,3 +124,21 @@ func (box *ABox) GetAll() ([]*A, error) {
 func (box *ABox) Remove(object *A) (err error) {
 	return box.Box.Remove(object.Id)
 }
+
+func (box *ABox) Query(conditions ...objectbox.Condition) *AQuery {
+	return &AQuery{
+		box.Box.Query(conditions...),
+	}
+}
+
+type AQuery struct {
+	*objectbox.Query
+}
+
+func (query *AQuery) Find() ([]*A, error) {
+	objects, err := query.Query.Find()
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*A), nil
+}

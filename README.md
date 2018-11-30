@@ -59,13 +59,6 @@ Docs
 Documentation is still on-going work.
 To get started, please have a look at the [examples](examples) directory and [golang.objectbox.io](https://golang.objectbox.io).
 
-Current state
--------------
-As this is still an early version of the Go APIs, they are not as convenient as the [Java/Kotlin APIs](https://docs.objectbox.io/),
-which deeply integrate into the language using e.g. [@Entity annotations](https://docs.objectbox.io/entity-annotations).
-
-A better language integration could be build based on reflection, code generation, or a combination of both.
-
 License
 -------
     Copyright 2018 ObjectBox Ltd. All rights reserved.

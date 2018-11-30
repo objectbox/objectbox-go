@@ -152,6 +152,76 @@ func (property PropertyInt64) NotIn(values ...int64) Condition {
 	}
 }
 
+type PropertyInt struct {
+	*Property
+}
+
+func (property PropertyInt) Equal(value int) Condition {
+	return &ConditionClosure{
+		func(qb *queryBuilder) (conditionId, error) {
+			return qb.IntEqual(property.Id, int64(value))
+		},
+	}
+}
+
+func (property PropertyInt) NotEqual(value int) Condition {
+	return &ConditionClosure{
+		func(qb *queryBuilder) (conditionId, error) {
+			return qb.IntNotEqual(property.Id, int64(value))
+		},
+	}
+}
+
+func (property PropertyInt) GreaterThan(value int) Condition {
+	return &ConditionClosure{
+		func(qb *queryBuilder) (conditionId, error) {
+			return qb.IntGreater(property.Id, int64(value))
+		},
+	}
+}
+
+func (property PropertyInt) LessThan(value int) Condition {
+	return &ConditionClosure{
+		func(qb *queryBuilder) (conditionId, error) {
+			return qb.IntLess(property.Id, int64(value))
+		},
+	}
+}
+
+func (property PropertyInt) Between(a, b int) Condition {
+	return &ConditionClosure{
+		func(qb *queryBuilder) (conditionId, error) {
+			return qb.IntBetween(property.Id, int64(a), int64(b))
+		},
+	}
+}
+
+func (property PropertyInt) int64Slice(values []int) []int64 {
+	result := make([]int64, len(values))
+
+	for i, v := range values {
+		result[i] = int64(v)
+	}
+
+	return result
+}
+
+func (property PropertyInt) In(values ...int) Condition {
+	return &ConditionClosure{
+		func(qb *queryBuilder) (conditionId, error) {
+			return qb.Int64In(property.Id, property.int64Slice(values))
+		},
+	}
+}
+
+func (property PropertyInt) NotIn(values ...int) Condition {
+	return &ConditionClosure{
+		func(qb *queryBuilder) (conditionId, error) {
+			return qb.Int64NotIn(property.Id, property.int64Slice(values))
+		},
+	}
+}
+
 type PropertyUint64 struct {
 	*Property
 }
@@ -172,29 +242,6 @@ func (property PropertyUint64) NotEqual(value uint64) Condition {
 	}
 }
 
-func (property PropertyUint64) GreaterThan(value uint64) Condition {
-	return &ConditionClosure{
-		func(qb *queryBuilder) (conditionId, error) {
-			return qb.IntGreater(property.Id, int64(value))
-		},
-	}
-}
-
-func (property PropertyUint64) LessThan(value uint64) Condition {
-	return &ConditionClosure{
-		func(qb *queryBuilder) (conditionId, error) {
-			return qb.IntLess(property.Id, int64(value))
-		},
-	}
-}
-
-func (property PropertyUint64) Between(a, b uint64) Condition {
-	return &ConditionClosure{
-		func(qb *queryBuilder) (conditionId, error) {
-			return qb.IntBetween(property.Id, int64(a), int64(b))
-		},
-	}
-}
 func (property PropertyUint64) int64Slice(values []uint64) []int64 {
 	result := make([]int64, len(values))
 
@@ -217,6 +264,122 @@ func (property PropertyUint64) NotIn(values ...uint64) Condition {
 	return &ConditionClosure{
 		func(qb *queryBuilder) (conditionId, error) {
 			return qb.Int64NotIn(property.Id, property.int64Slice(values))
+		},
+	}
+}
+
+type PropertyUint struct {
+	*Property
+}
+
+func (property PropertyUint) Equal(value uint) Condition {
+	return &ConditionClosure{
+		func(qb *queryBuilder) (conditionId, error) {
+			return qb.IntEqual(property.Id, int64(value))
+		},
+	}
+}
+
+func (property PropertyUint) NotEqual(value uint) Condition {
+	return &ConditionClosure{
+		func(qb *queryBuilder) (conditionId, error) {
+			return qb.IntNotEqual(property.Id, int64(value))
+		},
+	}
+}
+
+func (property PropertyUint) int64Slice(values []uint) []int64 {
+	result := make([]int64, len(values))
+
+	for i, v := range values {
+		result[i] = int64(v)
+	}
+
+	return result
+}
+
+func (property PropertyUint) In(values ...uint) Condition {
+	return &ConditionClosure{
+		func(qb *queryBuilder) (conditionId, error) {
+			return qb.Int64In(property.Id, property.int64Slice(values))
+		},
+	}
+}
+
+func (property PropertyUint) NotIn(values ...uint) Condition {
+	return &ConditionClosure{
+		func(qb *queryBuilder) (conditionId, error) {
+			return qb.Int64NotIn(property.Id, property.int64Slice(values))
+		},
+	}
+}
+
+type PropertyRune struct {
+	*Property
+}
+
+func (property PropertyRune) Equal(value rune) Condition {
+	return &ConditionClosure{
+		func(qb *queryBuilder) (conditionId, error) {
+			return qb.IntEqual(property.Id, int64(value))
+		},
+	}
+}
+
+func (property PropertyRune) NotEqual(value rune) Condition {
+	return &ConditionClosure{
+		func(qb *queryBuilder) (conditionId, error) {
+			return qb.IntNotEqual(property.Id, int64(value))
+		},
+	}
+}
+
+func (property PropertyRune) GreaterThan(value rune) Condition {
+	return &ConditionClosure{
+		func(qb *queryBuilder) (conditionId, error) {
+			return qb.IntGreater(property.Id, int64(value))
+		},
+	}
+}
+
+func (property PropertyRune) LessThan(value rune) Condition {
+	return &ConditionClosure{
+		func(qb *queryBuilder) (conditionId, error) {
+			return qb.IntLess(property.Id, int64(value))
+		},
+	}
+}
+
+func (property PropertyRune) Between(a, b rune) Condition {
+	return &ConditionClosure{
+		func(qb *queryBuilder) (conditionId, error) {
+			return qb.IntBetween(property.Id, int64(a), int64(b))
+		},
+	}
+}
+
+func (property PropertyRune) int32Slice(values []rune) []int32 {
+	result := make([]int32, len(values))
+
+	for i, v := range values {
+		result[i] = int32(v)
+	}
+
+	return result
+}
+
+func (property PropertyRune) In(values ...rune) Condition {
+	return &ConditionClosure{
+		func(qb *queryBuilder) (conditionId, error) {
+			return qb.Int32In(property.Id, property.int32Slice(values))
+		},
+	}
+}
+
+func (property PropertyRune) NotIn(values ...rune) Condition {
+	return &ConditionClosure{
+		func(qb *queryBuilder) (conditionId, error) {
+			return qb.Int32NotIn(property.Id, property.int32Slice(values))
 		},
 	}
 }
@@ -351,32 +514,180 @@ func (property PropertyUint32) NotIn(values ...uint32) Condition {
 	}
 }
 
-type PropertyRune struct {
+type PropertyInt16 struct {
 	*Property
 }
 
-type PropertyInt16 struct {
-	*Property
+func (property PropertyInt16) Equal(value int16) Condition {
+	return &ConditionClosure{
+		func(qb *queryBuilder) (conditionId, error) {
+			return qb.IntEqual(property.Id, int64(value))
+		},
+	}
+}
+
+func (property PropertyInt16) NotEqual(value int16) Condition {
+	return &ConditionClosure{
+		func(qb *queryBuilder) (conditionId, error) {
+			return qb.IntNotEqual(property.Id, int64(value))
+		},
+	}
+}
+
+func (property PropertyInt16) GreaterThan(value int16) Condition {
+	return &ConditionClosure{
+		func(qb *queryBuilder) (conditionId, error) {
+			return qb.IntGreater(property.Id, int64(value))
+		},
+	}
+}
+
+func (property PropertyInt16) LessThan(value int16) Condition {
+	return &ConditionClosure{
+		func(qb *queryBuilder) (conditionId, error) {
+			return qb.IntLess(property.Id, int64(value))
+		},
+	}
+}
+
+func (property PropertyInt16) Between(a, b int16) Condition {
+	return &ConditionClosure{
+		func(qb *queryBuilder) (conditionId, error) {
+			return qb.IntBetween(property.Id, int64(a), int64(b))
+		},
+	}
 }
 
 type PropertyUint16 struct {
 	*Property
 }
 
+func (property PropertyUint16) Equal(value uint16) Condition {
+	return &ConditionClosure{
+		func(qb *queryBuilder) (conditionId, error) {
+			return qb.IntEqual(property.Id, int64(value))
+		},
+	}
+}
+
+func (property PropertyUint16) NotEqual(value uint16) Condition {
+	return &ConditionClosure{
+		func(qb *queryBuilder) (conditionId, error) {
+			return qb.IntNotEqual(property.Id, int64(value))
+		},
+	}
+}
+
+func (property PropertyUint16) GreaterThan(value uint16) Condition {
+	return &ConditionClosure{
+		func(qb *queryBuilder) (conditionId, error) {
+			return qb.IntGreater(property.Id, int64(value))
+		},
+	}
+}
+
+func (property PropertyUint16) LessThan(value uint16) Condition {
+	return &ConditionClosure{
+		func(qb *queryBuilder) (conditionId, error) {
+			return qb.IntLess(property.Id, int64(value))
+		},
+	}
+}
+
+func (property PropertyUint16) Between(a, b uint16) Condition {
+	return &ConditionClosure{
+		func(qb *queryBuilder) (conditionId, error) {
+			return qb.IntBetween(property.Id, int64(a), int64(b))
+		},
+	}
+}
+
 type PropertyInt8 struct {
 	*Property
+}
+
+func (property PropertyInt8) Equal(value int8) Condition {
+	return &ConditionClosure{
+		func(qb *queryBuilder) (conditionId, error) {
+			return qb.IntEqual(property.Id, int64(value))
+		},
+	}
+}
+
+func (property PropertyInt8) NotEqual(value int8) Condition {
+	return &ConditionClosure{
+		func(qb *queryBuilder) (conditionId, error) {
+			return qb.IntNotEqual(property.Id, int64(value))
+		},
+	}
+}
+
+func (property PropertyInt8) GreaterThan(value int8) Condition {
+	return &ConditionClosure{
+		func(qb *queryBuilder) (conditionId, error) {
+			return qb.IntGreater(property.Id, int64(value))
+		},
+	}
+}
+
+func (property PropertyInt8) LessThan(value int8) Condition {
+	return &ConditionClosure{
+		func(qb *queryBuilder) (conditionId, error) {
+			return qb.IntLess(property.Id, int64(value))
+		},
+	}
+}
+
+func (property PropertyInt8) Between(a, b int8) Condition {
+	return &ConditionClosure{
+		func(qb *queryBuilder) (conditionId, error) {
+			return qb.IntBetween(property.Id, int64(a), int64(b))
+		},
+	}
 }
 
 type PropertyUint8 struct {
 	*Property
 }
 
-type PropertyInt struct {
-	*Property
+func (property PropertyUint8) Equal(value uint8) Condition {
+	return &ConditionClosure{
+		func(qb *queryBuilder) (conditionId, error) {
+			return qb.IntEqual(property.Id, int64(value))
+		},
+	}
 }
 
-type PropertyUint struct {
-	*Property
+func (property PropertyUint8) NotEqual(value uint8) Condition {
+	return &ConditionClosure{
+		func(qb *queryBuilder) (conditionId, error) {
+			return qb.IntNotEqual(property.Id, int64(value))
+		},
+	}
+}
+
+func (property PropertyUint8) GreaterThan(value uint8) Condition {
+	return &ConditionClosure{
+		func(qb *queryBuilder) (conditionId, error) {
+			return qb.IntGreater(property.Id, int64(value))
+		},
+	}
+}
+
+func (property PropertyUint8) LessThan(value uint8) Condition {
+	return &ConditionClosure{
+		func(qb *queryBuilder) (conditionId, error) {
+			return qb.IntLess(property.Id, int64(value))
+		},
+	}
+}
+
+func (property PropertyUint8) Between(a, b uint8) Condition {
+	return &ConditionClosure{
+		func(qb *queryBuilder) (conditionId, error) {
+			return qb.IntBetween(property.Id, int64(a), int64(b))
+		},
+	}
 }
 
 type PropertyFloat64 struct {

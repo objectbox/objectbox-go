@@ -37,7 +37,7 @@ var Entity_ = struct {
 	Rune       *objectbox.PropertyRune
 	Float32    *objectbox.PropertyFloat32
 	Float64    *objectbox.PropertyFloat64
-	Date       *objectbox.PropertyUint64
+	Date       *objectbox.PropertyInt64
 }{
 	Id: &objectbox.PropertyUint64{
 		Property: &objectbox.Property{
@@ -129,7 +129,7 @@ var Entity_ = struct {
 			Id: 18,
 		},
 	},
-	Date: &objectbox.PropertyUint64{
+	Date: &objectbox.PropertyInt64{
 		Property: &objectbox.Property{
 			Id: 19,
 		},
@@ -140,13 +140,13 @@ func (entity_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("Entity", 1, 3022148985475790732)
 	model.Property("Id", objectbox.PropertyType_Long, 1, 1213346202559552829)
 	model.PropertyFlags(objectbox.PropertyFlags_ID)
-	model.Property("Int", objectbox.PropertyType_Int, 2, 6609825840127351046)
-	model.Property("Int8", objectbox.PropertyType_Short, 3, 741904540265547276)
+	model.Property("Int", objectbox.PropertyType_Long, 2, 6609825840127351046)
+	model.Property("Int8", objectbox.PropertyType_Byte, 3, 741904540265547276)
 	model.Property("Int16", objectbox.PropertyType_Short, 4, 2102961483425256790)
 	model.Property("Int32", objectbox.PropertyType_Int, 5, 5086065890743931723)
 	model.Property("Int64", objectbox.PropertyType_Long, 6, 7993850425898343586)
-	model.Property("Uint", objectbox.PropertyType_Int, 7, 993618338451248101)
-	model.Property("Uint8", objectbox.PropertyType_Short, 8, 8794162191867215541)
+	model.Property("Uint", objectbox.PropertyType_Long, 7, 993618338451248101)
+	model.Property("Uint8", objectbox.PropertyType_Byte, 8, 8794162191867215541)
 	model.Property("Uint16", objectbox.PropertyType_Short, 9, 8820932096807845950)
 	model.Property("Uint32", objectbox.PropertyType_Int, 10, 6060435196424462358)
 	model.Property("Uint64", objectbox.PropertyType_Long, 11, 6159011311237949479)
@@ -178,12 +178,12 @@ func (entity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, i
 	// build the FlatBuffers object
 	fbb.StartObject(19)
 	fbb.PrependUint64Slot(0, id, 0)
-	fbb.PrependInt32Slot(1, int32(obj.Int), 0)
+	fbb.PrependInt64Slot(1, int64(obj.Int), 0)
 	fbb.PrependInt8Slot(2, obj.Int8, 0)
 	fbb.PrependInt16Slot(3, obj.Int16, 0)
 	fbb.PrependInt32Slot(4, obj.Int32, 0)
 	fbb.PrependInt64Slot(5, obj.Int64, 0)
-	fbb.PrependUint32Slot(6, uint32(obj.Uint), 0)
+	fbb.PrependUint64Slot(6, uint64(obj.Uint), 0)
 	fbb.PrependUint8Slot(7, obj.Uint8, 0)
 	fbb.PrependUint16Slot(8, obj.Uint16, 0)
 	fbb.PrependUint32Slot(9, obj.Uint32, 0)
@@ -195,7 +195,7 @@ func (entity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, i
 	fbb.PrependInt32Slot(15, obj.Rune, 0)
 	fbb.PrependFloat32Slot(16, obj.Float32, 0)
 	fbb.PrependFloat64Slot(17, obj.Float64, 0)
-	fbb.PrependUint64Slot(18, obj.Date, 0)
+	fbb.PrependInt64Slot(18, obj.Date, 0)
 }
 
 func (entity_EntityInfo) ToObject(bytes []byte) interface{} {
@@ -206,12 +206,12 @@ func (entity_EntityInfo) ToObject(bytes []byte) interface{} {
 
 	return &Entity{
 		Id:         table.GetUint64Slot(4, 0),
-		Int:        int(table.GetUint32Slot(6, 0)),
+		Int:        int(table.GetUint64Slot(6, 0)),
 		Int8:       table.GetInt8Slot(8, 0),
 		Int16:      table.GetInt16Slot(10, 0),
 		Int32:      table.GetInt32Slot(12, 0),
 		Int64:      table.GetInt64Slot(14, 0),
-		Uint:       uint(table.GetUint32Slot(16, 0)),
+		Uint:       uint(table.GetUint64Slot(16, 0)),
 		Uint8:      table.GetUint8Slot(18, 0),
 		Uint16:     table.GetUint16Slot(20, 0),
 		Uint32:     table.GetUint32Slot(22, 0),
@@ -223,7 +223,7 @@ func (entity_EntityInfo) ToObject(bytes []byte) interface{} {
 		Rune:       rune(table.GetInt32Slot(34, 0)),
 		Float32:    table.GetFloat32Slot(36, 0),
 		Float64:    table.GetFloat64Slot(38, 0),
-		Date:       table.GetUint64Slot(40, 0),
+		Date:       table.GetInt64Slot(40, 0),
 	}
 }
 

@@ -37,7 +37,7 @@ var Typeful_ = struct {
 	Rune       *objectbox.PropertyRune
 	Float32    *objectbox.PropertyFloat32
 	Float64    *objectbox.PropertyFloat64
-	Date       *objectbox.PropertyUint64
+	Date       *objectbox.PropertyInt64
 }{
 	Id: &objectbox.PropertyUint64{
 		Property: &objectbox.Property{
@@ -129,7 +129,7 @@ var Typeful_ = struct {
 			Id: 18,
 		},
 	},
-	Date: &objectbox.PropertyUint64{
+	Date: &objectbox.PropertyInt64{
 		Property: &objectbox.Property{
 			Id: 19,
 		},
@@ -195,7 +195,7 @@ func (typeful_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, 
 	fbb.PrependInt32Slot(15, obj.Rune, 0)
 	fbb.PrependFloat32Slot(16, obj.Float32, 0)
 	fbb.PrependFloat64Slot(17, obj.Float64, 0)
-	fbb.PrependUint64Slot(18, obj.Date, 0)
+	fbb.PrependInt64Slot(18, obj.Date, 0)
 }
 
 func (typeful_EntityInfo) ToObject(bytes []byte) interface{} {
@@ -223,7 +223,7 @@ func (typeful_EntityInfo) ToObject(bytes []byte) interface{} {
 		Rune:       rune(table.GetInt32Slot(34, 0)),
 		Float32:    table.GetFloat32Slot(36, 0),
 		Float64:    table.GetFloat64Slot(38, 0),
-		Date:       table.GetUint64Slot(40, 0),
+		Date:       table.GetInt64Slot(40, 0),
 	}
 }
 

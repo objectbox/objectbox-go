@@ -19,25 +19,46 @@ package objectbox_test
 import (
 	"testing"
 
+	"github.com/objectbox/objectbox-go/test/model"
+
 	"github.com/objectbox/objectbox-go/objectbox"
 	"github.com/objectbox/objectbox-go/test/assert"
-	"github.com/objectbox/objectbox-go/test/model/iot"
 )
 
 func TestQueryConditions(t *testing.T) {
-	objectBox := iot.LoadEmptyTestObjectBox()
-	defer objectBox.Close()
-	box := iot.BoxForEvent(objectBox)
-	defer box.Close()
+	env := model.NewTestEnv(t)
+	defer env.Close()
+
+	var box = env.Box
+
+	// let's alias the entity to make the test cases easier to read
+	var E = model.Entity_
 
 	testCases := []struct {
 		expected string
 		query    *objectbox.Query
 	}{
-		{
-			`Device starts with "dev"`,
-			box.Query(iot.Event_.Device.StartsWith("dev", true)),
-		},
+		// string
+		{`String == "val"`, box.Query(E.String.Equal("val", true))},
+		{`String == "val"`, box.Query(E.String.Equal("val", false))},
+		{`String != "val"`, box.Query(E.String.NotEqual("val", true))},
+		{`String != "val"`, box.Query(E.String.NotEqual("val", false))},
+		{`String contains "val"`, box.Query(E.String.Contains("val", true))},
+		{`String contains "val"`, box.Query(E.String.Contains("val", false))},
+		{`String starts with "val"`, box.Query(E.String.StartsWith("val", true))},
+		{`String starts with "val"`, box.Query(E.String.StartsWith("val", false))},
+		{`String ends with "val"`, box.Query(E.String.EndsWith("val", true))},
+		{`String ends with "val"`, box.Query(E.String.EndsWith("val", false))},
+		{`String > "val"`, box.Query(E.String.GreaterThan("val", true))},
+		{`String > "val"`, box.Query(E.String.GreaterThan("val", false))},
+		{`String >= "val"`, box.Query(E.String.GreaterOrEqual("val", true))},
+		{`String >= "val"`, box.Query(E.String.GreaterOrEqual("val", false))},
+		{`String < "val"`, box.Query(E.String.LessThan("val", true))},
+		{`String < "val"`, box.Query(E.String.LessThan("val", false))},
+		{`String <= "val"`, box.Query(E.String.LessOrEqual("val", true))},
+		{`String <= "val"`, box.Query(E.String.LessOrEqual("val", false))},
+		{`String in ["val1", "val2"]`, box.Query(E.String.In(true, "val1", "val2"))},
+		{`String in ["val1", "val2"]`, box.Query(E.String.In(false, "val1", "val2"))},
 	}
 
 	for i, tc := range testCases {
@@ -115,7 +136,7 @@ func TestQueryConditions(t *testing.T) {
 //	qb := objectBox.QueryBuilder(iot.EventBinding.Id)
 //	assert.NoErr(t, qb.Err)
 //	defer qb.Close()
-//	qb.StringEq(iot.Event_.Device, "device 2", false)
+//	qb.StringEqual(iot.Event_.Device, "device 2", false)
 //	query, err := qb.Build()
 //	assert.NoErr(t, err)
 //	defer query.Close()
@@ -235,7 +256,7 @@ func TestQueryConditions(t *testing.T) {
 //	qb := objectBox.QueryBuilder(iot.EventBinding.Id)
 //	assert.NoErr(t, qb.Err)
 //	defer qb.Close()
-//	qb.StringNotEq(iot.Event_.Device, "device 3", false)
+//	qb.StringNotEqual(iot.Event_.Device, "device 3", false)
 //	query, err := qb.Build()
 //	assert.NoErr(t, err)
 //	defer query.Close()

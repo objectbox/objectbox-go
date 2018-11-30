@@ -65,7 +65,7 @@ func (qb *queryBuilder) Close() error {
 	return nil
 }
 
-func (qb *queryBuilder) StringEq(propertyId TypeId, value string, caseSensitive bool) (conditionId, error) {
+func (qb *queryBuilder) StringEqual(propertyId TypeId, value string, caseSensitive bool) (conditionId, error) {
 	if qb.Err != nil {
 		return 0, qb.Err
 	}
@@ -150,7 +150,7 @@ func (qb *queryBuilder) Null(propertyId TypeId) (conditionId, error) {
 	return conditionId(cid), qb.Err
 }
 
-func (qb *queryBuilder) StringNotEq(propertyId TypeId, value string, caseSensitive bool) (conditionId, error) {
+func (qb *queryBuilder) StringNotEqual(propertyId TypeId, value string, caseSensitive bool) (conditionId, error) {
 	if qb.Err != nil {
 		return 0, qb.Err
 	}

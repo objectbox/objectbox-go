@@ -34,31 +34,83 @@ func TestQueryConditions(t *testing.T) {
 	// let's alias the entity to make the test cases easier to read
 	var E = model.Entity_
 
+	// define some data for the tests
+	var e = model.Entity{
+		Int:        42,
+		Int8:       42,
+		Int16:      42,
+		Int32:      42,
+		Int64:      42,
+		Uint:       42,
+		Uint8:      42,
+		Uint16:     42,
+		Uint32:     42,
+		Uint64:     42,
+		Bool:       true,
+		String:     "val",
+		Byte:       42,
+		ByteVector: []byte{1, 1, 2, 3, 5, 8, 13},
+		Rune:       42,
+		Float32:    42,
+		Float64:    42,
+	}
+
 	testCases := []struct {
 		expected string
 		query    *objectbox.Query
 	}{
-		// string
-		{`String == "val"`, box.Query(E.String.Equal("val", true))},
-		{`String == "val"`, box.Query(E.String.Equal("val", false))},
-		{`String != "val"`, box.Query(E.String.NotEqual("val", true))},
-		{`String != "val"`, box.Query(E.String.NotEqual("val", false))},
-		{`String contains "val"`, box.Query(E.String.Contains("val", true))},
-		{`String contains "val"`, box.Query(E.String.Contains("val", false))},
-		{`String starts with "val"`, box.Query(E.String.StartsWith("val", true))},
-		{`String starts with "val"`, box.Query(E.String.StartsWith("val", false))},
-		{`String ends with "val"`, box.Query(E.String.EndsWith("val", true))},
-		{`String ends with "val"`, box.Query(E.String.EndsWith("val", false))},
-		{`String > "val"`, box.Query(E.String.GreaterThan("val", true))},
-		{`String > "val"`, box.Query(E.String.GreaterThan("val", false))},
-		{`String >= "val"`, box.Query(E.String.GreaterOrEqual("val", true))},
-		{`String >= "val"`, box.Query(E.String.GreaterOrEqual("val", false))},
-		{`String < "val"`, box.Query(E.String.LessThan("val", true))},
-		{`String < "val"`, box.Query(E.String.LessThan("val", false))},
-		{`String <= "val"`, box.Query(E.String.LessOrEqual("val", true))},
-		{`String <= "val"`, box.Query(E.String.LessOrEqual("val", false))},
+		{`String == "val"`, box.Query(E.String.Equal(e.String, true))},
+		{`String == "val"`, box.Query(E.String.Equal(e.String, false))},
+		{`String != "val"`, box.Query(E.String.NotEqual(e.String, true))},
+		{`String != "val"`, box.Query(E.String.NotEqual(e.String, false))},
+		{`String contains "val"`, box.Query(E.String.Contains(e.String, true))},
+		{`String contains "val"`, box.Query(E.String.Contains(e.String, false))},
+		{`String starts with "val"`, box.Query(E.String.StartsWith(e.String, true))},
+		{`String starts with "val"`, box.Query(E.String.StartsWith(e.String, false))},
+		{`String ends with "val"`, box.Query(E.String.EndsWith(e.String, true))},
+		{`String ends with "val"`, box.Query(E.String.EndsWith(e.String, false))},
+		{`String > "val"`, box.Query(E.String.GreaterThan(e.String, true))},
+		{`String > "val"`, box.Query(E.String.GreaterThan(e.String, false))},
+		{`String >= "val"`, box.Query(E.String.GreaterOrEqual(e.String, true))},
+		{`String >= "val"`, box.Query(E.String.GreaterOrEqual(e.String, false))},
+		{`String < "val"`, box.Query(E.String.LessThan(e.String, true))},
+		{`String < "val"`, box.Query(E.String.LessThan(e.String, false))},
+		{`String <= "val"`, box.Query(E.String.LessOrEqual(e.String, true))},
+		{`String <= "val"`, box.Query(E.String.LessOrEqual(e.String, false))},
 		{`String in ["val1", "val2"]`, box.Query(E.String.In(true, "val1", "val2"))},
 		{`String in ["val1", "val2"]`, box.Query(E.String.In(false, "val1", "val2"))},
+
+		{`Int64 == 42`, box.Query(E.Int64.Equal(e.Int64))},
+		{`Int64 != 42`, box.Query(E.Int64.NotEqual(e.Int64))},
+		{`Int64 > 42`, box.Query(E.Int64.GreaterThan(e.Int64))},
+		{`Int64 < 42`, box.Query(E.Int64.LessThan(e.Int64))},
+		{`Int64 between 42 and 84`, box.Query(E.Int64.Between(e.Int64, e.Int64*2))},
+		{`Int64 in [84|42]`, box.Query(E.Int64.In(e.Int64, e.Int64*2))},
+		{`Int64 in [84|42]`, box.Query(E.Int64.NotIn(e.Int64, e.Int64*2))},
+
+		{`Uint64 == 42`, box.Query(E.Uint64.Equal(e.Uint64))},
+		{`Uint64 != 42`, box.Query(E.Uint64.NotEqual(e.Uint64))},
+		{`Uint64 > 42`, box.Query(E.Uint64.GreaterThan(e.Uint64))},
+		{`Uint64 < 42`, box.Query(E.Uint64.LessThan(e.Uint64))},
+		{`Uint64 between 42 and 84`, box.Query(E.Uint64.Between(e.Uint64, e.Uint64*2))},
+		{`Uint64 in [84|42]`, box.Query(E.Uint64.In(e.Uint64, e.Uint64*2))},
+		{`Uint64 in [84|42]`, box.Query(E.Uint64.NotIn(e.Uint64, e.Uint64*2))},
+
+		{`Int32 == 42`, box.Query(E.Int32.Equal(e.Int32))},
+		{`Int32 != 42`, box.Query(E.Int32.NotEqual(e.Int32))},
+		{`Int32 > 42`, box.Query(E.Int32.GreaterThan(e.Int32))},
+		{`Int32 < 42`, box.Query(E.Int32.LessThan(e.Int32))},
+		{`Int32 between 42 and 84`, box.Query(E.Int32.Between(e.Int32, e.Int32*2))},
+		{`Int32 in [84|42]`, box.Query(E.Int32.In(e.Int32, e.Int32*2))},
+		{`Int32 in [84|42]`, box.Query(E.Int32.NotIn(e.Int32, e.Int32*2))},
+
+		{`Uint32 == 42`, box.Query(E.Uint32.Equal(e.Uint32))},
+		{`Uint32 != 42`, box.Query(E.Uint32.NotEqual(e.Uint32))},
+		{`Uint32 > 42`, box.Query(E.Uint32.GreaterThan(e.Uint32))},
+		{`Uint32 < 42`, box.Query(E.Uint32.LessThan(e.Uint32))},
+		{`Uint32 between 42 and 84`, box.Query(E.Uint32.Between(e.Uint32, e.Uint32*2))},
+		{`Uint32 in [84|42]`, box.Query(E.Uint32.In(e.Uint32, e.Uint32*2))},
+		{`Uint32 in [84|42]`, box.Query(E.Uint32.NotIn(e.Uint32, e.Uint32*2))},
 	}
 
 	for i, tc := range testCases {

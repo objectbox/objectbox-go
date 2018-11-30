@@ -286,48 +286,46 @@ func (property *Property) setAnnotations(tags string) error {
 func (property *Property) setType(t ast.Expr) error {
 	property.GoType = types.ExprString(t)
 
-	// TODO check thoroughly
-
 	ts := property.GoType
 	if property.GoType == "string" {
 		property.ObType = "String"
 		property.FbType = "UOffsetT"
-	} else if ts == "int64" {
+	} else if ts == "int" || ts == "int64" {
 		property.ObType = "Long"
 		property.FbType = "Int64"
-	} else if ts == "uint64" {
+	} else if ts == "uint" || ts == "uint64" {
 		property.ObType = "Long"
 		property.FbType = "Uint64"
-	} else if ts == "int" || ts == "int32" || ts == "rune" {
+	} else if ts == "int32" || ts == "rune" {
 		property.ObType = "Int"
 		property.FbType = "Int32"
-	} else if ts == "uint" || ts == "uint32" {
+	} else if ts == "uint32" {
 		property.ObType = "Int"
 		property.FbType = "Uint32"
-	} else if ts == "int8" {
-		property.ObType = "Short"
-		property.FbType = "Int8"
-	} else if ts == "uint8" {
-		property.ObType = "Short"
-		property.FbType = "Uint8"
 	} else if ts == "int16" {
 		property.ObType = "Short"
 		property.FbType = "Int16"
 	} else if ts == "uint16" {
 		property.ObType = "Short"
 		property.FbType = "Uint16"
-	} else if ts == "float32" {
-		property.ObType = "Float"
-		property.FbType = "Float32"
-	} else if ts == "float64" {
-		property.ObType = "Double"
-		property.FbType = "Float64"
+	} else if ts == "int8" {
+		property.ObType = "Byte"
+		property.FbType = "Int8"
+	} else if ts == "uint8" {
+		property.ObType = "Byte"
+		property.FbType = "Uint8"
 	} else if ts == "byte" {
 		property.ObType = "Byte"
 		property.FbType = "Byte"
 	} else if ts == "[]byte" {
 		property.ObType = "ByteVector"
 		property.FbType = "UOffsetT"
+	} else if ts == "float64" {
+		property.ObType = "Double"
+		property.FbType = "Float64"
+	} else if ts == "float32" {
+		property.ObType = "Float"
+		property.FbType = "Float32"
 	} else if ts == "bool" {
 		property.ObType = "Bool"
 		property.FbType = "Bool"

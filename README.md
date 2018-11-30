@@ -13,9 +13,11 @@ ObjectBox persists your native Go structs using a simple CRUD API:
 Want details? **[Read the docs](https://golang.objectbox.io/)** or
 **[check out the API reference](https://godoc.org/github.com/objectbox/objectbox-go/objectbox)**.
 
+Latest release: [v0.7.1 (2018-11-30)](https://golang.objectbox.io/)
+
 Some features
 -------------
-* Queries 
+* Queries
 * Secondary indexes based on object properties
 * Asynchronous puts
 * Automatic model migration (no schema upgrade scripts etc.) 

@@ -51,8 +51,8 @@ func TestQueryConditions(t *testing.T) {
 		Byte:       42,
 		ByteVector: []byte{1, 1, 2, 3, 5, 8, 13},
 		Rune:       42,
-		Float32:    42,
-		Float64:    42,
+		Float32:    42.24,
+		Float64:    42.24,
 	}
 
 	testCases := []struct {
@@ -167,13 +167,46 @@ func TestQueryConditions(t *testing.T) {
 		{`Uint8 between 42 and 84`, box.Query(E.Uint8.Between(e.Uint8, e.Uint8*2))},
 		//{`Uint8 in [84|42]`, box.Query(E.Uint8.In(e.Uint8, e.Uint8*2))},
 		//{`Uint8 in [84|42]`, box.Query(E.Uint8.NotIn(e.Uint8, e.Uint8*2))},
+
+		{`Byte == 42`, box.Query(E.Byte.Equal(e.Byte))},
+		{`Byte != 42`, box.Query(E.Byte.NotEqual(e.Byte))},
+		{`Byte > 42`, box.Query(E.Byte.GreaterThan(e.Byte))},
+		{`Byte < 42`, box.Query(E.Byte.LessThan(e.Byte))},
+		{`Byte between 42 and 84`, box.Query(E.Byte.Between(e.Byte, e.Byte*2))},
+		//{`Byte in [84|42]`, box.Query(E.Byte.In(e.Byte, e.Byte*2))},
+		//{`Byte in [84|42]`, box.Query(E.Byte.NotIn(e.Byte, e.Byte*2))},
+
+		{`Float64 > 42.240000`, box.Query(E.Float64.GreaterThan(e.Float64))},
+		{`Float64 < 42.240000`, box.Query(E.Float64.LessThan(e.Float64))},
+		{`Float64 between 42.240000 and 84.480000`, box.Query(E.Float64.Between(e.Float64, e.Float64*2))},
+
+		{`Float32 > 42.240002`, box.Query(E.Float32.GreaterThan(e.Float32))},
+		{`Float32 < 42.240002`, box.Query(E.Float32.LessThan(e.Float32))},
+		{`Float32 between 42.240002 and 84.480003`, box.Query(E.Float32.Between(e.Float32, e.Float32*2))},
+
+		{`ByteVector == `, box.Query(E.ByteVector.Equal(e.ByteVector))},
+		//{`ByteVector != `, box.Query(E.ByteVector.NotEqual(e.ByteVector))},
+		{`ByteVector >= `, box.Query(E.ByteVector.GreaterThan(e.ByteVector))},
+		{`ByteVector >= `, box.Query(E.ByteVector.GreaterOrEqual(e.ByteVector))},
+		{`ByteVector <= `, box.Query(E.ByteVector.LessThan(e.ByteVector))},
+		{`ByteVector <= `, box.Query(E.ByteVector.LessOrEqual(e.ByteVector))},
+
+		{`Bool == 1`, box.Query(E.Bool.Equal(e.Bool))},
 	}
+
+	t.Logf("Executing %d test cases", len(testCases))
 
 	for i, tc := range testCases {
 		if desc, err := tc.query.Describe(); err != nil {
-			assert.Failf(t, "error on %d {%s} - %s", i, tc.expected, err)
+			assert.Failf(t, "error describing %d {%s} - %s", i, tc.expected, err)
 		} else {
 			assert.Eq(t, tc.expected, desc)
+		}
+
+		if data, err := tc.query.Find(); err != nil {
+			assert.Failf(t, "error executing %d {%s} - %s", i, tc.expected, err)
+		} else if data == nil {
+			assert.Failf(t, "error executing %d {%s} - data is nil", i, tc.expected)
 		}
 	}
 }

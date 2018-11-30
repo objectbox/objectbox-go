@@ -64,13 +64,13 @@ func (typeful_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("Typeful", 1, 8717895732742165505)
 	model.Property("Id", objectbox.PropertyType_Long, 1, 2259404117704393152)
 	model.PropertyFlags(objectbox.PropertyFlags_ID)
-	model.Property("Int", objectbox.PropertyType_Int, 2, 6050128673802995827)
-	model.Property("Int8", objectbox.PropertyType_Short, 3, 501233450539197794)
+	model.Property("Int", objectbox.PropertyType_Long, 2, 6050128673802995827)
+	model.Property("Int8", objectbox.PropertyType_Byte, 3, 501233450539197794)
 	model.Property("Int16", objectbox.PropertyType_Short, 4, 3390393562759376202)
 	model.Property("Int32", objectbox.PropertyType_Int, 5, 2669985732393126063)
 	model.Property("Int64", objectbox.PropertyType_Long, 6, 1774932891286980153)
-	model.Property("Uint", objectbox.PropertyType_Int, 7, 6044372234677422456)
-	model.Property("Uint8", objectbox.PropertyType_Short, 8, 8274930044578894929)
+	model.Property("Uint", objectbox.PropertyType_Long, 7, 6044372234677422456)
+	model.Property("Uint8", objectbox.PropertyType_Byte, 8, 8274930044578894929)
 	model.Property("Uint16", objectbox.PropertyType_Short, 9, 1543572285742637646)
 	model.Property("Uint32", objectbox.PropertyType_Int, 10, 2661732831099943416)
 	model.Property("Uint64", objectbox.PropertyType_Long, 11, 8325060299420976708)
@@ -102,12 +102,12 @@ func (typeful_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, 
 	// build the FlatBuffers object
 	fbb.StartObject(19)
 	fbb.PrependUint64Slot(0, id, 0)
-	fbb.PrependInt32Slot(1, int32(obj.Int), 0)
+	fbb.PrependInt64Slot(1, int64(obj.Int), 0)
 	fbb.PrependInt8Slot(2, obj.Int8, 0)
 	fbb.PrependInt16Slot(3, obj.Int16, 0)
 	fbb.PrependInt32Slot(4, obj.Int32, 0)
 	fbb.PrependInt64Slot(5, obj.Int64, 0)
-	fbb.PrependUint32Slot(6, uint32(obj.Uint), 0)
+	fbb.PrependUint64Slot(6, uint64(obj.Uint), 0)
 	fbb.PrependUint8Slot(7, obj.Uint8, 0)
 	fbb.PrependUint16Slot(8, obj.Uint16, 0)
 	fbb.PrependUint32Slot(9, obj.Uint32, 0)
@@ -130,12 +130,12 @@ func (typeful_EntityInfo) ToObject(bytes []byte) interface{} {
 
 	return &Typeful{
 		Id:         table.GetUint64Slot(4, 0),
-		Int:        int(table.GetUint32Slot(6, 0)),
+		Int:        int(table.GetUint64Slot(6, 0)),
 		Int8:       table.GetInt8Slot(8, 0),
 		Int16:      table.GetInt16Slot(10, 0),
 		Int32:      table.GetInt32Slot(12, 0),
 		Int64:      table.GetInt64Slot(14, 0),
-		Uint:       uint(table.GetUint32Slot(16, 0)),
+		Uint:       uint(table.GetUint64Slot(16, 0)),
 		Uint8:      table.GetUint8Slot(18, 0),
 		Uint16:     table.GetUint16Slot(20, 0),
 		Uint32:     table.GetUint32Slot(22, 0),

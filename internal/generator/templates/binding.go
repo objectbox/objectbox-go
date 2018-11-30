@@ -102,8 +102,8 @@ func ({{$entityNameCamel}}_EntityInfo) Flatten(object interface{}, fbb *flatbuff
         {{- if eq $property.FbType "UOffsetT"}} offset{{$property.Name}}, 0)
         {{- else if eq $property.Name $entity.IdProperty.Name}} id, 0)
         {{- else if eq $property.GoType "bool"}} obj.{{$property.Name}}, false)
-        {{- else if eq $property.GoType "int"}} int32(obj.{{$property.Name}}), 0)
-        {{- else if eq $property.GoType "uint"}} uint32(obj.{{$property.Name}}), 0)
+        {{- else if eq $property.GoType "int"}} int64(obj.{{$property.Name}}), 0)
+        {{- else if eq $property.GoType "uint"}} uint64(obj.{{$property.Name}}), 0)
         {{- else}} obj.{{$property.Name}}, 0)
         {{- end}}
     {{end -}}
@@ -118,8 +118,8 @@ func ({{$entityNameCamel}}_EntityInfo) ToObject(bytes []byte) interface{} {
 	return &{{$entity.Name}}{
 	{{- range $property := $entity.Properties}}
 		{{$property.Name}}: {{if eq $property.GoType "bool"}} table.GetBoolSlot({{$property.FbvTableOffset}}, false)
-        {{- else if eq $property.GoType "int"}} int(table.GetUint32Slot({{$property.FbvTableOffset}}, 0))
-        {{- else if eq $property.GoType "uint"}} uint(table.GetUint32Slot({{$property.FbvTableOffset}}, 0))
+        {{- else if eq $property.GoType "int"}} int(table.GetUint64Slot({{$property.FbvTableOffset}}, 0))
+        {{- else if eq $property.GoType "uint"}} uint(table.GetUint64Slot({{$property.FbvTableOffset}}, 0))
 		{{- else if eq $property.GoType "rune"}} rune(table.GetInt32Slot({{$property.FbvTableOffset}}, 0))
 		{{- else if eq $property.GoType "string"}} fbutils.GetStringSlot(table, {{$property.FbvTableOffset}})
         {{- else if eq $property.GoType "[]byte"}} fbutils.GetByteVectorSlot(table, {{$property.FbvTableOffset}})

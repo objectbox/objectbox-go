@@ -111,6 +111,15 @@ func (ob *ObjectBox) runInTxn(readOnly bool, txnFun txnFun) (err error) {
 	//fmt.Println(">>> START TX")
 	//os.Stdout.Sync()
 
+	// Defer to ensure a TX is ALWAYS closed, even in a panic
+	defer func() {
+		err2 := txn.Close()
+		if err == nil {
+			err = err2
+		}
+		runtime.UnlockOSThread()
+	}()
+
 	err = txnFun(txn)
 
 	//fmt.Println("<<< END TX")
@@ -119,11 +128,6 @@ func (ob *ObjectBox) runInTxn(readOnly bool, txnFun txnFun) (err error) {
 	if !readOnly && err == nil {
 		err = txn.Commit()
 	}
-	err2 := txn.Close()
-	if err == nil {
-		err = err2
-	}
-	runtime.UnlockOSThread()
 
 	//fmt.Println("<<< END TX Close")
 	//os.Stdout.Sync()
@@ -156,18 +160,15 @@ func (ob *ObjectBox) runWithCursor(typeId TypeId, readOnly bool, cursorFun curso
 		if err != nil {
 			return err
 		}
-		//fmt.Println(">>> START C")
-		//os.Stdout.Sync()
 
+		defer func() {
+			err2 := cursor.Close()
+			if err == nil {
+				err = err2
+			}
+		}()
 		err = cursorFun(cursor)
 
-		//fmt.Println("<<< END C")
-		//os.Stdout.Sync()
-
-		err2 := cursor.Close()
-		if err == nil {
-			err = err2
-		}
 		return err
 	})
 }

@@ -29,7 +29,7 @@ func (c_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("C", 3, 6044372234677422456)
 	model.Property("Id", objectbox.PropertyType_Long, 1, 8274930044578894929)
 	model.PropertyFlags(objectbox.PropertyFlags_ID)
-	model.Property("New", objectbox.PropertyType_Int, 3, 2661732831099943416)
+	model.Property("New", objectbox.PropertyType_Long, 3, 2661732831099943416)
 	model.EntityLastPropertyId(3, 2661732831099943416)
 }
 
@@ -48,7 +48,7 @@ func (c_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uin
 	// build the FlatBuffers object
 	fbb.StartObject(3)
 	fbb.PrependUint64Slot(0, id, 0)
-	fbb.PrependInt32Slot(2, int32(obj.New), 0)
+	fbb.PrependInt64Slot(2, int64(obj.New), 0)
 }
 
 func (c_EntityInfo) ToObject(bytes []byte) interface{} {
@@ -59,7 +59,7 @@ func (c_EntityInfo) ToObject(bytes []byte) interface{} {
 
 	return &C{
 		Id:  table.GetUint64Slot(4, 0),
-		New: int(table.GetUint32Slot(8, 0)),
+		New: int(table.GetUint64Slot(8, 0)),
 	}
 }
 

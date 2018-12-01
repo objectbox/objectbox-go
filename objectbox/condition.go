@@ -22,21 +22,21 @@ type Condition interface {
 
 type conditionId = int
 
-type ConditionClosure struct {
+type conditionClosure struct {
 	buildFun func(qb *queryBuilder) (conditionId, error)
 }
 
-func (condition *ConditionClosure) build(qb *queryBuilder) (conditionId, error) {
+func (condition *conditionClosure) build(qb *queryBuilder) (conditionId, error) {
 	return condition.buildFun(qb)
 }
 
 // Combines multiple conditions with an operator
-type ConditionCombination struct {
+type conditionCombination struct {
 	or         bool // AND by default
 	conditions []Condition
 }
 
-func (condition *ConditionCombination) build(qb *queryBuilder) (conditionId, error) {
+func (condition *conditionCombination) build(qb *queryBuilder) (conditionId, error) {
 	ids := make([]conditionId, len(condition.conditions))
 
 	for _, sub := range condition.conditions {

@@ -61,7 +61,7 @@ func (box *Box) Query(conditions ...Condition) *Query {
 		// optimize the most common case = a single condition
 		condition = conditions[0]
 	} else {
-		condition = &ConditionCombination{
+		condition = &conditionCombination{
 			conditions: conditions,
 		}
 	}

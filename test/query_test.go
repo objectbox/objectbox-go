@@ -25,12 +25,20 @@ import (
 )
 
 // tests all queries using the Describe method which serializes the query to string
-func TestQueryDescribe(t *testing.T) {
+func TestQueries(t *testing.T) {
 	env := model.NewTestEnv(t)
 	defer env.Close()
 
-	// insert 1000 entries
-	env.Populate(1000)
+	// the number of entities in the database when the queries are executed
+	// if you want to change this, you need to update all the expected numbers in the test cases below
+	const baseCount = 1000
+
+	var resetDb = func() {
+		assert.NoErr(t, env.Box.RemoveAll())
+
+		// insert new entries
+		env.Populate(baseCount)
+	}
 
 	var box = env.Box
 
@@ -213,17 +221,23 @@ func TestQueryDescribe(t *testing.T) {
 	t.Logf("Executing %d test cases", len(testCases))
 
 	for i, tc := range testCases {
+		// reset Db before each query, necessary due to query.Remove()
+		// TODO we can replace this to make the test run faster by a managed transaction with rollback
+		resetDb()
+
 		// assign some readable variable names
 		var count = tc.c
 		var desc = tc.d
 		var query = tc.q
 
+		// Describe
 		if actualDesc, err := query.Describe(); err != nil {
 			assert.Failf(t, "case #%d {%s} - %s", i, desc, err)
 		} else if desc != actualDesc {
 			assert.Failf(t, "case #%d expected {%s}, but got {%s}", i, desc, actualDesc)
 		}
 
+		// Find
 		var actualData []*model.Entity
 		if data, err := query.Find(); err != nil {
 			assert.Failf(t, "case #%d {%s} %s", i, desc, err)
@@ -235,16 +249,30 @@ func TestQueryDescribe(t *testing.T) {
 			actualData = data
 		}
 
+		// Count
 		if actualCount, err := query.Count(); err != nil {
 			assert.Failf(t, "case #%d {%s} %s", i, desc, err)
 		} else if uint64(count) != actualCount {
 			assert.Failf(t, "case #%d {%s} expected %d, but got %d Count()", i, desc, count, actualCount)
 		}
 
+		// FindIds
 		if ids, err := query.FindIds(); err != nil {
 			assert.Failf(t, "case #%d {%s} %s", i, desc, err)
 		} else if err := matchAllEntityIds(ids, actualData); err != nil {
 			assert.Failf(t, "case #%d {%s} %s", i, desc, err)
+		}
+
+		// Remove
+		if removedCount, err := query.Remove(); err != nil {
+			assert.Failf(t, "case #%d {%s} %s", i, desc, err)
+		} else if uint64(count) != removedCount {
+			assert.Failf(t, "case #%d {%s} expected %d, but got %d Remove()", i, desc, count, removedCount)
+		} else if actualCount, err := env.Box.Count(); err != nil {
+			assert.Failf(t, "case #%d {%s} %s", i, desc, err)
+		} else if actualCount+removedCount != baseCount {
+			assert.Failf(t, "case #%d {%s} expected %d, but got %d Box.Count() after remove",
+				i, desc, baseCount-removedCount, actualCount)
 		}
 	}
 }

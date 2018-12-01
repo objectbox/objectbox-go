@@ -48,6 +48,22 @@ func (query *Query) Find() (objects interface{}, err error) {
 	return
 }
 
+func (query *Query) FindIds() (ids []uint64, err error) {
+	if err = query.cBuild(); err != nil {
+		return nil, err
+	} else {
+		defer query.cFree()
+	}
+
+	err = query.objectBox.runWithCursor(query.typeId, true, func(cursor *cursor) error {
+		var errInner error
+		ids, errInner = query.findIds(cursor)
+		return errInner
+	})
+
+	return
+}
+
 func (query *Query) Count() (count uint64, err error) {
 	if err = query.cBuild(); err != nil {
 		return 0, err
@@ -109,6 +125,18 @@ func (query *Query) count(cursor *cursor) (uint64, error) {
 		return 0, createError()
 	}
 	return uint64(cCount), nil
+}
+
+func (query *Query) findIds(cursor *cursor) (ids []uint64, err error) {
+	cIdsArray := C.obx_query_find_ids(query.cQuery, cursor.cursor)
+	if cIdsArray == nil {
+		return nil, createError()
+	}
+
+	idsArray := cIdsArrayToGo(cIdsArray)
+	defer idsArray.free()
+
+	return idsArray.ids, nil
 }
 
 func (query *Query) find(cursor *cursor) (slice interface{}, err error) {

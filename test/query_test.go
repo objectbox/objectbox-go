@@ -17,6 +17,7 @@
 package objectbox_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/objectbox/objectbox-go/test/assert"
@@ -223,12 +224,15 @@ func TestQueryDescribe(t *testing.T) {
 			assert.Failf(t, "case #%d expected {%s}, but got {%s}", i, desc, actualDesc)
 		}
 
+		var actualData []*model.Entity
 		if data, err := query.Find(); err != nil {
 			assert.Failf(t, "case #%d {%s} %s", i, desc, err)
 		} else if data == nil {
 			assert.Failf(t, "case #%d {%s} data is nil", i, desc)
 		} else if len(data) != count {
 			assert.Failf(t, "case #%d {%s} expected %d, but got %d len(Find())", i, desc, count, len(data))
+		} else {
+			actualData = data
 		}
 
 		if actualCount, err := query.Count(); err != nil {
@@ -237,5 +241,37 @@ func TestQueryDescribe(t *testing.T) {
 			assert.Failf(t, "case #%d {%s} expected %d, but got %d Count()", i, desc, count, actualCount)
 		}
 
+		if ids, err := query.FindIds(); err != nil {
+			assert.Failf(t, "case #%d {%s} %s", i, desc, err)
+		} else if err := matchAllEntityIds(ids, actualData); err != nil {
+			assert.Failf(t, "case #%d {%s} %s", i, desc, err)
+		}
 	}
+}
+
+func matchAllEntityIds(ids []uint64, items []*model.Entity) error {
+	if len(ids) != len(items) {
+		return fmt.Errorf("count mismatch = ids=%d, items=%d", len(ids), len(items))
+	}
+
+	var merged = map[uint64]int{}
+
+	for _, id := range ids {
+		merged[id] = 1
+	}
+
+	for _, item := range items {
+		if merged[item.Id] == 0 {
+			return fmt.Errorf("item %d is missing in the IDs list %v", item.Id, ids)
+		}
+		merged[item.Id] = merged[item.Id] + 1
+	}
+
+	for id, count := range merged {
+		if count != 2 {
+			return fmt.Errorf("ID %d is missing in the items list", id)
+		}
+	}
+
+	return nil
 }

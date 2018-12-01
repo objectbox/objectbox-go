@@ -24,6 +24,9 @@ package objectbox
 import "C"
 
 // Query provides a way to search stored objects
+//
+// For example, you can find all people whose last name starts with an 'N':
+// 		box.Query(Person_.LastName.StartsWith("N", false)).Find()
 type Query struct {
 	typeId    TypeId
 	objectBox *ObjectBox
@@ -32,6 +35,7 @@ type Query struct {
 	cQuery *C.OBX_query
 }
 
+// Find returns all objects matching the query
 func (query *Query) Find() (objects interface{}, err error) {
 	if err = query.cBuild(); err != nil {
 		return nil, err
@@ -48,6 +52,7 @@ func (query *Query) Find() (objects interface{}, err error) {
 	return
 }
 
+// FindIds returns IDs of all objects matching the query
 func (query *Query) FindIds() (ids []uint64, err error) {
 	if err = query.cBuild(); err != nil {
 		return nil, err
@@ -64,6 +69,7 @@ func (query *Query) FindIds() (ids []uint64, err error) {
 	return
 }
 
+// Count returns the number of objects matching the query
 func (query *Query) Count() (count uint64, err error) {
 	if err = query.cBuild(); err != nil {
 		return 0, err
@@ -80,6 +86,7 @@ func (query *Query) Count() (count uint64, err error) {
 	return
 }
 
+// Remove permanently deletes all objects matching the query from the database
 func (query *Query) Remove() (count uint64, err error) {
 	if err := query.cBuild(); err != nil {
 		return 0, err
@@ -96,6 +103,7 @@ func (query *Query) Remove() (count uint64, err error) {
 	return
 }
 
+// Describe returns a string representation of the query
 func (query *Query) Describe() (string, error) {
 	if err := query.cBuild(); err != nil {
 		return "", err

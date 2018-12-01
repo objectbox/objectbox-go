@@ -60,3 +60,29 @@ func cBytesArrayToGo(cBytesArray *C.OBX_bytes_array) *bytesArray {
 	}
 	return &bytesArray{plainBytesArray, cBytesArray}
 }
+
+type idsArray struct {
+	ids    []uint64
+	cArray *C.OBX_id_array
+}
+
+func (array *idsArray) free() {
+	if array.cArray != nil {
+		C.obx_id_array_free(array.cArray)
+		array.cArray = nil
+	}
+	array.ids = nil
+}
+
+func cIdsArrayToGo(cArray *C.OBX_id_array) *idsArray {
+	var size = uint(cArray.count)
+	var ids = make([]uint64, size)
+	if size > 0 {
+		var cArrayStart = uintptr(unsafe.Pointer(cArray.ids))
+		var cIdSize = unsafe.Sizeof(*cArray.ids)
+		for i := uint(0); i < size; i++ {
+			ids[i] = *(*uint64)(unsafe.Pointer(cArrayStart + uintptr(i)*cIdSize))
+		}
+	}
+	return &idsArray{ids, cArray}
+}

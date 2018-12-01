@@ -224,11 +224,17 @@ func TestQueryDescribe(t *testing.T) {
 		}
 
 		if data, err := query.Find(); err != nil {
-			assert.Failf(t, "case #%d {%s} - %s", i, desc, err)
+			assert.Failf(t, "case #%d {%s} %s", i, desc, err)
 		} else if data == nil {
-			assert.Failf(t, "case #%d {%s} - data is nil", i, desc)
+			assert.Failf(t, "case #%d {%s} data is nil", i, desc)
 		} else if len(data) != count {
-			assert.Failf(t, "case #%d {%s} - expected %d, but got %d len(data)", i, desc, count, len(data))
+			assert.Failf(t, "case #%d {%s} expected %d, but got %d len(Find())", i, desc, count, len(data))
+		}
+
+		if actualCount, err := query.Count(); err != nil {
+			assert.Failf(t, "case #%d {%s} %s", i, desc, err)
+		} else if uint64(count) != actualCount {
+			assert.Failf(t, "case #%d {%s} expected %d, but got %d Count()", i, desc, count, actualCount)
 		}
 
 	}

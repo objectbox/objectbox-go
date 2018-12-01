@@ -1,0 +1,62 @@
+/*
+ * Copyright 2018 ObjectBox Ltd. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package objectbox
+
+/*
+#cgo LDFLAGS: -lobjectbox
+#include <stdlib.h>
+#include "objectbox.h"
+*/
+import "C"
+import (
+	"reflect"
+	"unsafe"
+)
+
+type bytesArray struct {
+	BytesArray  [][]byte
+	cBytesArray *C.OBX_bytes_array
+}
+
+func (bytesArray *bytesArray) free() {
+	cBytesArray := bytesArray.cBytesArray
+	if cBytesArray != nil {
+		bytesArray.cBytesArray = nil
+		C.obx_bytes_array_free(cBytesArray)
+	}
+	bytesArray.BytesArray = nil
+}
+
+func cBytesArrayToGo(cBytesArray *C.OBX_bytes_array) *bytesArray {
+	size := int(cBytesArray.count)
+	plainBytesArray := make([][]byte, size)
+	if size > 0 {
+		// Previous alternative without reflect:
+		//   https://github.com/golang/go/wiki/cgo#turning-c-arrays-into-go-slices (2012)
+		//   On a RPi 3, the size with 1<<30 did not work, but 1<<27 did
+		// Raul measured both variants and did notice a visible perf impact (Go 1.11.2)
+		var goBytesArray []C.OBX_bytes
+		header := (*reflect.SliceHeader)(unsafe.Pointer(&goBytesArray))
+		*header = reflect.SliceHeader{Data: uintptr(unsafe.Pointer(cBytesArray.bytes)), Len: size, Cap: size}
+		for i := 0; i < size; i++ {
+			cBytes := goBytesArray[i]
+			dataBytes := C.GoBytes(cBytes.data, C.int(cBytes.size))
+			plainBytesArray[i] = dataBytes
+		}
+	}
+	return &bytesArray{plainBytesArray, cBytesArray}
+}

@@ -112,18 +112,10 @@ func (query *Query) count(cursor *cursor) (uint64, error) {
 }
 
 func (query *Query) find(cursor *cursor) (slice interface{}, err error) {
-	bytesArray, err := query.findBytes(cursor)
-	if err != nil {
-		return
-	}
-	defer bytesArray.free()
-	return cursor.bytesArrayToObjects(bytesArray), nil
-}
-
-func (query *Query) findBytes(cursor *cursor) (*BytesArray, error) {
 	cBytesArray := C.obx_query_find(query.cQuery, cursor.cursor)
 	if cBytesArray == nil {
 		return nil, createError()
 	}
-	return cBytesArrayToGo(cBytesArray), nil
+
+	return cursor.cBytesArrayToObjects(cBytesArray), nil
 }

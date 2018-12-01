@@ -61,12 +61,6 @@ type ObjectBox struct {
 	bindingsByName map[string]ObjectBinding
 }
 
-// Internal: Won't be public in the future
-type BytesArray struct {
-	BytesArray  [][]byte
-	cBytesArray *C.OBX_bytes_array
-}
-
 type txnFun func(transaction *Transaction) error
 type cursorFun func(cursor *cursor) error
 
@@ -230,15 +224,6 @@ func (ob *ObjectBox) newQueryBuilder(typeId TypeId) *queryBuilder {
 		cqb:       qb,
 		Err:       err,
 	}
-}
-
-func (bytesArray *BytesArray) free() {
-	cBytesArray := bytesArray.cBytesArray
-	if cBytesArray != nil {
-		bytesArray.cBytesArray = nil
-		C.obx_bytes_array_free(cBytesArray)
-	}
-	bytesArray.BytesArray = nil
 }
 
 func createError() error {

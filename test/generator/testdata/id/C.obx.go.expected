@@ -55,8 +55,8 @@ func (c_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uin
 
 	// build the FlatBuffers object
 	fbb.StartObject(2)
-	fbb.PrependUint64Slot(0, obj.Id, 0)
-	fbb.PrependUint64Slot(1, id, 0)
+	fbutils.SetUint64Slot(fbb, 0, obj.Id)
+	fbutils.SetUint64Slot(fbb, 1, id)
 }
 
 func (c_EntityInfo) ToObject(bytes []byte) interface{} {

@@ -102,13 +102,12 @@ func ({{$entityNameCamel}}_EntityInfo) Flatten(object interface{}, fbb *flatbuff
     // build the FlatBuffers object
     fbb.StartObject({{$entity.LastPropertyId.GetId}})
     {{range $property := $entity.Properties -}}
-    fbb.Prepend{{$property.FbType}}Slot({{$property.FbSlot}},
-        {{- if eq $property.FbType "UOffsetT"}} offset{{$property.Name}}, 0)
-        {{- else if eq $property.Name $entity.IdProperty.Name}} id, 0)
-        {{- else if eq $property.GoType "bool"}} obj.{{$property.Name}}, false)
-        {{- else if eq $property.GoType "int"}} int64(obj.{{$property.Name}}), 0)
-        {{- else if eq $property.GoType "uint"}} uint64(obj.{{$property.Name}}), 0)
-        {{- else}} obj.{{$property.Name}}, 0)
+    fbutils.Set{{$property.FbType}}Slot(fbb, {{$property.FbSlot}},
+        {{- if eq $property.FbType "UOffsetT"}} offset{{$property.Name}})
+        {{- else if eq $property.Name $entity.IdProperty.Name}} id)
+        {{- else if eq $property.GoType "int"}} int64(obj.{{$property.Name}}))
+        {{- else if eq $property.GoType "uint"}} uint64(obj.{{$property.Name}}))
+        {{- else}} obj.{{$property.Name}})
         {{- end}}
     {{end -}}
 }

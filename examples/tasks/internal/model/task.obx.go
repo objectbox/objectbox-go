@@ -71,10 +71,10 @@ func (task_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id 
 
 	// build the FlatBuffers object
 	fbb.StartObject(4)
-	fbb.PrependUint64Slot(0, id, 0)
-	fbb.PrependUOffsetTSlot(1, offsetText, 0)
-	fbb.PrependInt64Slot(2, obj.DateCreated, 0)
-	fbb.PrependInt64Slot(3, obj.DateFinished, 0)
+	fbutils.SetUint64Slot(fbb, 0, id)
+	fbutils.SetUOffsetTSlot(fbb, 1, offsetText)
+	fbutils.SetInt64Slot(fbb, 2, obj.DateCreated)
+	fbutils.SetInt64Slot(fbb, 3, obj.DateFinished)
 }
 
 func (task_EntityInfo) ToObject(bytes []byte) interface{} {

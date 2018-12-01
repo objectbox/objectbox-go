@@ -110,14 +110,14 @@ func (task_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id 
 
 	// build the FlatBuffers object
 	fbb.StartObject(8)
-	fbb.PrependUint64Slot(0, id, 0)
-	fbb.PrependUOffsetTSlot(1, offsetUid, 0)
-	fbb.PrependUOffsetTSlot(2, offsetName, 0)
-	fbb.PrependUOffsetTSlot(3, offsetPlace, 0)
-	fbb.PrependUOffsetTSlot(4, offsetSource, 0)
-	fbb.PrependUOffsetTSlot(5, offsetText, 0)
-	fbb.PrependUint64Slot(6, obj.Date, 0)
-	fbb.PrependUint64Slot(7, obj.GroupId, 0)
+	fbutils.SetUint64Slot(fbb, 0, id)
+	fbutils.SetUOffsetTSlot(fbb, 1, offsetUid)
+	fbutils.SetUOffsetTSlot(fbb, 2, offsetName)
+	fbutils.SetUOffsetTSlot(fbb, 3, offsetPlace)
+	fbutils.SetUOffsetTSlot(fbb, 4, offsetSource)
+	fbutils.SetUOffsetTSlot(fbb, 5, offsetText)
+	fbutils.SetUint64Slot(fbb, 6, obj.Date)
+	fbutils.SetUint64Slot(fbb, 7, obj.GroupId)
 }
 
 func (task_EntityInfo) ToObject(bytes []byte) interface{} {
@@ -248,7 +248,7 @@ func (group_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id
 
 	// build the FlatBuffers object
 	fbb.StartObject(1)
-	fbb.PrependUint64Slot(0, id, 0)
+	fbutils.SetUint64Slot(fbb, 0, id)
 }
 
 func (group_EntityInfo) ToObject(bytes []byte) interface{} {

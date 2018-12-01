@@ -82,11 +82,11 @@ func (event_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id
 
 	// build the FlatBuffers object
 	fbb.StartObject(5)
-	fbb.PrependUint64Slot(0, id, 0)
-	fbb.PrependUOffsetTSlot(3, offsetUid, 0)
-	fbb.PrependUOffsetTSlot(1, offsetDevice, 0)
-	fbb.PrependInt64Slot(2, obj.Date, 0)
-	fbb.PrependUOffsetTSlot(4, offsetPicture, 0)
+	fbutils.SetUint64Slot(fbb, 0, id)
+	fbutils.SetUOffsetTSlot(fbb, 3, offsetUid)
+	fbutils.SetUOffsetTSlot(fbb, 1, offsetDevice)
+	fbutils.SetInt64Slot(fbb, 2, obj.Date)
+	fbutils.SetUOffsetTSlot(fbb, 4, offsetPicture)
 }
 
 func (event_EntityInfo) ToObject(bytes []byte) interface{} {
@@ -274,15 +274,15 @@ func (reading_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, 
 
 	// build the FlatBuffers object
 	fbb.StartObject(9)
-	fbb.PrependUint64Slot(0, id, 0)
-	fbb.PrependInt64Slot(1, obj.Date, 0)
-	fbb.PrependUint64Slot(2, obj.EventId, 0)
-	fbb.PrependUOffsetTSlot(3, offsetValueName, 0)
-	fbb.PrependUOffsetTSlot(4, offsetValueString, 0)
-	fbb.PrependInt64Slot(5, obj.ValueInteger, 0)
-	fbb.PrependFloat64Slot(6, obj.ValueFloating, 0)
-	fbb.PrependInt32Slot(7, obj.ValueInt32, 0)
-	fbb.PrependFloat32Slot(8, obj.ValueFloating32, 0)
+	fbutils.SetUint64Slot(fbb, 0, id)
+	fbutils.SetInt64Slot(fbb, 1, obj.Date)
+	fbutils.SetUint64Slot(fbb, 2, obj.EventId)
+	fbutils.SetUOffsetTSlot(fbb, 3, offsetValueName)
+	fbutils.SetUOffsetTSlot(fbb, 4, offsetValueString)
+	fbutils.SetInt64Slot(fbb, 5, obj.ValueInteger)
+	fbutils.SetFloat64Slot(fbb, 6, obj.ValueFloating)
+	fbutils.SetInt32Slot(fbb, 7, obj.ValueInt32)
+	fbutils.SetFloat32Slot(fbb, 8, obj.ValueFloating32)
 }
 
 func (reading_EntityInfo) ToObject(bytes []byte) interface{} {

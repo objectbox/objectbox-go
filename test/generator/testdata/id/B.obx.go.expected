@@ -75,7 +75,7 @@ type BBox struct {
 
 func BoxForB(ob *objectbox.ObjectBox) *BBox {
 	return &BBox{
-		Box: ob.Box(2),
+		Box: objectbox.NewBox(ob, 2),
 	}
 }
 

@@ -118,7 +118,7 @@ type EventBox struct {
 
 func BoxForEvent(ob *objectbox.ObjectBox) *EventBox {
 	return &EventBox{
-		Box: ob.Box(1),
+		Box: objectbox.NewBox(ob, 1),
 	}
 }
 
@@ -318,7 +318,7 @@ type ReadingBox struct {
 
 func BoxForReading(ob *objectbox.ObjectBox) *ReadingBox {
 	return &ReadingBox{
-		Box: ob.Box(2),
+		Box: objectbox.NewBox(ob, 2),
 	}
 }
 

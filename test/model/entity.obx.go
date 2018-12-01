@@ -241,7 +241,7 @@ type EntityBox struct {
 
 func BoxForEntity(ob *objectbox.ObjectBox) *EntityBox {
 	return &EntityBox{
-		Box: ob.Box(1),
+		Box: objectbox.NewBox(ob, 1),
 	}
 }
 

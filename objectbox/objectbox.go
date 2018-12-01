@@ -28,8 +28,6 @@ import (
 	"fmt"
 	"runtime"
 	"strconv"
-
-	"github.com/google/flatbuffers/go"
 )
 
 //noinspection GoUnusedConst
@@ -163,33 +161,6 @@ func (ob *ObjectBox) SetDebugFlags(flags uint) error {
 		return createError()
 	}
 	return nil
-}
-
-// Box opens an Entity Box which provides CRUD access to objects
-//
-// panics on error (in case entity with the given ID doesn't exist)
-func (ob *ObjectBox) Box(typeId TypeId) *Box {
-	box, err := ob.BoxOrError(typeId)
-	if err != nil {
-		panic("Could not create box for type ID " + strconv.Itoa(int(typeId)) + ": " + err.Error())
-	}
-	return box
-}
-
-// BoxOrError opens an Entity Box which provides CRUD access to objects of the given type
-func (ob *ObjectBox) BoxOrError(typeId TypeId) (*Box, error) {
-	binding := ob.getBindingById(typeId)
-	cbox := C.obx_box_create(ob.store, C.obx_schema_id(typeId))
-	if cbox == nil {
-		return nil, createError()
-	}
-	return &Box{
-		objectBox: ob,
-		box:       cbox,
-		typeId:    typeId,
-		binding:   binding,
-		fbb:       flatbuffers.NewBuilder(512),
-	}, nil
 }
 
 // AwaitAsyncCompletion blocks until all PutAsync insert have been processed

@@ -43,18 +43,6 @@ const (
 
 type TypeId uint32
 
-// An ObjectBinding provides an interface for various object types to be included in the model
-type ObjectBinding interface {
-	AddToModel(model *Model)
-	GetId(object interface{}) (id uint64, err error)
-	// TODO SetId never errs
-	SetId(object interface{}, id uint64) error
-	Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64)
-	ToObject(bytes []byte) interface{}
-	MakeSlice(capacity int) interface{}
-	AppendToSlice(slice interface{}, object interface{}) (sliceNew interface{})
-}
-
 type ObjectBox struct {
 	store          *C.OBX_store
 	bindingsById   map[TypeId]ObjectBinding

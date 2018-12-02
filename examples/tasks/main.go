@@ -35,7 +35,6 @@ func main() {
 	defer ob.Close()
 
 	box := model.BoxForTask(ob)
-	defer box.Close()
 
 	runInteractiveShell(box)
 }

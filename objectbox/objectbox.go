@@ -28,6 +28,9 @@ import (
 	"fmt"
 	"runtime"
 	"strconv"
+	"sync"
+
+	"github.com/google/flatbuffers/go"
 )
 
 //noinspection GoUnusedConst
@@ -45,6 +48,8 @@ type ObjectBox struct {
 	store          *C.OBX_store
 	bindingsById   map[TypeId]ObjectBinding
 	bindingsByName map[string]ObjectBinding
+	boxes          map[TypeId]*Box
+	boxesMutex     *sync.RWMutex
 }
 
 type txnFun func(transaction *Transaction) error
@@ -56,6 +61,13 @@ func (ob *ObjectBox) Close() {
 	ob.store = nil
 	if storeToClose != nil {
 		C.obx_store_close(storeToClose)
+	}
+
+	ob.boxesMutex.Lock()
+	defer ob.boxesMutex.Unlock()
+	for typeId, box := range ob.boxes {
+		box.close()
+		delete(ob.boxes, typeId)
 	}
 }
 
@@ -161,6 +173,45 @@ func (ob *ObjectBox) SetDebugFlags(flags uint) error {
 		return createError()
 	}
 	return nil
+}
+
+// BoxOrError opens an Entity Box which provides CRUD access to objects of the given type
+func (ob *ObjectBox) box(typeId TypeId) (*Box, error) {
+	// get a read lock to check whether the box is already there
+	ob.boxesMutex.RLock()
+
+	if ob.boxes[typeId] != nil {
+		defer ob.boxesMutex.RUnlock()
+		return ob.boxes[typeId], nil
+	} else {
+		// we need to unlock first or Lock() would block
+		ob.boxesMutex.RUnlock()
+	}
+
+	// get a write lock and create the box
+	ob.boxesMutex.Lock()
+	defer ob.boxesMutex.Unlock()
+
+	// one more check as it's possible another thread has already created it between RUnlock and Lock
+	if ob.boxes[typeId] != nil {
+		return ob.boxes[typeId], nil
+	}
+
+	binding := ob.getBindingById(typeId)
+	cbox := C.obx_box_create(ob.store, C.obx_schema_id(typeId))
+	if cbox == nil {
+		return nil, createError()
+	}
+
+	ob.boxes[typeId] = &Box{
+		objectBox: ob,
+		box:       cbox,
+		typeId:    typeId,
+		binding:   binding,
+		fbb:       flatbuffers.NewBuilder(512),
+	}
+
+	return ob.boxes[typeId], nil
 }
 
 // AwaitAsyncCompletion blocks until all PutAsync insert have been processed

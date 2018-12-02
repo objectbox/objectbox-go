@@ -59,13 +59,7 @@ func NewTestEnv(t *testing.T) *TestEnv {
 }
 
 func (env *TestEnv) Close() {
-	err := env.Box.Close()
 	env.ObjectBox.Close()
-
-	if err != nil {
-		env.t.Error(err)
-	}
-
 	removeDb(env.dbName)
 }
 

@@ -146,7 +146,7 @@ type {{$entity.Name}}Box struct {
 
 func BoxFor{{$entity.Name}}(ob *objectbox.ObjectBox) *{{$entity.Name}}Box {
 	return &{{$entity.Name}}Box{
-		Box: objectbox.NewBox(ob, {{$entity.Id}}),
+		Box: ob.InternalBox({{$entity.Id}}),
 	}
 }
 

@@ -177,9 +177,8 @@ func (ob *ObjectBox) SetDebugFlags(flags uint) error {
 	return nil
 }
 
-// TODO: rename to InternalBox
 // panics on error (in case entity with the given ID doesn't exist)
-func NewBox(ob *ObjectBox, typeId TypeId) *Box {
+func (ob *ObjectBox) InternalBox(typeId TypeId) *Box {
 	box, err := ob.box(typeId)
 	if err != nil {
 		panic(fmt.Sprintf("Could not create box for type ID %d: %s", typeId, err))

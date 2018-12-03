@@ -87,7 +87,7 @@ type CBox struct {
 
 func BoxForC(ob *objectbox.ObjectBox) *CBox {
 	return &CBox{
-		Box: objectbox.NewBox(ob, 3),
+		Box: ob.InternalBox(3),
 	}
 }
 

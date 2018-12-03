@@ -152,7 +152,7 @@ type TaskBox struct {
 
 func BoxForTask(ob *objectbox.ObjectBox) *TaskBox {
 	return &TaskBox{
-		Box: objectbox.NewBox(ob, 1),
+		Box: ob.InternalBox(1),
 	}
 }
 
@@ -276,7 +276,7 @@ type GroupBox struct {
 
 func BoxForGroup(ob *objectbox.ObjectBox) *GroupBox {
 	return &GroupBox{
-		Box: objectbox.NewBox(ob, 2),
+		Box: ob.InternalBox(2),
 	}
 }
 

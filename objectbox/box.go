@@ -24,7 +24,6 @@ package objectbox
 import "C"
 
 import (
-	"fmt"
 	"reflect"
 	"sync/atomic"
 	"unsafe"

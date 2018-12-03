@@ -30,10 +30,7 @@ import "C"
 type Query struct {
 	typeId    TypeId
 	objectBox *ObjectBox
-	condition Condition
-
-	cQuery *C.OBX_query
-	err    error
+	cQuery    *C.OBX_query
 }
 
 func (query *Query) Close() error {
@@ -49,10 +46,6 @@ func (query *Query) Close() error {
 
 // Find returns all objects matching the query
 func (query *Query) Find() (objects interface{}, err error) {
-	if query.err != nil {
-		return nil, query.err
-	}
-
 	err = query.objectBox.runWithCursor(query.typeId, true, func(cursor *cursor) error {
 		var errInner error
 		objects, errInner = query.find(cursor)
@@ -64,10 +57,6 @@ func (query *Query) Find() (objects interface{}, err error) {
 
 // FindIds returns IDs of all objects matching the query
 func (query *Query) FindIds() (ids []uint64, err error) {
-	if query.err != nil {
-		return nil, query.err
-	}
-
 	err = query.objectBox.runWithCursor(query.typeId, true, func(cursor *cursor) error {
 		var errInner error
 		ids, errInner = query.findIds(cursor)
@@ -79,10 +68,6 @@ func (query *Query) FindIds() (ids []uint64, err error) {
 
 // Count returns the number of objects matching the query
 func (query *Query) Count() (count uint64, err error) {
-	if query.err != nil {
-		return 0, query.err
-	}
-
 	err = query.objectBox.runWithCursor(query.typeId, true, func(cursor *cursor) error {
 		var errInner error
 		count, errInner = query.count(cursor)
@@ -94,10 +79,6 @@ func (query *Query) Count() (count uint64, err error) {
 
 // Remove permanently deletes all objects matching the query from the database
 func (query *Query) Remove() (count uint64, err error) {
-	if query.err != nil {
-		return 0, query.err
-	}
-
 	err = query.objectBox.runWithCursor(query.typeId, false, func(cursor *cursor) error {
 		var errInner error
 		count, errInner = query.remove(cursor)
@@ -109,27 +90,10 @@ func (query *Query) Remove() (count uint64, err error) {
 
 // Describe returns a string representation of the query
 func (query *Query) Describe() (string, error) {
-	if query.err != nil {
-		return "", query.err
-	}
-
 	// no need to free, it's handled by the cQuery internally
 	cResult := C.obx_query_describe_parameters(query.cQuery)
 
 	return C.GoString(cResult), nil
-}
-
-func (query *Query) build() error {
-	qb := query.objectBox.newQueryBuilder(query.typeId)
-	defer qb.Close()
-
-	var err error
-	if _, err = query.condition.build(qb); err != nil {
-		return err
-	}
-
-	query.cQuery, err = qb.build()
-	return err
 }
 
 func (query *Query) count(cursor *cursor) (uint64, error) {

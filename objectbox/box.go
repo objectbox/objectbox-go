@@ -24,6 +24,7 @@ package objectbox
 import "C"
 
 import (
+	"fmt"
 	"reflect"
 	"sync/atomic"
 	"unsafe"
@@ -55,26 +56,22 @@ func (box *Box) close() (err error) {
 	return
 }
 
+// Creates a query with the given conditions. Use generated properties to create conditions.
+// Keep the Query object if you intend to execute it multiple times.
+// Note: this function panics if you try to create illegal queries; e.g. use properties of an alien type.
+// This is typically a programming error. Use QueryOrError instead if you want the error check.
 func (box *Box) Query(conditions ...Condition) *Query {
-	var condition Condition
-	if len(conditions) == 1 {
-		// optimize the most common case = a single condition
-		condition = conditions[0]
-	} else {
-		condition = &conditionCombination{
-			conditions: conditions,
-		}
+	query, err := box.QueryOrError(conditions...)
+	if err != nil {
+		panic(fmt.Sprintf("Could not create query - please check your query conditions: %s", err))
 	}
-
-	var query = &Query{
-		typeId:    box.typeId,
-		objectBox: box.objectBox,
-		condition: condition,
-	}
-
-	query.err = query.build()
-
 	return query
+}
+
+// Like Query() but with error handling; e.g. when you build conditions dynamically that may fail.
+func (box *Box) QueryOrError(conditions ...Condition) (*Query, error) {
+	queryBuilder := box.objectBox.newQueryBuilder(box.typeId)
+	return queryBuilder.BuildWithConditions(conditions...)
 }
 
 func (box *Box) idForPut(idCandidate uint64) (id uint64, err error) {

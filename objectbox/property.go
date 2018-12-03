@@ -44,7 +44,7 @@ func (property PropertyString) NotEqual(text string, caseSensitive bool) Conditi
 	}
 }
 
-func (property PropertyString) Contains(text string, caseSensitive bool) Condition {
+func (property PropertyString) Contain(text string, caseSensitive bool) Condition {
 	return &conditionClosure{
 		func(qb *queryBuilder) (conditionId, error) {
 			return qb.StringContains(property.Id, text, caseSensitive)
@@ -52,7 +52,7 @@ func (property PropertyString) Contains(text string, caseSensitive bool) Conditi
 	}
 }
 
-func (property PropertyString) StartsWith(text string, caseSensitive bool) Condition {
+func (property PropertyString) StartWith(text string, caseSensitive bool) Condition {
 	return &conditionClosure{
 		func(qb *queryBuilder) (conditionId, error) {
 			return qb.StringStartsWith(property.Id, text, caseSensitive)

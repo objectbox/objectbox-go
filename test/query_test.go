@@ -18,6 +18,7 @@ package objectbox_test
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/objectbox/objectbox-go/test/assert"
@@ -216,6 +217,8 @@ func TestQueries(t *testing.T) {
 
 		{256, `Bool == 1`, box.Query(E.Bool.Equal(true))},
 		{744, `Bool == 0`, box.Query(E.Bool.Equal(false))},
+
+		{3, `(Bool == 1 AND Byte == 1)`, box.Query(E.Bool.Equal(true), E.Byte.Equal(1))},
 	}
 
 	t.Logf("Executing %d test cases", len(testCases))
@@ -233,7 +236,7 @@ func TestQueries(t *testing.T) {
 		// Describe
 		if actualDesc, err := query.Describe(); err != nil {
 			assert.Failf(t, "case #%d {%s} - %s", i, desc, err)
-		} else if desc != actualDesc {
+		} else if actualDesc = strings.Replace(actualDesc, "\n", "", -1); desc != actualDesc {
 			assert.Failf(t, "case #%d expected {%s}, but got {%s}", i, desc, actualDesc)
 		}
 

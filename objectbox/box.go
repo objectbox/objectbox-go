@@ -94,11 +94,15 @@ func (box *Box) Query(conditions ...Condition) *Query {
 		}
 	}
 
-	return &Query{
+	var query = &Query{
 		typeId:    box.typeId,
 		objectBox: box.objectBox,
 		condition: condition,
 	}
+
+	query.err = query.build()
+
+	return query
 }
 
 func (box *Box) idForPut(idCandidate uint64) (id uint64, err error) {

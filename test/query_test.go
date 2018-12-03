@@ -274,6 +274,10 @@ func TestQueries(t *testing.T) {
 			assert.Failf(t, "case #%d {%s} expected %d, but got %d Box.Count() after remove",
 				i, desc, baseCount-removedCount, actualCount)
 		}
+
+		if err := query.Close(); err != nil {
+			assert.Failf(t, "case #%d {%s} %s", i, desc, err)
+		}
 	}
 }
 

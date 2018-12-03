@@ -47,7 +47,8 @@ type Entity struct {
 	LastPropertyId modelinfo.IdUid
 	Annotations    map[string]*Annotation
 
-	binding *Binding // parent
+	binding    *Binding // parent
+	uidRequest bool
 }
 
 type Property struct {
@@ -144,6 +145,18 @@ func (binding *Binding) createEntityFromAst(node ast.Node) (err error) {
 	if binding.currentEntityComments != nil {
 		if err = entity.setAnnotations(binding.currentEntityComments); err != nil {
 			return fmt.Errorf("%s on entity %s", err, entity.Name)
+		}
+	}
+
+	if entity.Annotations["uid"] != nil {
+		if len(entity.Annotations["uid"].Value) == 0 {
+			// in case the user doesn't provide `uid` value, it's considered in-process of setting up UID
+			// this flag is handled by the merge mechanism and prints the UID of the already existing entity
+			entity.uidRequest = true
+		} else if uid, err := strconv.ParseUint(entity.Annotations["uid"].Value, 10, 64); err != nil {
+			return fmt.Errorf("can't parse uid - %s on entity %s", err, entity.Name)
+		} else {
+			entity.Uid = uid
 		}
 	}
 

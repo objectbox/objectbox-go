@@ -42,37 +42,40 @@ func generateAllDirs(t *testing.T, overwriteExpected bool) {
 		}
 
 		var dir = filepath.Join(datadir, folder.Name())
+		generateOneDir(t, overwriteExpected, dir)
+	}
+}
 
-		modelInfoFile := generator.ModelInfoFile(dir)
-		modelInfoExpectedFile := modelInfoFile + ".expected"
-		modelInfoInitialFile := modelInfoFile + ".initial"
+func generateOneDir(t *testing.T, overwriteExpected bool, dir string) {
+	modelInfoFile := generator.ModelInfoFile(dir)
+	modelInfoExpectedFile := modelInfoFile + ".expected"
+	modelInfoInitialFile := modelInfoFile + ".initial"
 
-		modelFile := generator.ModelFile(modelInfoFile)
-		modelExpectedFile := modelFile + ".expected"
+	modelFile := generator.ModelFile(modelInfoFile)
+	modelExpectedFile := modelFile + ".expected"
 
-		// run the generation twice, first time with deleting old modelInfo
-		for i := 0; i <= 1; i++ {
-			if i == 0 {
-				t.Logf("Testing %s without model info JSON", folder.Name())
-				os.Remove(modelInfoFile)
-			} else {
-				t.Logf("Testing %s with previous model info JSON", folder.Name())
-			}
-
-			if fileExists(modelInfoInitialFile) {
-				assert.NoErr(t, copyFile(modelInfoInitialFile, modelInfoFile))
-			}
-
-			generateAllFiles(t, overwriteExpected, dir, modelInfoFile)
-
-			assertSameFile(t, modelInfoFile, modelInfoExpectedFile, overwriteExpected)
-			assertSameFile(t, modelFile, modelExpectedFile, overwriteExpected)
+	// run the generation twice, first time with deleting old modelInfo
+	for i := 0; i <= 1; i++ {
+		if i == 0 {
+			t.Logf("Testing %s without model info JSON", filepath.Base(dir))
+			os.Remove(modelInfoFile)
+		} else {
+			t.Logf("Testing %s with previous model info JSON", filepath.Base(dir))
 		}
+
+		if fileExists(modelInfoInitialFile) {
+			assert.NoErr(t, copyFile(modelInfoInitialFile, modelInfoFile))
+		}
+
+		generateAllFiles(t, overwriteExpected, dir, modelInfoFile)
+
+		assertSameFile(t, modelInfoFile, modelInfoExpectedFile, overwriteExpected)
+		assertSameFile(t, modelFile, modelExpectedFile, overwriteExpected)
 	}
 }
 
 func assertSameFile(t *testing.T, file string, expectedFile string, overwriteExpected bool) {
-	if !fileExists(expectedFile) {
+	if !fileExists(expectedFile) && !overwriteExpected {
 		assert.Eq(t, false, fileExists(file))
 		return
 	}

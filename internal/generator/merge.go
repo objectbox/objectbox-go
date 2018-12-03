@@ -40,7 +40,26 @@ func mergeBindingWithModelInfo(binding *Binding, modelInfo *modelinfo.ModelInfo)
 func getModelEntity(bindingEntity *Entity, modelInfo *modelinfo.ModelInfo) (*modelinfo.Entity, error) {
 	if bindingEntity.Uid != 0 {
 		return modelInfo.FindEntityByUid(bindingEntity.Uid)
-	} else if entity, err := modelInfo.FindEntityByName(bindingEntity.Name); entity != nil {
+	}
+
+	entity, err := modelInfo.FindEntityByName(bindingEntity.Name)
+
+	// handle uid request
+	if bindingEntity.uidRequest {
+		var errInfo string
+		if entity != nil {
+			if uid, err := entity.Id.GetUid(); err != nil {
+				return nil, err
+			} else {
+				errInfo = fmt.Sprintf("model entity UID = %d", uid)
+			}
+		} else {
+			errInfo = "entity not found in the model"
+		}
+		return nil, fmt.Errorf("uid annotation value must not be empty (%s) on entity %s", errInfo, bindingEntity.Name)
+	}
+
+	if entity != nil {
 		return entity, err
 	} else {
 		return modelInfo.CreateEntity()

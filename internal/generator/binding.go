@@ -33,8 +33,9 @@ type Binding struct {
 	Package  string
 	Entities []*Entity
 
-	currentEntityName string
-	err               error
+	currentEntityName     string
+	currentEntityComments []*ast.Comment
+	err                   error
 }
 
 type Entity struct {
@@ -44,6 +45,7 @@ type Entity struct {
 	Properties     []*Property
 	IdProperty     *Property
 	LastPropertyId modelinfo.IdUid
+	Annotations    map[string]*Annotation
 
 	binding *Binding // parent
 }
@@ -117,10 +119,14 @@ func (binding *Binding) entityLoader(node ast.Node) bool {
 			binding.err = binding.createEntityFromAst(node)
 			// reset after it has been "consumed"
 			binding.currentEntityName = ""
+			binding.currentEntityComments = nil
 		}
 		return true
 
 	case *ast.GenDecl:
+		if v.Doc != nil && v.Doc.List != nil {
+			binding.currentEntityComments = v.Doc.List
+		}
 		return true
 	case *ast.File:
 		return true
@@ -133,6 +139,12 @@ func (binding *Binding) createEntityFromAst(node ast.Node) (err error) {
 	entity := &Entity{
 		binding: binding,
 		Name:    binding.currentEntityName,
+	}
+
+	if binding.currentEntityComments != nil {
+		if err = entity.setAnnotations(binding.currentEntityComments); err != nil {
+			return fmt.Errorf("%s on entity %s", err, entity.Name)
+		}
 	}
 
 	propertiesByName := make(map[string]bool)
@@ -246,21 +258,79 @@ func (binding *Binding) createEntityFromAst(node ast.Node) (err error) {
 	return nil
 }
 
-// Supported annotations:
-// id
-// index (value|hash|hash64)
-// unique
-// nameInDb
-// transient
+func (entity *Entity) setAnnotations(comments []*ast.Comment) error {
+	lines := parseCommentsLines(comments)
+
+	entity.Annotations = make(map[string]*Annotation)
+
+	for _, tags := range lines {
+		if err := parseAnnotations(tags, &entity.Annotations); err != nil {
+			entity.Annotations = nil
+			return err
+		}
+	}
+
+	if len(entity.Annotations) == 0 {
+		entity.Annotations = nil
+	}
+
+	return nil
+}
+
+func parseCommentsLines(comments []*ast.Comment) []string {
+	var lines []string
+
+	for _, comment := range comments {
+		text := comment.Text
+		text = strings.TrimSpace(text)
+
+		// text is a single/multi line comment
+		if strings.HasPrefix(text, "//") {
+			text = strings.TrimPrefix(text, "//")
+			lines = append(lines, strings.TrimSpace(text))
+
+		} else if strings.HasPrefix(text, "/*") {
+			text = strings.TrimPrefix(text, "/*")
+			text = strings.TrimPrefix(text, "*")
+			text = strings.TrimSuffix(text, "*/")
+			text = strings.TrimSuffix(text, "*")
+			text = strings.TrimSpace(text)
+			for _, line := range strings.Split(text, "\n") {
+				lines = append(lines, strings.TrimSpace(line))
+			}
+		} else {
+			// unknown format, ignore
+		}
+	}
+
+	return lines
+}
+
 func (property *Property) setAnnotations(tags string) error {
+	property.Annotations = make(map[string]*Annotation)
+
+	if err := parseAnnotations(tags, &property.Annotations); err != nil {
+		property.Annotations = nil
+		return err
+	}
+
+	if len(property.Annotations) == 0 {
+		property.Annotations = nil
+	}
+
+	return nil
+}
+
+func parseAnnotations(tags string, annotations *map[string]*Annotation) error {
 	if len(tags) > 1 && tags[0] == tags[len(tags)-1] && (tags[0] == '`' || tags[0] == '"') {
 		tags = tags[1 : len(tags)-1]
-	}
-	if tags == "" {
+	} else {
 		return nil
 	}
 
-	property.Annotations = make(map[string]*Annotation)
+	if tags == "" {
+		return nil
+	}
 
 	// tags are space separated
 	for _, tag := range strings.Split(tags, " ") {
@@ -286,10 +356,10 @@ func (property *Property) setAnnotations(tags string) error {
 
 			name = strings.ToLower(name)
 
-			if property.Annotations[name] != nil {
+			if (*annotations)[name] != nil {
 				return fmt.Errorf("duplicate annotation %s", name)
 			} else {
-				property.Annotations[name] = value
+				(*annotations)[name] = value
 			}
 		}
 	}

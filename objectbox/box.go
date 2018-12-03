@@ -46,22 +46,6 @@ type Box struct {
 	fbbInUseAtomic uint32
 }
 
-// Box opens an Entity Box which provides CRUD access to objects
-//
-// panics on error (in case entity with the given ID doesn't exist)
-func NewBox(ob *ObjectBox, typeId TypeId) *Box {
-	box, err := ob.box(typeId)
-	if err != nil {
-		panic(fmt.Sprintf("Could not create box for type ID %d: %s", typeId, err))
-	}
-	return box
-}
-
-// BoxOrError opens an Entity Box which provides CRUD access to objects of the given type
-func NewBoxOrError(ob *ObjectBox, typeId TypeId) (*Box, error) {
-	return ob.box(typeId)
-}
-
 // close fully closes the Box connection and free's resources
 func (box *Box) close() (err error) {
 	rc := C.obx_box_close(box.box)

@@ -116,12 +116,11 @@ func (builder *Builder) Build() (*ObjectBox, error) {
 		return nil, createError()
 	}
 
-	// TODO move to objectbox.go?
 	return &ObjectBox{
 		store:          cStore,
 		bindingsById:   builder.model.bindingsById,
 		bindingsByName: builder.model.bindingsByName,
 		boxes:          make(map[TypeId]*Box, len(builder.model.bindingsById)),
-		boxesMutex:     &sync.RWMutex{},
+		boxesMutex:     &sync.Mutex{},
 	}, nil
 }

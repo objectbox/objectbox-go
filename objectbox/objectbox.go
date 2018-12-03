@@ -49,7 +49,7 @@ type ObjectBox struct {
 	bindingsById   map[TypeId]ObjectBinding
 	bindingsByName map[string]ObjectBinding
 	boxes          map[TypeId]*Box
-	boxesMutex     *sync.RWMutex
+	boxesMutex     *sync.Mutex
 }
 
 type txnFun func(transaction *Transaction) error
@@ -65,10 +65,12 @@ func (ob *ObjectBox) Close() {
 
 	ob.boxesMutex.Lock()
 	defer ob.boxesMutex.Unlock()
-	for typeId, box := range ob.boxes {
-		box.close()
-		delete(ob.boxes, typeId)
+	for _, box := range ob.boxes {
+		if err := box.close(); err != nil {
+			fmt.Println(err)
+		}
 	}
+	ob.boxes = nil
 }
 
 func (ob *ObjectBox) beginTxn() (*Transaction, error) {
@@ -175,26 +177,24 @@ func (ob *ObjectBox) SetDebugFlags(flags uint) error {
 	return nil
 }
 
-// BoxOrError opens an Entity Box which provides CRUD access to objects of the given type
-func (ob *ObjectBox) box(typeId TypeId) (*Box, error) {
-	// get a read lock to check whether the box is already there
-	ob.boxesMutex.RLock()
-
-	if ob.boxes[typeId] != nil {
-		defer ob.boxesMutex.RUnlock()
-		return ob.boxes[typeId], nil
-	} else {
-		// we need to unlock first or Lock() would block
-		ob.boxesMutex.RUnlock()
+// TODO: rename to InternalBox
+// panics on error (in case entity with the given ID doesn't exist)
+func NewBox(ob *ObjectBox, typeId TypeId) *Box {
+	box, err := ob.box(typeId)
+	if err != nil {
+		panic(fmt.Sprintf("Could not create box for type ID %d: %s", typeId, err))
 	}
+	return box
+}
 
-	// get a write lock and create the box
+// Gets an Entity Box which provides CRUD access to objects of the given type
+func (ob *ObjectBox) box(typeId TypeId) (*Box, error) {
 	ob.boxesMutex.Lock()
 	defer ob.boxesMutex.Unlock()
 
-	// one more check as it's possible another thread has already created it between RUnlock and Lock
-	if ob.boxes[typeId] != nil {
-		return ob.boxes[typeId], nil
+	box := ob.boxes[typeId]
+	if box != nil {
+		return box, nil
 	}
 
 	binding := ob.getBindingById(typeId)
@@ -203,15 +203,15 @@ func (ob *ObjectBox) box(typeId TypeId) (*Box, error) {
 		return nil, createError()
 	}
 
-	ob.boxes[typeId] = &Box{
+	box = &Box{
 		objectBox: ob,
 		box:       cbox,
 		typeId:    typeId,
 		binding:   binding,
 		fbb:       flatbuffers.NewBuilder(512),
 	}
-
-	return ob.boxes[typeId], nil
+	ob.boxes[typeId] = box
+	return box, nil
 }
 
 // AwaitAsyncCompletion blocks until all PutAsync insert have been processed

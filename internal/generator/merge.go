@@ -16,7 +16,11 @@
 
 package generator
 
-import "github.com/objectbox/objectbox-go/internal/generator/modelinfo"
+import (
+	"fmt"
+
+	"github.com/objectbox/objectbox-go/internal/generator/modelinfo"
+)
 
 func mergeBindingWithModelInfo(binding *Binding, modelInfo *modelinfo.ModelInfo) error {
 	for _, bindingEntity := range binding.Entities {
@@ -81,7 +85,27 @@ func mergeModelEntity(bindingEntity *Entity, modelEntity *modelinfo.Entity) (err
 func getModelProperty(bindingProperty *Property, modelEntity *modelinfo.Entity) (*modelinfo.Property, error) {
 	if bindingProperty.Uid != 0 {
 		return modelEntity.FindPropertyByUid(bindingProperty.Uid)
-	} else if property, err := modelEntity.FindPropertyByName(bindingProperty.Name); property != nil {
+	}
+
+	property, err := modelEntity.FindPropertyByName(bindingProperty.Name)
+
+	// handle uid request
+	if bindingProperty.uidRequest {
+		var errInfo string
+		if property != nil {
+			if uid, err := property.Id.GetUid(); err != nil {
+				return nil, err
+			} else {
+				errInfo = fmt.Sprintf("model property UID = %d", uid)
+			}
+		} else {
+			errInfo = "property not found in the model"
+		}
+		return nil, fmt.Errorf("uid annotation value must not be empty (%s) on property %s, entity %s",
+			errInfo, bindingProperty.Name, bindingProperty.entity.Name)
+	}
+
+	if property != nil {
 		return property, err
 	} else {
 		return modelEntity.CreateProperty()

@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"go/ast"
 	"go/types"
+	"strconv"
 	"strings"
 
 	"github.com/objectbox/objectbox-go/internal/generator/modelinfo"
@@ -60,7 +61,8 @@ type Property struct {
 	Relation    *Relation
 	Index       *Index
 
-	entity *Entity
+	entity     *Entity
+	uidRequest bool
 }
 
 type Relation struct {
@@ -197,6 +199,18 @@ func (binding *Binding) createEntityFromAst(node ast.Node) (err error) {
 					"duplicate name (note that property names are case insensitive)"), property)
 			} else {
 				propertiesByName[realObName] = true
+			}
+
+			if property.Annotations["uid"] != nil {
+				if len(property.Annotations["uid"].Value) == 0 {
+					// in case the user doesn't provide `uid` value, it's considered in-process of setting up UID
+					// this flag is handled by the merge mechanism and prints the UID of the already existing property
+					property.uidRequest = true
+				} else if uid, err := strconv.ParseUint(property.Annotations["uid"].Value, 10, 64); err != nil {
+					return propertyError(fmt.Errorf("can't parse uid - %s", err), property)
+				} else {
+					property.Uid = uid
+				}
 			}
 
 			entity.Properties = append(entity.Properties, property)

@@ -26,7 +26,7 @@ import "C"
 // Query provides a way to search stored objects
 //
 // For example, you can find all people whose last name starts with an 'N':
-// 		box.Query(Person_.LastName.StartWith("N", false)).Find()
+// 		box.Query(Person_.LastName.HasPrefix("N", false)).Find()
 type Query struct {
 	typeId    TypeId
 	objectBox *ObjectBox

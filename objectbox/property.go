@@ -28,7 +28,7 @@ type PropertyString struct {
 	*Property
 }
 
-func (property PropertyString) Equal(text string, caseSensitive bool) Condition {
+func (property PropertyString) Equals(text string, caseSensitive bool) Condition {
 	return &conditionClosure{
 		func(qb *queryBuilder) (conditionId, error) {
 			return qb.StringEqual(property.Id, text, caseSensitive)
@@ -36,7 +36,7 @@ func (property PropertyString) Equal(text string, caseSensitive bool) Condition 
 	}
 }
 
-func (property PropertyString) NotEqual(text string, caseSensitive bool) Condition {
+func (property PropertyString) NotEquals(text string, caseSensitive bool) Condition {
 	return &conditionClosure{
 		func(qb *queryBuilder) (conditionId, error) {
 			return qb.StringNotEqual(property.Id, text, caseSensitive)
@@ -44,7 +44,7 @@ func (property PropertyString) NotEqual(text string, caseSensitive bool) Conditi
 	}
 }
 
-func (property PropertyString) Contain(text string, caseSensitive bool) Condition {
+func (property PropertyString) Contains(text string, caseSensitive bool) Condition {
 	return &conditionClosure{
 		func(qb *queryBuilder) (conditionId, error) {
 			return qb.StringContains(property.Id, text, caseSensitive)
@@ -52,7 +52,7 @@ func (property PropertyString) Contain(text string, caseSensitive bool) Conditio
 	}
 }
 
-func (property PropertyString) StartWith(text string, caseSensitive bool) Condition {
+func (property PropertyString) HasPrefix(text string, caseSensitive bool) Condition {
 	return &conditionClosure{
 		func(qb *queryBuilder) (conditionId, error) {
 			return qb.StringStartsWith(property.Id, text, caseSensitive)
@@ -60,7 +60,7 @@ func (property PropertyString) StartWith(text string, caseSensitive bool) Condit
 	}
 }
 
-func (property PropertyString) EndWith(text string, caseSensitive bool) Condition {
+func (property PropertyString) HasSuffix(text string, caseSensitive bool) Condition {
 	return &conditionClosure{
 		func(qb *queryBuilder) (conditionId, error) {
 			return qb.StringEndsWith(property.Id, text, caseSensitive)
@@ -112,7 +112,7 @@ type PropertyInt64 struct {
 	*Property
 }
 
-func (property PropertyInt64) Equal(value int64) Condition {
+func (property PropertyInt64) Equals(value int64) Condition {
 	return &conditionClosure{
 		func(qb *queryBuilder) (conditionId, error) {
 			return qb.IntEqual(property.Id, value)
@@ -120,7 +120,7 @@ func (property PropertyInt64) Equal(value int64) Condition {
 	}
 }
 
-func (property PropertyInt64) NotEqual(value int64) Condition {
+func (property PropertyInt64) NotEquals(value int64) Condition {
 	return &conditionClosure{
 		func(qb *queryBuilder) (conditionId, error) {
 			return qb.IntNotEqual(property.Id, value)
@@ -172,7 +172,7 @@ type PropertyInt struct {
 	*Property
 }
 
-func (property PropertyInt) Equal(value int) Condition {
+func (property PropertyInt) Equals(value int) Condition {
 	return &conditionClosure{
 		func(qb *queryBuilder) (conditionId, error) {
 			return qb.IntEqual(property.Id, int64(value))
@@ -180,7 +180,7 @@ func (property PropertyInt) Equal(value int) Condition {
 	}
 }
 
-func (property PropertyInt) NotEqual(value int) Condition {
+func (property PropertyInt) NotEquals(value int) Condition {
 	return &conditionClosure{
 		func(qb *queryBuilder) (conditionId, error) {
 			return qb.IntNotEqual(property.Id, int64(value))
@@ -242,7 +242,7 @@ type PropertyUint64 struct {
 	*Property
 }
 
-func (property PropertyUint64) Equal(value uint64) Condition {
+func (property PropertyUint64) Equals(value uint64) Condition {
 	return &conditionClosure{
 		func(qb *queryBuilder) (conditionId, error) {
 			return qb.IntEqual(property.Id, int64(value))
@@ -250,7 +250,7 @@ func (property PropertyUint64) Equal(value uint64) Condition {
 	}
 }
 
-func (property PropertyUint64) NotEqual(value uint64) Condition {
+func (property PropertyUint64) NotEquals(value uint64) Condition {
 	return &conditionClosure{
 		func(qb *queryBuilder) (conditionId, error) {
 			return qb.IntNotEqual(property.Id, int64(value))
@@ -288,7 +288,7 @@ type PropertyUint struct {
 	*Property
 }
 
-func (property PropertyUint) Equal(value uint) Condition {
+func (property PropertyUint) Equals(value uint) Condition {
 	return &conditionClosure{
 		func(qb *queryBuilder) (conditionId, error) {
 			return qb.IntEqual(property.Id, int64(value))
@@ -296,7 +296,7 @@ func (property PropertyUint) Equal(value uint) Condition {
 	}
 }
 
-func (property PropertyUint) NotEqual(value uint) Condition {
+func (property PropertyUint) NotEquals(value uint) Condition {
 	return &conditionClosure{
 		func(qb *queryBuilder) (conditionId, error) {
 			return qb.IntNotEqual(property.Id, int64(value))
@@ -334,7 +334,7 @@ type PropertyRune struct {
 	*Property
 }
 
-func (property PropertyRune) Equal(value rune) Condition {
+func (property PropertyRune) Equals(value rune) Condition {
 	return &conditionClosure{
 		func(qb *queryBuilder) (conditionId, error) {
 			return qb.IntEqual(property.Id, int64(value))
@@ -342,7 +342,7 @@ func (property PropertyRune) Equal(value rune) Condition {
 	}
 }
 
-func (property PropertyRune) NotEqual(value rune) Condition {
+func (property PropertyRune) NotEquals(value rune) Condition {
 	return &conditionClosure{
 		func(qb *queryBuilder) (conditionId, error) {
 			return qb.IntNotEqual(property.Id, int64(value))
@@ -404,7 +404,7 @@ type PropertyInt32 struct {
 	*Property
 }
 
-func (property PropertyInt32) Equal(value int32) Condition {
+func (property PropertyInt32) Equals(value int32) Condition {
 	return &conditionClosure{
 		func(qb *queryBuilder) (conditionId, error) {
 			return qb.IntEqual(property.Id, int64(value))
@@ -412,7 +412,7 @@ func (property PropertyInt32) Equal(value int32) Condition {
 	}
 }
 
-func (property PropertyInt32) NotEqual(value int32) Condition {
+func (property PropertyInt32) NotEquals(value int32) Condition {
 	return &conditionClosure{
 		func(qb *queryBuilder) (conditionId, error) {
 			return qb.IntNotEqual(property.Id, int64(value))
@@ -464,7 +464,7 @@ type PropertyUint32 struct {
 	*Property
 }
 
-func (property PropertyUint32) Equal(value uint32) Condition {
+func (property PropertyUint32) Equals(value uint32) Condition {
 	return &conditionClosure{
 		func(qb *queryBuilder) (conditionId, error) {
 			return qb.IntEqual(property.Id, int64(value))
@@ -472,7 +472,7 @@ func (property PropertyUint32) Equal(value uint32) Condition {
 	}
 }
 
-func (property PropertyUint32) NotEqual(value uint32) Condition {
+func (property PropertyUint32) NotEquals(value uint32) Condition {
 	return &conditionClosure{
 		func(qb *queryBuilder) (conditionId, error) {
 			return qb.IntNotEqual(property.Id, int64(value))
@@ -534,7 +534,7 @@ type PropertyInt16 struct {
 	*Property
 }
 
-func (property PropertyInt16) Equal(value int16) Condition {
+func (property PropertyInt16) Equals(value int16) Condition {
 	return &conditionClosure{
 		func(qb *queryBuilder) (conditionId, error) {
 			return qb.IntEqual(property.Id, int64(value))
@@ -542,7 +542,7 @@ func (property PropertyInt16) Equal(value int16) Condition {
 	}
 }
 
-func (property PropertyInt16) NotEqual(value int16) Condition {
+func (property PropertyInt16) NotEquals(value int16) Condition {
 	return &conditionClosure{
 		func(qb *queryBuilder) (conditionId, error) {
 			return qb.IntNotEqual(property.Id, int64(value))
@@ -578,7 +578,7 @@ type PropertyUint16 struct {
 	*Property
 }
 
-func (property PropertyUint16) Equal(value uint16) Condition {
+func (property PropertyUint16) Equals(value uint16) Condition {
 	return &conditionClosure{
 		func(qb *queryBuilder) (conditionId, error) {
 			return qb.IntEqual(property.Id, int64(value))
@@ -586,7 +586,7 @@ func (property PropertyUint16) Equal(value uint16) Condition {
 	}
 }
 
-func (property PropertyUint16) NotEqual(value uint16) Condition {
+func (property PropertyUint16) NotEquals(value uint16) Condition {
 	return &conditionClosure{
 		func(qb *queryBuilder) (conditionId, error) {
 			return qb.IntNotEqual(property.Id, int64(value))
@@ -622,7 +622,7 @@ type PropertyInt8 struct {
 	*Property
 }
 
-func (property PropertyInt8) Equal(value int8) Condition {
+func (property PropertyInt8) Equals(value int8) Condition {
 	return &conditionClosure{
 		func(qb *queryBuilder) (conditionId, error) {
 			return qb.IntEqual(property.Id, int64(value))
@@ -630,7 +630,7 @@ func (property PropertyInt8) Equal(value int8) Condition {
 	}
 }
 
-func (property PropertyInt8) NotEqual(value int8) Condition {
+func (property PropertyInt8) NotEquals(value int8) Condition {
 	return &conditionClosure{
 		func(qb *queryBuilder) (conditionId, error) {
 			return qb.IntNotEqual(property.Id, int64(value))
@@ -666,7 +666,7 @@ type PropertyUint8 struct {
 	*Property
 }
 
-func (property PropertyUint8) Equal(value uint8) Condition {
+func (property PropertyUint8) Equals(value uint8) Condition {
 	return &conditionClosure{
 		func(qb *queryBuilder) (conditionId, error) {
 			return qb.IntEqual(property.Id, int64(value))
@@ -674,7 +674,7 @@ func (property PropertyUint8) Equal(value uint8) Condition {
 	}
 }
 
-func (property PropertyUint8) NotEqual(value uint8) Condition {
+func (property PropertyUint8) NotEquals(value uint8) Condition {
 	return &conditionClosure{
 		func(qb *queryBuilder) (conditionId, error) {
 			return qb.IntNotEqual(property.Id, int64(value))
@@ -710,7 +710,7 @@ type PropertyByte struct {
 	*Property
 }
 
-func (property PropertyByte) Equal(value byte) Condition {
+func (property PropertyByte) Equals(value byte) Condition {
 	return &conditionClosure{
 		func(qb *queryBuilder) (conditionId, error) {
 			return qb.IntEqual(property.Id, int64(value))
@@ -718,7 +718,7 @@ func (property PropertyByte) Equal(value byte) Condition {
 	}
 }
 
-func (property PropertyByte) NotEqual(value byte) Condition {
+func (property PropertyByte) NotEquals(value byte) Condition {
 	return &conditionClosure{
 		func(qb *queryBuilder) (conditionId, error) {
 			return qb.IntNotEqual(property.Id, int64(value))
@@ -810,7 +810,7 @@ type PropertyByteVector struct {
 	*Property
 }
 
-func (property PropertyByteVector) Equal(value []byte) Condition {
+func (property PropertyByteVector) Equals(value []byte) Condition {
 	return &conditionClosure{
 		func(qb *queryBuilder) (conditionId, error) {
 			return qb.BytesEqual(property.Id, value)
@@ -854,7 +854,7 @@ type PropertyBool struct {
 	*Property
 }
 
-func (property PropertyBool) Equal(value bool) Condition {
+func (property PropertyBool) Equals(value bool) Condition {
 	return &conditionClosure{
 		func(qb *queryBuilder) (conditionId, error) {
 			if value {

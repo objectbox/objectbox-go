@@ -349,11 +349,13 @@ func (qb *queryBuilder) Build() (*Query, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Query{
+	query := &Query{
 		objectBox: qb.objectBox,
 		cQuery:    cQuery,
 		typeId:    qb.typeId,
-	}, nil
+	}
+	query.installFinalizer()
+	return query, nil
 }
 
 func (qb *queryBuilder) BuildWithConditions(conditions ...Condition) (*Query, error) {

@@ -24,6 +24,8 @@ package objectbox
 import "C"
 import (
 	"errors"
+	"fmt"
+	"runtime"
 	"sync"
 )
 
@@ -38,6 +40,8 @@ type Query struct {
 	closeMutex sync.Mutex
 }
 
+// Frees (native) resources held by this Query.
+// Note that this is optional and not required because the GC invokes a finalizer automatically.
 func (query *Query) Close() error {
 	query.closeMutex.Lock()
 	defer query.closeMutex.Unlock()
@@ -49,6 +53,19 @@ func (query *Query) Close() error {
 		}
 	}
 	return nil
+}
+
+func queryFinalizer(query *Query) {
+	err := query.Close()
+	if err != nil {
+		fmt.Printf("Error while finalizer closed query: %s", err)
+	}
+}
+
+// The native query object in the ObjectBox core is not tied with other resources.
+// Thus timing of the Close call is independent from other resources.
+func (query *Query) installFinalizer() {
+	runtime.SetFinalizer(query, queryFinalizer)
 }
 
 func (query *Query) errorClosed() error {

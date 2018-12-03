@@ -18,6 +18,7 @@ package objectbox_test
 
 import (
 	"fmt"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -324,5 +325,29 @@ func TestQueryClose(t *testing.T) {
 
 	// Double close
 	assert.NoErr(t, query.Close())
+}
 
+// Forces the finalizer to run; not a "real" test with assertions
+func TestQueryCloseFinalizer(t *testing.T) {
+	env := model.NewTestEnv(t)
+	defer env.Close()
+	query := env.Box.Query()
+	_, _ = query.Count()
+	query = nil
+	runtime.GC()
+	runtime.GC() // 2nd GC allows to set a break point in the finalizer and actually stop there
+}
+
+func TestQueryCloseAfterObjectBox(t *testing.T) {
+	env := model.NewTestEnv(t)
+	query := env.Box.Query()
+	queryFinalizer := env.Box.Query()
+	_, _ = query.Count()
+	_, _ = queryFinalizer.Count()
+	env.Close()
+	err := query.Close()
+	assert.NoErr(t, err)
+	queryFinalizer = nil
+	runtime.GC()
+	runtime.GC() // 2nd GC allows to set a break point in the finalizer and actually stop there
 }

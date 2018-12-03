@@ -22,18 +22,25 @@ package objectbox
 #include "objectbox.h"
 */
 import "C"
+import (
+	"errors"
+	"sync"
+)
 
 // Query provides a way to search stored objects
 //
 // For example, you can find all people whose last name starts with an 'N':
 // 		box.Query(Person_.LastName.HasPrefix("N", false)).Find()
 type Query struct {
-	typeId    TypeId
-	objectBox *ObjectBox
-	cQuery    *C.OBX_query
+	typeId     TypeId
+	objectBox  *ObjectBox
+	cQuery     *C.OBX_query
+	closeMutex sync.Mutex
 }
 
 func (query *Query) Close() error {
+	query.closeMutex.Lock()
+	defer query.closeMutex.Unlock()
 	if query.cQuery != nil {
 		rc := C.obx_query_close(query.cQuery)
 		query.cQuery = nil
@@ -44,6 +51,10 @@ func (query *Query) Close() error {
 	return nil
 }
 
+func (query *Query) errorClosed() error {
+	return errors.New("illegal state; query was closed")
+}
+
 // Find returns all objects matching the query
 func (query *Query) Find() (objects interface{}, err error) {
 	err = query.objectBox.runWithCursor(query.typeId, true, func(cursor *cursor) error {
@@ -51,7 +62,6 @@ func (query *Query) Find() (objects interface{}, err error) {
 		objects, errInner = query.find(cursor)
 		return errInner
 	})
-
 	return
 }
 
@@ -90,6 +100,9 @@ func (query *Query) Remove() (count uint64, err error) {
 
 // Describe returns a string representation of the query
 func (query *Query) Describe() (string, error) {
+	if query.cQuery == nil {
+		return "", query.errorClosed()
+	}
 	// no need to free, it's handled by the cQuery internally
 	cResult := C.obx_query_describe_parameters(query.cQuery)
 
@@ -97,6 +110,9 @@ func (query *Query) Describe() (string, error) {
 }
 
 func (query *Query) count(cursor *cursor) (uint64, error) {
+	if query.cQuery == nil {
+		return 0, query.errorClosed()
+	}
 	var cCount C.uint64_t
 	rc := C.obx_query_count(query.cQuery, cursor.cursor, &cCount)
 	if rc != 0 {
@@ -106,6 +122,9 @@ func (query *Query) count(cursor *cursor) (uint64, error) {
 }
 
 func (query *Query) remove(cursor *cursor) (uint64, error) {
+	if query.cQuery == nil {
+		return 0, query.errorClosed()
+	}
 	var cCount C.uint64_t
 	rc := C.obx_query_remove(query.cQuery, cursor.cursor, &cCount)
 	if rc != 0 {
@@ -115,6 +134,9 @@ func (query *Query) remove(cursor *cursor) (uint64, error) {
 }
 
 func (query *Query) findIds(cursor *cursor) (ids []uint64, err error) {
+	if query.cQuery == nil {
+		return nil, query.errorClosed()
+	}
 	cIdsArray := C.obx_query_find_ids(query.cQuery, cursor.cursor)
 	if cIdsArray == nil {
 		return nil, createError()
@@ -127,6 +149,9 @@ func (query *Query) findIds(cursor *cursor) (ids []uint64, err error) {
 }
 
 func (query *Query) find(cursor *cursor) (slice interface{}, err error) {
+	if query.cQuery == nil {
+		return 0, query.errorClosed()
+	}
 	cBytesArray := C.obx_query_find(query.cQuery, cursor.cursor)
 	if cBytesArray == nil {
 		return nil, createError()

@@ -310,3 +310,19 @@ func matchAllEntityIds(ids []uint64, items []*model.Entity) error {
 
 	return nil
 }
+
+func TestQueryClose(t *testing.T) {
+	env := model.NewTestEnv(t)
+	defer env.Close()
+	query := env.Box.Query()
+	assert.NoErr(t, query.Close())
+
+	_, err := query.Find()
+	if err == nil {
+		assert.Failf(t, "should fail after Close()")
+	}
+
+	// Double close
+	assert.NoErr(t, query.Close())
+
+}

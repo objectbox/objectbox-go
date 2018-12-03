@@ -36,7 +36,6 @@ func concurrentInsert(t *testing.T, count, concurrency int, putAsync bool) {
 	objectBox := iot.LoadEmptyTestObjectBox()
 	defer objectBox.Close()
 	box := iot.BoxForEvent(objectBox)
-	defer box.Close()
 
 	err := box.RemoveAll()
 	assert.NoErr(t, err)

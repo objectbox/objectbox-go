@@ -24,7 +24,6 @@ package objectbox
 import "C"
 
 import (
-	"fmt"
 	"reflect"
 	"sync/atomic"
 	"unsafe"
@@ -46,35 +45,8 @@ type Box struct {
 	fbbInUseAtomic uint32
 }
 
-// Box opens an Entity Box which provides CRUD access to objects
-//
-// panics on error (in case entity with the given ID doesn't exist)
-func NewBox(ob *ObjectBox, typeId TypeId) *Box {
-	box, err := NewBoxOrError(ob, typeId)
-	if err != nil {
-		panic(fmt.Sprintf("Could not create box for type ID %d: %s", typeId, err))
-	}
-	return box
-}
-
-// BoxOrError opens an Entity Box which provides CRUD access to objects of the given type
-func NewBoxOrError(ob *ObjectBox, typeId TypeId) (*Box, error) {
-	binding := ob.getBindingById(typeId)
-	cbox := C.obx_box_create(ob.store, C.obx_schema_id(typeId))
-	if cbox == nil {
-		return nil, createError()
-	}
-	return &Box{
-		objectBox: ob,
-		box:       cbox,
-		typeId:    typeId,
-		binding:   binding,
-		fbb:       flatbuffers.NewBuilder(512),
-	}, nil
-}
-
-// Close fully closes the Box connection and free's resources
-func (box *Box) Close() (err error) {
+// close fully closes the Box connection and free's resources
+func (box *Box) close() (err error) {
 	rc := C.obx_box_close(box.box)
 	box.box = nil
 	if rc != 0 {

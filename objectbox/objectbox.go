@@ -28,6 +28,9 @@ import (
 	"fmt"
 	"runtime"
 	"strconv"
+	"sync"
+
+	"github.com/google/flatbuffers/go"
 )
 
 //noinspection GoUnusedConst
@@ -45,6 +48,8 @@ type ObjectBox struct {
 	store          *C.OBX_store
 	bindingsById   map[TypeId]ObjectBinding
 	bindingsByName map[string]ObjectBinding
+	boxes          map[TypeId]*Box
+	boxesMutex     *sync.Mutex
 }
 
 type txnFun func(transaction *Transaction) error
@@ -57,6 +62,15 @@ func (ob *ObjectBox) Close() {
 	if storeToClose != nil {
 		C.obx_store_close(storeToClose)
 	}
+
+	ob.boxesMutex.Lock()
+	defer ob.boxesMutex.Unlock()
+	for _, box := range ob.boxes {
+		if err := box.close(); err != nil {
+			fmt.Println(err)
+		}
+	}
+	ob.boxes = nil
 }
 
 func (ob *ObjectBox) beginTxn() (*Transaction, error) {
@@ -161,6 +175,42 @@ func (ob *ObjectBox) SetDebugFlags(flags uint) error {
 		return createError()
 	}
 	return nil
+}
+
+// panics on error (in case entity with the given ID doesn't exist)
+func (ob *ObjectBox) InternalBox(typeId TypeId) *Box {
+	box, err := ob.box(typeId)
+	if err != nil {
+		panic(fmt.Sprintf("Could not create box for type ID %d: %s", typeId, err))
+	}
+	return box
+}
+
+// Gets an Entity Box which provides CRUD access to objects of the given type
+func (ob *ObjectBox) box(typeId TypeId) (*Box, error) {
+	ob.boxesMutex.Lock()
+	defer ob.boxesMutex.Unlock()
+
+	box := ob.boxes[typeId]
+	if box != nil {
+		return box, nil
+	}
+
+	binding := ob.getBindingById(typeId)
+	cbox := C.obx_box_create(ob.store, C.obx_schema_id(typeId))
+	if cbox == nil {
+		return nil, createError()
+	}
+
+	box = &Box{
+		objectBox: ob,
+		box:       cbox,
+		typeId:    typeId,
+		binding:   binding,
+		fbb:       flatbuffers.NewBuilder(512),
+	}
+	ob.boxes[typeId] = box
+	return box, nil
 }
 
 // AwaitAsyncCompletion blocks until all PutAsync insert have been processed

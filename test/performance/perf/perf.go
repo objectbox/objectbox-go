@@ -54,7 +54,6 @@ func (perf *Executor) initObjectBox(dbName string) {
 func (perf *Executor) Close() {
 	defer perf.trackTime(time.Now())
 
-	perf.box.Close()
 	perf.ob.Close()
 }
 

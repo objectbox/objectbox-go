@@ -241,7 +241,7 @@ type TypefulBox struct {
 
 func BoxForTypeful(ob *objectbox.ObjectBox) *TypefulBox {
 	return &TypefulBox{
-		Box: objectbox.NewBox(ob, 1),
+		Box: ob.InternalBox(1),
 	}
 }
 

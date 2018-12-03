@@ -105,7 +105,7 @@ type TaskBox struct {
 
 func BoxForTask(ob *objectbox.ObjectBox) *TaskBox {
 	return &TaskBox{
-		Box: objectbox.NewBox(ob, 1),
+		Box: ob.InternalBox(1),
 	}
 }
 

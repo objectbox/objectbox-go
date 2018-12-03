@@ -60,7 +60,7 @@ func (property PropertyString) StartWith(text string, caseSensitive bool) Condit
 	}
 }
 
-func (property PropertyString) EndsWith(text string, caseSensitive bool) Condition {
+func (property PropertyString) EndWith(text string, caseSensitive bool) Condition {
 	return &conditionClosure{
 		func(qb *queryBuilder) (conditionId, error) {
 			return qb.StringEndsWith(property.Id, text, caseSensitive)

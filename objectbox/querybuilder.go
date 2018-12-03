@@ -367,7 +367,7 @@ func (qb *queryBuilder) BuildWithConditions(conditions ...Condition) (*Query, er
 	}
 
 	var err error
-	if _, err = condition.build(qb); err != nil {
+	if _, err = condition.applyTo(qb); err != nil {
 		return nil, err
 	}
 	return qb.Build()

@@ -18,9 +18,13 @@ var BBinding = b_EntityInfo{
 }
 
 var B_ = struct {
-	Id objectbox.TypeId
+	Id *objectbox.PropertyUint64
 }{
-	Id: 1,
+	Id: &objectbox.PropertyUint64{
+		Property: &objectbox.Property{
+			Id: 1,
+		},
+	},
 }
 
 func (b_EntityInfo) AddToModel(model *objectbox.Model) {
@@ -43,7 +47,7 @@ func (b_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uin
 
 	// build the FlatBuffers object
 	fbb.StartObject(1)
-	fbb.PrependUint64Slot(0, id, 0)
+	fbutils.SetUint64Slot(fbb, 0, id)
 }
 
 func (b_EntityInfo) ToObject(bytes []byte) interface{} {
@@ -71,7 +75,7 @@ type BBox struct {
 
 func BoxForB(ob *objectbox.ObjectBox) *BBox {
 	return &BBox{
-		Box: ob.Box(1),
+		Box: ob.InternalBox(1),
 	}
 }
 
@@ -107,4 +111,22 @@ func (box *BBox) GetAll() ([]*B, error) {
 
 func (box *BBox) Remove(object *B) (err error) {
 	return box.Box.Remove(object.Id)
+}
+
+func (box *BBox) Query(conditions ...objectbox.Condition) *BQuery {
+	return &BQuery{
+		box.Box.Query(conditions...),
+	}
+}
+
+type BQuery struct {
+	*objectbox.Query
+}
+
+func (query *BQuery) Find() ([]*B, error) {
+	objects, err := query.Query.Find()
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*B), nil
 }

@@ -42,7 +42,8 @@ func getModelEntity(bindingEntity *Entity, modelInfo *modelinfo.ModelInfo) (*mod
 		return modelInfo.FindEntityByUid(bindingEntity.Uid)
 	}
 
-	entity, err := modelInfo.FindEntityByName(bindingEntity.Name)
+	// we don't care about this error = either the entity is found or we create it
+	entity, _ := modelInfo.FindEntityByName(bindingEntity.Name)
 
 	// handle uid request
 	if bindingEntity.uidRequest {
@@ -60,7 +61,7 @@ func getModelEntity(bindingEntity *Entity, modelInfo *modelinfo.ModelInfo) (*mod
 	}
 
 	if entity != nil {
-		return entity, err
+		return entity, nil
 	} else {
 		return modelInfo.CreateEntity()
 	}
@@ -106,7 +107,8 @@ func getModelProperty(bindingProperty *Property, modelEntity *modelinfo.Entity) 
 		return modelEntity.FindPropertyByUid(bindingProperty.Uid)
 	}
 
-	property, err := modelEntity.FindPropertyByName(bindingProperty.Name)
+	// we don't care about this error, either the property is found or we create it
+	property, _ := modelEntity.FindPropertyByName(bindingProperty.Name)
 
 	// handle uid request
 	if bindingProperty.uidRequest {
@@ -125,7 +127,7 @@ func getModelProperty(bindingProperty *Property, modelEntity *modelinfo.Entity) 
 	}
 
 	if property != nil {
-		return property, err
+		return property, nil
 	} else {
 		return modelEntity.CreateProperty()
 	}

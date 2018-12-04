@@ -63,6 +63,11 @@ This repository also come with a `install.sh` script that can be used for instal
  ```bash
 ~/go/src/github.com/objectbox/objectbox-go/install.sh
  ```
+ 
+Afterwards, don't forget to re-run the code generation on your project
+```bash
+go generate ./...
+```
 
 Docs
 ----

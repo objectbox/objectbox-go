@@ -136,6 +136,10 @@ var Typeful_ = struct {
 	},
 }
 
+func (typeful_EntityInfo) GeneratorVersion() int {
+	return 1
+}
+
 func (typeful_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("Typeful", 1, 8717895732742165505)
 	model.Property("Id", objectbox.PropertyType_Long, 1, 2259404117704393152)

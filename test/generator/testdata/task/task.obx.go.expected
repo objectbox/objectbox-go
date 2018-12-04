@@ -70,6 +70,10 @@ var Task_ = struct {
 	},
 }
 
+func (task_EntityInfo) GeneratorVersion() int {
+	return 1
+}
+
 func (task_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("Task", 1, 8717895732742165505)
 	model.Property("Id", objectbox.PropertyType_Long, 1, 2259404117704393152)
@@ -226,6 +230,10 @@ var Group_ = struct {
 			Id: 1,
 		},
 	},
+}
+
+func (group_EntityInfo) GeneratorVersion() int {
+	return 1
 }
 
 func (group_EntityInfo) AddToModel(model *objectbox.Model) {

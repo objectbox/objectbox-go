@@ -30,6 +30,8 @@ import (
 	"github.com/objectbox/objectbox-go/internal/generator/templates"
 )
 
+const Version = 1
+
 func BindingFile(sourceFile string) string {
 	var extension = filepath.Ext(sourceFile)
 	return sourceFile[0:len(sourceFile)-len(extension)] + ".obx" + extension
@@ -118,7 +120,13 @@ func createBinding(sourceFile string, modelInfo *modelinfo.ModelInfo) error {
 func generateBindingFile(binding *Binding) (data []byte, err error) {
 	var b bytes.Buffer
 	writer := bufio.NewWriter(&b)
-	if err = templates.BindingTemplate.Execute(writer, binding); err != nil {
+
+	var tplArguments = struct {
+		Binding          *Binding
+		GeneratorVersion int
+	}{binding, Version}
+
+	if err = templates.BindingTemplate.Execute(writer, tplArguments); err != nil {
 		return nil, fmt.Errorf("template execution failed: %s", err)
 	}
 
@@ -178,7 +186,13 @@ func createModel(modelInfoFile string, modelInfo *modelinfo.ModelInfo) error {
 func generateModelFile(model *modelinfo.ModelInfo) (data []byte, err error) {
 	var b bytes.Buffer
 	writer := bufio.NewWriter(&b)
-	if err = templates.ModelTemplate.Execute(writer, model); err != nil {
+
+	var tplArguments = struct {
+		Model            *modelinfo.ModelInfo
+		GeneratorVersion int
+	}{model, Version}
+
+	if err = templates.ModelTemplate.Execute(writer, tplArguments); err != nil {
 		return nil, fmt.Errorf("template execution failed: %s", err)
 	}
 

@@ -28,6 +28,7 @@ import (
 	"unsafe"
 
 	"github.com/google/flatbuffers/go"
+	"github.com/objectbox/objectbox-go/internal/generator"
 )
 
 //noinspection GoUnusedConst
@@ -89,6 +90,7 @@ type ObjectBinding interface {
 	ToObject(bytes []byte) interface{}
 	MakeSlice(capacity int) interface{}
 	AppendToSlice(slice interface{}, object interface{}) (sliceNew interface{})
+	GeneratorVersion() int
 }
 
 // Model is used by the generated code to represent information about the ObjectBox database schema
@@ -109,6 +111,8 @@ type Model struct {
 
 	lastRelationId  TypeId
 	lastRelationUid uint64
+
+	generatorVersion int
 }
 
 func NewModel() *Model {
@@ -123,6 +127,14 @@ func NewModel() *Model {
 		bindingsById:   make(map[TypeId]ObjectBinding),
 		bindingsByName: make(map[string]ObjectBinding),
 	}
+}
+
+func (model *Model) GeneratorVersion(version int) {
+	if model.Error != nil {
+		return
+	}
+
+	model.generatorVersion = version
 }
 
 func (model *Model) LastEntityId(id TypeId, uid uint64) {
@@ -259,6 +271,13 @@ func (model *Model) RegisterBinding(binding ObjectBinding) {
 		return
 	}
 
+	var version = binding.GeneratorVersion()
+	if version != generator.Version {
+		model.Error = fmt.Errorf("incompatible generator version %d used to generate the binding %s code "+
+			"- please follow the upgrade procedure described in the README.md", version, name)
+		return
+	}
+
 	model.bindingsById[id] = binding
 	model.bindingsByName[name] = binding
 }
@@ -266,6 +285,11 @@ func (model *Model) RegisterBinding(binding ObjectBinding) {
 func (model *Model) validate() error {
 	if model.Error != nil {
 		return model.Error
+	}
+
+	if model.generatorVersion != generator.Version {
+		return fmt.Errorf("incompatible generator version %d used to generate the model code "+
+			"- please follow the upgrade procedure described in the README.md", model.generatorVersion)
 	}
 
 	if model.lastEntityId == 0 || model.lastEntityUid == 0 {

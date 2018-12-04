@@ -33,9 +33,7 @@ type Binding struct {
 	Package  string
 	Entities []*Entity
 
-	currentEntityName     string
-	currentEntityComments []*ast.Comment
-	err                   error
+	err error
 }
 
 type Entity struct {
@@ -88,9 +86,12 @@ func newBinding() (*Binding, error) {
 func (binding *Binding) createFromAst(f *file) (err error) {
 	binding.Package = f.f.Name.Name // this is actually package name, not file name
 
-	// process all structs
+	// this will hold the pointer to the latest GenDecl encountered (parent of the current struct)
+	var prevDecl *ast.GenDecl
+
+	// traverse the AST to process all structs
 	f.walk(func(node ast.Node) bool {
-		return binding.entityLoader(node)
+		return binding.entityLoader(node, &prevDecl)
 	})
 
 	if binding.err != nil {
@@ -101,33 +102,44 @@ func (binding *Binding) createFromAst(f *file) (err error) {
 }
 
 // this function only processes structs and cuts-off on types that can't contain a struct
-func (binding *Binding) entityLoader(node ast.Node) bool {
+func (binding *Binding) entityLoader(node ast.Node, prevDecl **ast.GenDecl) bool {
 	if binding.err != nil {
 		return false
 	}
 
 	switch v := node.(type) {
 	case *ast.TypeSpec:
-		// this might be the name of the next struct
-		binding.currentEntityName = v.Name.Name
-		return true
-	case *ast.StructType:
-		if binding.currentEntityName == "" {
-			// NOTE this should probably not happen
-			binding.err = fmt.Errorf("encountered a struct without a name")
+		if strct, isStruct := v.Type.(*ast.StructType); isStruct {
+			var name = v.Name.Name
+
+			if name == "" {
+				// NOTE this should probably not happen
+				binding.err = fmt.Errorf("encountered a struct without a name")
+				return false
+			}
+
+			var comments []*ast.Comment
+
+			if v.Doc != nil && v.Doc.List != nil {
+				// this will be defined in case the struct is inside a block of multiple types - `type (...)`
+				comments = v.Doc.List
+
+			} else if prevDecl != nil && *prevDecl != nil && (**prevDecl).Doc != nil && (**prevDecl).Doc.List != nil {
+				// otherwise (`type A struct {`), use the docs from the parent GenDecl
+				comments = (**prevDecl).Doc.List
+			}
+
+			binding.err = binding.createEntityFromAst(strct, name, comments)
+
+			// no need to go any deeper in the AST
 			return false
-		} else {
-			binding.err = binding.createEntityFromAst(node)
-			// reset after it has been "consumed"
-			binding.currentEntityName = ""
-			binding.currentEntityComments = nil
 		}
+
 		return true
 
 	case *ast.GenDecl:
-		if v.Doc != nil && v.Doc.List != nil {
-			binding.currentEntityComments = v.Doc.List
-		}
+		// store the "parent" declaration - we need it to get the comments
+		*prevDecl = v
 		return true
 	case *ast.File:
 		return true
@@ -136,14 +148,14 @@ func (binding *Binding) entityLoader(node ast.Node) bool {
 	return false
 }
 
-func (binding *Binding) createEntityFromAst(node ast.Node) (err error) {
+func (binding *Binding) createEntityFromAst(node ast.Node, name string, comments []*ast.Comment) (err error) {
 	entity := &Entity{
 		binding: binding,
-		Name:    binding.currentEntityName,
+		Name:    name,
 	}
 
-	if binding.currentEntityComments != nil {
-		if err = entity.setAnnotations(binding.currentEntityComments); err != nil {
+	if comments != nil {
+		if err = entity.setAnnotations(comments); err != nil {
 			return fmt.Errorf("%s on entity %s", err, entity.Name)
 		}
 	}

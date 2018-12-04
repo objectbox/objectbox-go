@@ -46,6 +46,10 @@ var Task_ = struct {
 	},
 }
 
+func (task_EntityInfo) GeneratorVersion() int {
+	return 1
+}
+
 func (task_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("Task", 1, 1306759095002958910)
 	model.Property("Id", objectbox.PropertyType_Long, 1, 2193439623591184445)

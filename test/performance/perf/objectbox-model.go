@@ -8,6 +8,7 @@ import (
 
 func ObjectBoxModel() *objectbox.Model {
 	model := objectbox.NewModel()
+	model.GeneratorVersion(1)
 
 	model.RegisterBinding(EntityBinding)
 	model.LastEntityId(1, 1737161401460991620)

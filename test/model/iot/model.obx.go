@@ -52,6 +52,10 @@ var Event_ = struct {
 	},
 }
 
+func (event_EntityInfo) GeneratorVersion() int {
+	return 1
+}
+
 func (event_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("Event", 1, 1468539308767086854)
 	model.Property("Id", objectbox.PropertyType_Long, 1, 3098166604415018001)
@@ -240,6 +244,10 @@ var Reading_ = struct {
 			Id: 9,
 		},
 	},
+}
+
+func (reading_EntityInfo) GeneratorVersion() int {
+	return 1
 }
 
 func (reading_EntityInfo) AddToModel(model *objectbox.Model) {

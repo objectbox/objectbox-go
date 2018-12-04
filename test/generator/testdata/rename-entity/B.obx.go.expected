@@ -27,6 +27,10 @@ var B_ = struct {
 	},
 }
 
+func (b_EntityInfo) GeneratorVersion() int {
+	return 1
+}
+
 func (b_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("B", 1, 8717895732742165505)
 	model.Property("Id", objectbox.PropertyType_Long, 1, 2259404117704393152)

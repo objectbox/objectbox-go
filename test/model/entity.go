@@ -19,6 +19,7 @@ package model
 //go:generate objectbox-gogen
 
 // Tests all available GO & ObjectBox types
+// TODO rename; e.g. TestEntity
 type Entity struct {
 	Id         uint64
 	Int        int

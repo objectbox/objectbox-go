@@ -181,7 +181,7 @@ func (box *Box) PutAll(slice interface{}) (ids []uint64, err error) {
 		for i := 0; i < count; i++ {
 			id, errPut := cursor.Put(sliceValue.Index(i).Interface())
 			if errPut != nil {
-				// TODO restore original IDs assigned to already processed objects if the transaction fails
+				// Note that objects that have been put before already have an ID assigned; similar to when an TX fails
 				return errPut
 			}
 			ids[i] = id

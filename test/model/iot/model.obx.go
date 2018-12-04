@@ -19,17 +19,37 @@ var EventBinding = event_EntityInfo{
 }
 
 var Event_ = struct {
-	Id      objectbox.TypeId
-	Uid     objectbox.TypeId
-	Device  objectbox.TypeId
-	Date    objectbox.TypeId
-	Picture objectbox.TypeId
+	Id      *objectbox.PropertyUint64
+	Uid     *objectbox.PropertyString
+	Device  *objectbox.PropertyString
+	Date    *objectbox.PropertyInt64
+	Picture *objectbox.PropertyByteVector
 }{
-	Id:      1,
-	Uid:     4,
-	Device:  2,
-	Date:    3,
-	Picture: 5,
+	Id: &objectbox.PropertyUint64{
+		Property: &objectbox.Property{
+			Id: 1,
+		},
+	},
+	Uid: &objectbox.PropertyString{
+		Property: &objectbox.Property{
+			Id: 4,
+		},
+	},
+	Device: &objectbox.PropertyString{
+		Property: &objectbox.Property{
+			Id: 2,
+		},
+	},
+	Date: &objectbox.PropertyInt64{
+		Property: &objectbox.Property{
+			Id: 3,
+		},
+	},
+	Picture: &objectbox.PropertyByteVector{
+		Property: &objectbox.Property{
+			Id: 5,
+		},
+	},
 }
 
 func (event_EntityInfo) AddToModel(model *objectbox.Model) {
@@ -62,11 +82,11 @@ func (event_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id
 
 	// build the FlatBuffers object
 	fbb.StartObject(5)
-	fbb.PrependUint64Slot(0, id, 0)
-	fbb.PrependUOffsetTSlot(3, offsetUid, 0)
-	fbb.PrependUOffsetTSlot(1, offsetDevice, 0)
-	fbb.PrependInt64Slot(2, obj.Date, 0)
-	fbb.PrependUOffsetTSlot(4, offsetPicture, 0)
+	fbutils.SetUint64Slot(fbb, 0, id)
+	fbutils.SetUOffsetTSlot(fbb, 3, offsetUid)
+	fbutils.SetUOffsetTSlot(fbb, 1, offsetDevice)
+	fbutils.SetInt64Slot(fbb, 2, obj.Date)
+	fbutils.SetUOffsetTSlot(fbb, 4, offsetPicture)
 }
 
 func (event_EntityInfo) ToObject(bytes []byte) interface{} {
@@ -98,7 +118,7 @@ type EventBox struct {
 
 func BoxForEvent(ob *objectbox.ObjectBox) *EventBox {
 	return &EventBox{
-		Box: ob.Box(1),
+		Box: ob.InternalBox(1),
 	}
 }
 
@@ -136,6 +156,24 @@ func (box *EventBox) Remove(object *Event) (err error) {
 	return box.Box.Remove(object.Id)
 }
 
+func (box *EventBox) Query(conditions ...objectbox.Condition) *EventQuery {
+	return &EventQuery{
+		box.Box.Query(conditions...),
+	}
+}
+
+type EventQuery struct {
+	*objectbox.Query
+}
+
+func (query *EventQuery) Find() ([]*Event, error) {
+	objects, err := query.Query.Find()
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*Event), nil
+}
+
 type reading_EntityInfo struct {
 	Id  objectbox.TypeId
 	Uid uint64
@@ -147,25 +185,61 @@ var ReadingBinding = reading_EntityInfo{
 }
 
 var Reading_ = struct {
-	Id              objectbox.TypeId
-	Date            objectbox.TypeId
-	EventId         objectbox.TypeId
-	ValueName       objectbox.TypeId
-	ValueString     objectbox.TypeId
-	ValueInteger    objectbox.TypeId
-	ValueFloating   objectbox.TypeId
-	ValueInt32      objectbox.TypeId
-	ValueFloating32 objectbox.TypeId
+	Id              *objectbox.PropertyUint64
+	Date            *objectbox.PropertyInt64
+	EventId         *objectbox.PropertyUint64
+	ValueName       *objectbox.PropertyString
+	ValueString     *objectbox.PropertyString
+	ValueInteger    *objectbox.PropertyInt64
+	ValueFloating   *objectbox.PropertyFloat64
+	ValueInt32      *objectbox.PropertyInt32
+	ValueFloating32 *objectbox.PropertyFloat32
 }{
-	Id:              1,
-	Date:            2,
-	EventId:         3,
-	ValueName:       4,
-	ValueString:     5,
-	ValueInteger:    6,
-	ValueFloating:   7,
-	ValueInt32:      8,
-	ValueFloating32: 9,
+	Id: &objectbox.PropertyUint64{
+		Property: &objectbox.Property{
+			Id: 1,
+		},
+	},
+	Date: &objectbox.PropertyInt64{
+		Property: &objectbox.Property{
+			Id: 2,
+		},
+	},
+	EventId: &objectbox.PropertyUint64{
+		Property: &objectbox.Property{
+			Id: 3,
+		},
+	},
+	ValueName: &objectbox.PropertyString{
+		Property: &objectbox.Property{
+			Id: 4,
+		},
+	},
+	ValueString: &objectbox.PropertyString{
+		Property: &objectbox.Property{
+			Id: 5,
+		},
+	},
+	ValueInteger: &objectbox.PropertyInt64{
+		Property: &objectbox.Property{
+			Id: 6,
+		},
+	},
+	ValueFloating: &objectbox.PropertyFloat64{
+		Property: &objectbox.Property{
+			Id: 7,
+		},
+	},
+	ValueInt32: &objectbox.PropertyInt32{
+		Property: &objectbox.Property{
+			Id: 8,
+		},
+	},
+	ValueFloating32: &objectbox.PropertyFloat32{
+		Property: &objectbox.Property{
+			Id: 9,
+		},
+	},
 }
 
 func (reading_EntityInfo) AddToModel(model *objectbox.Model) {
@@ -200,15 +274,15 @@ func (reading_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, 
 
 	// build the FlatBuffers object
 	fbb.StartObject(9)
-	fbb.PrependUint64Slot(0, id, 0)
-	fbb.PrependInt64Slot(1, obj.Date, 0)
-	fbb.PrependUint64Slot(2, obj.EventId, 0)
-	fbb.PrependUOffsetTSlot(3, offsetValueName, 0)
-	fbb.PrependUOffsetTSlot(4, offsetValueString, 0)
-	fbb.PrependInt64Slot(5, obj.ValueInteger, 0)
-	fbb.PrependFloat64Slot(6, obj.ValueFloating, 0)
-	fbb.PrependInt32Slot(7, obj.ValueInt32, 0)
-	fbb.PrependFloat32Slot(8, obj.ValueFloating32, 0)
+	fbutils.SetUint64Slot(fbb, 0, id)
+	fbutils.SetInt64Slot(fbb, 1, obj.Date)
+	fbutils.SetUint64Slot(fbb, 2, obj.EventId)
+	fbutils.SetUOffsetTSlot(fbb, 3, offsetValueName)
+	fbutils.SetUOffsetTSlot(fbb, 4, offsetValueString)
+	fbutils.SetInt64Slot(fbb, 5, obj.ValueInteger)
+	fbutils.SetFloat64Slot(fbb, 6, obj.ValueFloating)
+	fbutils.SetInt32Slot(fbb, 7, obj.ValueInt32)
+	fbutils.SetFloat32Slot(fbb, 8, obj.ValueFloating32)
 }
 
 func (reading_EntityInfo) ToObject(bytes []byte) interface{} {
@@ -244,7 +318,7 @@ type ReadingBox struct {
 
 func BoxForReading(ob *objectbox.ObjectBox) *ReadingBox {
 	return &ReadingBox{
-		Box: ob.Box(2),
+		Box: ob.InternalBox(2),
 	}
 }
 
@@ -280,4 +354,22 @@ func (box *ReadingBox) GetAll() ([]*Reading, error) {
 
 func (box *ReadingBox) Remove(object *Reading) (err error) {
 	return box.Box.Remove(object.Id)
+}
+
+func (box *ReadingBox) Query(conditions ...objectbox.Condition) *ReadingQuery {
+	return &ReadingQuery{
+		box.Box.Query(conditions...),
+	}
+}
+
+type ReadingQuery struct {
+	*objectbox.Query
+}
+
+func (query *ReadingQuery) Find() ([]*Reading, error) {
+	objects, err := query.Query.Find()
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*Reading), nil
 }

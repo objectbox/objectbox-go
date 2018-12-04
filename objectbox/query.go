@@ -22,74 +22,157 @@ package objectbox
 #include "objectbox.h"
 */
 import "C"
-import "unsafe"
+import (
+	"errors"
+	"fmt"
+	"runtime"
+	"sync"
+)
 
-// WIP: Query interface is subject to change with full ObjectBox queries support
+// Query provides a way to search stored objects
+//
+// For example, you can find all people whose last name starts with an 'N':
+// 		box.Query(Person_.LastName.HasPrefix("N", false)).Find()
 type Query struct {
-	cquery    *C.OBX_query
-	typeId    TypeId
-	objectBox *ObjectBox
+	typeId     TypeId
+	objectBox  *ObjectBox
+	cQuery     *C.OBX_query
+	closeMutex sync.Mutex
 }
 
-func (query *Query) Close() (err error) {
-	rc := C.obx_query_close(query.cquery)
-	query.cquery = nil
-	if rc != 0 {
-		err = createError()
+// Frees (native) resources held by this Query.
+// Note that this is optional and not required because the GC invokes a finalizer automatically.
+func (query *Query) Close() error {
+	query.closeMutex.Lock()
+	defer query.closeMutex.Unlock()
+	if query.cQuery != nil {
+		rc := C.obx_query_close(query.cQuery)
+		query.cQuery = nil
+		if rc != 0 {
+			return createError()
+		}
 	}
-	return
+	return nil
 }
 
-func (query *Query) Find() (slice interface{}, err error) {
+func queryFinalizer(query *Query) {
+	err := query.Close()
+	if err != nil {
+		fmt.Printf("Error while finalizer closed query: %s", err)
+	}
+}
+
+// The native query object in the ObjectBox core is not tied with other resources.
+// Thus timing of the Close call is independent from other resources.
+func (query *Query) installFinalizer() {
+	runtime.SetFinalizer(query, queryFinalizer)
+}
+
+func (query *Query) errorClosed() error {
+	return errors.New("illegal state; query was closed")
+}
+
+// Find returns all objects matching the query
+func (query *Query) Find() (objects interface{}, err error) {
 	err = query.objectBox.runWithCursor(query.typeId, true, func(cursor *cursor) error {
 		var errInner error
-		slice, errInner = query.find(cursor)
+		objects, errInner = query.find(cursor)
 		return errInner
 	})
 	return
+}
+
+// FindIds returns IDs of all objects matching the query
+func (query *Query) FindIds() (ids []uint64, err error) {
+	err = query.objectBox.runWithCursor(query.typeId, true, func(cursor *cursor) error {
+		var errInner error
+		ids, errInner = query.findIds(cursor)
+		return errInner
+	})
+
+	return
+}
+
+// Count returns the number of objects matching the query
+func (query *Query) Count() (count uint64, err error) {
+	err = query.objectBox.runWithCursor(query.typeId, true, func(cursor *cursor) error {
+		var errInner error
+		count, errInner = query.count(cursor)
+		return errInner
+	})
+
+	return
+}
+
+// Remove permanently deletes all objects matching the query from the database
+func (query *Query) Remove() (count uint64, err error) {
+	err = query.objectBox.runWithCursor(query.typeId, false, func(cursor *cursor) error {
+		var errInner error
+		count, errInner = query.remove(cursor)
+		return errInner
+	})
+
+	return
+}
+
+// Describe returns a string representation of the query
+func (query *Query) Describe() (string, error) {
+	if query.cQuery == nil {
+		return "", query.errorClosed()
+	}
+	// no need to free, it's handled by the cQuery internally
+	cResult := C.obx_query_describe_parameters(query.cQuery)
+
+	return C.GoString(cResult), nil
+}
+
+func (query *Query) count(cursor *cursor) (uint64, error) {
+	if query.cQuery == nil {
+		return 0, query.errorClosed()
+	}
+	var cCount C.uint64_t
+	rc := C.obx_query_count(query.cQuery, cursor.cursor, &cCount)
+	if rc != 0 {
+		return 0, createError()
+	}
+	return uint64(cCount), nil
+}
+
+func (query *Query) remove(cursor *cursor) (uint64, error) {
+	if query.cQuery == nil {
+		return 0, query.errorClosed()
+	}
+	var cCount C.uint64_t
+	rc := C.obx_query_remove(query.cQuery, cursor.cursor, &cCount)
+	if rc != 0 {
+		return 0, createError()
+	}
+	return uint64(cCount), nil
+}
+
+func (query *Query) findIds(cursor *cursor) (ids []uint64, err error) {
+	if query.cQuery == nil {
+		return nil, query.errorClosed()
+	}
+	cIdsArray := C.obx_query_find_ids(query.cQuery, cursor.cursor)
+	if cIdsArray == nil {
+		return nil, createError()
+	}
+
+	idsArray := cIdsArrayToGo(cIdsArray)
+	defer idsArray.free()
+
+	return idsArray.ids, nil
 }
 
 func (query *Query) find(cursor *cursor) (slice interface{}, err error) {
-	bytesArray, err := query.findBytes(cursor)
-	if err != nil {
-		return
+	if query.cQuery == nil {
+		return 0, query.errorClosed()
 	}
-	defer bytesArray.free()
-	return cursor.bytesArrayToObjects(bytesArray), nil
-}
-
-// Deprecated: Won't be public in the future
-func (query *Query) FindBytes() (bytesArray *BytesArray, err error) {
-	err = query.objectBox.runWithCursor(query.typeId, true, func(cursor *cursor) error {
-		var errInner error
-		bytesArray, errInner = query.findBytes(cursor)
-		return errInner
-	})
-	return
-}
-
-func (query *Query) findBytes(cursor *cursor) (*BytesArray, error) {
-	cBytesArray := C.obx_query_find(query.cquery, cursor.cursor)
+	cBytesArray := C.obx_query_find(query.cQuery, cursor.cursor)
 	if cBytesArray == nil {
 		return nil, createError()
 	}
-	return cBytesArrayToGo(cBytesArray), nil
-}
 
-func (query *Query) SetParamString(propertyId TypeId, value string) error {
-	cvalue := C.CString(value)
-	defer C.free(unsafe.Pointer(cvalue))
-	rc := C.obx_query_string_param(query.cquery, C.obx_schema_id(propertyId), cvalue)
-	if rc != 0 {
-		return createError()
-	}
-	return nil
-}
-
-func (query *Query) SetParamInt(propertyId TypeId, value int64) error {
-	rc := C.obx_query_int_param(query.cquery, C.obx_schema_id(propertyId), C.int64_t(value))
-	if rc != 0 {
-		return createError()
-	}
-	return nil
+	return cursor.cBytesArrayToObjects(cBytesArray), nil
 }

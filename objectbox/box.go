@@ -24,6 +24,7 @@ package objectbox
 import "C"
 
 import (
+	"fmt"
 	"reflect"
 	"sync/atomic"
 	"unsafe"
@@ -45,14 +46,32 @@ type Box struct {
 	fbbInUseAtomic uint32
 }
 
-// Close fully closes the Box connection and free's resources
-func (box *Box) Close() (err error) {
+// close fully closes the Box connection and free's resources
+func (box *Box) close() (err error) {
 	rc := C.obx_box_close(box.box)
 	box.box = nil
 	if rc != 0 {
 		err = createError()
 	}
 	return
+}
+
+// Creates a query with the given conditions. Use generated properties to create conditions.
+// Keep the Query object if you intend to execute it multiple times.
+// Note: this function panics if you try to create illegal queries; e.g. use properties of an alien type.
+// This is typically a programming error. Use QueryOrError instead if you want the error check.
+func (box *Box) Query(conditions ...Condition) *Query {
+	query, err := box.QueryOrError(conditions...)
+	if err != nil {
+		panic(fmt.Sprintf("Could not create query - please check your query conditions: %s", err))
+	}
+	return query
+}
+
+// Like Query() but with error handling; e.g. when you build conditions dynamically that may fail.
+func (box *Box) QueryOrError(conditions ...Condition) (*Query, error) {
+	queryBuilder := box.objectBox.newQueryBuilder(box.typeId)
+	return queryBuilder.BuildWithConditions(conditions...)
 }
 
 func (box *Box) idForPut(idCandidate uint64) (id uint64, err error) {
@@ -162,7 +181,7 @@ func (box *Box) PutAll(slice interface{}) (ids []uint64, err error) {
 		for i := 0; i < count; i++ {
 			id, errPut := cursor.Put(sliceValue.Index(i).Interface())
 			if errPut != nil {
-				// TODO restore original IDs assigned to already processed objects if the transaction fails
+				// Note that objects that have been put before already have an ID assigned; similar to when an TX fails
 				return errPut
 			}
 			ids[i] = id

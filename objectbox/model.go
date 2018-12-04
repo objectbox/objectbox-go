@@ -26,6 +26,8 @@ import "C"
 import (
 	"fmt"
 	"unsafe"
+
+	"github.com/google/flatbuffers/go"
 )
 
 //noinspection GoUnusedConst
@@ -76,6 +78,18 @@ const (
 	/// (recommended mostly for 64 bit machines with values longer >200 bytes; small values are faster with a 32 bit hash)
 	PropertyFlags_INDEX_HASH64 = 4096
 )
+
+// An ObjectBinding provides an interface for various object types to be included in the model
+type ObjectBinding interface {
+	AddToModel(model *Model)
+	GetId(object interface{}) (id uint64, err error)
+	// TODO SetId never errs
+	SetId(object interface{}, id uint64) error
+	Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64)
+	ToObject(bytes []byte) interface{}
+	MakeSlice(capacity int) interface{}
+	AppendToSlice(slice interface{}, object interface{}) (sliceNew interface{})
+}
 
 // Model is used by the generated code to represent information about the ObjectBox database schema
 type Model struct {

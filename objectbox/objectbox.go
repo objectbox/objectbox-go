@@ -28,6 +28,7 @@ import (
 	"fmt"
 	"runtime"
 	"strconv"
+	"sync"
 
 	"github.com/google/flatbuffers/go"
 )
@@ -43,28 +44,12 @@ const (
 
 type TypeId uint32
 
-// An ObjectBinding provides an interface for various object types to be included in the model
-type ObjectBinding interface {
-	AddToModel(model *Model)
-	GetId(object interface{}) (id uint64, err error)
-	// TODO SetId never errs
-	SetId(object interface{}, id uint64) error
-	Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64)
-	ToObject(bytes []byte) interface{}
-	MakeSlice(capacity int) interface{}
-	AppendToSlice(slice interface{}, object interface{}) (sliceNew interface{})
-}
-
 type ObjectBox struct {
 	store          *C.OBX_store
 	bindingsById   map[TypeId]ObjectBinding
 	bindingsByName map[string]ObjectBinding
-}
-
-// Internal: Won't be public in the future
-type BytesArray struct {
-	BytesArray  [][]byte
-	cBytesArray *C.OBX_bytes_array
+	boxes          map[TypeId]*Box
+	boxesMutex     *sync.Mutex
 }
 
 type txnFun func(transaction *Transaction) error
@@ -77,6 +62,15 @@ func (ob *ObjectBox) Close() {
 	if storeToClose != nil {
 		C.obx_store_close(storeToClose)
 	}
+
+	ob.boxesMutex.Lock()
+	defer ob.boxesMutex.Unlock()
+	for _, box := range ob.boxes {
+		if err := box.close(); err != nil {
+			fmt.Println(err)
+		}
+	}
+	ob.boxes = nil
 }
 
 func (ob *ObjectBox) beginTxn() (*Transaction, error) {
@@ -183,31 +177,40 @@ func (ob *ObjectBox) SetDebugFlags(flags uint) error {
 	return nil
 }
 
-// Box opens an Entity Box which provides CRUD access to objects
-//
 // panics on error (in case entity with the given ID doesn't exist)
-func (ob *ObjectBox) Box(typeId TypeId) *Box {
-	box, err := ob.BoxOrError(typeId)
+func (ob *ObjectBox) InternalBox(typeId TypeId) *Box {
+	box, err := ob.box(typeId)
 	if err != nil {
-		panic("Could not create box for type ID " + strconv.Itoa(int(typeId)) + ": " + err.Error())
+		panic(fmt.Sprintf("Could not create box for type ID %d: %s", typeId, err))
 	}
 	return box
 }
 
-// BoxOrError opens an Entity Box which provides CRUD access to objects of the given type
-func (ob *ObjectBox) BoxOrError(typeId TypeId) (*Box, error) {
+// Gets an Entity Box which provides CRUD access to objects of the given type
+func (ob *ObjectBox) box(typeId TypeId) (*Box, error) {
+	ob.boxesMutex.Lock()
+	defer ob.boxesMutex.Unlock()
+
+	box := ob.boxes[typeId]
+	if box != nil {
+		return box, nil
+	}
+
 	binding := ob.getBindingById(typeId)
 	cbox := C.obx_box_create(ob.store, C.obx_schema_id(typeId))
 	if cbox == nil {
 		return nil, createError()
 	}
-	return &Box{
+
+	box = &Box{
 		objectBox: ob,
 		box:       cbox,
 		typeId:    typeId,
 		binding:   binding,
 		fbb:       flatbuffers.NewBuilder(512),
-	}, nil
+	}
+	ob.boxes[typeId] = box
+	return box, nil
 }
 
 // AwaitAsyncCompletion blocks until all PutAsync insert have been processed
@@ -218,30 +221,18 @@ func (ob *ObjectBox) AwaitAsyncCompletion() *ObjectBox {
 	return ob
 }
 
-// Query starts to build a new Query
-//
-// Deprecated: this function is subject to change due to necessary typeId argument
-func (ob *ObjectBox) Query(typeId TypeId) *QueryBuilder {
+func (ob *ObjectBox) newQueryBuilder(typeId TypeId) *queryBuilder {
 	qb := C.obx_qb_create(ob.store, C.obx_schema_id(typeId))
 	var err error = nil
 	if qb == nil {
 		err = createError()
 	}
-	return &QueryBuilder{
+	return &queryBuilder{
 		typeId:    typeId,
 		objectBox: ob,
 		cqb:       qb,
 		Err:       err,
 	}
-}
-
-func (bytesArray *BytesArray) free() {
-	cBytesArray := bytesArray.cBytesArray
-	if cBytesArray != nil {
-		bytesArray.cBytesArray = nil
-		C.obx_bytes_array_free(cBytesArray)
-	}
-	bytesArray.BytesArray = nil
 }
 
 func createError() error {

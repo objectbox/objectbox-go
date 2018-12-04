@@ -24,7 +24,6 @@ package objectbox
 import "C"
 
 import (
-	"reflect"
 	"unsafe"
 
 	"github.com/google/flatbuffers/go"
@@ -193,31 +192,11 @@ func (cursor *cursor) cBytesArrayToObjects(cBytesArray *C.OBX_bytes_array) (slic
 	return cursor.bytesArrayToObjects(bytesArray)
 }
 
-func (cursor *cursor) bytesArrayToObjects(bytesArray *BytesArray) (slice interface{}) {
+func (cursor *cursor) bytesArrayToObjects(bytesArray *bytesArray) (slice interface{}) {
 	slice = cursor.binding.MakeSlice(len(bytesArray.BytesArray))
 	for _, bytesData := range bytesArray.BytesArray {
 		object := cursor.binding.ToObject(bytesData)
 		slice = cursor.binding.AppendToSlice(slice, object)
 	}
 	return
-}
-
-func cBytesArrayToGo(cBytesArray *C.OBX_bytes_array) *BytesArray {
-	size := int(cBytesArray.count)
-	plainBytesArray := make([][]byte, size)
-	if size > 0 {
-		// Previous alternative without reflect:
-		//   https://github.com/golang/go/wiki/cgo#turning-c-arrays-into-go-slices (2012)
-		//   On a RPi 3, the size with 1<<30 did not work, but 1<<27 did
-		// Raul measured both variants and did notice a visible perf impact (Go 1.11.2)
-		var goBytesArray []C.OBX_bytes
-		header := (*reflect.SliceHeader)(unsafe.Pointer(&goBytesArray))
-		*header = reflect.SliceHeader{Data: uintptr(unsafe.Pointer(cBytesArray.bytes)), Len: size, Cap: size}
-		for i := 0; i < size; i++ {
-			cBytes := goBytesArray[i]
-			dataBytes := C.GoBytes(cBytes.data, C.int(cBytes.size))
-			plainBytesArray[i] = dataBytes
-		}
-	}
-	return &BytesArray{plainBytesArray, cBytesArray}
 }

@@ -19,15 +19,31 @@ var TaskBinding = task_EntityInfo{
 }
 
 var Task_ = struct {
-	Id           objectbox.TypeId
-	Text         objectbox.TypeId
-	DateCreated  objectbox.TypeId
-	DateFinished objectbox.TypeId
+	Id           *objectbox.PropertyUint64
+	Text         *objectbox.PropertyString
+	DateCreated  *objectbox.PropertyInt64
+	DateFinished *objectbox.PropertyInt64
 }{
-	Id:           1,
-	Text:         2,
-	DateCreated:  3,
-	DateFinished: 4,
+	Id: &objectbox.PropertyUint64{
+		Property: &objectbox.Property{
+			Id: 1,
+		},
+	},
+	Text: &objectbox.PropertyString{
+		Property: &objectbox.Property{
+			Id: 2,
+		},
+	},
+	DateCreated: &objectbox.PropertyInt64{
+		Property: &objectbox.Property{
+			Id: 3,
+		},
+	},
+	DateFinished: &objectbox.PropertyInt64{
+		Property: &objectbox.Property{
+			Id: 4,
+		},
+	},
 }
 
 func (task_EntityInfo) AddToModel(model *objectbox.Model) {
@@ -55,10 +71,10 @@ func (task_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id 
 
 	// build the FlatBuffers object
 	fbb.StartObject(4)
-	fbb.PrependUint64Slot(0, id, 0)
-	fbb.PrependUOffsetTSlot(1, offsetText, 0)
-	fbb.PrependInt64Slot(2, obj.DateCreated, 0)
-	fbb.PrependInt64Slot(3, obj.DateFinished, 0)
+	fbutils.SetUint64Slot(fbb, 0, id)
+	fbutils.SetUOffsetTSlot(fbb, 1, offsetText)
+	fbutils.SetInt64Slot(fbb, 2, obj.DateCreated)
+	fbutils.SetInt64Slot(fbb, 3, obj.DateFinished)
 }
 
 func (task_EntityInfo) ToObject(bytes []byte) interface{} {
@@ -89,7 +105,7 @@ type TaskBox struct {
 
 func BoxForTask(ob *objectbox.ObjectBox) *TaskBox {
 	return &TaskBox{
-		Box: ob.Box(1),
+		Box: ob.InternalBox(1),
 	}
 }
 
@@ -125,4 +141,22 @@ func (box *TaskBox) GetAll() ([]*Task, error) {
 
 func (box *TaskBox) Remove(object *Task) (err error) {
 	return box.Box.Remove(object.Id)
+}
+
+func (box *TaskBox) Query(conditions ...objectbox.Condition) *TaskQuery {
+	return &TaskQuery{
+		box.Box.Query(conditions...),
+	}
+}
+
+type TaskQuery struct {
+	*objectbox.Query
+}
+
+func (query *TaskQuery) Find() ([]*Task, error) {
+	objects, err := query.Query.Find()
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*Task), nil
 }

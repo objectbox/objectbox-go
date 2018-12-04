@@ -19,23 +19,55 @@ var TaskBinding = task_EntityInfo{
 }
 
 var Task_ = struct {
-	Id      objectbox.TypeId
-	Uid     objectbox.TypeId
-	Name    objectbox.TypeId
-	Place   objectbox.TypeId
-	Source  objectbox.TypeId
-	Text    objectbox.TypeId
-	Date    objectbox.TypeId
-	GroupId objectbox.TypeId
+	Id      *objectbox.PropertyUint64
+	Uid     *objectbox.PropertyString
+	Name    *objectbox.PropertyString
+	Place   *objectbox.PropertyString
+	Source  *objectbox.PropertyString
+	Text    *objectbox.PropertyString
+	Date    *objectbox.PropertyUint64
+	GroupId *objectbox.PropertyUint64
 }{
-	Id:      1,
-	Uid:     2,
-	Name:    3,
-	Place:   4,
-	Source:  5,
-	Text:    6,
-	Date:    7,
-	GroupId: 8,
+	Id: &objectbox.PropertyUint64{
+		Property: &objectbox.Property{
+			Id: 1,
+		},
+	},
+	Uid: &objectbox.PropertyString{
+		Property: &objectbox.Property{
+			Id: 2,
+		},
+	},
+	Name: &objectbox.PropertyString{
+		Property: &objectbox.Property{
+			Id: 3,
+		},
+	},
+	Place: &objectbox.PropertyString{
+		Property: &objectbox.Property{
+			Id: 4,
+		},
+	},
+	Source: &objectbox.PropertyString{
+		Property: &objectbox.Property{
+			Id: 5,
+		},
+	},
+	Text: &objectbox.PropertyString{
+		Property: &objectbox.Property{
+			Id: 6,
+		},
+	},
+	Date: &objectbox.PropertyUint64{
+		Property: &objectbox.Property{
+			Id: 7,
+		},
+	},
+	GroupId: &objectbox.PropertyUint64{
+		Property: &objectbox.Property{
+			Id: 8,
+		},
+	},
 }
 
 func (task_EntityInfo) AddToModel(model *objectbox.Model) {
@@ -78,14 +110,14 @@ func (task_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id 
 
 	// build the FlatBuffers object
 	fbb.StartObject(8)
-	fbb.PrependUint64Slot(0, id, 0)
-	fbb.PrependUOffsetTSlot(1, offsetUid, 0)
-	fbb.PrependUOffsetTSlot(2, offsetName, 0)
-	fbb.PrependUOffsetTSlot(3, offsetPlace, 0)
-	fbb.PrependUOffsetTSlot(4, offsetSource, 0)
-	fbb.PrependUOffsetTSlot(5, offsetText, 0)
-	fbb.PrependUint64Slot(6, obj.Date, 0)
-	fbb.PrependUint64Slot(7, obj.GroupId, 0)
+	fbutils.SetUint64Slot(fbb, 0, id)
+	fbutils.SetUOffsetTSlot(fbb, 1, offsetUid)
+	fbutils.SetUOffsetTSlot(fbb, 2, offsetName)
+	fbutils.SetUOffsetTSlot(fbb, 3, offsetPlace)
+	fbutils.SetUOffsetTSlot(fbb, 4, offsetSource)
+	fbutils.SetUOffsetTSlot(fbb, 5, offsetText)
+	fbutils.SetUint64Slot(fbb, 6, obj.Date)
+	fbutils.SetUint64Slot(fbb, 7, obj.GroupId)
 }
 
 func (task_EntityInfo) ToObject(bytes []byte) interface{} {
@@ -120,7 +152,7 @@ type TaskBox struct {
 
 func BoxForTask(ob *objectbox.ObjectBox) *TaskBox {
 	return &TaskBox{
-		Box: ob.Box(1),
+		Box: ob.InternalBox(1),
 	}
 }
 
@@ -158,6 +190,24 @@ func (box *TaskBox) Remove(object *Task) (err error) {
 	return box.Box.Remove(object.Id)
 }
 
+func (box *TaskBox) Query(conditions ...objectbox.Condition) *TaskQuery {
+	return &TaskQuery{
+		box.Box.Query(conditions...),
+	}
+}
+
+type TaskQuery struct {
+	*objectbox.Query
+}
+
+func (query *TaskQuery) Find() ([]*Task, error) {
+	objects, err := query.Query.Find()
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*Task), nil
+}
+
 type group_EntityInfo struct {
 	Id  objectbox.TypeId
 	Uid uint64
@@ -169,9 +219,13 @@ var GroupBinding = group_EntityInfo{
 }
 
 var Group_ = struct {
-	Id objectbox.TypeId
+	Id *objectbox.PropertyUint64
 }{
-	Id: 1,
+	Id: &objectbox.PropertyUint64{
+		Property: &objectbox.Property{
+			Id: 1,
+		},
+	},
 }
 
 func (group_EntityInfo) AddToModel(model *objectbox.Model) {
@@ -194,7 +248,7 @@ func (group_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id
 
 	// build the FlatBuffers object
 	fbb.StartObject(1)
-	fbb.PrependUint64Slot(0, id, 0)
+	fbutils.SetUint64Slot(fbb, 0, id)
 }
 
 func (group_EntityInfo) ToObject(bytes []byte) interface{} {
@@ -222,7 +276,7 @@ type GroupBox struct {
 
 func BoxForGroup(ob *objectbox.ObjectBox) *GroupBox {
 	return &GroupBox{
-		Box: ob.Box(2),
+		Box: ob.InternalBox(2),
 	}
 }
 
@@ -258,4 +312,22 @@ func (box *GroupBox) GetAll() ([]*Group, error) {
 
 func (box *GroupBox) Remove(object *Group) (err error) {
 	return box.Box.Remove(object.Id)
+}
+
+func (box *GroupBox) Query(conditions ...objectbox.Condition) *GroupQuery {
+	return &GroupQuery{
+		box.Box.Query(conditions...),
+	}
+}
+
+type GroupQuery struct {
+	*objectbox.Query
+}
+
+func (query *GroupQuery) Find() ([]*Group, error) {
+	objects, err := query.Query.Find()
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*Group), nil
 }

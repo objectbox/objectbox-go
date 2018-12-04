@@ -45,11 +45,15 @@ var {{$entity.Name}}Binding = {{$entityNameCamel}}_EntityInfo {
 
 var {{$entity.Name}}_ = struct {
 	{{range $property := $entity.Properties -}}
-    {{$property.Name}} objectbox.TypeId
+    {{$property.Name}} *objectbox.Property{{$property.GoType | TypeIdentifier}}
     {{end -}}
 }{
 	{{range $property := $entity.Properties -}}
-    {{$property.Name}}: {{$property.Id}},
+    {{$property.Name}}: &objectbox.Property{{$property.GoType | TypeIdentifier}}{
+		Property: &objectbox.Property{
+			Id: {{$property.Id}},
+		},
+	},
     {{end -}}
 }
 
@@ -98,13 +102,12 @@ func ({{$entityNameCamel}}_EntityInfo) Flatten(object interface{}, fbb *flatbuff
     // build the FlatBuffers object
     fbb.StartObject({{$entity.LastPropertyId.GetId}})
     {{range $property := $entity.Properties -}}
-    fbb.Prepend{{$property.FbType}}Slot({{$property.FbSlot}},
-        {{- if eq $property.FbType "UOffsetT"}} offset{{$property.Name}}, 0)
-        {{- else if eq $property.Name $entity.IdProperty.Name}} id, 0)
-        {{- else if eq $property.GoType "bool"}} obj.{{$property.Name}}, false)
-        {{- else if eq $property.GoType "int"}} int64(obj.{{$property.Name}}), 0)
-        {{- else if eq $property.GoType "uint"}} uint64(obj.{{$property.Name}}), 0)
-        {{- else}} obj.{{$property.Name}}, 0)
+    fbutils.Set{{$property.FbType}}Slot(fbb, {{$property.FbSlot}},
+        {{- if eq $property.FbType "UOffsetT"}} offset{{$property.Name}})
+        {{- else if eq $property.Name $entity.IdProperty.Name}} id)
+        {{- else if eq $property.GoType "int"}} int64(obj.{{$property.Name}}))
+        {{- else if eq $property.GoType "uint"}} uint64(obj.{{$property.Name}}))
+        {{- else}} obj.{{$property.Name}})
         {{- end}}
     {{end -}}
 }
@@ -143,7 +146,7 @@ type {{$entity.Name}}Box struct {
 
 func BoxFor{{$entity.Name}}(ob *objectbox.ObjectBox) *{{$entity.Name}}Box {
 	return &{{$entity.Name}}Box{
-		Box: ob.Box({{$entity.Id}}),
+		Box: ob.InternalBox({{$entity.Id}}),
 	}
 }
 
@@ -179,6 +182,24 @@ func (box *{{$entity.Name}}Box) GetAll() ([]*{{$entity.Name}}, error) {
 
 func (box *{{$entity.Name}}Box) Remove(object *{{$entity.Name}}) (err error) {
 	return box.Box.Remove(object.{{$entity.IdProperty.Name}})
+}
+
+func (box *{{$entity.Name}}Box) Query(conditions ...objectbox.Condition) *{{$entity.Name}}Query {
+	return &{{$entity.Name}}Query{
+		box.Box.Query(conditions...),
+	}
+}
+
+type {{$entity.Name}}Query struct {
+	*objectbox.Query
+}
+
+func (query *{{$entity.Name}}Query) Find() ([]*{{$entity.Name}}, error) {
+	objects, err := query.Query.Find()
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*{{$entity.Name}}), nil
 }
 
 {{end -}}`))

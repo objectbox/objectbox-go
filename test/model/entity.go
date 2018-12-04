@@ -14,24 +14,32 @@
  * limitations under the License.
  */
 
-package templates
+package model
 
-import (
-	"strings"
-	"text/template"
-)
+//go:generate objectbox-gogen
 
-var funcMap = template.FuncMap{
-	"StringTitle": strings.Title,
-	"StringCamel": func(s string) string {
-		result := strings.Title(s)
-		return strings.ToLower(result[0:1]) + result[1:]
-	},
-	"TypeIdentifier": func(s string) string {
-		if s == "[]byte" {
-			return "ByteVector"
-		} else {
-			return strings.Title(s)
-		}
-	},
+// Tests all available GO & ObjectBox types
+// TODO rename; e.g. TestEntity
+type Entity struct {
+	Id         uint64
+	Int        int
+	Int8       int8
+	Int16      int16
+	Int32      int32
+	Int64      int64
+	Uint       uint
+	Uint8      uint8
+	Uint16     uint16
+	Uint32     uint32
+	Uint64     uint64
+	Bool       bool
+	String     string
+	Byte       byte
+	ByteVector []byte
+	Rune       rune
+	Float32    float32
+	Float64    float64
+	Date       int64 `date`
+	// TODO Complex64  complex64
+	// TODO Complex128 complex128
 }

@@ -19,7 +19,6 @@ they are discarded here to keep the example concise)
 	defer ob.Close()
 
 	box := BoxForPerson(ob)
-	defer box.Close()
 
 	// Create
 	id, _ := box.Put(&Person{

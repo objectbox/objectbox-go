@@ -14,24 +14,8 @@
  * limitations under the License.
  */
 
-package templates
+package objectbox
 
-import (
-	"strings"
-	"text/template"
-)
-
-var funcMap = template.FuncMap{
-	"StringTitle": strings.Title,
-	"StringCamel": func(s string) string {
-		result := strings.Title(s)
-		return strings.ToLower(result[0:1]) + result[1:]
-	},
-	"TypeIdentifier": func(s string) string {
-		if s == "[]byte" {
-			return "ByteVector"
-		} else {
-			return strings.Title(s)
-		}
-	},
+type Entity struct {
+	Id TypeId
 }

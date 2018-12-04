@@ -23,11 +23,19 @@ import (
 	"github.com/objectbox/objectbox-go/test/model/iot"
 )
 
+func TestBox(t *testing.T) {
+	objectBox := iot.LoadEmptyTestObjectBox()
+	defer objectBox.Close()
+	box1 := iot.BoxForEvent(objectBox)
+	box2 := iot.BoxForEvent(objectBox)
+
+	assert.Eq(t, box1.Box, box2.Box)
+}
+
 func TestPutAsync(t *testing.T) {
 	objectBox := iot.LoadEmptyTestObjectBox()
 	defer objectBox.Close()
 	box := iot.BoxForEvent(objectBox)
-	defer box.Close()
 	err := box.RemoveAll()
 	assert.NoErr(t, err)
 
@@ -68,7 +76,6 @@ func TestUnique(t *testing.T) {
 	objectBox := iot.LoadEmptyTestObjectBox()
 	defer objectBox.Close()
 	box := iot.BoxForEvent(objectBox)
-	defer box.Close()
 
 	err := box.RemoveAll()
 	assert.NoErr(t, err)
@@ -96,7 +103,6 @@ func TestPutAll(t *testing.T) {
 	objectBox := iot.LoadEmptyTestObjectBox()
 	defer objectBox.Close()
 	box := iot.BoxForEvent(objectBox)
-	defer box.Close()
 
 	err := box.RemoveAll()
 	assert.NoErr(t, err)
@@ -142,7 +148,6 @@ func TestPut(t *testing.T) {
 	objectBox := iot.LoadEmptyTestObjectBox()
 	defer objectBox.Close()
 	box := iot.BoxForEvent(objectBox)
-	defer box.Close()
 
 	assert.NoErr(t, box.RemoveAll())
 

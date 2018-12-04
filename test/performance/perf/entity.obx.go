@@ -19,17 +19,37 @@ var EntityBinding = entity_EntityInfo{
 }
 
 var Entity_ = struct {
-	Id      objectbox.TypeId
-	Int32   objectbox.TypeId
-	Int64   objectbox.TypeId
-	String  objectbox.TypeId
-	Float64 objectbox.TypeId
+	Id      *objectbox.PropertyUint64
+	Int32   *objectbox.PropertyInt32
+	Int64   *objectbox.PropertyInt64
+	String  *objectbox.PropertyString
+	Float64 *objectbox.PropertyFloat64
 }{
-	Id:      1,
-	Int32:   2,
-	Int64:   3,
-	String:  4,
-	Float64: 5,
+	Id: &objectbox.PropertyUint64{
+		Property: &objectbox.Property{
+			Id: 1,
+		},
+	},
+	Int32: &objectbox.PropertyInt32{
+		Property: &objectbox.Property{
+			Id: 2,
+		},
+	},
+	Int64: &objectbox.PropertyInt64{
+		Property: &objectbox.Property{
+			Id: 3,
+		},
+	},
+	String: &objectbox.PropertyString{
+		Property: &objectbox.Property{
+			Id: 4,
+		},
+	},
+	Float64: &objectbox.PropertyFloat64{
+		Property: &objectbox.Property{
+			Id: 5,
+		},
+	},
 }
 
 func (entity_EntityInfo) AddToModel(model *objectbox.Model) {
@@ -58,11 +78,11 @@ func (entity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, i
 
 	// build the FlatBuffers object
 	fbb.StartObject(5)
-	fbb.PrependUint64Slot(0, id, 0)
-	fbb.PrependInt32Slot(1, obj.Int32, 0)
-	fbb.PrependInt64Slot(2, obj.Int64, 0)
-	fbb.PrependUOffsetTSlot(3, offsetString, 0)
-	fbb.PrependFloat64Slot(4, obj.Float64, 0)
+	fbutils.SetUint64Slot(fbb, 0, id)
+	fbutils.SetInt32Slot(fbb, 1, obj.Int32)
+	fbutils.SetInt64Slot(fbb, 2, obj.Int64)
+	fbutils.SetUOffsetTSlot(fbb, 3, offsetString)
+	fbutils.SetFloat64Slot(fbb, 4, obj.Float64)
 }
 
 func (entity_EntityInfo) ToObject(bytes []byte) interface{} {
@@ -94,7 +114,7 @@ type EntityBox struct {
 
 func BoxForEntity(ob *objectbox.ObjectBox) *EntityBox {
 	return &EntityBox{
-		Box: ob.Box(1),
+		Box: ob.InternalBox(1),
 	}
 }
 
@@ -130,4 +150,22 @@ func (box *EntityBox) GetAll() ([]*Entity, error) {
 
 func (box *EntityBox) Remove(object *Entity) (err error) {
 	return box.Box.Remove(object.Id)
+}
+
+func (box *EntityBox) Query(conditions ...objectbox.Condition) *EntityQuery {
+	return &EntityQuery{
+		box.Box.Query(conditions...),
+	}
+}
+
+type EntityQuery struct {
+	*objectbox.Query
+}
+
+func (query *EntityQuery) Find() ([]*Entity, error) {
+	objects, err := query.Query.Find()
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*Entity), nil
 }

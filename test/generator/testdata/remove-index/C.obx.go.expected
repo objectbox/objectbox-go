@@ -18,11 +18,19 @@ var CBinding = c_EntityInfo{
 }
 
 var C_ = struct {
-	Id  objectbox.TypeId
-	New objectbox.TypeId
+	Id  *objectbox.PropertyUint64
+	New *objectbox.PropertyInt
 }{
-	Id:  1,
-	New: 3,
+	Id: &objectbox.PropertyUint64{
+		Property: &objectbox.Property{
+			Id: 1,
+		},
+	},
+	New: &objectbox.PropertyInt{
+		Property: &objectbox.Property{
+			Id: 3,
+		},
+	},
 }
 
 func (c_EntityInfo) AddToModel(model *objectbox.Model) {
@@ -49,8 +57,8 @@ func (c_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uin
 
 	// build the FlatBuffers object
 	fbb.StartObject(3)
-	fbb.PrependUint64Slot(0, id, 0)
-	fbb.PrependInt64Slot(2, int64(obj.New), 0)
+	fbutils.SetUint64Slot(fbb, 0, id)
+	fbutils.SetInt64Slot(fbb, 2, int64(obj.New))
 }
 
 func (c_EntityInfo) ToObject(bytes []byte) interface{} {
@@ -79,7 +87,7 @@ type CBox struct {
 
 func BoxForC(ob *objectbox.ObjectBox) *CBox {
 	return &CBox{
-		Box: ob.Box(3),
+		Box: ob.InternalBox(3),
 	}
 }
 
@@ -115,4 +123,22 @@ func (box *CBox) GetAll() ([]*C, error) {
 
 func (box *CBox) Remove(object *C) (err error) {
 	return box.Box.Remove(object.Id)
+}
+
+func (box *CBox) Query(conditions ...objectbox.Condition) *CQuery {
+	return &CQuery{
+		box.Box.Query(conditions...),
+	}
+}
+
+type CQuery struct {
+	*objectbox.Query
+}
+
+func (query *CQuery) Find() ([]*C, error) {
+	objects, err := query.Query.Find()
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*C), nil
 }

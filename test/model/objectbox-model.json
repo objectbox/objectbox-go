@@ -1,0 +1,97 @@
+{
+  "comment": [
+    "KEEP THIS FILE! Check it into a version control system (VCS) like git.",
+    "ObjectBox manages crucial IDs for your object model. See docs for details.",
+    "If you have VCS merge conflicts, you must resolve them according to ObjectBox docs."
+  ],
+  "entities": [
+    {
+      "id": "1:3022148985475790732",
+      "name": "Entity",
+      "lastPropertyId": "19:2927532418453906842",
+      "properties": [
+        {
+          "id": "1:1213346202559552829",
+          "name": "Id"
+        },
+        {
+          "id": "2:6609825840127351046",
+          "name": "Int"
+        },
+        {
+          "id": "3:741904540265547276",
+          "name": "Int8"
+        },
+        {
+          "id": "4:2102961483425256790",
+          "name": "Int16"
+        },
+        {
+          "id": "5:5086065890743931723",
+          "name": "Int32"
+        },
+        {
+          "id": "6:7993850425898343586",
+          "name": "Int64"
+        },
+        {
+          "id": "7:993618338451248101",
+          "name": "Uint"
+        },
+        {
+          "id": "8:8794162191867215541",
+          "name": "Uint8"
+        },
+        {
+          "id": "9:8820932096807845950",
+          "name": "Uint16"
+        },
+        {
+          "id": "10:6060435196424462358",
+          "name": "Uint32"
+        },
+        {
+          "id": "11:6159011311237949479",
+          "name": "Uint64"
+        },
+        {
+          "id": "12:13717766026420552",
+          "name": "Bool"
+        },
+        {
+          "id": "13:3525810560076343996",
+          "name": "String"
+        },
+        {
+          "id": "14:4035373893984224671",
+          "name": "Byte"
+        },
+        {
+          "id": "15:1294888641203478533",
+          "name": "ByteVector"
+        },
+        {
+          "id": "16:445652208596094853",
+          "name": "Rune"
+        },
+        {
+          "id": "17:2321055489159952634",
+          "name": "Float32"
+        },
+        {
+          "id": "18:681625187526498317",
+          "name": "Float64"
+        },
+        {
+          "id": "19:2927532418453906842",
+          "name": "Date"
+        }
+      ]
+    }
+  ],
+  "lastEntityId": "1:3022148985475790732",
+  "lastIndexId": "",
+  "retiredEntityUids": [],
+  "retiredIndexUids": [],
+  "retiredPropertyUids": []
+}

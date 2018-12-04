@@ -75,7 +75,9 @@ func generateOneDir(t *testing.T, overwriteExpected bool, dir string) {
 }
 
 func assertSameFile(t *testing.T, file string, expectedFile string, overwriteExpected bool) {
-	if !fileExists(expectedFile) && !overwriteExpected {
+	// if no file is expected
+	if !fileExists(expectedFile) {
+		// there can be no source file either
 		assert.Eq(t, false, fileExists(file))
 		return
 	}

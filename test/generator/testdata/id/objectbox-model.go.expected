@@ -15,7 +15,8 @@ func ObjectBoxModel() *objectbox.Model {
 	model.RegisterBinding(ABinding)
 	model.RegisterBinding(BBinding)
 	model.RegisterBinding(CBinding)
-	model.LastEntityId(3, 3390393562759376202)
+	model.RegisterBinding(StringBinding)
+	model.LastEntityId(4, 6044372234677422456)
 
 	return model
 }

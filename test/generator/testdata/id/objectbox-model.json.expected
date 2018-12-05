@@ -41,9 +41,20 @@
           "name": "identifier"
         }
       ]
+    },
+    {
+      "id": "4:6044372234677422456",
+      "name": "String",
+      "lastPropertyId": "1:8274930044578894929",
+      "properties": [
+        {
+          "id": "1:8274930044578894929",
+          "name": "Id"
+        }
+      ]
     }
   ],
-  "lastEntityId": "3:3390393562759376202",
+  "lastEntityId": "4:6044372234677422456",
   "lastIndexId": "",
   "retiredEntityUids": [],
   "retiredIndexUids": [],

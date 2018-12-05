@@ -21,9 +21,9 @@ var StringBinding = string_EntityInfo{
 
 // String_ contains type-based Property helpers to facilitate some common operations such as Queries.
 var String_ = struct {
-	Id *objectbox.PropertyString
+	Id *objectbox.PropertyStringUint64
 }{
-	Id: &objectbox.PropertyString{
+	Id: &objectbox.PropertyStringUint64{
 		Property: &objectbox.Property{
 			Id: 1,
 		},

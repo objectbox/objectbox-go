@@ -47,11 +47,17 @@ var {{$entity.Name}}Binding = {{$entityNameCamel}}_EntityInfo {
 // {{$entity.Name}}_ contains type-based Property helpers to facilitate some common operations such as Queries. 
 var {{$entity.Name}}_ = struct {
 	{{range $property := $entity.Properties -}}
-    {{$property.Name}} *objectbox.Property{{$property.GoType | TypeIdentifier}}
+    {{$property.Name}} *objectbox.
+		{{- if and (eq $entity.IdProperty.Name $property.Name) (eq $entity.IdProperty.GoType "string")}}PropertyStringUint64
+		{{- else}}Property{{$property.GoType | TypeIdentifier}}
+		{{- end}}
     {{end -}}
 }{
 	{{range $property := $entity.Properties -}}
-    {{$property.Name}}: &objectbox.Property{{$property.GoType | TypeIdentifier}}{
+    {{$property.Name}}: &objectbox.
+			{{- if and (eq $entity.IdProperty.Name $property.Name) (eq $entity.IdProperty.GoType "string")}}PropertyStringUint64
+			{{- else}}Property{{$property.GoType | TypeIdentifier}}
+			{{- end}}{
 		Property: &objectbox.Property{
 			Id: {{$property.Id}},
 		},
@@ -95,7 +101,7 @@ func ({{$entityNameCamel}}_EntityInfo) GetId(object interface{}) (uint64, error)
 // SetId is called by the ObjectBox during Put to update an ID on an object that has just been inserted
 func ({{$entityNameCamel}}_EntityInfo) SetId(object interface{}, id uint64) error {
 	{{if eq $entity.IdProperty.GoType "string" -}}
-	object.(*String).Id = strconv.FormatUint(id, 10)
+	object.(*{{$entity.Name}}).Id = strconv.FormatUint(id, 10)
 	{{- else -}}
 	object.(*{{$entity.Name}}).{{$entity.IdProperty.Name}} = id
 	{{- end}}

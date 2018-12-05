@@ -16,6 +16,8 @@
 
 package objectbox
 
+import "strconv"
+
 type Property struct {
 	Id     TypeId
 	Entity *Entity
@@ -861,6 +863,78 @@ func (property PropertyBool) Equals(value bool) Condition {
 				return qb.IntEqual(property.Id, 1)
 			} else {
 				return qb.IntEqual(property.Id, 0)
+			}
+		},
+	}
+}
+
+// PropertyStringUint64 is for a number stored as uint64 in a DB but represented as a string in the entity.
+// It has the same operators as PropertyUint64 but takes string as an argument.
+type PropertyStringUint64 struct {
+	*Property
+}
+
+func (property PropertyStringUint64) Equals(value string) Condition {
+	return &conditionClosure{
+		func(qb *queryBuilder) (conditionId, error) {
+			if num, err := strconv.ParseUint(value, 10, 64); err != nil {
+				qb.setError(err)
+				return 0, err
+			} else {
+				return qb.IntEqual(property.Id, int64(num))
+			}
+		},
+	}
+}
+
+func (property PropertyStringUint64) NotEquals(value string) Condition {
+	return &conditionClosure{
+		func(qb *queryBuilder) (conditionId, error) {
+			if num, err := strconv.ParseUint(value, 10, 64); err != nil {
+				qb.setError(err)
+				return 0, err
+			} else {
+				return qb.IntNotEqual(property.Id, int64(num))
+			}
+		},
+	}
+}
+
+func (property PropertyStringUint64) int64Slice(values []string) ([]int64, error) {
+	result := make([]int64, len(values))
+
+	for i, v := range values {
+		if num, err := strconv.ParseUint(v, 10, 64); err != nil {
+			return nil, err
+		} else {
+			result[i] = int64(num)
+		}
+	}
+
+	return result, nil
+}
+
+func (property PropertyStringUint64) In(values ...string) Condition {
+	return &conditionClosure{
+		func(qb *queryBuilder) (conditionId, error) {
+			if nums, err := property.int64Slice(values); err != nil {
+				qb.setError(err)
+				return 0, err
+			} else {
+				return qb.Int64In(property.Id, nums)
+			}
+		},
+	}
+}
+
+func (property PropertyStringUint64) NotIn(values ...string) Condition {
+	return &conditionClosure{
+		func(qb *queryBuilder) (conditionId, error) {
+			if nums, err := property.int64Slice(values); err != nil {
+				qb.setError(err)
+				return 0, err
+			} else {
+				return qb.Int64NotIn(property.Id, nums)
 			}
 		},
 	}

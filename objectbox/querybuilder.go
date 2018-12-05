@@ -66,6 +66,12 @@ func (qb *QueryBuilder) Close() error {
 	return nil
 }
 
+func (qb *QueryBuilder) setError(err error) {
+	if qb.Err == nil {
+		qb.Err = err
+	}
+}
+
 func (qb *QueryBuilder) StringEquals(propertyId TypeId, value string, caseSensitive bool) (ConditionId, error) {
 	if qb.Err != nil {
 		return 0, qb.Err

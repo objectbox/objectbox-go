@@ -521,19 +521,6 @@ func (property *Property) setObFlags(f ast.Field) error {
 }
 
 // called from the template
-// avoid GO error "imported and not used"
-func (binding *Binding) UsesFbUtils() bool {
-	for _, entity := range binding.Entities {
-		for _, property := range entity.Properties {
-			if strings.ToLower(property.ObType) == "string" || strings.ToLower(property.ObType) == "bytevector" {
-				return true
-			}
-		}
-	}
-	return false
-}
-
-// called from the template
 // avoid GO error "variable declared and not used"
 func (entity *Entity) HasNonIdProperty() bool {
 	for _, prop := range entity.Properties {

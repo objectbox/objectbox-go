@@ -5,6 +5,7 @@ package object
 import (
 	"github.com/google/flatbuffers/go"
 	"github.com/objectbox/objectbox-go/objectbox"
+	"github.com/objectbox/objectbox-go/objectbox/fbutils"
 )
 
 type c_EntityInfo struct {

@@ -28,7 +28,7 @@ package {{.Binding.Package}}
 import (
 	"github.com/google/flatbuffers/go"
 	"github.com/objectbox/objectbox-go/objectbox"
-	{{if .Binding.UsesFbUtils}}"github.com/objectbox/objectbox-go/objectbox/fbutils"{{end}}
+	"github.com/objectbox/objectbox-go/objectbox/fbutils"
 )
 
 {{range $entity := .Binding.Entities -}}

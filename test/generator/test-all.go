@@ -78,7 +78,9 @@ func assertSameFile(t *testing.T, file string, expectedFile string, overwriteExp
 	// if no file is expected
 	if !fileExists(expectedFile) {
 		// there can be no source file either
-		assert.Eq(t, false, fileExists(file))
+		if fileExists(file) {
+			assert.Failf(t, "%s is missing but %s exists", expectedFile, file)
+		}
 		return
 	}
 

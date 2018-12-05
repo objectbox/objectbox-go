@@ -217,10 +217,20 @@ func (box *EventBox) Query(conditions ...objectbox.Condition) *EventQuery {
 	}
 }
 
+// Creates a query with the given conditions. Use the fields of the Event_ struct to create conditions.
+// Keep the *EventQuery if you intend to execute the query multiple times.
+func (box *EventBox) QueryOrError(conditions ...objectbox.Condition) (*EventQuery, error) {
+	if query, err := box.Box.QueryOrError(conditions...); err != nil {
+		return nil, err
+	} else {
+		return &EventQuery{query}, nil
+	}
+}
+
 // Query provides a way to search stored objects
 //
-// For example, you can find all Event which Id is lower than 100:
-// 		box.Query(Event_.Id.LessThan(100)).Find()
+// For example, you can find all Event which Id is either 42 or 47:
+// 		box.Query(Event_.Id.In(42, 47)).Find()
 type EventQuery struct {
 	*objectbox.Query
 }
@@ -477,10 +487,20 @@ func (box *ReadingBox) Query(conditions ...objectbox.Condition) *ReadingQuery {
 	}
 }
 
+// Creates a query with the given conditions. Use the fields of the Reading_ struct to create conditions.
+// Keep the *ReadingQuery if you intend to execute the query multiple times.
+func (box *ReadingBox) QueryOrError(conditions ...objectbox.Condition) (*ReadingQuery, error) {
+	if query, err := box.Box.QueryOrError(conditions...); err != nil {
+		return nil, err
+	} else {
+		return &ReadingQuery{query}, nil
+	}
+}
+
 // Query provides a way to search stored objects
 //
-// For example, you can find all Reading which Id is lower than 100:
-// 		box.Query(Reading_.Id.LessThan(100)).Find()
+// For example, you can find all Reading which Id is either 42 or 47:
+// 		box.Query(Reading_.Id.In(42, 47)).Find()
 type ReadingQuery struct {
 	*objectbox.Query
 }

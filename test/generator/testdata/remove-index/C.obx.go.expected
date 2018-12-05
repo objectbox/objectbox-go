@@ -187,10 +187,20 @@ func (box *CBox) Query(conditions ...objectbox.Condition) *CQuery {
 	}
 }
 
+// Creates a query with the given conditions. Use the fields of the C_ struct to create conditions.
+// Keep the *CQuery if you intend to execute the query multiple times.
+func (box *CBox) QueryOrError(conditions ...objectbox.Condition) (*CQuery, error) {
+	if query, err := box.Box.QueryOrError(conditions...); err != nil {
+		return nil, err
+	} else {
+		return &CQuery{query}, nil
+	}
+}
+
 // Query provides a way to search stored objects
 //
-// For example, you can find all C which Id is lower than 100:
-// 		box.Query(C_.Id.LessThan(100)).Find()
+// For example, you can find all C which Id is either 42 or 47:
+// 		box.Query(C_.Id.In(42, 47)).Find()
 type CQuery struct {
 	*objectbox.Query
 }

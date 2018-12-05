@@ -204,10 +204,20 @@ func (box *TaskBox) Query(conditions ...objectbox.Condition) *TaskQuery {
 	}
 }
 
+// Creates a query with the given conditions. Use the fields of the Task_ struct to create conditions.
+// Keep the *TaskQuery if you intend to execute the query multiple times.
+func (box *TaskBox) QueryOrError(conditions ...objectbox.Condition) (*TaskQuery, error) {
+	if query, err := box.Box.QueryOrError(conditions...); err != nil {
+		return nil, err
+	} else {
+		return &TaskQuery{query}, nil
+	}
+}
+
 // Query provides a way to search stored objects
 //
-// For example, you can find all Task which Id is lower than 100:
-// 		box.Query(Task_.Id.LessThan(100)).Find()
+// For example, you can find all Task which Id is either 42 or 47:
+// 		box.Query(Task_.Id.In(42, 47)).Find()
 type TaskQuery struct {
 	*objectbox.Query
 }

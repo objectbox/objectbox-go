@@ -243,10 +243,20 @@ func (box *{{$entity.Name}}Box) Query(conditions ...objectbox.Condition) *{{$ent
 	}
 }
 
+// Creates a query with the given conditions. Use the fields of the {{$entity.Name}}_ struct to create conditions.
+// Keep the *{{$entity.Name}}Query if you intend to execute the query multiple times.
+func (box *{{$entity.Name}}Box) QueryOrError(conditions ...objectbox.Condition) (*{{$entity.Name}}Query, error) {
+	if query, err := box.Box.QueryOrError(conditions...); err != nil {
+		return nil, err
+	} else {
+		return &{{$entity.Name}}Query{query}, nil
+	}
+}
+
 // Query provides a way to search stored objects
 //
-// For example, you can find all {{$entity.Name}} which {{$entity.IdProperty.Name}} is lower than 100:
-// 		box.Query({{$entity.Name}}_.{{$entity.IdProperty.Name}}.LessThan(100)).Find()
+// For example, you can find all {{$entity.Name}} which {{$entity.IdProperty.Name}} is either 42 or 47:
+// 		box.Query({{$entity.Name}}_.{{$entity.IdProperty.Name}}.In(42, 47)).Find()
 type {{$entity.Name}}Query struct {
 	*objectbox.Query
 }

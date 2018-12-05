@@ -186,10 +186,20 @@ func (box *BBox) Query(conditions ...objectbox.Condition) *BQuery {
 	}
 }
 
+// Creates a query with the given conditions. Use the fields of the B_ struct to create conditions.
+// Keep the *BQuery if you intend to execute the query multiple times.
+func (box *BBox) QueryOrError(conditions ...objectbox.Condition) (*BQuery, error) {
+	if query, err := box.Box.QueryOrError(conditions...); err != nil {
+		return nil, err
+	} else {
+		return &BQuery{query}, nil
+	}
+}
+
 // Query provides a way to search stored objects
 //
-// For example, you can find all B which Id is lower than 100:
-// 		box.Query(B_.Id.LessThan(100)).Find()
+// For example, you can find all B which Id is either 42 or 47:
+// 		box.Query(B_.Id.In(42, 47)).Find()
 type BQuery struct {
 	*objectbox.Query
 }

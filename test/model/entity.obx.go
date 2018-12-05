@@ -340,10 +340,20 @@ func (box *EntityBox) Query(conditions ...objectbox.Condition) *EntityQuery {
 	}
 }
 
+// Creates a query with the given conditions. Use the fields of the Entity_ struct to create conditions.
+// Keep the *EntityQuery if you intend to execute the query multiple times.
+func (box *EntityBox) QueryOrError(conditions ...objectbox.Condition) (*EntityQuery, error) {
+	if query, err := box.Box.QueryOrError(conditions...); err != nil {
+		return nil, err
+	} else {
+		return &EntityQuery{query}, nil
+	}
+}
+
 // Query provides a way to search stored objects
 //
-// For example, you can find all Entity which Id is lower than 100:
-// 		box.Query(Entity_.Id.LessThan(100)).Find()
+// For example, you can find all Entity which Id is either 42 or 47:
+// 		box.Query(Entity_.Id.In(42, 47)).Find()
 type EntityQuery struct {
 	*objectbox.Query
 }

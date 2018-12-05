@@ -186,10 +186,20 @@ func (box *ABox) Query(conditions ...objectbox.Condition) *AQuery {
 	}
 }
 
+// Creates a query with the given conditions. Use the fields of the A_ struct to create conditions.
+// Keep the *AQuery if you intend to execute the query multiple times.
+func (box *ABox) QueryOrError(conditions ...objectbox.Condition) (*AQuery, error) {
+	if query, err := box.Box.QueryOrError(conditions...); err != nil {
+		return nil, err
+	} else {
+		return &AQuery{query}, nil
+	}
+}
+
 // Query provides a way to search stored objects
 //
-// For example, you can find all A which Id is lower than 100:
-// 		box.Query(A_.Id.LessThan(100)).Find()
+// For example, you can find all A which Id is either 42 or 47:
+// 		box.Query(A_.Id.In(42, 47)).Find()
 type AQuery struct {
 	*objectbox.Query
 }

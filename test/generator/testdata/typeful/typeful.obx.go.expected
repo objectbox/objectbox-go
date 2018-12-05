@@ -340,10 +340,20 @@ func (box *TypefulBox) Query(conditions ...objectbox.Condition) *TypefulQuery {
 	}
 }
 
+// Creates a query with the given conditions. Use the fields of the Typeful_ struct to create conditions.
+// Keep the *TypefulQuery if you intend to execute the query multiple times.
+func (box *TypefulBox) QueryOrError(conditions ...objectbox.Condition) (*TypefulQuery, error) {
+	if query, err := box.Box.QueryOrError(conditions...); err != nil {
+		return nil, err
+	} else {
+		return &TypefulQuery{query}, nil
+	}
+}
+
 // Query provides a way to search stored objects
 //
-// For example, you can find all Typeful which Id is lower than 100:
-// 		box.Query(Typeful_.Id.LessThan(100)).Find()
+// For example, you can find all Typeful which Id is either 42 or 47:
+// 		box.Query(Typeful_.Id.In(42, 47)).Find()
 type TypefulQuery struct {
 	*objectbox.Query
 }

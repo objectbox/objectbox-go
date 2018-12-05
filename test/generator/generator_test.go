@@ -21,10 +21,18 @@ import (
 	"testing"
 )
 
+// used during development of generator to overwrite the "golden" files
 var overwriteExpected = flag.Bool("update", false,
 	"Update all '.expected' files with the generated content. "+
 		"It's up to the developer to actually check before committing whether the newly generated files are correct")
 
-func TestAll(t *testing.T) {
-	generateAllDirs(t, *overwriteExpected)
+// used during development of generator to test a single directory
+var target = flag.String("target", "", "Specify target subdirectory of testdata to generate")
+
+func TestGenerator(t *testing.T) {
+	if *target == "" {
+		generateAllDirs(t, *overwriteExpected)
+	} else {
+		generateOneDir(t, *overwriteExpected, "testdata/"+*target)
+	}
 }

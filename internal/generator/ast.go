@@ -32,7 +32,7 @@ func parseFile(filePath string) (f *file, err error) {
 	// Create the AST by parsing src.
 	fileset := token.NewFileSet() // positions are relative to fileset
 
-	if f.f, err = parser.ParseFile(fileset, filePath, nil, 0); err != nil {
+	if f.f, err = parser.ParseFile(fileset, filePath, nil, parser.ParseComments); err != nil {
 		return nil, err
 	}
 

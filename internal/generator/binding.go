@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"go/ast"
 	"go/types"
+	"strconv"
 	"strings"
 
 	"github.com/objectbox/objectbox-go/internal/generator/modelinfo"
@@ -32,8 +33,7 @@ type Binding struct {
 	Package  string
 	Entities []*Entity
 
-	currentEntityName string
-	err               error
+	err error
 }
 
 type Entity struct {
@@ -43,8 +43,10 @@ type Entity struct {
 	Properties     []*Property
 	IdProperty     *Property
 	LastPropertyId modelinfo.IdUid
+	Annotations    map[string]*Annotation
 
-	binding *Binding // parent
+	binding    *Binding // parent
+	uidRequest bool
 }
 
 type Property struct {
@@ -60,7 +62,8 @@ type Property struct {
 	Relation    *Relation
 	Index       *Index
 
-	entity *Entity
+	entity     *Entity
+	uidRequest bool
 }
 
 type Relation struct {
@@ -83,9 +86,12 @@ func newBinding() (*Binding, error) {
 func (binding *Binding) createFromAst(f *file) (err error) {
 	binding.Package = f.f.Name.Name // this is actually package name, not file name
 
-	// process all structs
+	// this will hold the pointer to the latest GenDecl encountered (parent of the current struct)
+	var prevDecl *ast.GenDecl
+
+	// traverse the AST to process all structs
 	f.walk(func(node ast.Node) bool {
-		return binding.entityLoader(node)
+		return binding.entityLoader(node, &prevDecl)
 	})
 
 	if binding.err != nil {
@@ -96,29 +102,44 @@ func (binding *Binding) createFromAst(f *file) (err error) {
 }
 
 // this function only processes structs and cuts-off on types that can't contain a struct
-func (binding *Binding) entityLoader(node ast.Node) bool {
+func (binding *Binding) entityLoader(node ast.Node, prevDecl **ast.GenDecl) bool {
 	if binding.err != nil {
 		return false
 	}
 
 	switch v := node.(type) {
 	case *ast.TypeSpec:
-		// this might be the name of the next struct
-		binding.currentEntityName = v.Name.Name
-		return true
-	case *ast.StructType:
-		if binding.currentEntityName == "" {
-			// NOTE this should probably not happen
-			binding.err = fmt.Errorf("encountered a struct without a name")
+		if strct, isStruct := v.Type.(*ast.StructType); isStruct {
+			var name = v.Name.Name
+
+			if name == "" {
+				// NOTE this should probably not happen
+				binding.err = fmt.Errorf("encountered a struct without a name")
+				return false
+			}
+
+			var comments []*ast.Comment
+
+			if v.Doc != nil && v.Doc.List != nil {
+				// this will be defined in case the struct is inside a block of multiple types - `type (...)`
+				comments = v.Doc.List
+
+			} else if prevDecl != nil && *prevDecl != nil && (**prevDecl).Doc != nil && (**prevDecl).Doc.List != nil {
+				// otherwise (`type A struct {`), use the docs from the parent GenDecl
+				comments = (**prevDecl).Doc.List
+			}
+
+			binding.err = binding.createEntityFromAst(strct, name, comments)
+
+			// no need to go any deeper in the AST
 			return false
-		} else {
-			binding.err = binding.createEntityFromAst(node)
-			// reset after it has been "consumed"
-			binding.currentEntityName = ""
 		}
+
 		return true
 
 	case *ast.GenDecl:
+		// store the "parent" declaration - we need it to get the comments
+		*prevDecl = v
 		return true
 	case *ast.File:
 		return true
@@ -127,10 +148,28 @@ func (binding *Binding) entityLoader(node ast.Node) bool {
 	return false
 }
 
-func (binding *Binding) createEntityFromAst(node ast.Node) (err error) {
+func (binding *Binding) createEntityFromAst(node ast.Node, name string, comments []*ast.Comment) (err error) {
 	entity := &Entity{
 		binding: binding,
-		Name:    binding.currentEntityName,
+		Name:    name,
+	}
+
+	if comments != nil {
+		if err = entity.setAnnotations(comments); err != nil {
+			return fmt.Errorf("%s on entity %s", err, entity.Name)
+		}
+	}
+
+	if entity.Annotations["uid"] != nil {
+		if len(entity.Annotations["uid"].Value) == 0 {
+			// in case the user doesn't provide `uid` value, it's considered in-process of setting up UID
+			// this flag is handled by the merge mechanism and prints the UID of the already existing entity
+			entity.uidRequest = true
+		} else if uid, err := strconv.ParseUint(entity.Annotations["uid"].Value, 10, 64); err != nil {
+			return fmt.Errorf("can't parse uid - %s on entity %s", err, entity.Name)
+		} else {
+			entity.Uid = uid
+		}
 	}
 
 	propertiesByName := make(map[string]bool)
@@ -199,6 +238,18 @@ func (binding *Binding) createEntityFromAst(node ast.Node) (err error) {
 				propertiesByName[realObName] = true
 			}
 
+			if property.Annotations["uid"] != nil {
+				if len(property.Annotations["uid"].Value) == 0 {
+					// in case the user doesn't provide `uid` value, it's considered in-process of setting up UID
+					// this flag is handled by the merge mechanism and prints the UID of the already existing property
+					property.uidRequest = true
+				} else if uid, err := strconv.ParseUint(property.Annotations["uid"].Value, 10, 64); err != nil {
+					return propertyError(fmt.Errorf("can't parse uid - %s", err), property)
+				} else {
+					property.Uid = uid
+				}
+			}
+
 			entity.Properties = append(entity.Properties, property)
 		}
 	}
@@ -232,21 +283,79 @@ func (binding *Binding) createEntityFromAst(node ast.Node) (err error) {
 	return nil
 }
 
-// Supported annotations:
-// id
-// index (value|hash|hash64)
-// unique
-// nameInDb
-// transient
+func (entity *Entity) setAnnotations(comments []*ast.Comment) error {
+	lines := parseCommentsLines(comments)
+
+	entity.Annotations = make(map[string]*Annotation)
+
+	for _, tags := range lines {
+		if err := parseAnnotations(tags, &entity.Annotations); err != nil {
+			entity.Annotations = nil
+			return err
+		}
+	}
+
+	if len(entity.Annotations) == 0 {
+		entity.Annotations = nil
+	}
+
+	return nil
+}
+
+func parseCommentsLines(comments []*ast.Comment) []string {
+	var lines []string
+
+	for _, comment := range comments {
+		text := comment.Text
+		text = strings.TrimSpace(text)
+
+		// text is a single/multi line comment
+		if strings.HasPrefix(text, "//") {
+			text = strings.TrimPrefix(text, "//")
+			lines = append(lines, strings.TrimSpace(text))
+
+		} else if strings.HasPrefix(text, "/*") {
+			text = strings.TrimPrefix(text, "/*")
+			text = strings.TrimPrefix(text, "*")
+			text = strings.TrimSuffix(text, "*/")
+			text = strings.TrimSuffix(text, "*")
+			text = strings.TrimSpace(text)
+			for _, line := range strings.Split(text, "\n") {
+				lines = append(lines, strings.TrimSpace(line))
+			}
+		} else {
+			// unknown format, ignore
+		}
+	}
+
+	return lines
+}
+
 func (property *Property) setAnnotations(tags string) error {
+	property.Annotations = make(map[string]*Annotation)
+
+	if err := parseAnnotations(tags, &property.Annotations); err != nil {
+		property.Annotations = nil
+		return err
+	}
+
+	if len(property.Annotations) == 0 {
+		property.Annotations = nil
+	}
+
+	return nil
+}
+
+func parseAnnotations(tags string, annotations *map[string]*Annotation) error {
 	if len(tags) > 1 && tags[0] == tags[len(tags)-1] && (tags[0] == '`' || tags[0] == '"') {
 		tags = tags[1 : len(tags)-1]
-	}
-	if tags == "" {
+	} else {
 		return nil
 	}
 
-	property.Annotations = make(map[string]*Annotation)
+	if tags == "" {
+		return nil
+	}
 
 	// tags are space separated
 	for _, tag := range strings.Split(tags, " ") {
@@ -272,10 +381,10 @@ func (property *Property) setAnnotations(tags string) error {
 
 			name = strings.ToLower(name)
 
-			if property.Annotations[name] != nil {
+			if (*annotations)[name] != nil {
 				return fmt.Errorf("duplicate annotation %s", name)
 			} else {
-				property.Annotations[name] = value
+				(*annotations)[name] = value
 			}
 		}
 	}

@@ -92,7 +92,11 @@ func ({{$entityNameCamel}}_EntityInfo) AddToModel(model *objectbox.Model) {
 // GetId is called by the ObjectBox during Put operations to check for existing ID on an object
 func ({{$entityNameCamel}}_EntityInfo) GetId(object interface{}) (uint64, error) {
 	{{if eq $entity.IdProperty.GoType "string" -}}
-	return strconv.ParseUint(object.(*{{$entity.Name}}).{{$entity.IdProperty.Name}}, 10, 64)
+	if len(object.(*{{$entity.Name}}).{{$entity.IdProperty.Name}}) == 0 {
+		return 0, nil
+	} else {
+		return strconv.ParseUint(object.(*{{$entity.Name}}).{{$entity.IdProperty.Name}}, 10, 64)
+	}
 	{{- else -}}
 	return object.(*{{$entity.Name}}).{{$entity.IdProperty.Name}}, nil
 	{{- end}}

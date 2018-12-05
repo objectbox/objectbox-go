@@ -45,7 +45,11 @@ func (string_EntityInfo) AddToModel(model *objectbox.Model) {
 
 // GetId is called by the ObjectBox during Put operations to check for existing ID on an object
 func (string_EntityInfo) GetId(object interface{}) (uint64, error) {
-	return strconv.ParseUint(object.(*String).Id, 10, 64)
+	if len(object.(*String).Id) == 0 {
+		return 0, nil
+	} else {
+		return strconv.ParseUint(object.(*String).Id, 10, 64)
+	}
 }
 
 // SetId is called by the ObjectBox during Put to update an ID on an object that has just been inserted

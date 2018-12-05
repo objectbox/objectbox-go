@@ -43,3 +43,7 @@ type Entity struct {
 	// TODO Complex64  complex64
 	// TODO Complex128 complex128
 }
+
+type TestStringIdEntity struct {
+	Id string `id`
+}

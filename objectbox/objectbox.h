@@ -41,7 +41,7 @@ extern "C" {
 
 // Note that you should use methods with prefix obx_version_ to check when linking against the dynamic library
 #define OBX_VERSION_MAJOR 0
-#define OBX_VERSION_MINOR 3
+#define OBX_VERSION_MINOR 4
 #define OBX_VERSION_PATCH 0
 
 /// Returns the version of the library as ints. Pointers may be null
@@ -53,11 +53,11 @@ bool obx_version_is_at_least(int major, int minor, int patch);
 
 /// Returns the version of the library to be printed.
 /// The format may change; to query for version use the int based methods instead.
-const char* obx_version_string();
+const char* obx_version_string(void);
 
 /// Returns the version of the ObjectBox core to be printed.
 /// The format may change, do not rely on its current form.
-const char* obx_version_core_string();
+const char* obx_version_core_string(void);
 
 //----------------------------------------------
 // Return codes
@@ -122,13 +122,13 @@ typedef int obx_err;
 // Error info
 //----------------------------------------------
 
-obx_err obx_last_error_code();
+obx_err obx_last_error_code(void);
 
-const char* obx_last_error_message();
+const char* obx_last_error_message(void);
 
-obx_err obx_last_error_secondary();
+obx_err obx_last_error_secondary(void);
 
-void obx_last_error_clear();
+void obx_last_error_clear(void);
 
 //----------------------------------------------
 // Model
@@ -187,7 +187,7 @@ typedef enum {
 struct OBX_model;
 typedef struct OBX_model OBX_model;
 
-OBX_model* obx_model_create();
+OBX_model* obx_model_create(void);
 
 /// Only call when not calling obx_store_open (which will free it internally)
 obx_err obx_model_free(OBX_model* model);
@@ -324,7 +324,14 @@ obx_err obx_cursor_remove(OBX_cursor* cursor, obx_id id);
 
 obx_err obx_cursor_remove_all(OBX_cursor* cursor);
 
+/// Count the number of available objects
 obx_err obx_cursor_count(OBX_cursor* cursor, uint64_t* count);
+
+/// Count the number of available objects up to the specified maximum
+obx_err obx_cursor_count_max(OBX_cursor* cursor, uint64_t max_count, uint64_t* out_count);
+
+/// Results true if there is no object available (false if at least one object is available)
+obx_err obx_cursor_is_empty(OBX_cursor* cursor, bool* out_is_empty);
 
 OBX_bytes_array* obx_cursor_backlink_bytes(OBX_cursor* cursor, obx_schema_id entity_id, obx_schema_id property_id,
                                            obx_id id);

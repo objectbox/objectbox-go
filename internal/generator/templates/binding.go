@@ -43,6 +43,7 @@ var {{$entity.Name}}Binding = {{$entityNameCamel}}_EntityInfo {
 	Uid: {{$entity.Uid}},
 }
 
+// {{$entity.Name}}_ contains type-based Property helpers to facilitate some common operations such as Queries. 
 var {{$entity.Name}}_ = struct {
 	{{range $property := $entity.Properties -}}
     {{$property.Name}} *objectbox.Property{{$property.GoType | TypeIdentifier}}
@@ -57,10 +58,12 @@ var {{$entity.Name}}_ = struct {
     {{end -}}
 }
 
+// GeneratorVersion is called by the ObjectBox to verify the compatibility of the generator used to generate this code	
 func ({{$entityNameCamel}}_EntityInfo) GeneratorVersion() int {
 	return {{$.GeneratorVersion}}
 }
 
+// AddToModel is called by the ObjectBox during model build
 func ({{$entityNameCamel}}_EntityInfo) AddToModel(model *objectbox.Model) {
     model.Entity("{{$entity.Name}}", {{$entity.Id}}, {{$entity.Uid}})
     {{range $property := $entity.Properties -}}
@@ -79,15 +82,18 @@ func ({{$entityNameCamel}}_EntityInfo) AddToModel(model *objectbox.Model) {
     model.EntityLastPropertyId({{$entity.LastPropertyId.GetId}}, {{$entity.LastPropertyId.GetUid}})
 }
 
+// GetId is called by the ObjectBox during Put operations to check for existing ID on an object
 func ({{$entityNameCamel}}_EntityInfo) GetId(object interface{}) (uint64, error) {
 	return object.(*{{$entity.Name}}).{{$entity.IdProperty.Name}}, nil
 }
 
+// SetId is called by the ObjectBox during Put to update an ID on an object that has just been inserted
 func ({{$entityNameCamel}}_EntityInfo) SetId(object interface{}, id uint64) error {
 	object.(*{{$entity.Name}}).{{$entity.IdProperty.Name}} = id
 	return nil
 }
 
+// Flatten is called by the ObjectBox to transform an object to a FlatBuffer
 func ({{$entityNameCamel}}_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
     {{if $entity.HasNonIdProperty}}obj := object.(*{{$entity.Name}}){{end -}}
 
@@ -97,8 +103,6 @@ func ({{$entityNameCamel}}_EntityInfo) Flatten(object interface{}, fbb *flatbuff
     var offset{{$property.Name}} = fbutils.CreateStringOffset(fbb, obj.{{$property.Name}})
             {{- else if eq $property.GoType "[]byte"}}
     var offset{{$property.Name}} = fbutils.CreateByteVectorOffset(fbb, obj.{{$property.Name}})
-            {{- else -}}
-            TODO offset creation for the {{$property.Name}}, type ${{$property.GoType}} is not implemented
             {{- end -}}
         {{end}}
     {{- end}}
@@ -116,6 +120,7 @@ func ({{$entityNameCamel}}_EntityInfo) Flatten(object interface{}, fbb *flatbuff
     {{end -}}
 }
 
+// ToObject is called by the ObjectBox to load an object from a FlatBuffer 
 func ({{$entityNameCamel}}_EntityInfo) ToObject(bytes []byte) interface{} {
 	table := &flatbuffers.Table{
 		Bytes: bytes,
@@ -136,36 +141,74 @@ func ({{$entityNameCamel}}_EntityInfo) ToObject(bytes []byte) interface{} {
 	}
 }
 
+// MakeSlice is called by the ObjectBox to construct a new slice to hold the read objects  
 func ({{$entityNameCamel}}_EntityInfo) MakeSlice(capacity int) interface{} {
 	return make([]*{{$entity.Name}}, 0, capacity)
 }
 
+// AppendToSlice is called by the ObjectBox to fill the slice of the read objects
 func ({{$entityNameCamel}}_EntityInfo) AppendToSlice(slice interface{}, object interface{}) interface{} {
 	return append(slice.([]*{{$entity.Name}}), object.(*{{$entity.Name}}))
 }
 
+// Box provides CRUD access to {{$entity.Name}} objects
 type {{$entity.Name}}Box struct {
 	*objectbox.Box
 }
 
+// BoxFor{{$entity.Name}} opens a box of {{$entity.Name}} objects 
 func BoxFor{{$entity.Name}}(ob *objectbox.ObjectBox) *{{$entity.Name}}Box {
 	return &{{$entity.Name}}Box{
 		Box: ob.InternalBox({{$entity.Id}}),
 	}
 }
 
+// Put synchronously inserts/updates a single object.
+// In case the {{$entity.IdProperty.Name}} is not specified, it would be assigned automatically (auto-increment).
+// When inserting, the {{$entity.Name}}.{{$entity.IdProperty.Name}} property on the passed object will be assigned the new ID as well.
 func (box *{{$entity.Name}}Box) Put(object *{{$entity.Name}}) ({{$entity.IdProperty.GoType}}, error) {
 	return box.Box.Put(object)
 }
 
+// PutAsync asynchronously inserts/updates a single object.
+// When inserting, the {{$entity.Name}}.{{$entity.IdProperty.Name}} property on the passed object will be assigned the new ID as well.
+// 
+// It's executed on a separate internal thread for better performance.
+//
+// There are two main use cases:
+//
+// 1) "Put & Forget:" you gain faster puts as you don't have to wait for the transaction to finish.
+//
+// 2) Many small transactions: if your write load is typically a lot of individual puts that happen in parallel,
+// this will merge small transactions into bigger ones. This results in a significant gain in overall throughput.
+//
+//
+// In situations with (extremely) high async load, this method may be throttled (~1ms) or delayed (<1s).
+// In the unlikely event that the object could not be enqueued after delaying, an error will be returned.
+//
+// Note that this method does not give you hard durability guarantees like the synchronous Put provides.
+// There is a small time window (typically 3 ms) in which the data may not have been committed durably yet.
 func (box *{{$entity.Name}}Box) PutAsync(object *{{$entity.Name}}) ({{$entity.IdProperty.GoType}}, error) {
 	return box.Box.PutAsync(object)
 }
 
+// PutAll inserts multiple objects in single transaction.
+// In case {{$entity.IdProperty.Name}}s are not set on the objects, they would be assigned automatically (auto-increment).
+// 
+// Returns: IDs of the put objects (in the same order).
+// When inserting, the {{$entity.Name}}.{{$entity.IdProperty.Name}} property on the objects in the slice will be assigned the new IDs as well.
+//
+// Note: In case an error occurs during the transaction, some of the objects may already have the {{$entity.Name}}.{{$entity.IdProperty.Name}} assigned    
+// even though the transaction has been rolled back and the objects are not stored under those IDs.
+//
+// Note: The slice may be empty or even nil; in both cases, an empty IDs slice and no error is returned.
 func (box *{{$entity.Name}}Box) PutAll(objects []*{{$entity.Name}}) ([]{{$entity.IdProperty.GoType}}, error) {
 	return box.Box.PutAll(objects)
 }
 
+// Get reads a single object.
+//
+// Returns nil (and no error) in case the object with the given ID doesn't exist.
 func (box *{{$entity.Name}}Box) Get(id {{$entity.IdProperty.GoType}}) (*{{$entity.Name}}, error) {
 	object, err := box.Box.Get(id)
 	if err != nil {
@@ -176,6 +219,7 @@ func (box *{{$entity.Name}}Box) Get(id {{$entity.IdProperty.GoType}}) (*{{$entit
 	return object.(*{{$entity.Name}}), nil
 }
 
+// Get reads all stored objects
 func (box *{{$entity.Name}}Box) GetAll() ([]*{{$entity.Name}}, error) {
 	objects, err := box.Box.GetAll()
 	if err != nil {
@@ -184,20 +228,30 @@ func (box *{{$entity.Name}}Box) GetAll() ([]*{{$entity.Name}}, error) {
 	return objects.([]*{{$entity.Name}}), nil
 }
 
+// Remove deletes a single object
 func (box *{{$entity.Name}}Box) Remove(object *{{$entity.Name}}) (err error) {
 	return box.Box.Remove(object.{{$entity.IdProperty.Name}})
 }
 
+// Creates a query with the given conditions. Use the fields of the {{$entity.Name}}_ struct to create conditions.
+// Keep the *{{$entity.Name}}Query if you intend to execute the query multiple times.
+// Note: this function panics if you try to create illegal queries; e.g. use properties of an alien type.
+// This is typically a programming error. Use QueryOrError instead if you want the explicit error check.
 func (box *{{$entity.Name}}Box) Query(conditions ...objectbox.Condition) *{{$entity.Name}}Query {
 	return &{{$entity.Name}}Query{
 		box.Box.Query(conditions...),
 	}
 }
 
+// Query provides a way to search stored objects
+//
+// For example, you can find all {{$entity.Name}} which {{$entity.IdProperty.Name}} is lower than 100:
+// 		box.Query({{$entity.Name}}_.{{$entity.IdProperty.Name}}.LessThan(100)).Find()
 type {{$entity.Name}}Query struct {
 	*objectbox.Query
 }
 
+// Find returns all objects matching the query
 func (query *{{$entity.Name}}Query) Find() ([]*{{$entity.Name}}, error) {
 	objects, err := query.Query.Find()
 	if err != nil {

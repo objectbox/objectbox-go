@@ -59,7 +59,7 @@ func (box *Box) close() (err error) {
 // Creates a query with the given conditions. Use generated properties to create conditions.
 // Keep the Query object if you intend to execute it multiple times.
 // Note: this function panics if you try to create illegal queries; e.g. use properties of an alien type.
-// This is typically a programming error. Use QueryOrError instead if you want the error check.
+// This is typically a programming error. Use QueryOrError instead if you want the explicit error check.
 func (box *Box) Query(conditions ...Condition) *Query {
 	query, err := box.QueryOrError(conditions...)
 	if err != nil {
@@ -82,7 +82,10 @@ func (box *Box) idForPut(idCandidate uint64) (id uint64, err error) {
 	return
 }
 
-// Puts the given object asynchronously (using another, internal, thread) for better performance.
+// PutAsync asynchronously inserts/updates a single object.
+// When inserting, the ID property on the passed object will be assigned the new ID as well.
+//
+// It's executed on a separate internal thread for better performance.
 //
 // There are two main use cases:
 //
@@ -150,7 +153,8 @@ func (box *Box) finishFbbAndPutAsync(fbb *flatbuffers.Builder, id uint64, checkF
 }
 
 // Put synchronously inserts/updates a single object.
-// In case the ID is not given, it would be assigned automatically (auto-increment).
+// In case the ID is not specified, it would be assigned automatically (auto-increment).
+// When inserting, the ID property on the passed object will be assigned the new ID as well.
 func (box *Box) Put(object interface{}) (id uint64, err error) {
 	err = box.objectBox.runWithCursor(box.typeId, false, func(cursor *cursor) error {
 		var errInner error
@@ -160,10 +164,14 @@ func (box *Box) Put(object interface{}) (id uint64, err error) {
 	return
 }
 
+// PutAll inserts multiple objects in single transaction.
 // The given argument must be a slice of the object type this Box represents (pointers to objects).
 // In case IDs are not set on the objects, they would be assigned automatically (auto-increment).
 //
 // Returns: IDs of the put objects (in the same order).
+//
+// Note: In case an error occurs during the transaction, some of the objects may already have the ID assigned
+// even though the transaction has been rolled back and the objects are not stored under those IDs.
 //
 // Note: The slice may be empty or even nil; in both cases, an empty IDs slice and no error is returned.
 func (box *Box) PutAll(slice interface{}) (ids []uint64, err error) {

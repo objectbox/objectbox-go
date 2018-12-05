@@ -13,7 +13,7 @@ ObjectBox persists your native Go structs using a simple CRUD API:
 Want details? **[Read the docs](https://golang.objectbox.io/)** or
 **[check out the API reference](https://godoc.org/github.com/objectbox/objectbox-go/objectbox)**.
 
-Latest release: [v0.7.1 (2018-11-30)](https://golang.objectbox.io/)
+Latest release: [v0.8.0 (2018-12-05)](https://golang.objectbox.io/)
 
 Some features
 -------------

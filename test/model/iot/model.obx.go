@@ -18,6 +18,7 @@ var EventBinding = event_EntityInfo{
 	Uid: 1468539308767086854,
 }
 
+// Event_ contains type-based Property helpers to facilitate some common operations such as Queries.
 var Event_ = struct {
 	Id      *objectbox.PropertyUint64
 	Uid     *objectbox.PropertyString
@@ -52,10 +53,12 @@ var Event_ = struct {
 	},
 }
 
+// GeneratorVersion is called by the ObjectBox to verify the compatibility of the generator used to generate this code
 func (event_EntityInfo) GeneratorVersion() int {
 	return 1
 }
 
+// AddToModel is called by the ObjectBox during model build
 func (event_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("Event", 1, 1468539308767086854)
 	model.Property("Id", objectbox.PropertyType_Long, 1, 3098166604415018001)
@@ -69,15 +72,18 @@ func (event_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.EntityLastPropertyId(5, 6024563395733984005)
 }
 
+// GetId is called by the ObjectBox during Put operations to check for existing ID on an object
 func (event_EntityInfo) GetId(object interface{}) (uint64, error) {
 	return object.(*Event).Id, nil
 }
 
+// SetId is called by the ObjectBox during Put to update an ID on an object that has just been inserted
 func (event_EntityInfo) SetId(object interface{}, id uint64) error {
 	object.(*Event).Id = id
 	return nil
 }
 
+// Flatten is called by the ObjectBox to transform an object to a FlatBuffer
 func (event_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
 	obj := object.(*Event)
 	var offsetUid = fbutils.CreateStringOffset(fbb, obj.Uid)
@@ -93,6 +99,7 @@ func (event_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id
 	fbutils.SetUOffsetTSlot(fbb, 4, offsetPicture)
 }
 
+// ToObject is called by the ObjectBox to load an object from a FlatBuffer
 func (event_EntityInfo) ToObject(bytes []byte) interface{} {
 	table := &flatbuffers.Table{
 		Bytes: bytes,
@@ -108,36 +115,74 @@ func (event_EntityInfo) ToObject(bytes []byte) interface{} {
 	}
 }
 
+// MakeSlice is called by the ObjectBox to construct a new slice to hold the read objects
 func (event_EntityInfo) MakeSlice(capacity int) interface{} {
 	return make([]*Event, 0, capacity)
 }
 
+// AppendToSlice is called by the ObjectBox to fill the slice of the read objects
 func (event_EntityInfo) AppendToSlice(slice interface{}, object interface{}) interface{} {
 	return append(slice.([]*Event), object.(*Event))
 }
 
+// Box provides CRUD access to Event objects
 type EventBox struct {
 	*objectbox.Box
 }
 
+// BoxForEvent opens a box of Event objects
 func BoxForEvent(ob *objectbox.ObjectBox) *EventBox {
 	return &EventBox{
 		Box: ob.InternalBox(1),
 	}
 }
 
+// Put synchronously inserts/updates a single object.
+// In case the Id is not specified, it would be assigned automatically (auto-increment).
+// When inserting, the Event.Id property on the passed object will be assigned the new ID as well.
 func (box *EventBox) Put(object *Event) (uint64, error) {
 	return box.Box.Put(object)
 }
 
+// PutAsync asynchronously inserts/updates a single object.
+// When inserting, the Event.Id property on the passed object will be assigned the new ID as well.
+//
+// It's executed on a separate internal thread for better performance.
+//
+// There are two main use cases:
+//
+// 1) "Put & Forget:" you gain faster puts as you don't have to wait for the transaction to finish.
+//
+// 2) Many small transactions: if your write load is typically a lot of individual puts that happen in parallel,
+// this will merge small transactions into bigger ones. This results in a significant gain in overall throughput.
+//
+//
+// In situations with (extremely) high async load, this method may be throttled (~1ms) or delayed (<1s).
+// In the unlikely event that the object could not be enqueued after delaying, an error will be returned.
+//
+// Note that this method does not give you hard durability guarantees like the synchronous Put provides.
+// There is a small time window (typically 3 ms) in which the data may not have been committed durably yet.
 func (box *EventBox) PutAsync(object *Event) (uint64, error) {
 	return box.Box.PutAsync(object)
 }
 
+// PutAll inserts multiple objects in single transaction.
+// In case Ids are not set on the objects, they would be assigned automatically (auto-increment).
+//
+// Returns: IDs of the put objects (in the same order).
+// When inserting, the Event.Id property on the objects in the slice will be assigned the new IDs as well.
+//
+// Note: In case an error occurs during the transaction, some of the objects may already have the Event.Id assigned
+// even though the transaction has been rolled back and the objects are not stored under those IDs.
+//
+// Note: The slice may be empty or even nil; in both cases, an empty IDs slice and no error is returned.
 func (box *EventBox) PutAll(objects []*Event) ([]uint64, error) {
 	return box.Box.PutAll(objects)
 }
 
+// Get reads a single object.
+//
+// Returns nil (and no error) in case the object with the given ID doesn't exist.
 func (box *EventBox) Get(id uint64) (*Event, error) {
 	object, err := box.Box.Get(id)
 	if err != nil {
@@ -148,6 +193,7 @@ func (box *EventBox) Get(id uint64) (*Event, error) {
 	return object.(*Event), nil
 }
 
+// Get reads all stored objects
 func (box *EventBox) GetAll() ([]*Event, error) {
 	objects, err := box.Box.GetAll()
 	if err != nil {
@@ -156,20 +202,30 @@ func (box *EventBox) GetAll() ([]*Event, error) {
 	return objects.([]*Event), nil
 }
 
+// Remove deletes a single object
 func (box *EventBox) Remove(object *Event) (err error) {
 	return box.Box.Remove(object.Id)
 }
 
+// Creates a query with the given conditions. Use the fields of the Event_ struct to create conditions.
+// Keep the *EventQuery if you intend to execute the query multiple times.
+// Note: this function panics if you try to create illegal queries; e.g. use properties of an alien type.
+// This is typically a programming error. Use QueryOrError instead if you want the explicit error check.
 func (box *EventBox) Query(conditions ...objectbox.Condition) *EventQuery {
 	return &EventQuery{
 		box.Box.Query(conditions...),
 	}
 }
 
+// Query provides a way to search stored objects
+//
+// For example, you can find all Event which Id is lower than 100:
+// 		box.Query(Event_.Id.LessThan(100)).Find()
 type EventQuery struct {
 	*objectbox.Query
 }
 
+// Find returns all objects matching the query
 func (query *EventQuery) Find() ([]*Event, error) {
 	objects, err := query.Query.Find()
 	if err != nil {
@@ -188,6 +244,7 @@ var ReadingBinding = reading_EntityInfo{
 	Uid: 5284076134434938613,
 }
 
+// Reading_ contains type-based Property helpers to facilitate some common operations such as Queries.
 var Reading_ = struct {
 	Id              *objectbox.PropertyUint64
 	Date            *objectbox.PropertyInt64
@@ -246,10 +303,12 @@ var Reading_ = struct {
 	},
 }
 
+// GeneratorVersion is called by the ObjectBox to verify the compatibility of the generator used to generate this code
 func (reading_EntityInfo) GeneratorVersion() int {
 	return 1
 }
 
+// AddToModel is called by the ObjectBox during model build
 func (reading_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("Reading", 2, 5284076134434938613)
 	model.Property("Id", objectbox.PropertyType_Long, 1, 3968063745680890327)
@@ -266,15 +325,18 @@ func (reading_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.EntityLastPropertyId(9, 6040892611651481730)
 }
 
+// GetId is called by the ObjectBox during Put operations to check for existing ID on an object
 func (reading_EntityInfo) GetId(object interface{}) (uint64, error) {
 	return object.(*Reading).Id, nil
 }
 
+// SetId is called by the ObjectBox during Put to update an ID on an object that has just been inserted
 func (reading_EntityInfo) SetId(object interface{}, id uint64) error {
 	object.(*Reading).Id = id
 	return nil
 }
 
+// Flatten is called by the ObjectBox to transform an object to a FlatBuffer
 func (reading_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
 	obj := object.(*Reading)
 	var offsetValueName = fbutils.CreateStringOffset(fbb, obj.ValueName)
@@ -293,6 +355,7 @@ func (reading_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, 
 	fbutils.SetFloat32Slot(fbb, 8, obj.ValueFloating32)
 }
 
+// ToObject is called by the ObjectBox to load an object from a FlatBuffer
 func (reading_EntityInfo) ToObject(bytes []byte) interface{} {
 	table := &flatbuffers.Table{
 		Bytes: bytes,
@@ -312,36 +375,74 @@ func (reading_EntityInfo) ToObject(bytes []byte) interface{} {
 	}
 }
 
+// MakeSlice is called by the ObjectBox to construct a new slice to hold the read objects
 func (reading_EntityInfo) MakeSlice(capacity int) interface{} {
 	return make([]*Reading, 0, capacity)
 }
 
+// AppendToSlice is called by the ObjectBox to fill the slice of the read objects
 func (reading_EntityInfo) AppendToSlice(slice interface{}, object interface{}) interface{} {
 	return append(slice.([]*Reading), object.(*Reading))
 }
 
+// Box provides CRUD access to Reading objects
 type ReadingBox struct {
 	*objectbox.Box
 }
 
+// BoxForReading opens a box of Reading objects
 func BoxForReading(ob *objectbox.ObjectBox) *ReadingBox {
 	return &ReadingBox{
 		Box: ob.InternalBox(2),
 	}
 }
 
+// Put synchronously inserts/updates a single object.
+// In case the Id is not specified, it would be assigned automatically (auto-increment).
+// When inserting, the Reading.Id property on the passed object will be assigned the new ID as well.
 func (box *ReadingBox) Put(object *Reading) (uint64, error) {
 	return box.Box.Put(object)
 }
 
+// PutAsync asynchronously inserts/updates a single object.
+// When inserting, the Reading.Id property on the passed object will be assigned the new ID as well.
+//
+// It's executed on a separate internal thread for better performance.
+//
+// There are two main use cases:
+//
+// 1) "Put & Forget:" you gain faster puts as you don't have to wait for the transaction to finish.
+//
+// 2) Many small transactions: if your write load is typically a lot of individual puts that happen in parallel,
+// this will merge small transactions into bigger ones. This results in a significant gain in overall throughput.
+//
+//
+// In situations with (extremely) high async load, this method may be throttled (~1ms) or delayed (<1s).
+// In the unlikely event that the object could not be enqueued after delaying, an error will be returned.
+//
+// Note that this method does not give you hard durability guarantees like the synchronous Put provides.
+// There is a small time window (typically 3 ms) in which the data may not have been committed durably yet.
 func (box *ReadingBox) PutAsync(object *Reading) (uint64, error) {
 	return box.Box.PutAsync(object)
 }
 
+// PutAll inserts multiple objects in single transaction.
+// In case Ids are not set on the objects, they would be assigned automatically (auto-increment).
+//
+// Returns: IDs of the put objects (in the same order).
+// When inserting, the Reading.Id property on the objects in the slice will be assigned the new IDs as well.
+//
+// Note: In case an error occurs during the transaction, some of the objects may already have the Reading.Id assigned
+// even though the transaction has been rolled back and the objects are not stored under those IDs.
+//
+// Note: The slice may be empty or even nil; in both cases, an empty IDs slice and no error is returned.
 func (box *ReadingBox) PutAll(objects []*Reading) ([]uint64, error) {
 	return box.Box.PutAll(objects)
 }
 
+// Get reads a single object.
+//
+// Returns nil (and no error) in case the object with the given ID doesn't exist.
 func (box *ReadingBox) Get(id uint64) (*Reading, error) {
 	object, err := box.Box.Get(id)
 	if err != nil {
@@ -352,6 +453,7 @@ func (box *ReadingBox) Get(id uint64) (*Reading, error) {
 	return object.(*Reading), nil
 }
 
+// Get reads all stored objects
 func (box *ReadingBox) GetAll() ([]*Reading, error) {
 	objects, err := box.Box.GetAll()
 	if err != nil {
@@ -360,20 +462,30 @@ func (box *ReadingBox) GetAll() ([]*Reading, error) {
 	return objects.([]*Reading), nil
 }
 
+// Remove deletes a single object
 func (box *ReadingBox) Remove(object *Reading) (err error) {
 	return box.Box.Remove(object.Id)
 }
 
+// Creates a query with the given conditions. Use the fields of the Reading_ struct to create conditions.
+// Keep the *ReadingQuery if you intend to execute the query multiple times.
+// Note: this function panics if you try to create illegal queries; e.g. use properties of an alien type.
+// This is typically a programming error. Use QueryOrError instead if you want the explicit error check.
 func (box *ReadingBox) Query(conditions ...objectbox.Condition) *ReadingQuery {
 	return &ReadingQuery{
 		box.Box.Query(conditions...),
 	}
 }
 
+// Query provides a way to search stored objects
+//
+// For example, you can find all Reading which Id is lower than 100:
+// 		box.Query(Reading_.Id.LessThan(100)).Find()
 type ReadingQuery struct {
 	*objectbox.Query
 }
 
+// Find returns all objects matching the query
 func (query *ReadingQuery) Find() ([]*Reading, error) {
 	objects, err := query.Query.Find()
 	if err != nil {

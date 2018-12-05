@@ -120,25 +120,33 @@ func createTask(box *model.TaskBox, text string) {
 }
 
 func printList(box *model.TaskBox, all bool) {
-	if list, err := box.GetAll(); err != nil {
-		fmt.Fprintf(os.Stderr, "could not list tasks: %s\n", err)
+	var list []*model.Task
+	var err error
+
+	if all {
+		// load all tasks
+		list, err = box.GetAll()
 	} else {
-		fmt.Printf("%3s  %-29s  %-29s  %s\n", "ID", "Created", "Finished", "Text")
-		for _, task := range list {
-			if task.DateFinished != 0 && !all {
-				// skip finished tasks if we aren't printing everything
-				// NOTE you could use Queries to do this in the future but let's keep the example simple
-				continue
-			}
-			fmt.Printf("%3d  %-29s  %-29s  %s\n",
-				task.Id, fmtTime(task.DateCreated), fmtTime(task.DateFinished), task.Text)
-		}
+		// load only the unfinished tasks
+		list, err = box.Query(model.Task_.DateFinished.Equals(0)).Find()
+	}
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "could not list tasks: %s\n", err)
+	}
+
+	fmt.Printf("%3s  %-29s  %-29s  %s\n", "ID", "Created", "Finished", "Text")
+	for _, task := range list {
+		fmt.Printf("%3d  %-29s  %-29s  %s\n",
+			task.Id, fmtTime(task.DateCreated), fmtTime(task.DateFinished), task.Text)
 	}
 }
 
 func setDone(box *model.TaskBox, id uint64) {
 	if task, err := box.Get(id); err != nil {
 		fmt.Fprintf(os.Stderr, "could not read task ID %d: %s\n", id, err)
+	} else if task == nil {
+		fmt.Fprintf(os.Stderr, "task ID %d doesn't exist\n", id)
 	} else {
 		task.DateFinished = obNow()
 		if _, err := box.Put(task); err != nil {

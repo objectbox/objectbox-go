@@ -219,6 +219,7 @@ func (box *Box) Count() (count uint64, err error) {
 // Get reads a single object.
 //
 // Returns an interface that should be cast to the appropriate type.
+// Returns nil in case the object with the given ID doesn't exist.
 // The cast is done automatically when using the generated BoxFor* code
 func (box *Box) Get(id uint64) (object interface{}, err error) {
 	err = box.objectBox.runWithCursor(box.typeId, true, func(cursor *cursor) error {

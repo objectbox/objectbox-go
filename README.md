@@ -67,8 +67,6 @@ This generates a few files in the same folder as the entity - remember to add th
 Once code generation finished successfully, you can start using ObjectBox:
 ```go
    obx := objectbox.NewBuilder().Model(ObjectBoxModel()).Build()
-   defer obx.Close()
-   
    box := BoxForTask(obx) // Generated function to provide a Box for Task objects
    id, _ := box.Put(&Task{ Text: "Buy milk" })
 ```

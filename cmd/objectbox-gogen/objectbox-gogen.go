@@ -51,7 +51,9 @@ func getArgs() (file string, line uint, modelInfoFile string) {
 	var hasAll = true
 	line = 0
 
-	file = *flag.String("source", "", "path to the source file containing structs to process")
+	flag.StringVar(&file, "source", "", "path to the source file containing structs to process")
+	flag.StringVar(&modelInfoFile, "persist", "", "path to the model information persistence file")
+	flag.Parse()
 
 	if len(file) == 0 {
 		// if the command is run by go:generate some environment variables are set
@@ -64,8 +66,6 @@ func getArgs() (file string, line uint, modelInfoFile string) {
 			hasAll = false
 		}
 	}
-
-	modelInfoFile = *flag.String("persist", "", "path to the model information persistence file")
 
 	if len(modelInfoFile) == 0 {
 		modelInfoFile = generator.ModelInfoFile(filepath.Dir(file))

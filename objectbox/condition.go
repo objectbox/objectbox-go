@@ -17,16 +17,16 @@
 package objectbox
 
 type Condition interface {
-	applyTo(qb *QueryBuilder) (conditionId, error)
+	applyTo(qb *QueryBuilder) (ConditionId, error)
 }
 
-type conditionId = int
+type ConditionId = int
 
 type conditionClosure struct {
-	applyFun func(qb *QueryBuilder) (conditionId, error)
+	applyFun func(qb *QueryBuilder) (ConditionId, error)
 }
 
-func (condition *conditionClosure) applyTo(qb *QueryBuilder) (conditionId, error) {
+func (condition *conditionClosure) applyTo(qb *QueryBuilder) (ConditionId, error) {
 	return condition.applyFun(qb)
 }
 
@@ -36,8 +36,8 @@ type conditionCombination struct {
 	conditions []Condition
 }
 
-func (condition *conditionCombination) applyTo(qb *QueryBuilder) (conditionId, error) {
-	ids := make([]conditionId, len(condition.conditions))
+func (condition *conditionCombination) applyTo(qb *QueryBuilder) (ConditionId, error) {
+	ids := make([]ConditionId, len(condition.conditions))
 
 	for _, sub := range condition.conditions {
 		if id, err := sub.applyTo(qb); err != nil {

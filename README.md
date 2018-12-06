@@ -17,11 +17,10 @@ Latest release: [v0.8.0 (2018-12-06)](https://golang.objectbox.io/)
 
 Some features
 -------------
-* Queries
+* [Powerful queries](https://golang.objectbox.io/queries)
 * Secondary indexes based on object properties
 * Asynchronous puts
 * Automatic model migration (no schema upgrade scripts etc.) 
-* (Coming soon: Powerful queries) 
 * (Coming soon: Relations to other objects) 
 
 Installation

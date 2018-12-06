@@ -13,7 +13,7 @@ ObjectBox persists your native Go structs using a simple CRUD API:
 Want details? **[Read the docs](https://golang.objectbox.io/)** or
 **[check out the API reference](https://godoc.org/github.com/objectbox/objectbox-go/objectbox)**.
 
-Latest release: [v0.8.0 (2018-12-05)](https://golang.objectbox.io/)
+Latest release: [v0.8.0 (2018-12-06)](https://golang.objectbox.io/)
 
 Some features
 -------------
@@ -48,7 +48,7 @@ go test github.com/objectbox/objectbox-go/...
 ```
 
 Getting started
-----
+---------------
 With the dependencies installed, you can start adding entities to your project:
 ```go
 //go:generate objectbox-gogen
@@ -56,8 +56,6 @@ With the dependencies installed, you can start adding entities to your project:
 type Task struct {
 	Id           uint64
 	Text         string
-	DateCreated  int64
-	DateFinished int64
 }
 ```
 And run code generation in your project dir
@@ -66,33 +64,13 @@ go generate ./...
 ```
 This generates a few files in the same folder as the entity - remember to add those to version control (e. g. git).
 
-At this point, you can start using the ObjectBox:
+Once code generation finished successfully, you can start using ObjectBox:
 ```go
-func initObjectBox() *objectbox.ObjectBox {
-	objectBox, err := objectbox.NewBuilder().Model(ObjectBoxModel()).Build()
-	if err != nil {
-		panic(err)
-	}
-	return objectBox
-}
-
-func main() {
-   // load objectbox
-   ob := initObjectBox()
-   defer ob.Close()
+   obx := objectbox.NewBuilder().Model(ObjectBoxModel()).Build()
+   defer obx.Close()
    
-   box := BoxForTask(ob)
-   
-   // Create
-   id, _ := box.Put(&Task{
-      Text: "Buy milk",
-   })
-   
-   task, _ := box.Get(id) // Read
-   task.Text += " & some bread"
-   box.Put(task)         // Update
-   box.Remove(task)      // Delete
-}
+   box := BoxForTask(obx) // Generated function to provide a Box for Task objects
+   id, _ := box.Put(&Task{ Text: "Buy milk" })
 ```
 
 See the [Getting started](https://golang.objectbox.io/getting-started) section of our docs for a more thorough intro. 
@@ -121,7 +99,6 @@ Afterwards, don't forget to re-run the code generation on your project
 ```bash
 go generate ./...
 ```
-
 
 License
 -------

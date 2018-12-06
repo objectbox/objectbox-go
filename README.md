@@ -47,6 +47,59 @@ Additionally, you can run tests to validate your installation
 go test github.com/objectbox/objectbox-go/...
 ```
 
+Getting started
+----
+With the dependencies installed, you can start adding entities to your project:
+```go
+//go:generate objectbox-gogen
+​
+type Task struct {
+	Id           uint64
+	Text         string
+	DateCreated  int64
+	DateFinished int64
+}
+```
+And run code generation in your project dir
+```bash
+go generate ./...
+```
+This generates a few files in the same folder as the entity - remember to add those to version control (e. g. git).
+
+At this point, you can start using the ObjectBox:
+```go
+func initObjectBox() *objectbox.ObjectBox {
+	objectBox, err := objectbox.NewBuilder().Model(ObjectBoxModel()).Build()
+	if err != nil {
+		panic(err)
+	}
+	return objectBox
+}
+
+func main() {
+   // load objectbox
+   ob := initObjectBox()
+   defer ob.Close()
+   
+   box := BoxForTask(ob)
+   
+   // Create
+   id, _ := box.Put(&Task{
+      Text: "Buy milk",
+   })
+   
+   task, _ := box.Get(id) // Read
+   task.Text += " & some bread"
+   box.Put(task)         // Update
+   box.Remove(task)      // Delete
+}
+```
+
+See the [Getting started](https://golang.objectbox.io/getting-started) section of our docs for a more thorough intro. 
+
+Also, please have a look at the [examples](examples) directory and for the API reference see 
+[ObjectBox GoDocs](https://godoc.org/github.com/objectbox/objectbox-go/objectbox) - and the sources in this repo. 
+
 Upgrading to a newer version
 ----------------------------
 When you want to update, please re-run the entire installation process to ensure all components are updated:
@@ -68,14 +121,6 @@ Afterwards, don't forget to re-run the code generation on your project
 ```bash
 go generate ./...
 ```
-
-Docs
-----
-To get started, please have a look at the [examples](examples) directory and [ObjectBox Go docs](https://golang.objectbox.io).
-
-Also, check the [ObjectBox GoDocs](https://godoc.org/github.com/objectbox/objectbox-go/objectbox) - and the sources in this repo. 
-
-Documentation is still on-going work; expect more soon.
 
 
 License

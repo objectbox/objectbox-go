@@ -876,7 +876,7 @@ type PropertyStringUint64 struct {
 
 func (property PropertyStringUint64) Equals(value string) Condition {
 	return &conditionClosure{
-		func(qb *queryBuilder) (conditionId, error) {
+		func(qb *QueryBuilder) (ConditionId, error) {
 			if num, err := strconv.ParseUint(value, 10, 64); err != nil {
 				qb.setError(err)
 				return 0, err
@@ -889,7 +889,7 @@ func (property PropertyStringUint64) Equals(value string) Condition {
 
 func (property PropertyStringUint64) NotEquals(value string) Condition {
 	return &conditionClosure{
-		func(qb *queryBuilder) (conditionId, error) {
+		func(qb *QueryBuilder) (ConditionId, error) {
 			if num, err := strconv.ParseUint(value, 10, 64); err != nil {
 				qb.setError(err)
 				return 0, err
@@ -916,7 +916,7 @@ func (property PropertyStringUint64) int64Slice(values []string) ([]int64, error
 
 func (property PropertyStringUint64) In(values ...string) Condition {
 	return &conditionClosure{
-		func(qb *queryBuilder) (conditionId, error) {
+		func(qb *QueryBuilder) (ConditionId, error) {
 			if nums, err := property.int64Slice(values); err != nil {
 				qb.setError(err)
 				return 0, err
@@ -929,7 +929,7 @@ func (property PropertyStringUint64) In(values ...string) Condition {
 
 func (property PropertyStringUint64) NotIn(values ...string) Condition {
 	return &conditionClosure{
-		func(qb *queryBuilder) (conditionId, error) {
+		func(qb *QueryBuilder) (ConditionId, error) {
 			if nums, err := property.int64Slice(values); err != nil {
 				qb.setError(err)
 				return 0, err

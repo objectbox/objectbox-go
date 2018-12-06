@@ -568,10 +568,20 @@ func (box *TestStringIdEntityBox) Query(conditions ...objectbox.Condition) *Test
 	}
 }
 
+// Creates a query with the given conditions. Use the fields of the TestStringIdEntity_ struct to create conditions.
+// Keep the *TestStringIdEntityQuery if you intend to execute the query multiple times.
+func (box *TestStringIdEntityBox) QueryOrError(conditions ...objectbox.Condition) (*TestStringIdEntityQuery, error) {
+	if query, err := box.Box.QueryOrError(conditions...); err != nil {
+		return nil, err
+	} else {
+		return &TestStringIdEntityQuery{query}, nil
+	}
+}
+
 // Query provides a way to search stored objects
 //
-// For example, you can find all TestStringIdEntity which Id is lower than 100:
-// 		box.Query(TestStringIdEntity_.Id.LessThan(100)).Find()
+// For example, you can find all TestStringIdEntity which Id is either 42 or 47:
+// 		box.Query(TestStringIdEntity_.Id.In(42, 47)).Find()
 type TestStringIdEntityQuery struct {
 	*objectbox.Query
 }

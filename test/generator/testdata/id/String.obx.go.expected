@@ -209,10 +209,20 @@ func (box *StringBox) Query(conditions ...objectbox.Condition) *StringQuery {
 	}
 }
 
+// Creates a query with the given conditions. Use the fields of the String_ struct to create conditions.
+// Keep the *StringQuery if you intend to execute the query multiple times.
+func (box *StringBox) QueryOrError(conditions ...objectbox.Condition) (*StringQuery, error) {
+	if query, err := box.Box.QueryOrError(conditions...); err != nil {
+		return nil, err
+	} else {
+		return &StringQuery{query}, nil
+	}
+}
+
 // Query provides a way to search stored objects
 //
-// For example, you can find all String which Id is lower than 100:
-// 		box.Query(String_.Id.LessThan(100)).Find()
+// For example, you can find all String which Id is either 42 or 47:
+// 		box.Query(String_.Id.In(42, 47)).Find()
 type StringQuery struct {
 	*objectbox.Query
 }

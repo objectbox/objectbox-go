@@ -73,7 +73,7 @@ func (builder *Builder) MaxReaders(maxReaders uint) *Builder {
 	return builder
 }
 
-// Model specifies schema for the database
+// Model specifies schema for the database.
 //
 // Pass the result of the generated function ObjectBoxModel as an argument: Model(ObjectBoxModel())
 func (builder *Builder) Model(model *Model) *Builder {
@@ -91,8 +91,18 @@ func (builder *Builder) Model(model *Model) *Builder {
 	return builder
 }
 
-// Build validates the configuration and tries to init the ObjectBox
+// Build validates the configuration and tries to init the ObjectBox.
+// This call panics on failures; if ObjectBox is optional for your app, consider BuildOrError().
 func (builder *Builder) Build() (*ObjectBox, error) {
+	objectBox, err := builder.BuildOrError()
+	if err != nil {
+		panic(fmt.Sprintf("Could not create ObjectBox - please check configuration: %s", err))
+	}
+	return objectBox, nil
+}
+
+// Build validates the configuration and tries to init the ObjectBox.
+func (builder *Builder) BuildOrError() (*ObjectBox, error) {
 	if builder.Error != nil {
 		return nil, builder.Error
 	}

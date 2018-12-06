@@ -261,7 +261,8 @@ func (binding *Binding) createEntityFromAst(node ast.Node, name string, comments
 	if entity.IdProperty == nil {
 		// try to find an ID property automatically based on it's name and type
 		for _, property := range entity.Properties {
-			if strings.ToLower(property.Name) == "id" && strings.ToLower(property.GoType) == "uint64" {
+			if strings.ToLower(property.Name) == "id" &&
+				(strings.ToLower(property.GoType) == "uint64" || strings.ToLower(property.GoType) == "string") {
 				if entity.IdProperty == nil {
 					entity.IdProperty = property
 					property.addObFlag("ID")
@@ -275,7 +276,7 @@ func (binding *Binding) createEntityFromAst(node ast.Node, name string, comments
 
 		if entity.IdProperty == nil {
 			return fmt.Errorf("id field is missing on entity %s - either annotate a field with `id` tag "+
-				"or use a uint64 field named 'Id/id/ID'", entity.Name)
+				"or use an uint64 field named 'Id/id/ID'", entity.Name)
 		}
 	}
 

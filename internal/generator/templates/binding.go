@@ -105,7 +105,7 @@ func ({{$entityNameCamel}}_EntityInfo) GetId(object interface{}) (uint64, error)
 // SetId is called by the ObjectBox during Put to update an ID on an object that has just been inserted
 func ({{$entityNameCamel}}_EntityInfo) SetId(object interface{}, id uint64) error {
 	{{if eq $entity.IdProperty.GoType "string" -}}
-	object.(*{{$entity.Name}}).Id = strconv.FormatUint(id, 10)
+	object.(*{{$entity.Name}}).{{$entity.IdProperty.Name}} = strconv.FormatUint(id, 10)
 	{{- else -}}
 	object.(*{{$entity.Name}}).{{$entity.IdProperty.Name}} = id
 	{{- end}}

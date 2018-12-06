@@ -43,8 +43,9 @@ import (
 	"unsafe"
 )
 
+// Internal class; use Box.Query instead.
 // Allows construction of queries; just check queryBuilder.Error or err from Build()
-type queryBuilder struct {
+type QueryBuilder struct {
 	objectBox *ObjectBox
 	cqb       *C.OBX_query_builder
 	typeId    TypeId
@@ -53,7 +54,7 @@ type queryBuilder struct {
 	Err error
 }
 
-func (qb *queryBuilder) Close() error {
+func (qb *QueryBuilder) Close() error {
 	toClose := qb.cqb
 	if toClose != nil {
 		qb.cqb = nil
@@ -65,7 +66,7 @@ func (qb *queryBuilder) Close() error {
 	return nil
 }
 
-func (qb *queryBuilder) StringEqual(propertyId TypeId, value string, caseSensitive bool) (conditionId, error) {
+func (qb *QueryBuilder) StringEqual(propertyId TypeId, value string, caseSensitive bool) (conditionId, error) {
 	if qb.Err != nil {
 		return 0, qb.Err
 	}
@@ -77,7 +78,7 @@ func (qb *queryBuilder) StringEqual(propertyId TypeId, value string, caseSensiti
 	return conditionId(cid), qb.Err
 }
 
-func (qb *queryBuilder) StringIn(propertyId TypeId, values []string, caseSensitive bool) (conditionId, error) {
+func (qb *QueryBuilder) StringIn(propertyId TypeId, values []string, caseSensitive bool) (conditionId, error) {
 	if qb.Err != nil {
 		return 0, qb.Err
 	}
@@ -94,7 +95,7 @@ func (qb *queryBuilder) StringIn(propertyId TypeId, values []string, caseSensiti
 	return conditionId(cid), qb.Err
 }
 
-func (qb *queryBuilder) StringContains(propertyId TypeId, value string, caseSensitive bool) (conditionId, error) {
+func (qb *QueryBuilder) StringContains(propertyId TypeId, value string, caseSensitive bool) (conditionId, error) {
 	if qb.Err != nil {
 		return 0, qb.Err
 	}
@@ -106,7 +107,7 @@ func (qb *queryBuilder) StringContains(propertyId TypeId, value string, caseSens
 	return conditionId(cid), qb.Err
 }
 
-func (qb *queryBuilder) StringStartsWith(propertyId TypeId, value string, caseSensitive bool) (conditionId, error) {
+func (qb *QueryBuilder) StringStartsWith(propertyId TypeId, value string, caseSensitive bool) (conditionId, error) {
 	if qb.Err != nil {
 		return 0, qb.Err
 	}
@@ -118,7 +119,7 @@ func (qb *queryBuilder) StringStartsWith(propertyId TypeId, value string, caseSe
 	return conditionId(cid), qb.Err
 }
 
-func (qb *queryBuilder) StringEndsWith(propertyId TypeId, value string, caseSensitive bool) (conditionId, error) {
+func (qb *QueryBuilder) StringEndsWith(propertyId TypeId, value string, caseSensitive bool) (conditionId, error) {
 	if qb.Err != nil {
 		return 0, qb.Err
 	}
@@ -130,7 +131,7 @@ func (qb *queryBuilder) StringEndsWith(propertyId TypeId, value string, caseSens
 	return conditionId(cid), qb.Err
 }
 
-func (qb *queryBuilder) IntBetween(propertyId TypeId, value1 int64, value2 int64) (conditionId, error) {
+func (qb *QueryBuilder) IntBetween(propertyId TypeId, value1 int64, value2 int64) (conditionId, error) {
 	if qb.Err != nil {
 		return 0, qb.Err
 	}
@@ -140,7 +141,7 @@ func (qb *queryBuilder) IntBetween(propertyId TypeId, value1 int64, value2 int64
 	return conditionId(cid), qb.Err
 }
 
-func (qb *queryBuilder) Null(propertyId TypeId) (conditionId, error) {
+func (qb *QueryBuilder) Null(propertyId TypeId) (conditionId, error) {
 	if qb.Err != nil {
 		return 0, qb.Err
 	}
@@ -150,7 +151,7 @@ func (qb *queryBuilder) Null(propertyId TypeId) (conditionId, error) {
 	return conditionId(cid), qb.Err
 }
 
-func (qb *queryBuilder) StringNotEqual(propertyId TypeId, value string, caseSensitive bool) (conditionId, error) {
+func (qb *QueryBuilder) StringNotEqual(propertyId TypeId, value string, caseSensitive bool) (conditionId, error) {
 	if qb.Err != nil {
 		return 0, qb.Err
 	}
@@ -162,7 +163,7 @@ func (qb *queryBuilder) StringNotEqual(propertyId TypeId, value string, caseSens
 	return conditionId(cid), qb.Err
 }
 
-func (qb *queryBuilder) StringGreater(propertyId TypeId, value string, caseSensitive bool, withEqual bool) (conditionId, error) {
+func (qb *QueryBuilder) StringGreater(propertyId TypeId, value string, caseSensitive bool, withEqual bool) (conditionId, error) {
 	if qb.Err != nil {
 		return 0, qb.Err
 	}
@@ -174,7 +175,7 @@ func (qb *queryBuilder) StringGreater(propertyId TypeId, value string, caseSensi
 	return conditionId(cid), qb.Err
 }
 
-func (qb *queryBuilder) StringLess(propertyId TypeId, value string, caseSensitive bool, withEqual bool) (conditionId, error) {
+func (qb *QueryBuilder) StringLess(propertyId TypeId, value string, caseSensitive bool, withEqual bool) (conditionId, error) {
 	if qb.Err != nil {
 		return 0, qb.Err
 	}
@@ -186,7 +187,7 @@ func (qb *queryBuilder) StringLess(propertyId TypeId, value string, caseSensitiv
 	return conditionId(cid), qb.Err
 }
 
-func (qb *queryBuilder) IntEqual(propertyId TypeId, value int64) (conditionId, error) {
+func (qb *QueryBuilder) IntEqual(propertyId TypeId, value int64) (conditionId, error) {
 	if qb.Err != nil {
 		return 0, qb.Err
 	}
@@ -196,7 +197,7 @@ func (qb *queryBuilder) IntEqual(propertyId TypeId, value int64) (conditionId, e
 	return conditionId(cid), qb.Err
 }
 
-func (qb *queryBuilder) DoubleGreater(propertyId TypeId, value float64) (conditionId, error) {
+func (qb *QueryBuilder) DoubleGreater(propertyId TypeId, value float64) (conditionId, error) {
 	if qb.Err != nil {
 		return 0, qb.Err
 	}
@@ -206,7 +207,7 @@ func (qb *queryBuilder) DoubleGreater(propertyId TypeId, value float64) (conditi
 	return conditionId(cid), qb.Err
 }
 
-func (qb *queryBuilder) DoubleLess(propertyId TypeId, value float64) (conditionId, error) {
+func (qb *QueryBuilder) DoubleLess(propertyId TypeId, value float64) (conditionId, error) {
 	if qb.Err != nil {
 		return 0, qb.Err
 	}
@@ -216,7 +217,7 @@ func (qb *queryBuilder) DoubleLess(propertyId TypeId, value float64) (conditionI
 	return conditionId(cid), qb.Err
 }
 
-func (qb *queryBuilder) DoubleBetween(propertyId TypeId, valueA float64, valueB float64) (conditionId, error) {
+func (qb *QueryBuilder) DoubleBetween(propertyId TypeId, valueA float64, valueB float64) (conditionId, error) {
 	if qb.Err != nil {
 		return 0, qb.Err
 	}
@@ -227,7 +228,7 @@ func (qb *queryBuilder) DoubleBetween(propertyId TypeId, valueA float64, valueB 
 }
 
 // obx_qb_cond obx_qb_int_not_equal(OBX_query_builder* builder, obx_schema_id property_id, int64 value);
-func (qb *queryBuilder) IntNotEqual(propertyId TypeId, value int64) (conditionId, error) {
+func (qb *QueryBuilder) IntNotEqual(propertyId TypeId, value int64) (conditionId, error) {
 	if qb.Err != nil {
 		return 0, qb.Err
 	}
@@ -238,7 +239,7 @@ func (qb *queryBuilder) IntNotEqual(propertyId TypeId, value int64) (conditionId
 }
 
 // obx_qb_cond obx_qb_int_greater(OBX_query_builder* builder, obx_schema_id property_id, int64  value);
-func (qb *queryBuilder) IntGreater(propertyId TypeId, value int64) (conditionId, error) {
+func (qb *QueryBuilder) IntGreater(propertyId TypeId, value int64) (conditionId, error) {
 	if qb.Err != nil {
 		return 0, qb.Err
 	}
@@ -249,7 +250,7 @@ func (qb *queryBuilder) IntGreater(propertyId TypeId, value int64) (conditionId,
 }
 
 // obx_qb_cond obx_qb_int_less(OBX_query_builder* builder, obx_schema_id property_id, int64  value);
-func (qb *queryBuilder) IntLess(propertyId TypeId, value int64) (conditionId, error) {
+func (qb *QueryBuilder) IntLess(propertyId TypeId, value int64) (conditionId, error) {
 	if qb.Err != nil {
 		return 0, qb.Err
 	}
@@ -259,7 +260,7 @@ func (qb *queryBuilder) IntLess(propertyId TypeId, value int64) (conditionId, er
 	return conditionId(cid), qb.Err
 }
 
-func (qb *queryBuilder) NotNull(propertyId TypeId) (conditionId, error) {
+func (qb *QueryBuilder) NotNull(propertyId TypeId) (conditionId, error) {
 	if qb.Err != nil {
 		return 0, qb.Err
 	}
@@ -269,7 +270,7 @@ func (qb *queryBuilder) NotNull(propertyId TypeId) (conditionId, error) {
 	return conditionId(cid), qb.Err
 }
 
-func (qb *queryBuilder) BytesEqual(propertyId TypeId, value []byte) (conditionId, error) {
+func (qb *QueryBuilder) BytesEqual(propertyId TypeId, value []byte) (conditionId, error) {
 	if qb.Err != nil {
 		return 0, qb.Err
 	}
@@ -280,7 +281,7 @@ func (qb *queryBuilder) BytesEqual(propertyId TypeId, value []byte) (conditionId
 	return conditionId(cid), qb.Err
 }
 
-func (qb *queryBuilder) BytesGreater(propertyId TypeId, value []byte, withEqual bool) (conditionId, error) {
+func (qb *QueryBuilder) BytesGreater(propertyId TypeId, value []byte, withEqual bool) (conditionId, error) {
 	if qb.Err != nil {
 		return 0, qb.Err
 	}
@@ -290,7 +291,7 @@ func (qb *queryBuilder) BytesGreater(propertyId TypeId, value []byte, withEqual 
 	return conditionId(cid), qb.Err
 }
 
-func (qb *queryBuilder) BytesLess(propertyId TypeId, value []byte, withEqual bool) (conditionId, error) {
+func (qb *QueryBuilder) BytesLess(propertyId TypeId, value []byte, withEqual bool) (conditionId, error) {
 	if qb.Err != nil {
 		return 0, qb.Err
 	}
@@ -300,7 +301,7 @@ func (qb *queryBuilder) BytesLess(propertyId TypeId, value []byte, withEqual boo
 	return conditionId(cid), qb.Err
 }
 
-func (qb *queryBuilder) Int64In(propertyId TypeId, values []int64) (conditionId, error) {
+func (qb *QueryBuilder) Int64In(propertyId TypeId, values []int64) (conditionId, error) {
 	if qb.Err != nil {
 		return 0, qb.Err
 	}
@@ -310,7 +311,7 @@ func (qb *queryBuilder) Int64In(propertyId TypeId, values []int64) (conditionId,
 	return conditionId(cid), qb.Err
 }
 
-func (qb *queryBuilder) Int64NotIn(propertyId TypeId, values []int64) (conditionId, error) {
+func (qb *QueryBuilder) Int64NotIn(propertyId TypeId, values []int64) (conditionId, error) {
 	if qb.Err != nil {
 		return 0, qb.Err
 	}
@@ -320,7 +321,7 @@ func (qb *queryBuilder) Int64NotIn(propertyId TypeId, values []int64) (condition
 	return conditionId(cid), qb.Err
 }
 
-func (qb *queryBuilder) Int32In(propertyId TypeId, values []int32) (conditionId, error) {
+func (qb *QueryBuilder) Int32In(propertyId TypeId, values []int32) (conditionId, error) {
 	if qb.Err != nil {
 		return 0, qb.Err
 	}
@@ -330,7 +331,7 @@ func (qb *queryBuilder) Int32In(propertyId TypeId, values []int32) (conditionId,
 	return conditionId(cid), qb.Err
 }
 
-func (qb *queryBuilder) Int32NotIn(propertyId TypeId, values []int32) (conditionId, error) {
+func (qb *QueryBuilder) Int32NotIn(propertyId TypeId, values []int32) (conditionId, error) {
 	if qb.Err != nil {
 		return 0, qb.Err
 	}
@@ -340,7 +341,7 @@ func (qb *queryBuilder) Int32NotIn(propertyId TypeId, values []int32) (condition
 	return conditionId(cid), qb.Err
 }
 
-func (qb *queryBuilder) Build() (*Query, error) {
+func (qb *QueryBuilder) Build() (*Query, error) {
 	qb.checkForCError()
 	if qb.Err != nil {
 		return nil, qb.Err
@@ -358,7 +359,7 @@ func (qb *queryBuilder) Build() (*Query, error) {
 	return query, nil
 }
 
-func (qb *queryBuilder) BuildWithConditions(conditions ...Condition) (*Query, error) {
+func (qb *QueryBuilder) BuildWithConditions(conditions ...Condition) (*Query, error) {
 	var condition Condition
 	if len(conditions) == 1 {
 		condition = conditions[0]
@@ -375,7 +376,7 @@ func (qb *queryBuilder) BuildWithConditions(conditions ...Condition) (*Query, er
 	return qb.Build()
 }
 
-func (qb *queryBuilder) checkForCError() {
+func (qb *QueryBuilder) checkForCError() {
 	if qb.Err != nil {
 		errCode := C.obx_qb_error_code(qb.cqb)
 		if errCode != 0 {

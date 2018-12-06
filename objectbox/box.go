@@ -70,7 +70,7 @@ func (box *Box) Query(conditions ...Condition) *Query {
 
 // Like Query() but with error handling; e.g. when you build conditions dynamically that may fail.
 func (box *Box) QueryOrError(conditions ...Condition) (*Query, error) {
-	queryBuilder := box.objectBox.newQueryBuilder(box.typeId)
+	queryBuilder := box.objectBox.InternalNewQueryBuilder(box.typeId)
 	return queryBuilder.BuildWithConditions(conditions...)
 }
 

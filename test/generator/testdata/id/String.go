@@ -1,5 +1,5 @@
 package object
 
-type String struct {
+type StringIdEntity struct {
 	Id string `id`
 }

@@ -9,18 +9,18 @@ import (
 	"strconv"
 )
 
-type string_EntityInfo struct {
+type stringIdEntity_EntityInfo struct {
 	Id  objectbox.TypeId
 	Uid uint64
 }
 
-var StringBinding = string_EntityInfo{
+var StringIdEntityBinding = stringIdEntity_EntityInfo{
 	Id:  4,
 	Uid: 6044372234677422456,
 }
 
-// String_ contains type-based Property helpers to facilitate some common operations such as Queries.
-var String_ = struct {
+// StringIdEntity_ contains type-based Property helpers to facilitate some common operations such as Queries.
+var StringIdEntity_ = struct {
 	Id *objectbox.PropertyStringUint64
 }{
 	Id: &objectbox.PropertyStringUint64{
@@ -31,35 +31,35 @@ var String_ = struct {
 }
 
 // GeneratorVersion is called by the ObjectBox to verify the compatibility of the generator used to generate this code
-func (string_EntityInfo) GeneratorVersion() int {
+func (stringIdEntity_EntityInfo) GeneratorVersion() int {
 	return 1
 }
 
 // AddToModel is called by the ObjectBox during model build
-func (string_EntityInfo) AddToModel(model *objectbox.Model) {
-	model.Entity("String", 4, 6044372234677422456)
+func (stringIdEntity_EntityInfo) AddToModel(model *objectbox.Model) {
+	model.Entity("StringIdEntity", 4, 6044372234677422456)
 	model.Property("Id", objectbox.PropertyType_Long, 1, 8274930044578894929)
 	model.PropertyFlags(objectbox.PropertyFlags_ID)
 	model.EntityLastPropertyId(1, 8274930044578894929)
 }
 
 // GetId is called by the ObjectBox during Put operations to check for existing ID on an object
-func (string_EntityInfo) GetId(object interface{}) (uint64, error) {
-	if len(object.(*String).Id) == 0 {
+func (stringIdEntity_EntityInfo) GetId(object interface{}) (uint64, error) {
+	if len(object.(*StringIdEntity).Id) == 0 {
 		return 0, nil
 	} else {
-		return strconv.ParseUint(object.(*String).Id, 10, 64)
+		return strconv.ParseUint(object.(*StringIdEntity).Id, 10, 64)
 	}
 }
 
 // SetId is called by the ObjectBox during Put to update an ID on an object that has just been inserted
-func (string_EntityInfo) SetId(object interface{}, id uint64) error {
-	object.(*String).Id = strconv.FormatUint(id, 10)
+func (stringIdEntity_EntityInfo) SetId(object interface{}, id uint64) error {
+	object.(*StringIdEntity).Id = strconv.FormatUint(id, 10)
 	return nil
 }
 
 // Flatten is called by the ObjectBox to transform an object to a FlatBuffer
-func (string_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
+func (stringIdEntity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
 
 	// build the FlatBuffers object
 	fbb.StartObject(1)
@@ -67,43 +67,43 @@ func (string_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, i
 }
 
 // ToObject is called by the ObjectBox to load an object from a FlatBuffer
-func (string_EntityInfo) ToObject(bytes []byte) interface{} {
+func (stringIdEntity_EntityInfo) ToObject(bytes []byte) interface{} {
 	table := &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
 
-	return &String{
+	return &StringIdEntity{
 		Id: strconv.FormatUint(table.GetUint64Slot(4, 0), 10),
 	}
 }
 
 // MakeSlice is called by the ObjectBox to construct a new slice to hold the read objects
-func (string_EntityInfo) MakeSlice(capacity int) interface{} {
-	return make([]*String, 0, capacity)
+func (stringIdEntity_EntityInfo) MakeSlice(capacity int) interface{} {
+	return make([]*StringIdEntity, 0, capacity)
 }
 
 // AppendToSlice is called by the ObjectBox to fill the slice of the read objects
-func (string_EntityInfo) AppendToSlice(slice interface{}, object interface{}) interface{} {
-	return append(slice.([]*String), object.(*String))
+func (stringIdEntity_EntityInfo) AppendToSlice(slice interface{}, object interface{}) interface{} {
+	return append(slice.([]*StringIdEntity), object.(*StringIdEntity))
 }
 
-// Box provides CRUD access to String objects
-type StringBox struct {
+// Box provides CRUD access to StringIdEntity objects
+type StringIdEntityBox struct {
 	*objectbox.Box
 }
 
-// BoxForString opens a box of String objects
-func BoxForString(ob *objectbox.ObjectBox) *StringBox {
-	return &StringBox{
+// BoxForStringIdEntity opens a box of StringIdEntity objects
+func BoxForStringIdEntity(ob *objectbox.ObjectBox) *StringIdEntityBox {
+	return &StringIdEntityBox{
 		Box: ob.InternalBox(4),
 	}
 }
 
 // Put synchronously inserts/updates a single object.
 // In case the Id is not specified, it would be assigned automatically (auto-increment).
-// When inserting, the String.Id property on the passed object will be assigned the new ID as well.
-func (box *StringBox) Put(object *String) (string, error) {
+// When inserting, the StringIdEntity.Id property on the passed object will be assigned the new ID as well.
+func (box *StringIdEntityBox) Put(object *StringIdEntity) (string, error) {
 	if id, err := box.Box.Put(object); err != nil {
 		return "", err
 	} else {
@@ -112,7 +112,7 @@ func (box *StringBox) Put(object *String) (string, error) {
 }
 
 // PutAsync asynchronously inserts/updates a single object.
-// When inserting, the String.Id property on the passed object will be assigned the new ID as well.
+// When inserting, the StringIdEntity.Id property on the passed object will be assigned the new ID as well.
 //
 // It's executed on a separate internal thread for better performance.
 //
@@ -129,7 +129,7 @@ func (box *StringBox) Put(object *String) (string, error) {
 //
 // Note that this method does not give you hard durability guarantees like the synchronous Put provides.
 // There is a small time window (typically 3 ms) in which the data may not have been committed durably yet.
-func (box *StringBox) PutAsync(object *String) (string, error) {
+func (box *StringIdEntityBox) PutAsync(object *StringIdEntity) (string, error) {
 	if id, err := box.Box.PutAsync(object); err != nil {
 		return "", err
 	} else {
@@ -141,13 +141,13 @@ func (box *StringBox) PutAsync(object *String) (string, error) {
 // In case Ids are not set on the objects, they would be assigned automatically (auto-increment).
 //
 // Returns: IDs of the put objects (in the same order).
-// When inserting, the String.Id property on the objects in the slice will be assigned the new IDs as well.
+// When inserting, the StringIdEntity.Id property on the objects in the slice will be assigned the new IDs as well.
 //
-// Note: In case an error occurs during the transaction, some of the objects may already have the String.Id assigned
+// Note: In case an error occurs during the transaction, some of the objects may already have the StringIdEntity.Id assigned
 // even though the transaction has been rolled back and the objects are not stored under those IDs.
 //
 // Note: The slice may be empty or even nil; in both cases, an empty IDs slice and no error is returned.
-func (box *StringBox) PutAll(objects []*String) ([]string, error) {
+func (box *StringIdEntityBox) PutAll(objects []*StringIdEntity) ([]string, error) {
 	ids, err := box.Box.PutAll(objects)
 	if err != nil || len(ids) == 0 {
 		return []string{}, err
@@ -164,7 +164,7 @@ func (box *StringBox) PutAll(objects []*String) ([]string, error) {
 // Get reads a single object.
 //
 // Returns nil (and no error) in case the object with the given ID doesn't exist.
-func (box *StringBox) Get(id string) (*String, error) {
+func (box *StringIdEntityBox) Get(id string) (*StringIdEntity, error) {
 	idUint64, parseErr := strconv.ParseUint(id, 10, 64)
 	if parseErr != nil {
 		return nil, parseErr
@@ -177,20 +177,20 @@ func (box *StringBox) Get(id string) (*String, error) {
 	} else if object == nil {
 		return nil, nil
 	}
-	return object.(*String), nil
+	return object.(*StringIdEntity), nil
 }
 
 // Get reads all stored objects
-func (box *StringBox) GetAll() ([]*String, error) {
+func (box *StringIdEntityBox) GetAll() ([]*StringIdEntity, error) {
 	objects, err := box.Box.GetAll()
 	if err != nil {
 		return nil, err
 	}
-	return objects.([]*String), nil
+	return objects.([]*StringIdEntity), nil
 }
 
 // Remove deletes a single object
-func (box *StringBox) Remove(object *String) (err error) {
+func (box *StringIdEntityBox) Remove(object *StringIdEntity) (err error) {
 	idUint64, parseErr := strconv.ParseUint(object.Id, 10, 64)
 	if parseErr != nil {
 		return parseErr
@@ -199,39 +199,39 @@ func (box *StringBox) Remove(object *String) (err error) {
 	return box.Box.Remove(idUint64)
 }
 
-// Creates a query with the given conditions. Use the fields of the String_ struct to create conditions.
-// Keep the *StringQuery if you intend to execute the query multiple times.
+// Creates a query with the given conditions. Use the fields of the StringIdEntity_ struct to create conditions.
+// Keep the *StringIdEntityQuery if you intend to execute the query multiple times.
 // Note: this function panics if you try to create illegal queries; e.g. use properties of an alien type.
 // This is typically a programming error. Use QueryOrError instead if you want the explicit error check.
-func (box *StringBox) Query(conditions ...objectbox.Condition) *StringQuery {
-	return &StringQuery{
+func (box *StringIdEntityBox) Query(conditions ...objectbox.Condition) *StringIdEntityQuery {
+	return &StringIdEntityQuery{
 		box.Box.Query(conditions...),
 	}
 }
 
-// Creates a query with the given conditions. Use the fields of the String_ struct to create conditions.
-// Keep the *StringQuery if you intend to execute the query multiple times.
-func (box *StringBox) QueryOrError(conditions ...objectbox.Condition) (*StringQuery, error) {
+// Creates a query with the given conditions. Use the fields of the StringIdEntity_ struct to create conditions.
+// Keep the *StringIdEntityQuery if you intend to execute the query multiple times.
+func (box *StringIdEntityBox) QueryOrError(conditions ...objectbox.Condition) (*StringIdEntityQuery, error) {
 	if query, err := box.Box.QueryOrError(conditions...); err != nil {
 		return nil, err
 	} else {
-		return &StringQuery{query}, nil
+		return &StringIdEntityQuery{query}, nil
 	}
 }
 
 // Query provides a way to search stored objects
 //
-// For example, you can find all String which Id is either 42 or 47:
-// 		box.Query(String_.Id.In(42, 47)).Find()
-type StringQuery struct {
+// For example, you can find all StringIdEntity which Id is either 42 or 47:
+// 		box.Query(StringIdEntity_.Id.In(42, 47)).Find()
+type StringIdEntityQuery struct {
 	*objectbox.Query
 }
 
 // Find returns all objects matching the query
-func (query *StringQuery) Find() ([]*String, error) {
+func (query *StringIdEntityQuery) Find() ([]*StringIdEntity, error) {
 	objects, err := query.Query.Find()
 	if err != nil {
 		return nil, err
 	}
-	return objects.([]*String), nil
+	return objects.([]*StringIdEntity), nil
 }

@@ -15,7 +15,7 @@ type typeful_EntityInfo struct {
 
 var TypefulBinding = typeful_EntityInfo{
 	Id:  2,
-	Uid: 3390393562759376202,
+	Uid: 1774932891286980153,
 }
 
 // Typeful_ contains type-based Property helpers to facilitate some common operations such as Queries.
@@ -201,28 +201,28 @@ func (typeful_EntityInfo) GeneratorVersion() int {
 
 // AddToModel is called by the ObjectBox during model build
 func (typeful_EntityInfo) AddToModel(model *objectbox.Model) {
-	model.Entity("Typeful", 2, 3390393562759376202)
-	model.Property("Id", objectbox.PropertyType_Long, 1, 2669985732393126063)
+	model.Entity("Typeful", 2, 1774932891286980153)
+	model.Property("Id", objectbox.PropertyType_Long, 1, 6044372234677422456)
 	model.PropertyFlags(objectbox.PropertyFlags_ID)
-	model.Property("Int", objectbox.PropertyType_Long, 2, 1774932891286980153)
-	model.Property("Int8", objectbox.PropertyType_Byte, 3, 6044372234677422456)
-	model.Property("Int16", objectbox.PropertyType_Short, 4, 8274930044578894929)
-	model.Property("Int32", objectbox.PropertyType_Int, 5, 1543572285742637646)
-	model.Property("Int64", objectbox.PropertyType_Long, 6, 2661732831099943416)
-	model.Property("Uint", objectbox.PropertyType_Long, 7, 8325060299420976708)
-	model.Property("Uint8", objectbox.PropertyType_Byte, 8, 7837839688282259259)
-	model.Property("Uint16", objectbox.PropertyType_Short, 9, 2518412263346885298)
-	model.Property("Uint32", objectbox.PropertyType_Int, 10, 5617773211005988520)
-	model.Property("Uint64", objectbox.PropertyType_Long, 11, 2339563716805116249)
-	model.Property("Bool", objectbox.PropertyType_Bool, 12, 7144924247938981575)
-	model.Property("String", objectbox.PropertyType_String, 13, 161231572858529631)
-	model.Property("Byte", objectbox.PropertyType_Byte, 14, 7259475919510918339)
-	model.Property("ByteVector", objectbox.PropertyType_ByteVector, 15, 7373105480197164748)
-	model.Property("Rune", objectbox.PropertyType_Int, 16, 3287288577352441706)
-	model.Property("Float32", objectbox.PropertyType_Float, 17, 3930927879439176946)
-	model.Property("Float64", objectbox.PropertyType_Double, 18, 4706154865122290029)
-	model.Property("Date", objectbox.PropertyType_Date, 19, 2217592893536642650)
-	model.EntityLastPropertyId(19, 2217592893536642650)
+	model.Property("Int", objectbox.PropertyType_Long, 2, 8274930044578894929)
+	model.Property("Int8", objectbox.PropertyType_Byte, 3, 1543572285742637646)
+	model.Property("Int16", objectbox.PropertyType_Short, 4, 2661732831099943416)
+	model.Property("Int32", objectbox.PropertyType_Int, 5, 8325060299420976708)
+	model.Property("Int64", objectbox.PropertyType_Long, 6, 7837839688282259259)
+	model.Property("Uint", objectbox.PropertyType_Long, 7, 2518412263346885298)
+	model.Property("Uint8", objectbox.PropertyType_Byte, 8, 5617773211005988520)
+	model.Property("Uint16", objectbox.PropertyType_Short, 9, 2339563716805116249)
+	model.Property("Uint32", objectbox.PropertyType_Int, 10, 7144924247938981575)
+	model.Property("Uint64", objectbox.PropertyType_Long, 11, 161231572858529631)
+	model.Property("Bool", objectbox.PropertyType_Bool, 12, 7259475919510918339)
+	model.Property("String", objectbox.PropertyType_String, 13, 7373105480197164748)
+	model.Property("Byte", objectbox.PropertyType_Byte, 14, 3287288577352441706)
+	model.Property("ByteVector", objectbox.PropertyType_ByteVector, 15, 3930927879439176946)
+	model.Property("Rune", objectbox.PropertyType_Int, 16, 4706154865122290029)
+	model.Property("Float32", objectbox.PropertyType_Float, 17, 2217592893536642650)
+	model.Property("Float64", objectbox.PropertyType_Double, 18, 1929546706668609706)
+	model.Property("Date", objectbox.PropertyType_Date, 19, 6392442863481646880)
+	model.EntityLastPropertyId(19, 6392442863481646880)
 }
 
 // GetId is called by the ObjectBox during Put operations to check for existing ID on an object

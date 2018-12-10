@@ -43,6 +43,13 @@ func Eq(t *testing.T, expected interface{}, actual interface{}) {
 	}
 }
 
+// Uses reflect.DeepEqual to test for equality
+func NotEq(t *testing.T, notThisValue interface{}, actual interface{}) {
+	if reflect.DeepEqual(notThisValue, actual) {
+		Failf(t, "Expected a value other than %v", notThisValue)
+	}
+}
+
 func NoErr(t *testing.T, err error) {
 	if err != nil {
 		Failf(t, "Unexpected error occurred: %v", err)

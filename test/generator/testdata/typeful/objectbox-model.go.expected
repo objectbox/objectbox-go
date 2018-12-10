@@ -12,8 +12,9 @@ func ObjectBoxModel() *objectbox.Model {
 	model := objectbox.NewModel()
 	model.GeneratorVersion(1)
 
+	model.RegisterBinding(AliasesBinding)
 	model.RegisterBinding(TypefulBinding)
-	model.LastEntityId(1, 8717895732742165505)
+	model.LastEntityId(2, 3390393562759376202)
 
 	return model
 }

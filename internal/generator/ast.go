@@ -17,26 +17,94 @@
 package generator
 
 import (
+	"fmt"
 	"go/ast"
+	"go/importer"
 	"go/parser"
 	"go/token"
+	"go/types"
+	"os"
+	"path/filepath"
 )
 
 type file struct {
-	f *ast.File
+	f       *ast.File
+	info    *types.Info
+	fileset *token.FileSet
+	files   []*ast.File
+	dir     string
 }
 
-func parseFile(filePath string) (f *file, err error) {
-	f = &file{}
+func parseFile(sourceFile string) (f *file, err error) {
+	f = &file{
+		dir:     filepath.Dir(sourceFile),
+		fileset: token.NewFileSet(),
+	}
 
-	// Create the AST by parsing src.
-	fileset := token.NewFileSet() // positions are relative to fileset
-
-	if f.f, err = parser.ParseFile(fileset, filePath, nil, parser.ParseComments); err != nil {
+	// get the main file's package name
+	pkgName, err := getPackageName(sourceFile)
+	if err != nil {
 		return nil, err
 	}
 
+	// parse the whole directory to read & understand the used types
+	var pkgs map[string]*ast.Package
+	if pkgs, err = parser.ParseDir(f.fileset, f.dir, skipGeneratedFiles, parser.ParseComments); err != nil {
+		return nil, err
+	}
+
+	if pkgs[pkgName] == nil {
+		return nil, fmt.Errorf("couldn't find package %s in directory %s", pkgName, f.dir)
+	}
+
+	// create a list of types in the package the original file belongs to and
+	for name, file := range pkgs[pkgName].Files {
+		if name == sourceFile {
+			f.f = file
+		}
+		f.files = append(f.files, file)
+	}
+
+	if f.f == nil {
+		return nil, fmt.Errorf("the source file %s not found among the files processed in the directory", sourceFile)
+	}
+
 	return f, nil
+}
+
+func getPackageName(filePath string) (string, error) {
+	if f, err := parser.ParseFile(&token.FileSet{}, filePath, nil, 0); err != nil {
+		return "", err
+	} else {
+		return f.Name.Name, nil
+	}
+}
+
+func skipGeneratedFiles(file os.FileInfo) bool {
+	return !isGeneratedFile(file.Name())
+}
+
+func (f *file) getUnderlyingType(expr ast.Expr) (string, error) {
+	// load file info (resolved types) JiT if necessary
+	if f.info == nil {
+		// call types.Config.Check() to fill types.Info
+		f.info = &types.Info{
+			Types: make(map[ast.Expr]types.TypeAndValue),
+			Defs:  make(map[*ast.Ident]types.Object),
+			Uses:  make(map[*ast.Ident]types.Object),
+		}
+
+		var conf = types.Config{Importer: importer.For("source", nil)}
+		if _, err := conf.Check(f.dir, f.fileset, f.files, f.info); err != nil {
+			return "", fmt.Errorf("error running type-check: %s", err)
+		}
+	}
+
+	if t := f.info.TypeOf(expr); t == nil {
+		return "", fmt.Errorf("type %s could not be resolved", expr)
+	} else {
+		return t.Underlying().String(), nil
+	}
 }
 
 func (f *file) walk(fn func(ast.Node) bool) {

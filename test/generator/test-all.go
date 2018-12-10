@@ -112,6 +112,7 @@ func generateAllFiles(t *testing.T, overwriteExpected bool, dir string, modelInf
 	for _, sourceFile := range inputFiles {
 		// skip generated files & "expected results" files
 		if strings.HasSuffix(sourceFile, ".obx.go") ||
+			strings.HasSuffix(sourceFile, ".skip.go") ||
 			strings.HasSuffix(sourceFile, "expected") ||
 			strings.HasSuffix(sourceFile, "initial") ||
 			sourceFile == modelFile {

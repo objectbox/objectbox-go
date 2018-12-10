@@ -33,7 +33,8 @@ type Binding struct {
 	Package  string
 	Entities []*Entity
 
-	err error
+	err    error
+	source *file
 }
 
 type Entity struct {
@@ -84,6 +85,7 @@ func newBinding() (*Binding, error) {
 }
 
 func (binding *Binding) createFromAst(f *file) (err error) {
+	binding.source = f
 	binding.Package = f.f.Name.Name // this is actually package name, not file name
 
 	// this will hold the pointer to the latest GenDecl encountered (parent of the current struct)
@@ -202,8 +204,14 @@ func (binding *Binding) createEntityFromAst(node ast.Node, name string, comments
 				continue
 			}
 
-			if err = property.setType(f.Type); err != nil {
-				return propertyError(err, property)
+			// first try to setType if it's one of the basic supported types
+			if err = property.setType(types.ExprString(f.Type)); err != nil {
+				// if not, get the underlying type and try again
+				if baseType, err := binding.source.getUnderlyingType(f.Type); err != nil {
+					return propertyError(err, property)
+				} else if err = property.setType(baseType); err != nil {
+					return propertyError(err, property)
+				}
 			}
 
 			if err = property.setObFlags(*f); err != nil {
@@ -399,8 +407,8 @@ func parseAnnotations(tags string, annotations *map[string]*Annotation) error {
 	return nil
 }
 
-func (property *Property) setType(t ast.Expr) error {
-	property.GoType = types.ExprString(t)
+func (property *Property) setType(baseType string) error {
+	property.GoType = baseType
 
 	ts := property.GoType
 	if property.GoType == "string" {

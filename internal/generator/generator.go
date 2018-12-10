@@ -48,11 +48,15 @@ func ModelFile(modelInfoFile string) string {
 
 // Process is the main API method of the package
 // it takes source file & model-information file paths and generates bindings (as a sibling file to the source file)
-func Process(sourceFile, modelInfoFile string) error {
+func Process(sourceFile string, options Options) error {
 	var err error
 
+	if len(options.ModelInfoFile) == 0 {
+		options.ModelInfoFile = ModelInfoFile(filepath.Dir(sourceFile))
+	}
+
 	var modelInfo *modelinfo.ModelInfo
-	if modelInfo, err = modelinfo.LoadOrCreateModel(modelInfoFile); err != nil {
+	if modelInfo, err = modelinfo.LoadOrCreateModel(options.ModelInfoFile); err != nil {
 		return fmt.Errorf("can't init ModelInfo: %s", err)
 	} else {
 		defer modelInfo.Close()
@@ -66,7 +70,7 @@ func Process(sourceFile, modelInfoFile string) error {
 		return err
 	}
 
-	if err = createModel(modelInfoFile, modelInfo); err != nil {
+	if err = createModel(options.ModelInfoFile, modelInfo); err != nil {
 		return err
 	}
 

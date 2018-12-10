@@ -119,7 +119,7 @@ func generateAllFiles(t *testing.T, overwriteExpected bool, dir string, modelInf
 
 		t.Logf("  %s", filepath.Base(sourceFile))
 
-		err = generator.Process(sourceFile, modelInfoFile)
+		err = generator.Process(sourceFile, generator.Options{ModelInfoFile: modelInfoFile})
 
 		// handle negative test
 		var shouldFail = strings.HasPrefix(filepath.Base(sourceFile), "_")

@@ -380,9 +380,9 @@ var TestStringIdEntityBinding = testStringIdEntity_EntityInfo{
 
 // TestStringIdEntity_ contains type-based Property helpers to facilitate some common operations such as Queries.
 var TestStringIdEntity_ = struct {
-	Id *objectbox.PropertyStringUint64
+	Id *objectbox.PropertyUint64
 }{
-	Id: &objectbox.PropertyStringUint64{
+	Id: &objectbox.PropertyUint64{
 		Property: &objectbox.Property{
 			Id: 1,
 		},
@@ -462,12 +462,8 @@ func BoxForTestStringIdEntity(ob *objectbox.ObjectBox) *TestStringIdEntityBox {
 // Put synchronously inserts/updates a single object.
 // In case the Id is not specified, it would be assigned automatically (auto-increment).
 // When inserting, the TestStringIdEntity.Id property on the passed object will be assigned the new ID as well.
-func (box *TestStringIdEntityBox) Put(object *TestStringIdEntity) (string, error) {
-	if id, err := box.Box.Put(object); err != nil {
-		return "", err
-	} else {
-		return strconv.FormatUint(id, 10), nil
-	}
+func (box *TestStringIdEntityBox) Put(object *TestStringIdEntity) (uint64, error) {
+	return box.Box.Put(object)
 }
 
 // PutAsync asynchronously inserts/updates a single object.
@@ -488,12 +484,8 @@ func (box *TestStringIdEntityBox) Put(object *TestStringIdEntity) (string, error
 //
 // Note that this method does not give you hard durability guarantees like the synchronous Put provides.
 // There is a small time window (typically 3 ms) in which the data may not have been committed durably yet.
-func (box *TestStringIdEntityBox) PutAsync(object *TestStringIdEntity) (string, error) {
-	if id, err := box.Box.PutAsync(object); err != nil {
-		return "", err
-	} else {
-		return strconv.FormatUint(id, 10), nil
-	}
+func (box *TestStringIdEntityBox) PutAsync(object *TestStringIdEntity) (uint64, error) {
+	return box.Box.PutAsync(object)
 }
 
 // PutAll inserts multiple objects in single transaction.
@@ -506,31 +498,15 @@ func (box *TestStringIdEntityBox) PutAsync(object *TestStringIdEntity) (string, 
 // even though the transaction has been rolled back and the objects are not stored under those IDs.
 //
 // Note: The slice may be empty or even nil; in both cases, an empty IDs slice and no error is returned.
-func (box *TestStringIdEntityBox) PutAll(objects []*TestStringIdEntity) ([]string, error) {
-	ids, err := box.Box.PutAll(objects)
-	if err != nil || len(ids) == 0 {
-		return []string{}, err
-	}
-
-	var stringIds = make([]string, len(ids))
-	for i, id := range ids {
-		stringIds[i] = strconv.FormatUint(id, 10)
-	}
-
-	return stringIds, nil
+func (box *TestStringIdEntityBox) PutAll(objects []*TestStringIdEntity) ([]uint64, error) {
+	return box.Box.PutAll(objects)
 }
 
 // Get reads a single object.
 //
 // Returns nil (and no error) in case the object with the given ID doesn't exist.
-func (box *TestStringIdEntityBox) Get(id string) (*TestStringIdEntity, error) {
-	idUint64, parseErr := strconv.ParseUint(id, 10, 64)
-	if parseErr != nil {
-		return nil, parseErr
-	}
-
-	object, err := box.Box.Get(idUint64)
-
+func (box *TestStringIdEntityBox) Get(id uint64) (*TestStringIdEntity, error) {
+	object, err := box.Box.Get(id)
 	if err != nil {
 		return nil, err
 	} else if object == nil {

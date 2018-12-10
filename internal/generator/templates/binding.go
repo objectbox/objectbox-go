@@ -48,14 +48,14 @@ var {{$entity.Name}}Binding = {{$entityNameCamel}}_EntityInfo {
 var {{$entity.Name}}_ = struct {
 	{{range $property := $entity.Properties -}}
     {{$property.Name}} *objectbox.
-		{{- if and (eq $entity.IdProperty.Name $property.Name) (eq $entity.IdProperty.GoType "string")}}PropertyStringUint64
+		{{- if and (eq $entity.IdProperty.Name $property.Name) (eq $entity.IdProperty.GoType "string")}}PropertyUint64
 		{{- else}}Property{{$property.GoType | TypeIdentifier}}
 		{{- end}}
     {{end -}}
 }{
 	{{range $property := $entity.Properties -}}
     {{$property.Name}}: &objectbox.
-			{{- if and (eq $entity.IdProperty.Name $property.Name) (eq $entity.IdProperty.GoType "string")}}PropertyStringUint64
+			{{- if and (eq $entity.IdProperty.Name $property.Name) (eq $entity.IdProperty.GoType "string")}}PropertyUint64
 			{{- else}}Property{{$property.GoType | TypeIdentifier}}
 			{{- end}}{
 		Property: &objectbox.Property{
@@ -186,16 +186,8 @@ func BoxFor{{$entity.Name}}(ob *objectbox.ObjectBox) *{{$entity.Name}}Box {
 // Put synchronously inserts/updates a single object.
 // In case the {{$entity.IdProperty.Name}} is not specified, it would be assigned automatically (auto-increment).
 // When inserting, the {{$entity.Name}}.{{$entity.IdProperty.Name}} property on the passed object will be assigned the new ID as well.
-func (box *{{$entity.Name}}Box) Put(object *{{$entity.Name}}) ({{$entity.IdProperty.GoType}}, error) {
-	{{if eq $entity.IdProperty.GoType "string" -}}
-	if id, err := box.Box.Put(object); err != nil {
-		return "", err
-	} else {
-		return strconv.FormatUint(id, 10), nil
-	}
-	{{- else -}}
+func (box *{{$entity.Name}}Box) Put(object *{{$entity.Name}}) (uint64, error) {
 	return box.Box.Put(object)
-	{{- end}}
 }
 
 // PutAsync asynchronously inserts/updates a single object.
@@ -216,16 +208,8 @@ func (box *{{$entity.Name}}Box) Put(object *{{$entity.Name}}) ({{$entity.IdPrope
 //
 // Note that this method does not give you hard durability guarantees like the synchronous Put provides.
 // There is a small time window (typically 3 ms) in which the data may not have been committed durably yet.
-func (box *{{$entity.Name}}Box) PutAsync(object *{{$entity.Name}}) ({{$entity.IdProperty.GoType}}, error) {
-	{{if eq $entity.IdProperty.GoType "string" -}}
-	if id, err := box.Box.PutAsync(object); err != nil {
-		return "", err
-	} else {
-		return strconv.FormatUint(id, 10), nil
-	}
-	{{- else -}}
+func (box *{{$entity.Name}}Box) PutAsync(object *{{$entity.Name}}) (uint64, error) {
 	return box.Box.PutAsync(object)
-	{{- end}}
 }
 
 // PutAll inserts multiple objects in single transaction.
@@ -238,40 +222,15 @@ func (box *{{$entity.Name}}Box) PutAsync(object *{{$entity.Name}}) ({{$entity.Id
 // even though the transaction has been rolled back and the objects are not stored under those IDs.
 //
 // Note: The slice may be empty or even nil; in both cases, an empty IDs slice and no error is returned.
-func (box *{{$entity.Name}}Box) PutAll(objects []*{{$entity.Name}}) ([]{{$entity.IdProperty.GoType}}, error) {
-	{{if eq $entity.IdProperty.GoType "string" -}}
-	ids, err := box.Box.PutAll(objects)
-	if err != nil || len(ids) == 0 {
-		return []string{}, err
-	}
-
-	var stringIds = make([]string, len(ids))
-	for i, id := range ids {
-		stringIds[i] = strconv.FormatUint(id, 10)
-	}
-
-	return stringIds, nil 
-	{{- else -}}
+func (box *{{$entity.Name}}Box) PutAll(objects []*{{$entity.Name}}) ([]uint64, error) {
 	return box.Box.PutAll(objects)
-	{{- end}}
 }
 
 // Get reads a single object.
 //
 // Returns nil (and no error) in case the object with the given ID doesn't exist.
-func (box *{{$entity.Name}}Box) Get(id {{$entity.IdProperty.GoType}}) (*{{$entity.Name}}, error) {
-	{{if eq $entity.IdProperty.GoType "string" -}}
-	idUint64, parseErr := strconv.ParseUint(id, 10, 64)
-	if parseErr != nil {
-		return nil, parseErr
-	}
-
-	object, err := box.Box.Get(idUint64)
-
-	{{else -}}
+func (box *{{$entity.Name}}Box) Get(id uint64) (*{{$entity.Name}}, error) {
 	object, err := box.Box.Get(id)
-	{{end -}}
-
 	if err != nil {
 		return nil, err
 	} else if object == nil {

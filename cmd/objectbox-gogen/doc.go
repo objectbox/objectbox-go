@@ -12,6 +12,8 @@ Alternatively, you can run the command manually:
 
 The flags are
 
+  -byValue
+        getters should return a struct value (a copy) instead of a struct pointer
   -persist string
         path to the model information persistence file
   -source string

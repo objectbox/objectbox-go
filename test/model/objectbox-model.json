@@ -98,9 +98,20 @@
           "name": "Id"
         }
       ]
+    },
+    {
+      "id": "3:2793387980842421409",
+      "name": "EntityByValue",
+      "lastPropertyId": "1:8853550994304785841",
+      "properties": [
+        {
+          "id": "1:8853550994304785841",
+          "name": "Id"
+        }
+      ]
     }
   ],
-  "lastEntityId": "2:5412225159475839048",
+  "lastEntityId": "3:2793387980842421409",
   "lastIndexId": "",
   "retiredEntityUids": [],
   "retiredIndexUids": [],

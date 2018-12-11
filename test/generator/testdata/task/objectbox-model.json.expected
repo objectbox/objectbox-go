@@ -58,9 +58,31 @@
           "name": "Id"
         }
       ]
+    },
+    {
+      "id": "3:2339563716805116249",
+      "name": "TaskByValue",
+      "lastPropertyId": "1:7144924247938981575",
+      "properties": [
+        {
+          "id": "1:7144924247938981575",
+          "name": "Id"
+        }
+      ]
+    },
+    {
+      "id": "4:161231572858529631",
+      "name": "TaskStringByValue",
+      "lastPropertyId": "1:7259475919510918339",
+      "properties": [
+        {
+          "id": "1:7259475919510918339",
+          "name": "Id"
+        }
+      ]
     }
   ],
-  "lastEntityId": "2:2518412263346885298",
+  "lastEntityId": "4:161231572858529631",
   "lastIndexId": "4:7837839688282259259",
   "retiredEntityUids": [],
   "retiredIndexUids": [],

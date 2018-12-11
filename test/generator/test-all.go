@@ -22,6 +22,7 @@ import (
 	"math/rand"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -119,7 +120,7 @@ func generateAllFiles(t *testing.T, overwriteExpected bool, dir string, modelInf
 
 		t.Logf("  %s", filepath.Base(sourceFile))
 
-		err = generator.Process(sourceFile, modelInfoFile)
+		err = generator.Process(sourceFile, getOptions(t, sourceFile, modelInfoFile))
 
 		// handle negative test
 		var shouldFail = strings.HasPrefix(filepath.Base(sourceFile), "_")
@@ -137,4 +138,56 @@ func generateAllFiles(t *testing.T, overwriteExpected bool, dir string, modelInf
 		var expectedFile = bindingFile + ".expected"
 		assertSameFile(t, bindingFile, expectedFile, overwriteExpected)
 	}
+}
+
+var generatorArgsRegexp = regexp.MustCompile("//go:generate objectbox-gogen (.+)[\n|\r]")
+
+func getOptions(t *testing.T, sourceFile, modelInfoFile string) generator.Options {
+	var options = generator.Options{ModelInfoFile: modelInfoFile}
+
+	source, err := ioutil.ReadFile(sourceFile)
+	assert.NoErr(t, err)
+
+	var match = generatorArgsRegexp.FindSubmatch(source)
+	if len(match) > 1 {
+		var args = argsToMap(string(match[1]))
+
+		setArgs(t, args, &options)
+	}
+
+	return options
+}
+
+func setArgs(t *testing.T, args map[string]string, options *generator.Options) {
+	for name, value := range args {
+		_ = value // get rid of the compiler warning until we start using some options with values
+
+		switch name {
+		case "byValue":
+			options.ByValue = true
+		default:
+			t.Fatalf("unknown option '%s'", name)
+		}
+	}
+}
+
+func argsToMap(args string) map[string]string {
+	var result = map[string]string{}
+
+	for _, arg := range strings.Split(strings.TrimSpace(args), "-") {
+		arg = strings.TrimSpace(arg)
+
+		if len(arg) == 0 {
+			continue
+		}
+
+		var pair = strings.Split(arg, " ")
+		if len(pair) == 1 {
+			result[pair[0]] = ""
+		} else {
+			result[pair[0]] = pair[1]
+		}
+	}
+
+	return result
 }

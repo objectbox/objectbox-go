@@ -21,22 +21,21 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
-	"path/filepath"
 	"time"
 
 	"github.com/objectbox/objectbox-go/internal/generator"
 )
 
 func main() {
-	file, _, modelFile := getArgs()
+	sourceFile, options := getArgs()
 
-	fmt.Printf("Generating ObjectBox bindings for %s", file)
+	fmt.Printf("Generating ObjectBox bindings for %s", sourceFile)
 	fmt.Println()
 
 	// we need to do random seeding here instead of the internal/generator so that it can be easily testable
 	rand.Seed(time.Now().UTC().UnixNano())
 
-	err := generator.Process(file, modelFile)
+	err := generator.Process(sourceFile, options)
 	stopOnError(err)
 }
 
@@ -47,12 +46,15 @@ func stopOnError(err error) {
 	}
 }
 
-func getArgs() (file string, line uint, modelInfoFile string) {
-	var hasAll = true
-	line = 0
+func showUsageAndExit() {
+	flag.Usage()
+	os.Exit(1)
+}
 
+func getArgs() (file string, options generator.Options) {
 	flag.StringVar(&file, "source", "", "path to the source file containing structs to process")
-	flag.StringVar(&modelInfoFile, "persist", "", "path to the model information persistence file")
+	flag.StringVar(&options.ModelInfoFile, "persist", "", "path to the model information persistence file")
+	flag.BoolVar(&options.ByValue, "byValue", false, "getters should return a struct value (a copy) instead of a struct pointer")
 	flag.Parse()
 
 	if len(file) == 0 {
@@ -63,17 +65,9 @@ func getArgs() (file string, line uint, modelInfoFile string) {
 		}
 
 		if len(file) == 0 {
-			hasAll = false
+			showUsageAndExit()
 		}
 	}
 
-	if len(modelInfoFile) == 0 {
-		modelInfoFile = generator.ModelInfoFile(filepath.Dir(file))
-	}
-
-	if !hasAll {
-		flag.Usage()
-		os.Exit(1)
-	}
 	return
 }

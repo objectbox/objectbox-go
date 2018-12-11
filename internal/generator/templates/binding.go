@@ -90,23 +90,59 @@ func ({{$entityNameCamel}}_EntityInfo) AddToModel(model *objectbox.Model) {
 
 // GetId is called by the ObjectBox during Put operations to check for existing ID on an object
 func ({{$entityNameCamel}}_EntityInfo) GetId(object interface{}) (uint64, error) {
-	{{if eq $entity.IdProperty.GoType "string" -}}
-	if len(object.(*{{$entity.Name}}).{{$entity.IdProperty.Name}}) == 0 {
-		return 0, nil
-	} else {
-		return strconv.ParseUint(object.(*{{$entity.Name}}).{{$entity.IdProperty.Name}}, 10, 64)
-	}
+	{{- if eq $entity.IdProperty.GoType "string" -}}
+		{{- if $.Options.ByValue}}
+			var strId string 
+			if obj, ok := object.(*{{$entity.Name}}); ok {
+				strId = obj.{{$entity.IdProperty.Name}}
+			} else {
+				strId = object.({{$entity.Name}}).{{$entity.IdProperty.Name}}
+			}
+		{{- else -}}
+			var strId = object.(*{{$entity.Name}}).{{$entity.IdProperty.Name}}
+		{{- end}}
+		if len(strId) == 0 {
+			return 0, nil
+		} else {
+			return strconv.ParseUint(strId, 10, 64)
+		}
 	{{- else -}}
-	return object.(*{{$entity.Name}}).{{$entity.IdProperty.Name}}, nil
+		{{- if $.Options.ByValue}}
+			if obj, ok := object.(*{{$entity.Name}}); ok {
+				return obj.{{$entity.IdProperty.Name}}, nil
+			} else {
+				return object.({{$entity.Name}}).{{$entity.IdProperty.Name}}, nil
+			}
+		{{- else -}}
+			return object.(*{{$entity.Name}}).{{$entity.IdProperty.Name}}, nil
+		{{- end}}
 	{{- end}}
 }
 
 // SetId is called by the ObjectBox during Put to update an ID on an object that has just been inserted
 func ({{$entityNameCamel}}_EntityInfo) SetId(object interface{}, id uint64) error {
-	{{if eq $entity.IdProperty.GoType "string" -}}
-	object.(*{{$entity.Name}}).{{$entity.IdProperty.Name}} = strconv.FormatUint(id, 10)
+	{{- if eq $entity.IdProperty.GoType "string" -}}
+		{{- if $.Options.ByValue}}
+			if obj, ok := object.(*{{$entity.Name}}); ok {
+				obj.{{$entity.IdProperty.Name}} = strconv.FormatUint(id, 10)
+			} else {
+				// NOTE while this can't update, it will at least behave consistently (panic in case of a wrong type)
+				_ = object.(EntityByValue).{{$entity.IdProperty.Name}}
+			}
+		{{- else -}}
+			object.(*{{$entity.Name}}).{{$entity.IdProperty.Name}} = strconv.FormatUint(id, 10)
+		{{- end}}
 	{{- else -}}
-	object.(*{{$entity.Name}}).{{$entity.IdProperty.Name}} = id
+		{{- if $.Options.ByValue}}
+			if obj, ok := object.(*{{$entity.Name}}); ok {
+				obj.{{$entity.IdProperty.Name}} = id
+			} else {
+				// NOTE while this can't update, it will at least behave consistently (panic in case of a wrong type)
+				_ = object.(EntityByValue).{{$entity.IdProperty.Name}}
+			}
+		{{- else -}}
+			object.(*{{$entity.Name}}).{{$entity.IdProperty.Name}} = id
+		{{- end}}
 	{{- end}}
 	return nil
 }

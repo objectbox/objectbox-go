@@ -69,9 +69,20 @@
           "name": "Id"
         }
       ]
+    },
+    {
+      "id": "4:161231572858529631",
+      "name": "TaskStringByValue",
+      "lastPropertyId": "1:7259475919510918339",
+      "properties": [
+        {
+          "id": "1:7259475919510918339",
+          "name": "Id"
+        }
+      ]
     }
   ],
-  "lastEntityId": "3:2339563716805116249",
+  "lastEntityId": "4:161231572858529631",
   "lastIndexId": "4:7837839688282259259",
   "retiredEntityUids": [],
   "retiredIndexUids": [],

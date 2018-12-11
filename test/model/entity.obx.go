@@ -404,10 +404,11 @@ func (testStringIdEntity_EntityInfo) AddToModel(model *objectbox.Model) {
 
 // GetId is called by the ObjectBox during Put operations to check for existing ID on an object
 func (testStringIdEntity_EntityInfo) GetId(object interface{}) (uint64, error) {
-	if len(object.(*TestStringIdEntity).Id) == 0 {
+	var strId = object.(*TestStringIdEntity).Id
+	if len(strId) == 0 {
 		return 0, nil
 	} else {
-		return strconv.ParseUint(object.(*TestStringIdEntity).Id, 10, 64)
+		return strconv.ParseUint(strId, 10, 64)
 	}
 }
 

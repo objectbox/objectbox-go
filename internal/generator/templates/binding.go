@@ -80,7 +80,6 @@ func ({{$entityNameCamel}}_EntityInfo) AddToModel(model *objectbox.Model) {
         {{- range $key, $flag := $property.ObFlags -}}
             {{if gt $key 0}} | {{end}}objectbox.PropertyFlags_{{$flag}}
         {{- end}})
-        {{- /* TODO model.PropertyIndexId() && model.PropertyRelation() */}}
     {{end -}}
 	{{if $property.Relation}}model.PropertyRelation("{{$property.Relation.Target}}", {{$property.Index.Id}}, {{$property.Index.Uid}})
 	{{else if $property.Index}}model.PropertyIndex({{$property.Index.Id}}, {{$property.Index.Uid}})
@@ -163,12 +162,12 @@ func ({{$entityNameCamel}}_EntityInfo) ToObject(bytes []byte) interface{} {
 
 // MakeSlice is called by the ObjectBox to construct a new slice to hold the read objects  
 func ({{$entityNameCamel}}_EntityInfo) MakeSlice(capacity int) interface{} {
-	return make([]*{{$entity.Name}}, 0, capacity)
+	return make([]{{if not $.Options.ByValue}}*{{end}}{{$entity.Name}}, 0, capacity)
 }
 
 // AppendToSlice is called by the ObjectBox to fill the slice of the read objects
 func ({{$entityNameCamel}}_EntityInfo) AppendToSlice(slice interface{}, object interface{}) interface{} {
-	return append(slice.([]*{{$entity.Name}}), object.(*{{$entity.Name}}))
+	return append(slice.([]{{if not $.Options.ByValue}}*{{end}}{{$entity.Name}}), {{if $.Options.ByValue}}*{{end}}object.(*{{$entity.Name}}))
 }
 
 // Box provides CRUD access to {{$entity.Name}} objects
@@ -222,7 +221,7 @@ func (box *{{$entity.Name}}Box) PutAsync(object *{{$entity.Name}}) (uint64, erro
 // even though the transaction has been rolled back and the objects are not stored under those IDs.
 //
 // Note: The slice may be empty or even nil; in both cases, an empty IDs slice and no error is returned.
-func (box *{{$entity.Name}}Box) PutAll(objects []*{{$entity.Name}}) ([]uint64, error) {
+func (box *{{$entity.Name}}Box) PutAll(objects []{{if not $.Options.ByValue}}*{{end}}{{$entity.Name}}) ([]uint64, error) {
 	return box.Box.PutAll(objects)
 }
 
@@ -240,12 +239,12 @@ func (box *{{$entity.Name}}Box) Get(id uint64) (*{{$entity.Name}}, error) {
 }
 
 // Get reads all stored objects
-func (box *{{$entity.Name}}Box) GetAll() ([]*{{$entity.Name}}, error) {
+func (box *{{$entity.Name}}Box) GetAll() ([]{{if not $.Options.ByValue}}*{{end}}{{$entity.Name}}, error) {
 	objects, err := box.Box.GetAll()
 	if err != nil {
 		return nil, err
 	}
-	return objects.([]*{{$entity.Name}}), nil
+	return objects.([]{{if not $.Options.ByValue}}*{{end}}{{$entity.Name}}), nil
 }
 
 // Remove deletes a single object
@@ -291,12 +290,12 @@ type {{$entity.Name}}Query struct {
 }
 
 // Find returns all objects matching the query
-func (query *{{$entity.Name}}Query) Find() ([]*{{$entity.Name}}, error) {
+func (query *{{$entity.Name}}Query) Find() ([]{{if not $.Options.ByValue}}*{{end}}{{$entity.Name}}, error) {
 	objects, err := query.Query.Find()
 	if err != nil {
 		return nil, err
 	}
-	return objects.([]*{{$entity.Name}}), nil
+	return objects.([]{{if not $.Options.ByValue}}*{{end}}{{$entity.Name}}), nil
 }
 
 {{end -}}`))

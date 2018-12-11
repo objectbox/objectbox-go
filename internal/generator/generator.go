@@ -66,7 +66,7 @@ func Process(sourceFile string, options Options) error {
 		return fmt.Errorf("invalid ModelInfo loaded: %s", err)
 	}
 
-	if err = createBinding(sourceFile, modelInfo); err != nil {
+	if err = createBinding(sourceFile, modelInfo, options); err != nil {
 		return err
 	}
 
@@ -77,7 +77,7 @@ func Process(sourceFile string, options Options) error {
 	return nil
 }
 
-func createBinding(sourceFile string, modelInfo *modelinfo.ModelInfo) error {
+func createBinding(sourceFile string, modelInfo *modelinfo.ModelInfo, options Options) error {
 	var err, err2 error
 	var binding *Binding
 	var f *file
@@ -99,7 +99,7 @@ func createBinding(sourceFile string, modelInfo *modelinfo.ModelInfo) error {
 	}
 
 	var bindingSource []byte
-	if bindingSource, err = generateBindingFile(binding); err != nil {
+	if bindingSource, err = generateBindingFile(binding, options); err != nil {
 		return fmt.Errorf("can't generate binding file %s: %s", sourceFile, err)
 	}
 
@@ -121,14 +121,15 @@ func createBinding(sourceFile string, modelInfo *modelinfo.ModelInfo) error {
 	return nil
 }
 
-func generateBindingFile(binding *Binding) (data []byte, err error) {
+func generateBindingFile(binding *Binding, options Options) (data []byte, err error) {
 	var b bytes.Buffer
 	writer := bufio.NewWriter(&b)
 
 	var tplArguments = struct {
 		Binding          *Binding
 		GeneratorVersion int
-	}{binding, Version}
+		Options          Options
+	}{binding, Version, options}
 
 	if err = templates.BindingTemplate.Execute(writer, tplArguments); err != nil {
 		return nil, fmt.Errorf("template execution failed: %s", err)

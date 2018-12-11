@@ -259,9 +259,10 @@ func (binding *Binding) createEntityFromAst(node ast.Node, name string, comments
 	}
 
 	if entity.IdProperty == nil {
-		// try to find an ID property by name
+		// try to find an ID property automatically based on it's name and type
 		for _, property := range entity.Properties {
-			if strings.ToLower(property.Name) == "id" && strings.ToLower(property.GoType) == "uint64" {
+			if strings.ToLower(property.Name) == "id" &&
+				(strings.ToLower(property.GoType) == "uint64" || strings.ToLower(property.GoType) == "string") {
 				if entity.IdProperty == nil {
 					entity.IdProperty = property
 					property.addObFlag("ID")
@@ -275,8 +276,14 @@ func (binding *Binding) createEntityFromAst(node ast.Node, name string, comments
 
 		if entity.IdProperty == nil {
 			return fmt.Errorf("id field is missing on entity %s - either annotate a field with `id` tag "+
-				"or use a uint64 field named 'Id/id/ID'", entity.Name)
+				"or use an uint64 field named 'Id/id/ID'", entity.Name)
 		}
+	}
+
+	// special handling for string IDs = they are transformed to uint64 in the binding
+	if entity.IdProperty.GoType == "string" {
+		entity.IdProperty.ObType = "Long"
+		entity.IdProperty.FbType = "Uint64"
 	}
 
 	binding.Entities = append(binding.Entities, entity)
@@ -518,6 +525,17 @@ func (property *Property) setObFlags(f ast.Field) error {
 	}
 
 	return nil
+}
+
+// called from the template
+// avoid GO error "imported and not used"
+func (binding *Binding) UsesStrconv() bool {
+	for _, entity := range binding.Entities {
+		if entity.IdProperty.GoType == "string" {
+			return true
+		}
+	}
+	return false
 }
 
 // called from the template

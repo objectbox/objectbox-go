@@ -29,6 +29,7 @@ import (
 	"github.com/google/flatbuffers/go"
 	"github.com/objectbox/objectbox-go/objectbox"
 	"github.com/objectbox/objectbox-go/objectbox/fbutils"
+	{{if .Binding.UsesStrconv}}"strconv"{{end}}
 )
 
 {{range $entity := .Binding.Entities -}}
@@ -46,11 +47,17 @@ var {{$entity.Name}}Binding = {{$entityNameCamel}}_EntityInfo {
 // {{$entity.Name}}_ contains type-based Property helpers to facilitate some common operations such as Queries. 
 var {{$entity.Name}}_ = struct {
 	{{range $property := $entity.Properties -}}
-    {{$property.Name}} *objectbox.Property{{$property.GoType | TypeIdentifier}}
+    {{$property.Name}} *objectbox.
+		{{- if and (eq $entity.IdProperty.Name $property.Name) (eq $entity.IdProperty.GoType "string")}}PropertyUint64
+		{{- else}}Property{{$property.GoType | TypeIdentifier}}
+		{{- end}}
     {{end -}}
 }{
 	{{range $property := $entity.Properties -}}
-    {{$property.Name}}: &objectbox.Property{{$property.GoType | TypeIdentifier}}{
+    {{$property.Name}}: &objectbox.
+			{{- if and (eq $entity.IdProperty.Name $property.Name) (eq $entity.IdProperty.GoType "string")}}PropertyUint64
+			{{- else}}Property{{$property.GoType | TypeIdentifier}}
+			{{- end}}{
 		Property: &objectbox.Property{
 			Id: {{$property.Id}},
 		},
@@ -84,12 +91,24 @@ func ({{$entityNameCamel}}_EntityInfo) AddToModel(model *objectbox.Model) {
 
 // GetId is called by the ObjectBox during Put operations to check for existing ID on an object
 func ({{$entityNameCamel}}_EntityInfo) GetId(object interface{}) (uint64, error) {
+	{{if eq $entity.IdProperty.GoType "string" -}}
+	if len(object.(*{{$entity.Name}}).{{$entity.IdProperty.Name}}) == 0 {
+		return 0, nil
+	} else {
+		return strconv.ParseUint(object.(*{{$entity.Name}}).{{$entity.IdProperty.Name}}, 10, 64)
+	}
+	{{- else -}}
 	return object.(*{{$entity.Name}}).{{$entity.IdProperty.Name}}, nil
+	{{- end}}
 }
 
 // SetId is called by the ObjectBox during Put to update an ID on an object that has just been inserted
 func ({{$entityNameCamel}}_EntityInfo) SetId(object interface{}, id uint64) error {
+	{{if eq $entity.IdProperty.GoType "string" -}}
+	object.(*{{$entity.Name}}).{{$entity.IdProperty.Name}} = strconv.FormatUint(id, 10)
+	{{- else -}}
 	object.(*{{$entity.Name}}).{{$entity.IdProperty.Name}} = id
+	{{- end}}
 	return nil
 }
 
@@ -133,6 +152,7 @@ func ({{$entityNameCamel}}_EntityInfo) ToObject(bytes []byte) interface{} {
         {{- else if eq $property.GoType "int"}} int(table.GetUint64Slot({{$property.FbvTableOffset}}, 0))
         {{- else if eq $property.GoType "uint"}} uint(table.GetUint64Slot({{$property.FbvTableOffset}}, 0))
 		{{- else if eq $property.GoType "rune"}} rune(table.GetInt32Slot({{$property.FbvTableOffset}}, 0))
+		{{- else if and (eq $property.GoType "string") (eq $property.FbType "Uint64")}} strconv.FormatUint(table.GetUint64Slot({{$property.FbvTableOffset}}, 0), 10)
 		{{- else if eq $property.GoType "string"}} fbutils.GetStringSlot(table, {{$property.FbvTableOffset}})
         {{- else if eq $property.GoType "[]byte"}} fbutils.GetByteVectorSlot(table, {{$property.FbvTableOffset}})
 		{{- else}} table.Get{{$property.GoType | StringTitle}}Slot({{$property.FbvTableOffset}}, 0)
@@ -166,7 +186,7 @@ func BoxFor{{$entity.Name}}(ob *objectbox.ObjectBox) *{{$entity.Name}}Box {
 // Put synchronously inserts/updates a single object.
 // In case the {{$entity.IdProperty.Name}} is not specified, it would be assigned automatically (auto-increment).
 // When inserting, the {{$entity.Name}}.{{$entity.IdProperty.Name}} property on the passed object will be assigned the new ID as well.
-func (box *{{$entity.Name}}Box) Put(object *{{$entity.Name}}) ({{$entity.IdProperty.GoType}}, error) {
+func (box *{{$entity.Name}}Box) Put(object *{{$entity.Name}}) (uint64, error) {
 	return box.Box.Put(object)
 }
 
@@ -188,7 +208,7 @@ func (box *{{$entity.Name}}Box) Put(object *{{$entity.Name}}) ({{$entity.IdPrope
 //
 // Note that this method does not give you hard durability guarantees like the synchronous Put provides.
 // There is a small time window (typically 3 ms) in which the data may not have been committed durably yet.
-func (box *{{$entity.Name}}Box) PutAsync(object *{{$entity.Name}}) ({{$entity.IdProperty.GoType}}, error) {
+func (box *{{$entity.Name}}Box) PutAsync(object *{{$entity.Name}}) (uint64, error) {
 	return box.Box.PutAsync(object)
 }
 
@@ -202,14 +222,14 @@ func (box *{{$entity.Name}}Box) PutAsync(object *{{$entity.Name}}) ({{$entity.Id
 // even though the transaction has been rolled back and the objects are not stored under those IDs.
 //
 // Note: The slice may be empty or even nil; in both cases, an empty IDs slice and no error is returned.
-func (box *{{$entity.Name}}Box) PutAll(objects []*{{$entity.Name}}) ([]{{$entity.IdProperty.GoType}}, error) {
+func (box *{{$entity.Name}}Box) PutAll(objects []*{{$entity.Name}}) ([]uint64, error) {
 	return box.Box.PutAll(objects)
 }
 
 // Get reads a single object.
 //
 // Returns nil (and no error) in case the object with the given ID doesn't exist.
-func (box *{{$entity.Name}}Box) Get(id {{$entity.IdProperty.GoType}}) (*{{$entity.Name}}, error) {
+func (box *{{$entity.Name}}Box) Get(id uint64) (*{{$entity.Name}}, error) {
 	object, err := box.Box.Get(id)
 	if err != nil {
 		return nil, err
@@ -230,7 +250,16 @@ func (box *{{$entity.Name}}Box) GetAll() ([]*{{$entity.Name}}, error) {
 
 // Remove deletes a single object
 func (box *{{$entity.Name}}Box) Remove(object *{{$entity.Name}}) (err error) {
+	{{if eq $entity.IdProperty.GoType "string" -}}
+	idUint64, parseErr := strconv.ParseUint(object.{{$entity.IdProperty.Name}}, 10, 64)
+	if parseErr != nil {
+		return parseErr
+	}
+
+	return box.Box.Remove(idUint64)
+	{{- else -}}
 	return box.Box.Remove(object.{{$entity.IdProperty.Name}})
+	{{- end}}
 }
 
 // Creates a query with the given conditions. Use the fields of the {{$entity.Name}}_ struct to create conditions.

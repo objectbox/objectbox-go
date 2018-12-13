@@ -28,21 +28,33 @@ var Task_ = struct {
 	Id: &objectbox.PropertyUint64{
 		Property: &objectbox.Property{
 			Id: 1,
+			Entity: &objectbox.Entity{
+				Id: 1,
+			},
 		},
 	},
 	Text: &objectbox.PropertyString{
 		Property: &objectbox.Property{
 			Id: 2,
+			Entity: &objectbox.Entity{
+				Id: 1,
+			},
 		},
 	},
 	DateCreated: &objectbox.PropertyInt64{
 		Property: &objectbox.Property{
 			Id: 3,
+			Entity: &objectbox.Entity{
+				Id: 1,
+			},
 		},
 	},
 	DateFinished: &objectbox.PropertyInt64{
 		Property: &objectbox.Property{
 			Id: 4,
+			Entity: &objectbox.Entity{
+				Id: 1,
+			},
 		},
 	},
 }

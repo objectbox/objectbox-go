@@ -29,26 +29,41 @@ var Event_ = struct {
 	Id: &objectbox.PropertyUint64{
 		Property: &objectbox.Property{
 			Id: 1,
+			Entity: &objectbox.Entity{
+				Id: 1,
+			},
 		},
 	},
 	Uid: &objectbox.PropertyString{
 		Property: &objectbox.Property{
 			Id: 4,
+			Entity: &objectbox.Entity{
+				Id: 1,
+			},
 		},
 	},
 	Device: &objectbox.PropertyString{
 		Property: &objectbox.Property{
 			Id: 2,
+			Entity: &objectbox.Entity{
+				Id: 1,
+			},
 		},
 	},
 	Date: &objectbox.PropertyInt64{
 		Property: &objectbox.Property{
 			Id: 3,
+			Entity: &objectbox.Entity{
+				Id: 1,
+			},
 		},
 	},
 	Picture: &objectbox.PropertyByteVector{
 		Property: &objectbox.Property{
 			Id: 5,
+			Entity: &objectbox.Entity{
+				Id: 1,
+			},
 		},
 	},
 }
@@ -269,46 +284,73 @@ var Reading_ = struct {
 	Id: &objectbox.PropertyUint64{
 		Property: &objectbox.Property{
 			Id: 1,
+			Entity: &objectbox.Entity{
+				Id: 2,
+			},
 		},
 	},
 	Date: &objectbox.PropertyInt64{
 		Property: &objectbox.Property{
 			Id: 2,
+			Entity: &objectbox.Entity{
+				Id: 2,
+			},
 		},
 	},
 	EventId: &objectbox.PropertyUint64{
 		Property: &objectbox.Property{
 			Id: 3,
+			Entity: &objectbox.Entity{
+				Id: 2,
+			},
 		},
 	},
 	ValueName: &objectbox.PropertyString{
 		Property: &objectbox.Property{
 			Id: 4,
+			Entity: &objectbox.Entity{
+				Id: 2,
+			},
 		},
 	},
 	ValueString: &objectbox.PropertyString{
 		Property: &objectbox.Property{
 			Id: 5,
+			Entity: &objectbox.Entity{
+				Id: 2,
+			},
 		},
 	},
 	ValueInteger: &objectbox.PropertyInt64{
 		Property: &objectbox.Property{
 			Id: 6,
+			Entity: &objectbox.Entity{
+				Id: 2,
+			},
 		},
 	},
 	ValueFloating: &objectbox.PropertyFloat64{
 		Property: &objectbox.Property{
 			Id: 7,
+			Entity: &objectbox.Entity{
+				Id: 2,
+			},
 		},
 	},
 	ValueInt32: &objectbox.PropertyInt32{
 		Property: &objectbox.Property{
 			Id: 8,
+			Entity: &objectbox.Entity{
+				Id: 2,
+			},
 		},
 	},
 	ValueFloating32: &objectbox.PropertyFloat32{
 		Property: &objectbox.Property{
 			Id: 9,
+			Entity: &objectbox.Entity{
+				Id: 2,
+			},
 		},
 	},
 }

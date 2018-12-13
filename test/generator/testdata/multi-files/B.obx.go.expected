@@ -27,16 +27,25 @@ var B_ = struct {
 	Id: &objectbox.PropertyUint64{
 		Property: &objectbox.Property{
 			Id: 1,
+			Entity: &objectbox.Entity{
+				Id: 2,
+			},
 		},
 	},
 	Name: &objectbox.PropertyString{
 		Property: &objectbox.Property{
 			Id: 2,
+			Entity: &objectbox.Entity{
+				Id: 2,
+			},
 		},
 	},
 	Info: &objectbox.PropertyString{
 		Property: &objectbox.Property{
 			Id: 3,
+			Entity: &objectbox.Entity{
+				Id: 2,
+			},
 		},
 	},
 }

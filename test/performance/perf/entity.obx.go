@@ -29,26 +29,41 @@ var Entity_ = struct {
 	Id: &objectbox.PropertyUint64{
 		Property: &objectbox.Property{
 			Id: 1,
+			Entity: &objectbox.Entity{
+				Id: 1,
+			},
 		},
 	},
 	Int32: &objectbox.PropertyInt32{
 		Property: &objectbox.Property{
 			Id: 2,
+			Entity: &objectbox.Entity{
+				Id: 1,
+			},
 		},
 	},
 	Int64: &objectbox.PropertyInt64{
 		Property: &objectbox.Property{
 			Id: 3,
+			Entity: &objectbox.Entity{
+				Id: 1,
+			},
 		},
 	},
 	String: &objectbox.PropertyString{
 		Property: &objectbox.Property{
 			Id: 4,
+			Entity: &objectbox.Entity{
+				Id: 1,
+			},
 		},
 	},
 	Float64: &objectbox.PropertyFloat64{
 		Property: &objectbox.Property{
 			Id: 5,
+			Entity: &objectbox.Entity{
+				Id: 1,
+			},
 		},
 	},
 }

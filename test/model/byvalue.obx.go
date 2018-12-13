@@ -25,6 +25,9 @@ var EntityByValue_ = struct {
 	Id: &objectbox.PropertyUint64{
 		Property: &objectbox.Property{
 			Id: 1,
+			Entity: &objectbox.Entity{
+				Id: 3,
+			},
 		},
 	},
 }

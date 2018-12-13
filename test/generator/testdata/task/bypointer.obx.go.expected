@@ -32,41 +32,65 @@ var Task_ = struct {
 	Id: &objectbox.PropertyUint64{
 		Property: &objectbox.Property{
 			Id: 1,
+			Entity: &objectbox.Entity{
+				Id: 1,
+			},
 		},
 	},
 	Uid: &objectbox.PropertyString{
 		Property: &objectbox.Property{
 			Id: 2,
+			Entity: &objectbox.Entity{
+				Id: 1,
+			},
 		},
 	},
 	Name: &objectbox.PropertyString{
 		Property: &objectbox.Property{
 			Id: 3,
+			Entity: &objectbox.Entity{
+				Id: 1,
+			},
 		},
 	},
 	Place: &objectbox.PropertyString{
 		Property: &objectbox.Property{
 			Id: 4,
+			Entity: &objectbox.Entity{
+				Id: 1,
+			},
 		},
 	},
 	Source: &objectbox.PropertyString{
 		Property: &objectbox.Property{
 			Id: 5,
+			Entity: &objectbox.Entity{
+				Id: 1,
+			},
 		},
 	},
 	Text: &objectbox.PropertyString{
 		Property: &objectbox.Property{
 			Id: 6,
+			Entity: &objectbox.Entity{
+				Id: 1,
+			},
 		},
 	},
 	Date: &objectbox.PropertyUint64{
 		Property: &objectbox.Property{
 			Id: 7,
+			Entity: &objectbox.Entity{
+				Id: 1,
+			},
 		},
 	},
 	GroupId: &objectbox.PropertyUint64{
 		Property: &objectbox.Property{
 			Id: 8,
+			Entity: &objectbox.Entity{
+				Id: 1,
+			},
 		},
 	},
 }
@@ -295,6 +319,9 @@ var Group_ = struct {
 	Id: &objectbox.PropertyUint64{
 		Property: &objectbox.Property{
 			Id: 1,
+			Entity: &objectbox.Entity{
+				Id: 2,
+			},
 		},
 	},
 }

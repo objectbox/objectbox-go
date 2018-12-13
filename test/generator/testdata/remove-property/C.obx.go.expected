@@ -26,11 +26,17 @@ var C_ = struct {
 	Id: &objectbox.PropertyUint64{
 		Property: &objectbox.Property{
 			Id: 1,
+			Entity: &objectbox.Entity{
+				Id: 3,
+			},
 		},
 	},
 	New: &objectbox.PropertyInt{
 		Property: &objectbox.Property{
 			Id: 3,
+			Entity: &objectbox.Entity{
+				Id: 3,
+			},
 		},
 	},
 }

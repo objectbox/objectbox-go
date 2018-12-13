@@ -18,6 +18,7 @@ package objectbox_test
 
 import (
 	"fmt"
+	"regexp"
 	"runtime"
 	"strings"
 	"testing"
@@ -350,4 +351,21 @@ func TestQueryCloseAfterObjectBox(t *testing.T) {
 	queryFinalizer = nil
 	runtime.GC()
 	runtime.GC() // 2nd GC allows to set a break point in the finalizer and actually stop there
+}
+
+func TestQueryWrongEntity(t *testing.T) {
+	env := model.NewTestEnv(t)
+	defer env.Close()
+
+	// try to use condition on a different entity than the one in the box
+	var box = model.BoxForEntity(env.ObjectBox)
+
+	var setWrongCondition = func() {
+		defer assert.MustPanic(t, regexp.MustCompile(fmt.Sprintf(
+			"property from a different entity %d passed, expected %d", model.EntityByValueBinding.Id, model.EntityBinding.Id)))
+
+		box.Query(model.EntityByValue_.Id.Equals(1))
+	}
+
+	setWrongCondition()
 }

@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"reflect"
+	"regexp"
 	"runtime"
 	"testing"
 )
@@ -80,5 +81,31 @@ func Fail(t *testing.T, text string) {
 		t.Fatal(text, "\n", stackString)
 	} else {
 		fmt.Print(text, "\n", stackString)
+	}
+}
+
+// mustPanic ensures that the caller's context will panic and that the panic will match the given regular expression
+//   func() {
+//   	defer mustPanic(t, regexp.MustCompile("+*"))
+//		panic("some text")
+//   }
+func MustPanic(t *testing.T, match *regexp.Regexp) {
+	if r := recover(); r != nil {
+		// convert panic result to string
+		var str string
+		switch x := r.(type) {
+		case string:
+			str = x
+		case error:
+			str = x.Error()
+		default:
+			Failf(t, "unknown panic result '%v' for an expected panic: %s", r, match.String())
+		}
+
+		if !match.MatchString(str) {
+			Failf(t, "expected panic '%s' but got '%s'", match.String(), str)
+		}
+	} else {
+		Failf(t, "expected panic hasn't occurred: %s", match.String())
 	}
 }

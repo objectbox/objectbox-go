@@ -60,6 +60,9 @@ var {{$entity.Name}}_ = struct {
 			{{- end}}{
 		Property: &objectbox.Property{
 			Id: {{$property.Id}},
+			Entity: &objectbox.Entity{
+				Id: {{$entity.Id}},
+			},
 		},
 	},
     {{end -}}

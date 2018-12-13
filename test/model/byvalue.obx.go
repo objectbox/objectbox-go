@@ -53,7 +53,6 @@ func (entityByValue_EntityInfo) GetId(object interface{}) (uint64, error) {
 
 // SetId is called by the ObjectBox during Put to update an ID on an object that has just been inserted
 func (entityByValue_EntityInfo) SetId(object interface{}, id uint64) error {
-
 	if obj, ok := object.(*EntityByValue); ok {
 		obj.Id = id
 	} else {

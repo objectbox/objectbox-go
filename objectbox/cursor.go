@@ -126,6 +126,15 @@ func (cursor *cursor) CountMax(max uint64) (count uint64, err error) {
 	return uint64(cCount), nil
 }
 
+func (cursor *cursor) IsEmpty() (result bool, err error) {
+	var cResult C.bool
+	rc := C.obx_cursor_is_empty(cursor.cursor, &cResult)
+	if rc != 0 {
+		err = createError()
+		return
+	}
+	return bool(cResult), nil
+}
 func (cursor *cursor) Put(object interface{}) (id uint64, err error) {
 	idFromObject, err := cursor.binding.GetId(object)
 	if err != nil {

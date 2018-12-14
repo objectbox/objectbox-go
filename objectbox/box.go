@@ -234,6 +234,16 @@ func (box *Box) CountMax(max uint64) (count uint64, err error) {
 	return
 }
 
+// IsEmpty checks whether the box contains any objects
+func (box *Box) IsEmpty() (result bool, err error) {
+	err = box.objectBox.runWithCursor(box.typeId, true, func(cursor *cursor) error {
+		var errInner error
+		result, errInner = cursor.IsEmpty()
+		return errInner
+	})
+	return
+}
+
 // Get reads a single object.
 //
 // Returns an interface that should be cast to the appropriate type.

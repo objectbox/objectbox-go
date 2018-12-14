@@ -191,3 +191,24 @@ func TestBoxCount(t *testing.T) {
 	assert.NoErr(t, err)
 	assert.Eq(t, c/2, count)
 }
+
+func TestBoxEmpty(t *testing.T) {
+	var env = model.NewTestEnv(t)
+	defer env.Close()
+
+	isEmpty, err := env.Box.IsEmpty()
+	assert.NoErr(t, err)
+	assert.Eq(t, true, isEmpty)
+
+	env.Populate(10)
+
+	isEmpty, err = env.Box.IsEmpty()
+	assert.NoErr(t, err)
+	assert.Eq(t, false, isEmpty)
+
+	env.Box.RemoveAll()
+
+	isEmpty, err = env.Box.IsEmpty()
+	assert.NoErr(t, err)
+	assert.Eq(t, true, isEmpty)
+}

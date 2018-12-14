@@ -224,6 +224,16 @@ func (box *Box) Count() (count uint64, err error) {
 	return
 }
 
+// CountMax returns a number of objects stored (up to a given maximum)
+func (box *Box) CountMax(max uint64) (count uint64, err error) {
+	err = box.objectBox.runWithCursor(box.typeId, true, func(cursor *cursor) error {
+		var errInner error
+		count, errInner = cursor.CountMax(max)
+		return errInner
+	})
+	return
+}
+
 // Get reads a single object.
 //
 // Returns an interface that should be cast to the appropriate type.

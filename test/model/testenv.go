@@ -63,7 +63,7 @@ func (env *TestEnv) Close() {
 	removeDb(env.dbName)
 }
 
-func (env *TestEnv) Populate(count int) {
+func (env *TestEnv) Populate(count uint) {
 	// the first one is always the special Entity47
 	env.PutEntity(Entity47())
 
@@ -78,7 +78,7 @@ func (env *TestEnv) Populate(count int) {
 	var limit = float64(4294967295) // uint max so that when we multiply with 42, we get some large int64 values
 	var step = limit / float64(toInsert) * 2
 	var entities = make([]*Entity, toInsert)
-	var i = 0
+	var i = uint(0)
 	for coef := -limit; i < toInsert; coef += step {
 		entities[i] = entity47(int(coef))
 		i++
@@ -89,7 +89,7 @@ func (env *TestEnv) Populate(count int) {
 
 	c, err := env.Box.Count()
 	assert.NoErr(env.t, err)
-	assert.Eq(env.t, count, int(c))
+	assert.Eq(env.t, uint64(count), c)
 }
 
 func (env *TestEnv) PutEntity(entity *Entity) uint64 {

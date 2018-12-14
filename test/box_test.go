@@ -20,6 +20,7 @@ import (
 	"testing"
 
 	"github.com/objectbox/objectbox-go/test/assert"
+	"github.com/objectbox/objectbox-go/test/model"
 	"github.com/objectbox/objectbox-go/test/model/iot"
 )
 
@@ -173,4 +174,20 @@ func TestPut(t *testing.T) {
 	all, err := box.GetAll()
 	assert.NoErr(t, err)
 	assert.EqInt(t, 2, len(all))
+}
+
+func TestBoxCount(t *testing.T) {
+	var env = model.NewTestEnv(t)
+	defer env.Close()
+
+	var c = uint64(10)
+	env.Populate(uint(c))
+
+	count, err := env.Box.Count()
+	assert.NoErr(t, err)
+	assert.Eq(t, c, count)
+
+	count, err = env.Box.CountMax(c / 2)
+	assert.NoErr(t, err)
+	assert.Eq(t, c/2, count)
 }

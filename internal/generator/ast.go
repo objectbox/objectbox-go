@@ -110,7 +110,11 @@ func (f *file) getUnderlyingType(expr ast.Expr) (string, error) {
 			Uses:  make(map[*ast.Ident]types.Object),
 		}
 
-		var conf = types.Config{Importer: importer.For("source", nil)}
+		var conf = types.Config{
+			IgnoreFuncBodies:         true,
+			DisableUnusedImportCheck: true,
+			Importer:                 importer.For("source", nil),
+		}
 		if _, err := conf.Check(f.dir, f.fileset, f.files, f.info); err != nil {
 			return "", fmt.Errorf("error running type-check: %s", err)
 		}

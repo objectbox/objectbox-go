@@ -134,9 +134,9 @@ func (qb *QueryBuilder) checkEntityId(entityId TypeId) bool {
 }
 
 func (qb *QueryBuilder) getConditionId(cid C.obx_qb_cond) ConditionId {
-	qb.checkForCError() // fill in the error
-	if qb.Err != nil {
-		return 0
+	if cid == 0 {
+		// we only need to check & store the error if cid is 0, otherwise there can't be any error
+		qb.checkForCError()
 	}
 
 	return ConditionId(cid)

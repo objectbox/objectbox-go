@@ -25,6 +25,8 @@ import (
 
 func TestEntityByValue(t *testing.T) {
 	env := model.NewTestEnv(t)
+	defer env.Close()
+
 	box := model.BoxForEntityByValue(env.ObjectBox)
 
 	var object = &model.EntityByValue{}

@@ -27,6 +27,8 @@ import (
 
 func TestStringIdSingleOps(t *testing.T) {
 	env := model.NewTestEnv(t)
+	defer env.Close()
+
 	box := model.BoxForTestStringIdEntity(env.ObjectBox)
 
 	var object = &model.TestStringIdEntity{}
@@ -64,6 +66,8 @@ func TestStringIdSingleOps(t *testing.T) {
 
 func TestStringIdMultiOps(t *testing.T) {
 	env := model.NewTestEnv(t)
+	defer env.Close()
+
 	box := model.BoxForTestStringIdEntity(env.ObjectBox)
 
 	objects := []*model.TestStringIdEntity{{}, {}}

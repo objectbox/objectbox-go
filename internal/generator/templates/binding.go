@@ -337,4 +337,15 @@ func (query *{{$entity.Name}}Query) Find() ([]{{if not $.Options.ByValue}}*{{end
 	return objects.([]{{if not $.Options.ByValue}}*{{end}}{{$entity.Name}}), nil
 }
 
+// Offset defines the index of the first object to process (how many objects to skip)
+func (query *{{$entity.Name}}Query) Offset(offset uint64) *{{$entity.Name}}Query {
+	query.Query.Offset(offset)
+	return query
+}
+
+// Limit sets the number of elements to process by the query
+func (query *{{$entity.Name}}Query) Limit(limit uint64) *{{$entity.Name}}Query {
+	query.Query.Limit(limit)
+	return query
+}
 {{end -}}`))

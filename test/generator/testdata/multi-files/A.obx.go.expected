@@ -218,3 +218,15 @@ func (query *AQuery) Find() ([]*A, error) {
 	}
 	return objects.([]*A), nil
 }
+
+// Offset defines the index of the first object to process (how many objects to skip)
+func (query *AQuery) Offset(offset uint64) *AQuery {
+	query.Query.Offset(offset)
+	return query
+}
+
+// Limit sets the number of elements to process by the query
+func (query *AQuery) Limit(limit uint64) *AQuery {
+	query.Query.Limit(limit)
+	return query
+}

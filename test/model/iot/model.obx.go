@@ -259,6 +259,18 @@ func (query *EventQuery) Find() ([]*Event, error) {
 	return objects.([]*Event), nil
 }
 
+// Offset defines the index of the first object to process (how many objects to skip)
+func (query *EventQuery) Offset(offset uint64) *EventQuery {
+	query.Query.Offset(offset)
+	return query
+}
+
+// Limit sets the number of elements to process by the query
+func (query *EventQuery) Limit(limit uint64) *EventQuery {
+	query.Query.Limit(limit)
+	return query
+}
+
 type reading_EntityInfo struct {
 	Id  objectbox.TypeId
 	Uid uint64
@@ -554,4 +566,16 @@ func (query *ReadingQuery) Find() ([]*Reading, error) {
 		return nil, err
 	}
 	return objects.([]*Reading), nil
+}
+
+// Offset defines the index of the first object to process (how many objects to skip)
+func (query *ReadingQuery) Offset(offset uint64) *ReadingQuery {
+	query.Query.Offset(offset)
+	return query
+}
+
+// Limit sets the number of elements to process by the query
+func (query *ReadingQuery) Limit(limit uint64) *ReadingQuery {
+	query.Query.Limit(limit)
+	return query
 }

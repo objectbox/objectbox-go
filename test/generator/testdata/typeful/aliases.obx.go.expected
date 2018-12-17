@@ -255,3 +255,15 @@ func (query *AliasesQuery) Find() ([]*Aliases, error) {
 	}
 	return objects.([]*Aliases), nil
 }
+
+// Offset defines the index of the first object to process (how many objects to skip)
+func (query *AliasesQuery) Offset(offset uint64) *AliasesQuery {
+	query.Query.Offset(offset)
+	return query
+}
+
+// Limit sets the number of elements to process by the query
+func (query *AliasesQuery) Limit(limit uint64) *AliasesQuery {
+	query.Query.Limit(limit)
+	return query
+}

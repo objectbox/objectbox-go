@@ -254,3 +254,15 @@ func (query *EntityQuery) Find() ([]*Entity, error) {
 	}
 	return objects.([]*Entity), nil
 }
+
+// Offset defines the index of the first object to process (how many objects to skip)
+func (query *EntityQuery) Offset(offset uint64) *EntityQuery {
+	query.Query.Offset(offset)
+	return query
+}
+
+// Limit sets the number of elements to process by the query
+func (query *EntityQuery) Limit(limit uint64) *EntityQuery {
+	query.Query.Limit(limit)
+	return query
+}

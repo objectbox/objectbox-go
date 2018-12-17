@@ -25,6 +25,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/objectbox/objectbox-go/internal/generator/modelinfo"
 	"github.com/objectbox/objectbox-go/internal/generator/templates"
@@ -44,6 +45,11 @@ func ModelInfoFile(dir string) string {
 func ModelFile(modelInfoFile string) string {
 	var extension = filepath.Ext(modelInfoFile)
 	return modelInfoFile[0:len(modelInfoFile)-len(extension)] + ".go"
+}
+
+func isGeneratedFile(file string) bool {
+	var name = filepath.Base(file)
+	return name == "objectbox-model.go" || strings.HasSuffix(name, ".obx.go")
 }
 
 // Process is the main API method of the package

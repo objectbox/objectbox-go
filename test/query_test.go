@@ -325,6 +325,33 @@ func matchAllEntityIds(ids []uint64, items []*model.Entity) error {
 	return nil
 }
 
+func TestQueryOffsetLimit(t *testing.T) {
+	env := model.NewTestEnv(t)
+	defer env.Close()
+
+	env.Populate(10)
+
+	items, err := env.Box.Query().Find()
+	assert.NoErr(t, err)
+	assert.Eq(t, 10, len(items))
+
+	items, err = env.Box.Query().Offset(5).Find()
+	assert.NoErr(t, err)
+	assert.Eq(t, 5, len(items))
+
+	items, err = env.Box.Query().Limit(3).Find()
+	assert.NoErr(t, err)
+	assert.Eq(t, 3, len(items))
+
+	items, err = env.Box.Query().Offset(3).Limit(3).Find()
+	assert.NoErr(t, err)
+	assert.Eq(t, 3, len(items))
+
+	items, err = env.Box.Query().Offset(9).Limit(3).Find()
+	assert.NoErr(t, err)
+	assert.Eq(t, 1, len(items))
+}
+
 func TestQueryClose(t *testing.T) {
 	env := model.NewTestEnv(t)
 	defer env.Close()

@@ -44,7 +44,7 @@ var Typeful_ = struct {
 		Property: &objectbox.Property{
 			Id: 1,
 			Entity: &objectbox.Entity{
-				Id: 1,
+				Id: 2,
 			},
 		},
 	},
@@ -52,7 +52,7 @@ var Typeful_ = struct {
 		Property: &objectbox.Property{
 			Id: 2,
 			Entity: &objectbox.Entity{
-				Id: 1,
+				Id: 2,
 			},
 		},
 	},
@@ -60,7 +60,7 @@ var Typeful_ = struct {
 		Property: &objectbox.Property{
 			Id: 3,
 			Entity: &objectbox.Entity{
-				Id: 1,
+				Id: 2,
 			},
 		},
 	},
@@ -68,7 +68,7 @@ var Typeful_ = struct {
 		Property: &objectbox.Property{
 			Id: 4,
 			Entity: &objectbox.Entity{
-				Id: 1,
+				Id: 2,
 			},
 		},
 	},
@@ -76,7 +76,7 @@ var Typeful_ = struct {
 		Property: &objectbox.Property{
 			Id: 5,
 			Entity: &objectbox.Entity{
-				Id: 1,
+				Id: 2,
 			},
 		},
 	},
@@ -84,7 +84,7 @@ var Typeful_ = struct {
 		Property: &objectbox.Property{
 			Id: 6,
 			Entity: &objectbox.Entity{
-				Id: 1,
+				Id: 2,
 			},
 		},
 	},
@@ -92,7 +92,7 @@ var Typeful_ = struct {
 		Property: &objectbox.Property{
 			Id: 7,
 			Entity: &objectbox.Entity{
-				Id: 1,
+				Id: 2,
 			},
 		},
 	},
@@ -100,7 +100,7 @@ var Typeful_ = struct {
 		Property: &objectbox.Property{
 			Id: 8,
 			Entity: &objectbox.Entity{
-				Id: 1,
+				Id: 2,
 			},
 		},
 	},
@@ -108,7 +108,7 @@ var Typeful_ = struct {
 		Property: &objectbox.Property{
 			Id: 9,
 			Entity: &objectbox.Entity{
-				Id: 1,
+				Id: 2,
 			},
 		},
 	},
@@ -116,7 +116,7 @@ var Typeful_ = struct {
 		Property: &objectbox.Property{
 			Id: 10,
 			Entity: &objectbox.Entity{
-				Id: 1,
+				Id: 2,
 			},
 		},
 	},
@@ -124,7 +124,7 @@ var Typeful_ = struct {
 		Property: &objectbox.Property{
 			Id: 11,
 			Entity: &objectbox.Entity{
-				Id: 1,
+				Id: 2,
 			},
 		},
 	},
@@ -132,7 +132,7 @@ var Typeful_ = struct {
 		Property: &objectbox.Property{
 			Id: 12,
 			Entity: &objectbox.Entity{
-				Id: 1,
+				Id: 2,
 			},
 		},
 	},
@@ -140,7 +140,7 @@ var Typeful_ = struct {
 		Property: &objectbox.Property{
 			Id: 13,
 			Entity: &objectbox.Entity{
-				Id: 1,
+				Id: 2,
 			},
 		},
 	},
@@ -148,7 +148,7 @@ var Typeful_ = struct {
 		Property: &objectbox.Property{
 			Id: 14,
 			Entity: &objectbox.Entity{
-				Id: 1,
+				Id: 2,
 			},
 		},
 	},
@@ -156,7 +156,7 @@ var Typeful_ = struct {
 		Property: &objectbox.Property{
 			Id: 15,
 			Entity: &objectbox.Entity{
-				Id: 1,
+				Id: 2,
 			},
 		},
 	},
@@ -164,7 +164,7 @@ var Typeful_ = struct {
 		Property: &objectbox.Property{
 			Id: 16,
 			Entity: &objectbox.Entity{
-				Id: 1,
+				Id: 2,
 			},
 		},
 	},
@@ -172,7 +172,7 @@ var Typeful_ = struct {
 		Property: &objectbox.Property{
 			Id: 17,
 			Entity: &objectbox.Entity{
-				Id: 1,
+				Id: 2,
 			},
 		},
 	},
@@ -180,7 +180,7 @@ var Typeful_ = struct {
 		Property: &objectbox.Property{
 			Id: 18,
 			Entity: &objectbox.Entity{
-				Id: 1,
+				Id: 2,
 			},
 		},
 	},
@@ -188,7 +188,7 @@ var Typeful_ = struct {
 		Property: &objectbox.Property{
 			Id: 19,
 			Entity: &objectbox.Entity{
-				Id: 1,
+				Id: 2,
 			},
 		},
 	},

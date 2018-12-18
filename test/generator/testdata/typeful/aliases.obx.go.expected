@@ -29,26 +29,41 @@ var Aliases_ = struct {
 	Id: &objectbox.PropertyUint64{
 		Property: &objectbox.Property{
 			Id: 1,
+			Entity: &objectbox.Entity{
+				Id: 1,
+			},
 		},
 	},
 	SameFile: &objectbox.PropertyString{
 		Property: &objectbox.Property{
 			Id: 2,
+			Entity: &objectbox.Entity{
+				Id: 1,
+			},
 		},
 	},
 	SamePackage: &objectbox.PropertyInt{
 		Property: &objectbox.Property{
 			Id: 3,
+			Entity: &objectbox.Entity{
+				Id: 1,
+			},
 		},
 	},
 	SameFile2: &objectbox.PropertyString{
 		Property: &objectbox.Property{
 			Id: 4,
+			Entity: &objectbox.Entity{
+				Id: 1,
+			},
 		},
 	},
 	SamePackage2: &objectbox.PropertyInt{
 		Property: &objectbox.Property{
 			Id: 5,
+			Entity: &objectbox.Entity{
+				Id: 1,
+			},
 		},
 	},
 }

@@ -123,7 +123,7 @@ func (query *Query) Describe() (string, error) {
 		return "", query.errorClosed()
 	}
 	// no need to free, it's handled by the cQuery internally
-	cResult := C.obx_query_describe_parameters(query.cQuery)
+	cResult := C.obx_query_describe_params(query.cQuery)
 
 	return C.GoString(cResult), nil
 }
@@ -171,7 +171,7 @@ func (query *Query) find(cursor *cursor) (slice interface{}, err error) {
 	if query.cQuery == nil {
 		return 0, query.errorClosed()
 	}
-	cBytesArray := C.obx_query_find(query.cQuery, cursor.cursor)
+	cBytesArray := C.obx_query_find(query.cQuery, cursor.cursor, 0, 0)
 	if cBytesArray == nil {
 		return nil, createError()
 	}
@@ -183,7 +183,7 @@ func (query *Query) find(cursor *cursor) (slice interface{}, err error) {
 func (query *Query) InternalSetParamString(propertyId TypeId, value string) (err error) {
 	cvalue := C.CString(value)
 	defer C.free(unsafe.Pointer(cvalue))
-	rc := C.obx_query_string_param(query.cQuery, C.obx_schema_id(propertyId), cvalue)
+	rc := C.obx_query_string_param(query.cQuery, 0, C.obx_schema_id(propertyId), cvalue)
 	if rc != 0 {
 		return createError()
 	}
@@ -192,7 +192,7 @@ func (query *Query) InternalSetParamString(propertyId TypeId, value string) (err
 
 // Internal & temporary API
 func (query *Query) InternalSetParamInt(propertyId TypeId, value int64) (err error) {
-	rc := C.obx_query_int_param(query.cQuery, C.obx_schema_id(propertyId), C.int64_t(value))
+	rc := C.obx_query_int_param(query.cQuery, 0, C.obx_schema_id(propertyId), C.int64_t(value))
 	if rc != 0 {
 		return createError()
 	}

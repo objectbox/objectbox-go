@@ -141,7 +141,7 @@ func (box *Box) finishFbbAndPutAsync(fbb *flatbuffers.Builder, id uint64, checkF
 	bytes := fbb.FinishedBytes()
 
 	rc := C.obx_box_put_async(box.box,
-		C.obx_id(id), unsafe.Pointer(&bytes[0]), C.size_t(len(bytes)), C.bool(checkForPreviousObject))
+		C.obx_id(id), unsafe.Pointer(&bytes[0]), C.size_t(len(bytes)), C.bool(checkForPreviousObject), 1000)
 	if rc != 0 {
 		err = createError()
 	}

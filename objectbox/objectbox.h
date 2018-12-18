@@ -21,7 +21,6 @@
 // * methods: obx_thing_action()
 // * structs: OBX_thing {}
 // * error codes: OBX_ERROR_REASON
-// * enums: TODO
 //
 
 #ifndef OBJECTBOX_H
@@ -42,13 +41,12 @@ extern "C" {
 // Note that you should use methods with prefix obx_version_ to check when linking against the dynamic library
 #define OBX_VERSION_MAJOR 0
 #define OBX_VERSION_MINOR 4
-#define OBX_VERSION_PATCH 0
+#define OBX_VERSION_PATCH 100 // values >= 100 are reserved for dev releases leading to the next minor/major increase
 
 /// Returns the version of the library as ints. Pointers may be null
 void obx_version(int* major, int* minor, int* patch);
 
 /// Checks if the version of the library is equal to or higher than the given version ints.
-/// @returns 1 if the condition is met and 0 otherwise
 bool obx_version_is_at_least(int major, int minor, int patch);
 
 /// Returns the version of the library to be printed.
@@ -353,7 +351,8 @@ obx_err obx_box_close(OBX_box* box);
 
 obx_id obx_box_id_for_put(OBX_box* box, obx_id id_or_zero);
 
-obx_err obx_box_put_async(OBX_box* box, obx_id id, const void* data, size_t size, bool checkForPreviousValueFlag);
+obx_err obx_box_put_async(OBX_box* box, obx_id id, const void* data, size_t size, bool checkForPreviousValueFlag,
+                          uint64_t timeoutMillis);
 
 //----------------------------------------------
 // Query Builder
@@ -423,7 +422,7 @@ obx_qb_cond obx_qb_bytes_less(OBX_query_builder* builder, obx_schema_id property
 obx_qb_cond obx_qb_all(OBX_query_builder* builder, const obx_qb_cond conditions[], int count);
 obx_qb_cond obx_qb_any(OBX_query_builder* builder, const obx_qb_cond conditions[], int count);
 
-obx_err obx_qb_parameter_alias(OBX_query_builder* builder, const char* alias);
+obx_err obx_qb_param_alias(OBX_query_builder* builder, const char* alias);
 
 //----------------------------------------------
 // Query
@@ -434,23 +433,38 @@ typedef struct OBX_query OBX_query;
 OBX_query* obx_query_create(OBX_query_builder* builder);
 obx_err obx_query_close(OBX_query* query);
 
-OBX_bytes_array* obx_query_find(OBX_query* query, OBX_cursor* cursor);
+OBX_bytes_array* obx_query_find(OBX_query* query, OBX_cursor* cursor, uint64_t offset, uint64_t limit);
 OBX_id_array* obx_query_find_ids(OBX_query* query, OBX_cursor* cursor);
 obx_err obx_query_count(OBX_query* query, OBX_cursor* cursor, uint64_t* count);
 
 /// Removes (deletes!) all matching entities.
 obx_err obx_query_remove(OBX_query* query, OBX_cursor* cursor, uint64_t* count);
 
-// TODO either introduce other group of "param" functions with entityId, or require entityId in each call
-obx_err obx_query_string_param(OBX_query* query, obx_schema_id property_id, const char* value);
-obx_err obx_query_string_params_in(OBX_query* query, obx_schema_id property_id, const char* values[], int count);
-obx_err obx_query_int_param(OBX_query* query, obx_schema_id property_id, int64_t value);
-obx_err obx_query_int_params(OBX_query* query, obx_schema_id property_id, int64_t value_a, int64_t value_b);
-obx_err obx_query_int64_params_in(OBX_query* query, obx_schema_id property_id, const int64_t values[], int count);
-obx_err obx_query_int32_params_in(OBX_query* query, obx_schema_id property_id, const int32_t values[], int count);
-obx_err obx_query_double_param(OBX_query* query, obx_schema_id property_id, double value);
-obx_err obx_query_double_params(OBX_query* query, obx_schema_id property_id, double value_a, double value_b);
-obx_err obx_query_bytes_param(OBX_query* query, obx_schema_id property_id, const void* value, size_t size);
+/// the resulting char* is valid until another call on to_string is made on the same query or until the query is freed
+const char* obx_query_describe(OBX_query* query);
+
+/// the resulting char* is valid until another call on describe_parameters is made on the same query or until the query
+/// is freed
+const char* obx_query_describe_params(OBX_query* query);
+
+//----------------------------------------------
+// Query parameters (obx_query_{type}_param(s))
+//----------------------------------------------
+obx_err obx_query_string_param(OBX_query* query, obx_schema_id entity_id, obx_schema_id property_id, const char* value);
+obx_err obx_query_string_params_in(OBX_query* query, obx_schema_id entity_id, obx_schema_id property_id,
+                                   const char* values[], int count);
+obx_err obx_query_int_param(OBX_query* query, obx_schema_id entity_id, obx_schema_id property_id, int64_t value);
+obx_err obx_query_int_params(OBX_query* query, obx_schema_id entity_id, obx_schema_id property_id, int64_t value_a,
+                             int64_t value_b);
+obx_err obx_query_int64_params_in(OBX_query* query, obx_schema_id entity_id, obx_schema_id property_id,
+                                  const int64_t values[], int count);
+obx_err obx_query_int32_params_in(OBX_query* query, obx_schema_id entity_id, obx_schema_id property_id,
+                                  const int32_t values[], int count);
+obx_err obx_query_double_param(OBX_query* query, obx_schema_id entity_id, obx_schema_id property_id, double value);
+obx_err obx_query_double_params(OBX_query* query, obx_schema_id entity_id, obx_schema_id property_id, double value_a,
+                                double value_b);
+obx_err obx_query_bytes_param(OBX_query* query, obx_schema_id entity_id, obx_schema_id property_id, const void* value,
+                              size_t size);
 
 obx_err obx_query_string_param_alias(OBX_query* query, const char* alias, const char* value);
 obx_err obx_query_string_params_in_alias(OBX_query* query, const char* alias, const char* values[], int count);
@@ -462,13 +476,9 @@ obx_err obx_query_double_param_alias(OBX_query* query, const char* alias, double
 obx_err obx_query_double_params_alias(OBX_query* query, const char* alias, double value_a, double value_b);
 obx_err obx_query_bytes_param_alias(OBX_query* query, const char* alias, const void* value, size_t size);
 
-/// the resulting char* is valid until another call on describe_parameters is made on the same query or until the query
-/// is freed
-const char* obx_query_describe_parameters(OBX_query* query);
-
-/// the resulting char* is valid until another call on to_string is made on the same query or until the query is freed
-const char* obx_query_to_string(OBX_query* query);
-
+//----------------------------------------------
+// Freeing bytes/ids/arrays
+//----------------------------------------------
 void obx_bytes_free(OBX_bytes* bytes);
 void obx_bytes_array_free(OBX_bytes_array* bytes_array);
 void obx_id_array_free(OBX_id_array* id_array);

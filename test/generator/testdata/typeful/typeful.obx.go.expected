@@ -423,3 +423,15 @@ func (query *TypefulQuery) Find() ([]*Typeful, error) {
 	}
 	return objects.([]*Typeful), nil
 }
+
+// Offset defines the index of the first object to process (how many objects to skip)
+func (query *TypefulQuery) Offset(offset uint64) *TypefulQuery {
+	query.Query.Offset(offset)
+	return query
+}
+
+// Limit sets the number of elements to process by the query
+func (query *TypefulQuery) Limit(limit uint64) *TypefulQuery {
+	query.Query.Limit(limit)
+	return query
+}

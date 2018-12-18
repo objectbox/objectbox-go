@@ -32,17 +32,6 @@ func TestQueries(t *testing.T) {
 	env := model.NewTestEnv(t)
 	defer env.Close()
 
-	// the number of entities in the database when the queries are executed
-	// if you want to change this, you need to update all the expected numbers in the test cases below
-	const baseCount = 1000
-
-	var resetDb = func() {
-		assert.NoErr(t, env.Box.RemoveAll())
-
-		// insert new entries
-		env.Populate(baseCount)
-	}
-
 	var box = env.Box
 
 	// let's alias the entity to make the test cases easier to read
@@ -51,15 +40,7 @@ func TestQueries(t *testing.T) {
 	// Use this special entity for testing descriptions
 	var e = model.Entity47()
 
-	// to keep the test-case definitions short &readable
-	type s = []string
-
-	testCases := []struct {
-		// using short variable names because the IDE auto-fills (displays) them in the value initialization
-		c int      // expected Query.Count()
-		d []string // expected Query.Describe()
-		q *model.EntityQuery
-	}{
+	testQueries(t, env, queryTestOptions{baseCount: 1000}, []queryTestCase{
 		{1, s{`String == "Val-1"`}, box.Query(E.String.Equals(e.String, true))},
 		{2, s{`String ==(i) "Val-1"`}, box.Query(E.String.Equals(e.String, false))},
 		{999, s{`String != "Val-1"`}, box.Query(E.String.NotEquals(e.String, true))},
@@ -224,105 +205,21 @@ func TestQueries(t *testing.T) {
 		{744, s{`Bool == 0`}, box.Query(E.Bool.Equals(false))},
 
 		{3, s{`(Bool == 1 AND Byte == 1)`}, box.Query(E.Bool.Equals(true), E.Byte.Equals(1))},
-	}
+	})
 
-	t.Logf("Executing %d test cases", len(testCases))
-
-	for i, tc := range testCases {
-		// reset Db before each query, necessary due to query.Remove()
-		// TODO we can replace this to make the test run faster by a managed transaction with rollback
-		resetDb()
-
-		// assign some readable variable names
-		var count = tc.c
-		var desc = tc.d
-		var query = tc.q
-
-		var isExpected = func(actualDesc string) bool {
-			for _, expectedDescription := range desc {
-				if expectedDescription == actualDesc {
-					return true
-				}
-			}
-			return false
-		}
-
-		// Describe
-		if actualDesc, err := query.Describe(); err != nil {
-			assert.Failf(t, "case #%d {%s} - %s", i, desc, err)
-		} else if actualDesc = strings.Replace(actualDesc, "\n", "", -1); !isExpected(actualDesc) {
-			assert.Failf(t, "case #%d expected one of %v, but got {%s}", i, desc, actualDesc)
-		}
-
-		// Find
-		var actualData []*model.Entity
-		if data, err := query.Find(); err != nil {
-			assert.Failf(t, "case #%d {%s} %s", i, desc, err)
-		} else if data == nil {
-			assert.Failf(t, "case #%d {%s} data is nil", i, desc)
-		} else if len(data) != count {
-			assert.Failf(t, "case #%d {%s} expected %d, but got %d len(Find())", i, desc, count, len(data))
-		} else {
-			actualData = data
-		}
-
-		// Count
-		if actualCount, err := query.Count(); err != nil {
-			assert.Failf(t, "case #%d {%s} %s", i, desc, err)
-		} else if uint64(count) != actualCount {
-			assert.Failf(t, "case #%d {%s} expected %d, but got %d Count()", i, desc, count, actualCount)
-		}
-
-		// FindIds
-		if ids, err := query.FindIds(); err != nil {
-			assert.Failf(t, "case #%d {%s} %s", i, desc, err)
-		} else if err := matchAllEntityIds(ids, actualData); err != nil {
-			assert.Failf(t, "case #%d {%s} %s", i, desc, err)
-		}
-
-		// Remove
-		if removedCount, err := query.Remove(); err != nil {
-			assert.Failf(t, "case #%d {%s} %s", i, desc, err)
-		} else if uint64(count) != removedCount {
-			assert.Failf(t, "case #%d {%s} expected %d, but got %d Remove()", i, desc, count, removedCount)
-		} else if actualCount, err := env.Box.Count(); err != nil {
-			assert.Failf(t, "case #%d {%s} %s", i, desc, err)
-		} else if actualCount+removedCount != baseCount {
-			assert.Failf(t, "case #%d {%s} expected %d, but got %d Box.Count() after remove",
-				i, desc, baseCount-removedCount, actualCount)
-		}
-
-		if err := query.Close(); err != nil {
-			assert.Failf(t, "case #%d {%s} %s", i, desc, err)
-		}
-	}
 }
 
-func matchAllEntityIds(ids []uint64, items []*model.Entity) error {
-	if len(ids) != len(items) {
-		return fmt.Errorf("count mismatch = ids=%d, items=%d", len(ids), len(items))
-	}
+func TestQueryOffsetLimit(t *testing.T) {
+	env := model.NewTestEnv(t)
+	defer env.Close()
 
-	var merged = map[uint64]int{}
-
-	for _, id := range ids {
-		merged[id] = 1
-	}
-
-	for _, item := range items {
-		if merged[item.Id] == 0 {
-			return fmt.Errorf("item %d is missing in the IDs list %v", item.Id, ids)
-		}
-		merged[item.Id] = merged[item.Id] + 1
-	}
-
-	for id, count := range merged {
-		if count != 2 {
-			return fmt.Errorf("ID %d is missing in the items list", id)
-		}
-	}
-
-	return nil
+	testQueries(t, env, queryTestOptions{baseCount: 10, skipCount: true, skipRemove: true}, []queryTestCase{
+		{10, s{`TRUE`}, env.Box.Query()},
+		{5, s{`TRUE`}, env.Box.Query().Offset(5)},
+		{3, s{`TRUE`}, env.Box.Query().Limit(3)},
+		{3, s{`TRUE`}, env.Box.Query().Offset(3).Limit(3)},
+		{1, s{`TRUE`}, env.Box.Query().Offset(9).Limit(3)},
+	})
 }
 
 func TestQueryClose(t *testing.T) {
@@ -380,4 +277,132 @@ func TestQueryWrongEntity(t *testing.T) {
 	}
 
 	setWrongCondition()
+}
+
+type queryTestCase struct {
+	// using short variable names because the IDE auto-fills (displays) them in the value initialization
+	c int      // expected Query.Count()
+	d []string // expected Query.Describe()
+	q *model.EntityQuery
+}
+
+type queryTestOptions struct {
+	baseCount  uint
+	skipCount  bool
+	skipRemove bool
+}
+
+// to keep the test-case definitions short &readable
+type s = []string
+
+// this function executes tests for all query methods on the given test-cases
+func testQueries(t *testing.T, env *model.TestEnv, options queryTestOptions, testCases []queryTestCase) {
+	t.Logf("Executing %d test cases", len(testCases))
+
+	var resetDb = func() {
+		assert.NoErr(t, env.Box.RemoveAll())
+
+		// insert new entries
+		env.Populate(options.baseCount)
+	}
+
+	for i, tc := range testCases {
+		// reset Db before each query, necessary due to query.Remove()
+		// TODO we can replace this to make the test run faster by a managed transaction with rollback
+		resetDb()
+
+		// assign some readable variable names
+		var count = tc.c
+		var desc = tc.d
+		var query = tc.q
+
+		var isExpected = func(actualDesc string) bool {
+			for _, expectedDescription := range desc {
+				if expectedDescription == actualDesc {
+					return true
+				}
+			}
+			return false
+		}
+
+		// Describe
+		if actualDesc, err := query.Describe(); err != nil {
+			assert.Failf(t, "case #%d {%s} - %s", i, desc, err)
+		} else if actualDesc = strings.Replace(actualDesc, "\n", "", -1); !isExpected(actualDesc) {
+			assert.Failf(t, "case #%d expected one of %v, but got {%s}", i, desc, actualDesc)
+		}
+
+		// Find
+		var actualData []*model.Entity
+		if data, err := query.Find(); err != nil {
+			assert.Failf(t, "case #%d {%s} %s", i, desc, err)
+		} else if data == nil {
+			assert.Failf(t, "case #%d {%s} data is nil", i, desc)
+		} else if len(data) != count {
+			assert.Failf(t, "case #%d {%s} expected %d, but got %d len(Find())", i, desc, count, len(data))
+		} else {
+			actualData = data
+		}
+
+		// Count
+		if !options.skipCount {
+			if actualCount, err := query.Count(); err != nil {
+				assert.Failf(t, "case #%d {%s} %s", i, desc, err)
+			} else if uint64(count) != actualCount {
+				assert.Failf(t, "case #%d {%s} expected %d, but got %d Count()", i, desc, count, actualCount)
+			}
+		}
+
+		// FindIds
+		if ids, err := query.FindIds(); err != nil {
+			assert.Failf(t, "case #%d {%s} %s", i, desc, err)
+		} else if err := matchAllEntityIds(ids, actualData); err != nil {
+			assert.Failf(t, "case #%d {%s} %s", i, desc, err)
+		}
+
+		// Remove
+		if !options.skipRemove {
+			if removedCount, err := query.Remove(); err != nil {
+				assert.Failf(t, "case #%d {%s} %s", i, desc, err)
+			} else if uint64(count) != removedCount {
+				assert.Failf(t, "case #%d {%s} expected %d, but got %d Remove()", i, desc, count, removedCount)
+			} else if actualCount, err := env.Box.Count(); err != nil {
+				assert.Failf(t, "case #%d {%s} %s", i, desc, err)
+			} else if actualCount+removedCount != uint64(options.baseCount) {
+				assert.Failf(t, "case #%d {%s} expected %d, but got %d Box.Count() after remove",
+					i, desc, uint64(options.baseCount)-removedCount, actualCount)
+			}
+		}
+
+		if err := query.Close(); err != nil {
+			assert.Failf(t, "case #%d {%s} %s", i, desc, err)
+		}
+	}
+}
+
+func matchAllEntityIds(ids []uint64, items []*model.Entity) error {
+	if len(ids) != len(items) {
+		return fmt.Errorf("count mismatch = ids=%d, items=%d", len(ids), len(items))
+	}
+
+	var merged = map[uint64]int{}
+
+	for _, id := range ids {
+		merged[id] = 1
+	}
+
+	for _, item := range items {
+		if merged[item.Id] == 0 {
+			return fmt.Errorf("item %d is missing in the IDs list %v", item.Id, ids)
+		}
+		merged[item.Id] = merged[item.Id] + 1
+	}
+
+	for id, count := range merged {
+		if count != 2 {
+			return fmt.Errorf("ID %d is missing in the items list", id)
+		}
+	}
+
+	return nil
 }

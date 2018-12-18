@@ -215,6 +215,18 @@ func (query *TaskByValueQuery) Find() ([]TaskByValue, error) {
 	return objects.([]TaskByValue), nil
 }
 
+// Offset defines the index of the first object to process (how many objects to skip)
+func (query *TaskByValueQuery) Offset(offset uint64) *TaskByValueQuery {
+	query.Query.Offset(offset)
+	return query
+}
+
+// Limit sets the number of elements to process by the query
+func (query *TaskByValueQuery) Limit(limit uint64) *TaskByValueQuery {
+	query.Query.Limit(limit)
+	return query
+}
+
 type taskStringByValue_EntityInfo struct {
 	Id  objectbox.TypeId
 	Uid uint64
@@ -430,4 +442,16 @@ func (query *TaskStringByValueQuery) Find() ([]TaskStringByValue, error) {
 		return nil, err
 	}
 	return objects.([]TaskStringByValue), nil
+}
+
+// Offset defines the index of the first object to process (how many objects to skip)
+func (query *TaskStringByValueQuery) Offset(offset uint64) *TaskStringByValueQuery {
+	query.Query.Offset(offset)
+	return query
+}
+
+// Limit sets the number of elements to process by the query
+func (query *TaskStringByValueQuery) Limit(limit uint64) *TaskStringByValueQuery {
+	query.Query.Limit(limit)
+	return query
 }

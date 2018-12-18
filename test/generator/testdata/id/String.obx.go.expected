@@ -215,3 +215,15 @@ func (query *StringIdEntityQuery) Find() ([]*StringIdEntity, error) {
 	}
 	return objects.([]*StringIdEntity), nil
 }
+
+// Offset defines the index of the first object to process (how many objects to skip)
+func (query *StringIdEntityQuery) Offset(offset uint64) *StringIdEntityQuery {
+	query.Query.Offset(offset)
+	return query
+}
+
+// Limit sets the number of elements to process by the query
+func (query *StringIdEntityQuery) Limit(limit uint64) *StringIdEntityQuery {
+	query.Query.Limit(limit)
+	return query
+}

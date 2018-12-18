@@ -40,6 +40,8 @@ type Query struct {
 	objectBox  *ObjectBox
 	cQuery     *C.OBX_query
 	closeMutex sync.Mutex
+	offset     uint64
+	limit      uint64
 }
 
 // Frees (native) resources held by this Query.
@@ -84,6 +86,18 @@ func (query *Query) Find() (objects interface{}, err error) {
 	return
 }
 
+// Offset defines the index of the first object to process (how many objects to skip)
+func (query *Query) Offset(offset uint64) *Query {
+	query.offset = offset
+	return query
+}
+
+// Limit sets the number of elements to process by the query
+func (query *Query) Limit(limit uint64) *Query {
+	query.limit = limit
+	return query
+}
+
 // FindIds returns IDs of all objects matching the query
 func (query *Query) FindIds() (ids []uint64, err error) {
 	err = query.objectBox.runWithCursor(query.typeId, true, func(cursor *cursor) error {
@@ -92,11 +106,25 @@ func (query *Query) FindIds() (ids []uint64, err error) {
 		return errInner
 	})
 
+	// TODO pass offset & limit to the underlying C call for more efficiency (not supported yet by the C-API)
+	if query.offset != 0 || query.limit != 0 && err == nil && ids != nil {
+		var endOffset = uint64(len(ids))
+		if query.limit != 0 && query.offset+query.limit < endOffset {
+			endOffset = query.offset + query.limit
+		}
+		return ids[query.offset:endOffset], nil
+	}
+
 	return
 }
 
 // Count returns the number of objects matching the query
 func (query *Query) Count() (count uint64, err error) {
+	// doesn't support offset/limit at this point
+	if query.offset != 0 || query.limit != 0 {
+		return 0, fmt.Errorf("limit/offset are not supported by Count at this moment")
+	}
+
 	err = query.objectBox.runWithCursor(query.typeId, true, func(cursor *cursor) error {
 		var errInner error
 		count, errInner = query.count(cursor)
@@ -108,6 +136,11 @@ func (query *Query) Count() (count uint64, err error) {
 
 // Remove permanently deletes all objects matching the query from the database
 func (query *Query) Remove() (count uint64, err error) {
+	// doesn't support offset/limit at this point
+	if query.offset != 0 || query.limit != 0 {
+		return 0, fmt.Errorf("limit/offset are not supported by Remove at this moment")
+	}
+
 	err = query.objectBox.runWithCursor(query.typeId, false, func(cursor *cursor) error {
 		var errInner error
 		count, errInner = query.remove(cursor)
@@ -171,7 +204,7 @@ func (query *Query) find(cursor *cursor) (slice interface{}, err error) {
 	if query.cQuery == nil {
 		return 0, query.errorClosed()
 	}
-	cBytesArray := C.obx_query_find(query.cQuery, cursor.cursor, 0, 0)
+	cBytesArray := C.obx_query_find(query.cQuery, cursor.cursor, C.uint64_t(query.offset), C.uint64_t(query.limit))
 	if cBytesArray == nil {
 		return nil, createError()
 	}

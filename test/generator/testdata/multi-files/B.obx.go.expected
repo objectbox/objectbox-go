@@ -231,3 +231,15 @@ func (query *BQuery) Find() ([]*B, error) {
 	}
 	return objects.([]*B), nil
 }
+
+// Offset defines the index of the first object to process (how many objects to skip)
+func (query *BQuery) Offset(offset uint64) *BQuery {
+	query.Query.Offset(offset)
+	return query
+}
+
+// Limit sets the number of elements to process by the query
+func (query *BQuery) Limit(limit uint64) *BQuery {
+	query.Query.Limit(limit)
+	return query
+}

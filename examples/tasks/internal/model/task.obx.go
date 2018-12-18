@@ -242,3 +242,15 @@ func (query *TaskQuery) Find() ([]*Task, error) {
 	}
 	return objects.([]*Task), nil
 }
+
+// Offset defines the index of the first object to process (how many objects to skip)
+func (query *TaskQuery) Offset(offset uint64) *TaskQuery {
+	query.Query.Offset(offset)
+	return query
+}
+
+// Limit sets the number of elements to process by the query
+func (query *TaskQuery) Limit(limit uint64) *TaskQuery {
+	query.Query.Limit(limit)
+	return query
+}

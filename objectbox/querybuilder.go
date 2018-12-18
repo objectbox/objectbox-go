@@ -20,21 +20,6 @@ package objectbox
 #cgo LDFLAGS: -lobjectbox
 #include <stdlib.h>
 #include "objectbox.h"
-
-
-static char**newCharArray(int size) {
-        return calloc(sizeof(char*), size);
-}
-
-static void setArrayString(const char **array, size_t index, const char *value) {
-        array[index] = value;
-}
-
-static void freeCharArray(char **a, int size) {
-        for (size_t i = 0; i < size; i++)
-                free(a[i]);
-        free(a);
-}
 */
 import "C"
 import (
@@ -178,13 +163,9 @@ func (qb *QueryBuilder) StringIn(property *Property, values []string, caseSensit
 	var cid ConditionId
 
 	if qb.Err == nil && qb.checkEntityId(property.Entity.Id) {
-		cStringArray := C.newCharArray(C.int(len(values)))
-		defer C.freeCharArray(cStringArray, C.int(len(values)))
-		for i, s := range values {
-			C.setArrayString(cStringArray, C.size_t(i), C.CString(s))
-		}
-
-		cid = qb.getConditionId(C.obx_qb_string_in(qb.cqb, C.obx_schema_id(property.Id), cStringArray, C.int(len(values)), C.bool(caseSensitive)))
+		cStringArray := goStringArrayToC(values)
+		defer cStringArray.free()
+		cid = qb.getConditionId(C.obx_qb_string_in(qb.cqb, C.obx_schema_id(property.Id), cStringArray.cArray, C.int(cStringArray.size), C.bool(caseSensitive)))
 	}
 
 	return cid, qb.Err

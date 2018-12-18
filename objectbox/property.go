@@ -21,6 +21,14 @@ type Property struct {
 	Entity *Entity
 }
 
+func (property Property) propertyId() TypeId {
+	return property.Id
+}
+
+func (property Property) entityId() TypeId {
+	return property.Entity.Id
+}
+
 // TODO consider not using closures but defining conditions for each operation
 // test performance to make an informed decision as that approach requires much more code and is not so clean
 

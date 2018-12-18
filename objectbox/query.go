@@ -212,15 +212,31 @@ func (query *Query) find(cursor *cursor) (slice interface{}, err error) {
 	return cursor.cBytesArrayToObjects(cBytesArray), nil
 }
 
-// Internal & temporary API
-func (query *Query) InternalSetParamString(propertyId TypeId, value string) (err error) {
-	cvalue := C.CString(value)
-	defer C.free(unsafe.Pointer(cvalue))
-	rc := C.obx_query_string_param(query.cQuery, 0, C.obx_schema_id(propertyId), cvalue)
+type anyProperty interface {
+	propertyId() TypeId
+	entityId() TypeId
+}
+
+func (query *Query) SetStringParams(property anyProperty, values ...string) error {
+	var rc = 0
+	if len(values) == 0 {
+		return fmt.Errorf("no values given")
+
+	} else if len(values) == 1 {
+		cString := C.CString(values[0])
+		defer C.free(unsafe.Pointer(cString))
+		rc = int(C.obx_query_string_param(query.cQuery, C.obx_schema_id(property.entityId()), C.obx_schema_id(property.propertyId()), cString))
+
+	} else {
+		cStringArray := goStringArrayToC(values)
+		defer cStringArray.free()
+		rc = int(C.obx_query_string_params_in(query.cQuery, C.obx_schema_id(property.entityId()), C.obx_schema_id(property.propertyId()), cStringArray.cArray, C.int(cStringArray.size)))
+	}
+
 	if rc != 0 {
 		return createError()
 	}
-	return
+	return nil
 }
 
 // Internal & temporary API

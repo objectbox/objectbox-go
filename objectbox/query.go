@@ -100,16 +100,20 @@ func (query *Query) Limit(limit uint64) *Query {
 
 // FindIds returns IDs of all objects matching the query
 func (query *Query) FindIds() (ids []uint64, err error) {
-	// doesn't support offset/limit at this point
-	if query.offset != 0 || query.limit != 0 {
-		return nil, fmt.Errorf("limit/offset are not supported by FindIds at this moment")
-	}
-
 	err = query.objectBox.runWithCursor(query.typeId, true, func(cursor *cursor) error {
 		var errInner error
 		ids, errInner = query.findIds(cursor)
 		return errInner
 	})
+
+	// TODO pass offset & limit to the underlying C call for more efficiency (not supported yet by the C-API)
+	if query.offset != 0 || query.limit != 0 && err == nil && ids != nil {
+		var endOffset = uint64(len(ids))
+		if query.limit != 0 && query.offset+query.limit < endOffset {
+			endOffset = query.offset + query.limit
+		}
+		return ids[query.offset:endOffset], nil
+	}
 
 	return
 }

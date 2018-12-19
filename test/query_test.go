@@ -315,6 +315,18 @@ func TestQueryParams(t *testing.T) {
 			func(q *eq) error { return q.SetInt64Params(E.Byte, int64(e.Byte)) }},
 		{8, s{`Byte between 0 and 1`}, box.Query(E.Byte.Between(0, 0)),
 			func(q *eq) error { return q.SetInt64Params(E.Byte, 0, 1) }},
+
+		{2, s{`Float64 between 47.739999 and 47.740001`}, box.Query(E.Float64.Between(0, 0)),
+			func(q *eq) error { return q.SetFloat64Params(E.Float64, e.Float64-0.000001, e.Float64+0.000001) }},
+		{498, s{`Float64 > 47.740000`}, box.Query(E.Float64.GreaterThan(0)),
+			func(q *eq) error { return q.SetFloat64Params(E.Float64, e.Float64) }},
+
+		{2, s{`Float32 between 47.739990 and 47.740013`}, box.Query(E.Float32.Between(0, 0)),
+			func(q *eq) error {
+				return q.SetFloat64Params(E.Float32, float64(e.Float32-0.00001), float64(e.Float32+0.00001))
+			}},
+		{498, s{`Float32 > 47.740002`}, box.Query(E.Float32.GreaterThan(e.Float32)),
+			func(q *eq) error { return q.SetFloat64Params(E.Float32, float64(e.Float32)) }},
 	})
 }
 

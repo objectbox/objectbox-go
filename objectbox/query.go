@@ -305,6 +305,27 @@ func (query *Query) SetInt32ParamsIn(property anyProperty, values ...int32) erro
 	return nil
 }
 
+func (query *Query) SetFloat64Params(property anyProperty, values ...float64) error {
+	var rc = 0
+	if len(values) == 0 {
+		return fmt.Errorf("no values given")
+
+	} else if len(values) == 1 {
+		rc = int(C.obx_query_double_param(query.cQuery, C.obx_schema_id(property.entityId()), C.obx_schema_id(property.propertyId()), C.double(values[0])))
+
+	} else if len(values) == 2 {
+		rc = int(C.obx_query_double_params(query.cQuery, C.obx_schema_id(property.entityId()), C.obx_schema_id(property.propertyId()), C.double(values[0]), C.double(values[1])))
+
+	} else {
+		return fmt.Errorf("too many values given")
+	}
+
+	if rc != 0 {
+		return createError()
+	}
+	return nil
+}
+
 // Internal & temporary API
 func (query *Query) InternalSetParamInt(propertyId TypeId, value int64) (err error) {
 	rc := C.obx_query_int_param(query.cQuery, 0, C.obx_schema_id(propertyId), C.int64_t(value))

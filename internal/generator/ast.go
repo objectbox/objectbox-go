@@ -95,7 +95,7 @@ func parserFilter(file os.FileInfo) bool {
 	return true
 }
 
-func (f *file) getUnderlyingType(expr ast.Expr) (string, error) {
+func (f *file) getUnderlyingType(expr ast.Expr) (types.Type, error) {
 	// load file info (resolved types) JiT if necessary
 	if f.info == nil {
 		// call types.Config.Check() to fill types.Info
@@ -111,14 +111,14 @@ func (f *file) getUnderlyingType(expr ast.Expr) (string, error) {
 			Importer:                 importer.For("source", nil),
 		}
 		if _, err := conf.Check(f.dir, f.fileset, f.files, f.info); err != nil {
-			return "", fmt.Errorf("error running type-check: %s", err)
+			return nil, fmt.Errorf("error running type-check: %s", err)
 		}
 	}
 
 	if t := f.info.TypeOf(expr); t == nil {
-		return "", fmt.Errorf("type %s could not be resolved", expr)
+		return nil, fmt.Errorf("type %s could not be resolved", expr)
 	} else {
-		return t.Underlying().String(), nil
+		return t.Underlying(), nil
 	}
 }
 

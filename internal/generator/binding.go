@@ -176,7 +176,7 @@ func (binding *Binding) createEntityFromAst(strct *ast.StructType, name string, 
 		}
 	}
 
-	if err := entity.addStructFields(strct); err != nil {
+	if err := entity.addFields(astStructFieldList{strct, binding.source}); err != nil {
 		return err
 	}
 
@@ -216,26 +216,27 @@ func (binding *Binding) createEntityFromAst(strct *ast.StructType, name string, 
 	return nil
 }
 
-func (entity *Entity) addStructFields(strct *ast.StructType) error {
+func (entity *Entity) addFields(fields fieldList) error {
 	var propertyError = func(err error, property *Property) error {
 		return fmt.Errorf("%s on property %s, entity %s", err, property.Name, entity.Name)
 	}
 
-	for _, f := range strct.Fields.List {
+	for i := 0; i < fields.Length(); i++ {
+		f := fields.Field(i)
+
 		property := &Property{
 			entity: entity,
 		}
 
-		if len(f.Names) == 0 {
-			property.Name = types.ExprString(f.Type)
-		} else if len(f.Names) == 1 {
-			property.Name = f.Names[0].Name
+		if name, err := f.Name(); err != nil {
+			property.Name = strconv.FormatInt(int64(i), 10) // just for the error message
+			return propertyError(err, property)
 		} else {
-			return fmt.Errorf("struct %s has a field with too many names: %v", entity.Name, len(f.Names))
+			property.Name = name
 		}
 
-		if f.Tag != nil {
-			if err := property.setAnnotations(f.Tag.Value); err != nil {
+		if tag := f.Tag(); tag != "" {
+			if err := property.setAnnotations(tag); err != nil {
 				return propertyError(err, property)
 			}
 		}
@@ -246,16 +247,19 @@ func (entity *Entity) addStructFields(strct *ast.StructType) error {
 		}
 
 		// first try to setType if it's one of the basic supported types
-		if err := property.setType(types.ExprString(f.Type)); err != nil {
+		if err := property.setType(f.Type().String()); err != nil {
 			// if not, get the underlying type and try again
-			if baseType, err := entity.binding.source.getUnderlyingType(f.Type); err != nil {
-				return propertyError(err, property)
-			} else if err = property.setType(baseType); err != nil {
+			baseType := f.Type().Underlying()
+
+			if embedded, isStruct := baseType.(*types.Struct); isStruct {
+				return entity.addFields(structFieldList{embedded})
+
+			} else if err = property.setType(baseType.String()); err != nil {
 				return propertyError(err, property)
 			}
 		}
 
-		if err := property.setObFlags(*f); err != nil {
+		if err := property.setObFlags(); err != nil {
 			return propertyError(err, property)
 		}
 
@@ -499,7 +503,7 @@ func (property *Property) setIndex() error {
 	}
 }
 
-func (property *Property) setObFlags(f ast.Field) error {
+func (property *Property) setObFlags() error {
 	if property.Annotations["id"] != nil {
 		property.addObFlag("ID")
 	}

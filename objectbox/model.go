@@ -33,18 +33,19 @@ import (
 
 //noinspection GoUnusedConst
 const (
-	PropertyType_Bool       = 1
-	PropertyType_Byte       = 2
-	PropertyType_Short      = 3
-	PropertyType_Char       = 4
-	PropertyType_Int        = 5
-	PropertyType_Long       = 6
-	PropertyType_Float      = 7
-	PropertyType_Double     = 8
-	PropertyType_String     = 9
-	PropertyType_Date       = 10
-	PropertyType_Relation   = 11
-	PropertyType_ByteVector = 23
+	PropertyType_Bool         = 1
+	PropertyType_Byte         = 2
+	PropertyType_Short        = 3
+	PropertyType_Char         = 4
+	PropertyType_Int          = 5
+	PropertyType_Long         = 6
+	PropertyType_Float        = 7
+	PropertyType_Double       = 8
+	PropertyType_String       = 9
+	PropertyType_Date         = 10
+	PropertyType_Relation     = 11
+	PropertyType_ByteVector   = 23
+	PropertyType_StringVector = 30
 )
 
 //noinspection GoUnusedConst

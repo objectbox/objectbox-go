@@ -116,6 +116,10 @@ func (property PropertyString) In(caseSensitive bool, texts ...string) Condition
 	}
 }
 
+type PropertyStringVector struct {
+	*Property
+}
+
 type PropertyInt64 struct {
 	*BaseProperty
 }

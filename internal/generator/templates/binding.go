@@ -30,9 +30,8 @@ var BindingTemplate = template.Must(template.New("binding").Funcs(funcMap).Parse
     {{- else if eq .GoType "uint"}} uint(table.GetUint64Slot({{.FbvTableOffset}}, 0))
 	{{- else if eq .GoType "rune"}} rune(table.GetInt32Slot({{.FbvTableOffset}}, 0))
 	{{- else if and (eq .GoType "string") (eq .FbType "Uint64")}} strconv.FormatUint(table.GetUint64Slot({{.FbvTableOffset}}, 0), 10)
-	{{- else if eq .GoType "string"}} fbutils.GetStringSlot(table, {{.FbvTableOffset}})
-    {{- else if eq .GoType "[]byte"}} fbutils.GetByteVectorSlot(table, {{.FbvTableOffset}})
-	{{- else}} table.Get{{.GoType | StringTitle}}Slot({{.FbvTableOffset}}, 0)
+	{{- else if eq .FbType "UOffsetT"}} fbutils.Get{{$property.ObType}}Slot(table, {{.FbvTableOffset}})
+    {{- else}} table.Get{{.GoType | StringTitle}}Slot({{.FbvTableOffset}}, 0)
     {{- end}}
 	{{- if .Converter}}){{end}}
 {{- end -}}
@@ -175,15 +174,9 @@ func ({{$entityNameCamel}}_EntityInfo) SetId(object interface{}, id uint64) erro
 func ({{$entityNameCamel}}_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
     {{if $entity.HasNonIdProperty}}obj := object.(*{{$entity.Name}}){{end -}}
 
-    {{- range $property := $entity.Properties}}
-        {{- if eq $property.FbType "UOffsetT"}}
-            {{- if eq $property.GoType "string"}}
-    var offset{{$property.Name}} = fbutils.CreateStringOffset(fbb, {{template "property-converter-encode" $property}})
-            {{- else if eq $property.GoType "[]byte"}}
-    var offset{{$property.Name}} = fbutils.CreateByteVectorOffset(fbb, {{template "property-converter-encode" $property}})
-            {{- end -}}
-        {{end}}
-    {{- end}}
+    {{- range $property := $entity.Properties}}{{if eq $property.FbType "UOffsetT"}}
+    var offset{{$property.Name}} = fbutils.Create{{$property.ObType}}Offset(fbb, {{template "property-converter-encode" $property}})
+	{{- end}}{{end}}
 
     // build the FlatBuffers object
     fbb.StartObject({{$entity.LastPropertyId.GetId}})

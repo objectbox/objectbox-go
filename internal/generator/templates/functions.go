@@ -28,8 +28,8 @@ var funcMap = template.FuncMap{
 		return strings.ToLower(result[0:1]) + result[1:]
 	},
 	"TypeIdentifier": func(s string) string {
-		if s == "[]byte" {
-			return "ByteVector"
+		if strings.HasPrefix(s, "[]") {
+			return strings.Title(s[2:]) + "Vector"
 		} else {
 			return strings.Title(s)
 		}

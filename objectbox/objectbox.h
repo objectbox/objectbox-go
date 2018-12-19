@@ -41,7 +41,7 @@ extern "C" {
 // Note that you should use methods with prefix obx_version_ to check when linking against the dynamic library
 #define OBX_VERSION_MAJOR 0
 #define OBX_VERSION_MINOR 4
-#define OBX_VERSION_PATCH 100 // values >= 100 are reserved for dev releases leading to the next minor/major increase
+#define OBX_VERSION_PATCH 101  // values >= 100 are reserved for dev releases leading to the next minor/major increase
 
 /// Returns the version of the library as ints. Pointers may be null
 void obx_version(int* major, int* minor, int* patch);
@@ -144,6 +144,7 @@ typedef enum {
     PropertyType_Date = 10,
     PropertyType_Relation = 11,
     PropertyType_ByteVector = 23,
+    PropertyType_StringVector = 30,
 } OBPropertyType;
 
 /// Not really an enum, but binary flags to use across languages

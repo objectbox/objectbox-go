@@ -35,6 +35,29 @@ func CreateByteVectorOffset(fbb *flatbuffers.Builder, value []byte) flatbuffers.
 	}
 }
 
+func CreateStringVectorOffset(fbb *flatbuffers.Builder, value []string) flatbuffers.UOffsetT {
+	if len(value) == 0 {
+		return 0
+	}
+
+	var offsets = make([]flatbuffers.UOffsetT, len(value))
+	for i, v := range value {
+		if len(value) > 0 {
+			offsets[i] = fbb.CreateString(v)
+		}
+	}
+
+	return createOffsetVector(fbb, offsets)
+}
+
+func createOffsetVector(fbb *flatbuffers.Builder, offsets []flatbuffers.UOffsetT) flatbuffers.UOffsetT {
+	fbb.StartVector(int(flatbuffers.SizeUOffsetT), len(offsets), int(flatbuffers.SizeUOffsetT))
+	for i := len(offsets) - 1; i >= 0; i-- {
+		fbb.PrependUOffsetT(offsets[i])
+	}
+	return fbb.EndVector(len(offsets))
+}
+
 // Define some Get*Slot methods that are missing in the FlatBuffers table
 
 func GetStringSlot(table *flatbuffers.Table, slot flatbuffers.VOffsetT) string {
@@ -48,6 +71,27 @@ func GetByteVectorSlot(table *flatbuffers.Table, slot flatbuffers.VOffsetT) []by
 	if o := flatbuffers.UOffsetT(table.Offset(slot)); o != 0 {
 		return table.ByteVector(o + table.Pos)
 	}
+	return nil
+}
+
+func GetStringVectorSlot(table *flatbuffers.Table, slot flatbuffers.VOffsetT) []string {
+	if o := flatbuffers.UOffsetT(table.Offset(slot)); o != 0 {
+		var ln = table.VectorLen(o) // number of elements
+
+		// prepare the result vector
+		var result = make([]string, 0, ln)
+
+		// iterate over the vector and read each element separately
+		var start = table.Vector(o)
+		var end = start + flatbuffers.UOffsetT(ln)*flatbuffers.SizeUOffsetT
+
+		for pos := start; pos < end; pos += flatbuffers.SizeUOffsetT {
+			result = append(result, table.String(pos))
+		}
+
+		return result
+	}
+
 	return nil
 }
 

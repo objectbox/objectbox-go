@@ -547,6 +547,9 @@ func (property *Property) setType(baseType string) error {
 	} else if ts == "[]byte" {
 		property.ObType = "ByteVector"
 		property.FbType = "UOffsetT"
+	} else if ts == "[]string" {
+		property.ObType = "StringVector"
+		property.FbType = "UOffsetT"
 	} else if ts == "float64" {
 		property.ObType = "Double"
 		property.FbType = "Float64"

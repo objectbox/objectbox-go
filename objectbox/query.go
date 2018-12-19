@@ -325,12 +325,3 @@ func (query *Query) SetFloat64Params(property anyProperty, values ...float64) er
 	}
 	return nil
 }
-
-// Internal & temporary API
-func (query *Query) InternalSetParamInt(propertyId TypeId, value int64) (err error) {
-	rc := C.obx_query_int_param(query.cQuery, 0, C.obx_schema_id(propertyId), C.int64_t(value))
-	if rc != 0 {
-		return createError()
-	}
-	return
-}

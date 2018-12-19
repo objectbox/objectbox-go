@@ -47,3 +47,10 @@ type Entity struct {
 type TestStringIdEntity struct {
 	Id string `id`
 }
+
+type TestEntityInline struct {
+	BaseWithDate
+	BaseWithValue
+
+	Id uint64 `index`
+}

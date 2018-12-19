@@ -239,6 +239,57 @@ func (query *Query) SetStringParams(property anyProperty, values ...string) erro
 	return nil
 }
 
+func (query *Query) SetInt64Params(property anyProperty, values ...int64) error {
+	var rc = 0
+	if len(values) == 0 {
+		return fmt.Errorf("no values given")
+
+	} else if len(values) == 1 {
+		rc = int(C.obx_query_int_param(query.cQuery, C.obx_schema_id(property.entityId()), C.obx_schema_id(property.propertyId()), C.int64_t(values[0])))
+
+	} else if len(values) == 2 {
+		rc = int(C.obx_query_int_params(query.cQuery, C.obx_schema_id(property.entityId()), C.obx_schema_id(property.propertyId()), C.int64_t(values[0]), C.int64_t(values[1])))
+
+	} else {
+		return fmt.Errorf("too many values given")
+	}
+
+	if rc != 0 {
+		return createError()
+	}
+	return nil
+}
+
+func (query *Query) SetInt64ParamsIn(property anyProperty, values ...int64) error {
+	var rc = 0
+	if len(values) == 0 {
+		return fmt.Errorf("no values given")
+
+	} else {
+		rc = int(C.obx_query_int64_params_in(query.cQuery, C.obx_schema_id(property.entityId()), C.obx_schema_id(property.propertyId()), (*C.int64_t)(unsafe.Pointer(&values[0])), C.int(len(values))))
+	}
+
+	if rc != 0 {
+		return createError()
+	}
+	return nil
+}
+
+func (query *Query) SetInt32ParamsIn(property anyProperty, values ...int32) error {
+	var rc = 0
+	if len(values) == 0 {
+		return fmt.Errorf("no values given")
+
+	} else {
+		rc = int(C.obx_query_int32_params_in(query.cQuery, C.obx_schema_id(property.entityId()), C.obx_schema_id(property.propertyId()), (*C.int32_t)(unsafe.Pointer(&values[0])), C.int(len(values))))
+	}
+
+	if rc != 0 {
+		return createError()
+	}
+	return nil
+}
+
 // Internal & temporary API
 func (query *Query) InternalSetParamInt(propertyId TypeId, value int64) (err error) {
 	rc := C.obx_query_int_param(query.cQuery, 0, C.obx_schema_id(propertyId), C.int64_t(value))

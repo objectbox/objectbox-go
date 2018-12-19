@@ -234,11 +234,87 @@ func TestQueryParams(t *testing.T) {
 	// Use this special entity for testing descriptions
 	var e = model.Entity47()
 
+	// and a shorter type name for the setup function argument
+	type eq = model.EntityQuery
+
 	testQueries(t, env, queryTestOptions{baseCount: 1000}, []queryTestCase{
 		{1, s{`String == "Val-1"`}, box.Query(E.String.Equals("", true)),
-			func(q *model.EntityQuery) error { return q.SetStringParams(E.String, e.String) }},
-		{2, s{`String in ["VAL-1", "val-860714888"]`, `String in ["val-860714888", "VAL-1"]`}, box.Query(E.String.In(true, "VAL-1", "val-860714888")),
-			func(q *model.EntityQuery) error { return q.SetStringParams(E.String, "val-860714888", "VAL-1") }},
+			func(q *eq) error { return q.SetStringParams(E.String, e.String) }},
+		//{2, s{`String in ["VAL-1"]`}, box.Query(E.String.In(true, "")),
+		//	func(q eq) error { return q.SetStringParams(E.String, "VAL-1") }},
+		{2, s{`String in ["VAL-1", "val-860714888"]`, `String in ["val-860714888", "VAL-1"]`},
+			box.Query(E.String.In(true, "", "")),
+			func(q *eq) error { return q.SetStringParams(E.String, "val-860714888", "VAL-1") }},
+
+		{2, s{`Int64 == 47`}, box.Query(E.Int64.Equals(0)),
+			func(q *eq) error { return q.SetInt64Params(E.Int64, e.Int64) }},
+		{1, s{`Int64 between -1 and 1`}, box.Query(E.Int64.Between(0, 0)),
+			func(q *eq) error { return q.SetInt64Params(E.Int64, -1, 1) }},
+		{2, s{`Int64 in [94|47]`, `Int64 in [47|94]`}, box.Query(E.Int64.In(0, 0)),
+			func(q *eq) error { return q.SetInt64ParamsIn(E.Int64, e.Int64, e.Int64*2) }},
+
+		{2, s{`Uint64 == 47`}, box.Query(E.Uint64.Equals(0)),
+			func(q *eq) error { return q.SetInt64Params(E.Uint64, int64(e.Uint64)) }},
+		{2, s{`Uint64 in [94|47]`, `Uint64 in [47|94]`}, box.Query(E.Uint64.In(0, 0)),
+			func(q *eq) error { return q.SetInt64ParamsIn(E.Uint64, int64(e.Uint64), int64(e.Uint64*2)) }},
+
+		{2, s{`Int == 47`}, box.Query(E.Int.Equals(0)),
+			func(q *eq) error { return q.SetInt64Params(E.Int, int64(e.Int)) }},
+		{1, s{`Int between -1 and 1`}, box.Query(E.Int.Between(0, 0)),
+			func(q *eq) error { return q.SetInt64Params(E.Int, -1, 1) }},
+		{2, s{`Int in [94|47]`, `Int in [47|94]`}, box.Query(E.Int.In(0, 0)),
+			func(q *eq) error { return q.SetInt64ParamsIn(E.Int, int64(e.Int), int64(e.Int*2)) }},
+
+		{2, s{`Uint == 47`}, box.Query(E.Uint.Equals(0)),
+			func(q *eq) error { return q.SetInt64Params(E.Uint, int64(e.Uint)) }},
+		{2, s{`Uint in [94|47]`, `Uint in [47|94]`}, box.Query(E.Uint.In(0, 0)),
+			func(q *eq) error { return q.SetInt64ParamsIn(E.Uint, int64(e.Uint), int64(e.Uint*2)) }},
+
+		{3, s{`Rune == 47`}, box.Query(E.Rune.Equals(0)),
+			func(q *eq) error { return q.SetInt64Params(E.Rune, int64(e.Rune)) }},
+		{1, s{`Rune between -1 and 1`}, box.Query(E.Rune.Between(0, 0)),
+			func(q *eq) error { return q.SetInt64Params(E.Rune, -1, 1) }},
+		{3, s{`Rune in [94|47]`, `Rune in [47|94]`}, box.Query(E.Rune.In(0, 0)),
+			func(q *eq) error { return q.SetInt32ParamsIn(E.Rune, int32(e.Rune), int32(e.Rune*2)) }},
+
+		{3, s{`Int32 == 47`}, box.Query(E.Int32.Equals(0)),
+			func(q *eq) error { return q.SetInt64Params(E.Int32, int64(e.Int32)) }},
+		{1, s{`Int32 between -1 and 1`}, box.Query(E.Int32.Between(0, 0)),
+			func(q *eq) error { return q.SetInt64Params(E.Int32, -1, 1) }},
+		{3, s{`Int32 in [94|47]`, `Int32 in [47|94]`}, box.Query(E.Int32.In(0, 0)),
+			func(q *eq) error { return q.SetInt32ParamsIn(E.Int32, e.Int32, e.Int32*2) }},
+
+		{3, s{`Uint32 == 47`}, box.Query(E.Uint32.Equals(0)),
+			func(q *eq) error { return q.SetInt64Params(E.Uint32, int64(e.Int32)) }},
+		{1, s{`Uint32 between 0 and 1`}, box.Query(E.Uint32.Between(0, 0)),
+			func(q *eq) error { return q.SetInt64Params(E.Uint32, 0, 1) }},
+		{3, s{`Uint32 in [94|47]`, `Uint32 in [47|94]`}, box.Query(E.Uint32.In(0, 0)),
+			func(q *eq) error { return q.SetInt32ParamsIn(E.Uint32, int32(e.Uint32), int32(e.Uint32*2)) }},
+
+		{3, s{`Int16 == 47`}, box.Query(E.Int16.Equals(0)),
+			func(q *eq) error { return q.SetInt64Params(E.Int16, int64(e.Int16)) }},
+		{1, s{`Int16 between -1 and 1`}, box.Query(E.Int16.Between(0, 0)),
+			func(q *eq) error { return q.SetInt64Params(E.Int16, -1, 1) }},
+
+		{3, s{`Uint16 == 47`}, box.Query(E.Uint16.Equals(0)),
+			func(q *eq) error { return q.SetInt64Params(E.Uint16, int64(e.Uint16)) }},
+		{1, s{`Uint16 between 0 and 1`}, box.Query(E.Uint16.Between(0, 0)),
+			func(q *eq) error { return q.SetInt64Params(E.Uint16, 0, 1) }},
+
+		{6, s{`Int8 == 47`}, box.Query(E.Int8.Equals(0)),
+			func(q *eq) error { return q.SetInt64Params(E.Int8, int64(e.Int8)) }},
+		{11, s{`Int8 between -1 and 1`}, box.Query(E.Int8.Between(0, 0)),
+			func(q *eq) error { return q.SetInt64Params(E.Int8, -1, 1) }},
+
+		{6, s{`Uint8 == 47`}, box.Query(E.Uint8.Equals(0)),
+			func(q *eq) error { return q.SetInt64Params(E.Uint8, int64(e.Uint8)) }},
+		{8, s{`Uint8 between 0 and 1`}, box.Query(E.Uint8.Between(0, 0)),
+			func(q *eq) error { return q.SetInt64Params(E.Uint8, 0, 1) }},
+
+		{6, s{`Byte == 47`}, box.Query(E.Byte.Equals(0)),
+			func(q *eq) error { return q.SetInt64Params(E.Byte, int64(e.Byte)) }},
+		{8, s{`Byte between 0 and 1`}, box.Query(E.Byte.Between(0, 0)),
+			func(q *eq) error { return q.SetInt64Params(E.Byte, 0, 1) }},
 	})
 }
 

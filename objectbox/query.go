@@ -228,6 +228,21 @@ func (query *Query) SetStringParams(property anyProperty, values ...string) erro
 		rc = int(C.obx_query_string_param(query.cQuery, C.obx_schema_id(property.entityId()), C.obx_schema_id(property.propertyId()), cString))
 
 	} else {
+		return fmt.Errorf("too many values given")
+	}
+
+	if rc != 0 {
+		return createError()
+	}
+	return nil
+}
+
+func (query *Query) SetStringParamsIn(property anyProperty, values ...string) error {
+	var rc = 0
+	if len(values) == 0 {
+		return fmt.Errorf("no values given")
+
+	} else {
 		cStringArray := goStringArrayToC(values)
 		defer cStringArray.free()
 		rc = int(C.obx_query_string_params_in(query.cQuery, C.obx_schema_id(property.entityId()), C.obx_schema_id(property.propertyId()), cStringArray.cArray, C.int(cStringArray.size)))

@@ -240,11 +240,11 @@ func TestQueryParams(t *testing.T) {
 	testQueries(t, env, queryTestOptions{baseCount: 1000}, []queryTestCase{
 		{1, s{`String == "Val-1"`}, box.Query(E.String.Equals("", true)),
 			func(q *eq) error { return q.SetStringParams(E.String, e.String) }},
-		//{2, s{`String in ["VAL-1"]`}, box.Query(E.String.In(true, "")),
-		//	func(q eq) error { return q.SetStringParams(E.String, "VAL-1") }},
+		{1, s{`String in ["VAL-1"]`}, box.Query(E.String.In(true, "")),
+			func(q *eq) error { return q.SetStringParamsIn(E.String, "VAL-1") }},
 		{2, s{`String in ["VAL-1", "val-860714888"]`, `String in ["val-860714888", "VAL-1"]`},
 			box.Query(E.String.In(true, "", "")),
-			func(q *eq) error { return q.SetStringParams(E.String, "val-860714888", "VAL-1") }},
+			func(q *eq) error { return q.SetStringParamsIn(E.String, "val-860714888", "VAL-1") }},
 
 		{2, s{`Int64 == 47`}, box.Query(E.Int64.Equals(0)),
 			func(q *eq) error { return q.SetInt64Params(E.Int64, e.Int64) }},

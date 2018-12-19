@@ -327,6 +327,13 @@ func TestQueryParams(t *testing.T) {
 			}},
 		{498, s{`Float32 > 47.740002`}, box.Query(E.Float32.GreaterThan(e.Float32)),
 			func(q *eq) error { return q.SetFloat64Params(E.Float32, float64(e.Float32)) }},
+
+		{6, s{`ByteVector == byte[5]{0x01020305 08}`}, box.Query(E.ByteVector.Equals(nil)),
+			func(q *eq) error { return q.SetBytesParams(E.ByteVector, e.ByteVector) }},
+		{1000, s{`ByteVector > byte[0]""`}, box.Query(E.ByteVector.GreaterThan(nil)),
+			func(q *eq) error { return q.SetBytesParams(E.ByteVector, nil) }},
+		{5, s{`ByteVector < byte[5]{0x01020305 08}`}, box.Query(E.ByteVector.LessThan(nil)),
+			func(q *eq) error { return q.SetBytesParams(E.ByteVector, e.ByteVector) }},
 	})
 }
 

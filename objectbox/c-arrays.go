@@ -124,3 +124,11 @@ func goStringArrayToC(values []string) *stringArray {
 	}
 	return result
 }
+
+func cBytesPtr(value []byte) unsafe.Pointer {
+	if len(value) >= 1 {
+		return unsafe.Pointer(&value[0])
+	} else {
+		return nil
+	}
+}

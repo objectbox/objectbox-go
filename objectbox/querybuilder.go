@@ -367,7 +367,7 @@ func (qb *QueryBuilder) BytesEqual(property *Property, value []byte) (ConditionI
 	var cid ConditionId
 
 	if qb.Err == nil && qb.checkEntityId(property.Entity.Id) {
-		cid = qb.getConditionId(C.obx_qb_bytes_equal(qb.cqb, C.obx_schema_id(property.Id), unsafe.Pointer(&value[0]), C.size_t(len(value))))
+		cid = qb.getConditionId(C.obx_qb_bytes_equal(qb.cqb, C.obx_schema_id(property.Id), cBytesPtr(value), C.size_t(len(value))))
 	}
 
 	return cid, qb.Err
@@ -377,7 +377,7 @@ func (qb *QueryBuilder) BytesGreater(property *Property, value []byte, withEqual
 	var cid ConditionId
 
 	if qb.Err == nil && qb.checkEntityId(property.Entity.Id) {
-		cid = qb.getConditionId(C.obx_qb_bytes_greater(qb.cqb, C.obx_schema_id(property.Id), unsafe.Pointer(&value[0]), C.size_t(len(value)), C.bool(withEqual)))
+		cid = qb.getConditionId(C.obx_qb_bytes_greater(qb.cqb, C.obx_schema_id(property.Id), cBytesPtr(value), C.size_t(len(value)), C.bool(withEqual)))
 	}
 
 	return cid, qb.Err
@@ -387,7 +387,7 @@ func (qb *QueryBuilder) BytesLess(property *Property, value []byte, withEqual bo
 	var cid ConditionId
 
 	if qb.Err == nil && qb.checkEntityId(property.Entity.Id) {
-		cid = qb.getConditionId(C.obx_qb_bytes_less(qb.cqb, C.obx_schema_id(property.Id), unsafe.Pointer(&value[0]), C.size_t(len(value)), C.bool(withEqual)))
+		cid = qb.getConditionId(C.obx_qb_bytes_less(qb.cqb, C.obx_schema_id(property.Id), cBytesPtr(value), C.size_t(len(value)), C.bool(withEqual)))
 	}
 
 	return cid, qb.Err

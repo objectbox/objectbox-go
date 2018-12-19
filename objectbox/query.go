@@ -325,3 +325,21 @@ func (query *Query) SetFloat64Params(property anyProperty, values ...float64) er
 	}
 	return nil
 }
+
+func (query *Query) SetBytesParams(property anyProperty, values ...[]byte) error {
+	var rc = 0
+	if len(values) == 0 {
+		return fmt.Errorf("no values given")
+
+	} else if len(values) == 1 {
+		rc = int(C.obx_query_bytes_param(query.cQuery, C.obx_schema_id(property.entityId()), C.obx_schema_id(property.propertyId()), cBytesPtr(values[0]), C.size_t(len(values[0]))))
+
+	} else {
+		return fmt.Errorf("too many values given")
+	}
+
+	if rc != 0 {
+		return createError()
+	}
+	return nil
+}

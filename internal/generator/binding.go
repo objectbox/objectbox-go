@@ -498,13 +498,16 @@ func (property *Property) setObFlags(f ast.Field) error {
 	}
 
 	if property.Annotations["index"] != nil {
-		property.addObFlag("INDEXED")
 		switch strings.ToLower(property.Annotations["index"].Value) {
 		case "":
-			// default
+			// if the user doesn't define index type use the default based on the data-type
+			if property.ObType == "String" {
+				property.addObFlag("INDEX_HASH")
+			} else {
+				property.addObFlag("INDEXED")
+			}
 		case "value":
-			// TODO this doesn't seem to be implemented by the c-api?
-			property.addObFlag("INDEX_VALUE")
+			property.addObFlag("INDEXED")
 		case "hash":
 			property.addObFlag("INDEX_HASH")
 		case "hash64":

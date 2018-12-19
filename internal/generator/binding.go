@@ -46,8 +46,9 @@ type Entity struct {
 	LastPropertyId modelinfo.IdUid
 	Annotations    map[string]*Annotation
 
-	binding    *Binding // parent
-	uidRequest bool
+	binding          *Binding // parent
+	uidRequest       bool
+	propertiesByName map[string]bool
 }
 
 type Property struct {
@@ -150,14 +151,15 @@ func (binding *Binding) entityLoader(node ast.Node, prevDecl **ast.GenDecl) bool
 	return false
 }
 
-func (binding *Binding) createEntityFromAst(node ast.Node, name string, comments []*ast.Comment) (err error) {
+func (binding *Binding) createEntityFromAst(strct *ast.StructType, name string, comments []*ast.Comment) error {
 	entity := &Entity{
-		binding: binding,
-		Name:    name,
+		binding:          binding,
+		Name:             name,
+		propertiesByName: make(map[string]bool),
 	}
 
 	if comments != nil {
-		if err = entity.setAnnotations(comments); err != nil {
+		if err := entity.setAnnotations(comments); err != nil {
 			return fmt.Errorf("%s on entity %s", err, entity.Name)
 		}
 	}
@@ -174,92 +176,8 @@ func (binding *Binding) createEntityFromAst(node ast.Node, name string, comments
 		}
 	}
 
-	propertiesByName := make(map[string]bool)
-
-	var propertyError = func(err error, property *Property) error {
-		return fmt.Errorf("%s on property %s, entity %s", err, property.Name, entity.Name)
-	}
-
-	switch t := node.(type) {
-	case *ast.StructType:
-		for _, f := range t.Fields.List {
-			if len(f.Names) != 1 {
-				return fmt.Errorf("struct %s has a f with an invalid number of names, one expected, got %v",
-					entity.Name, len(f.Names))
-			}
-
-			property := &Property{
-				entity: entity,
-				Name:   f.Names[0].Name,
-			}
-
-			if f.Tag != nil {
-				if err = property.setAnnotations(f.Tag.Value); err != nil {
-					return propertyError(err, property)
-				}
-			}
-
-			// transient properties are not stored, thus no need to use it in the binding
-			if property.Annotations["transient"] != nil {
-				continue
-			}
-
-			// first try to setType if it's one of the basic supported types
-			if err = property.setType(types.ExprString(f.Type)); err != nil {
-				// if not, get the underlying type and try again
-				if baseType, err := binding.source.getUnderlyingType(f.Type); err != nil {
-					return propertyError(err, property)
-				} else if err = property.setType(baseType); err != nil {
-					return propertyError(err, property)
-				}
-			}
-
-			if err = property.setObFlags(*f); err != nil {
-				return propertyError(err, property)
-			}
-
-			// if this is an ID, set it as entity.IdProperty
-			if property.Annotations["id"] != nil {
-				if entity.IdProperty != nil {
-					return fmt.Errorf("struct %s has multiple ID properties - %s and %s",
-						entity.Name, entity.IdProperty.Name, property.Name)
-				}
-				entity.IdProperty = property
-			}
-
-			if property.Annotations["nameindb"] != nil {
-				if len(property.Annotations["nameindb"].Value) == 0 {
-					return propertyError(fmt.Errorf("nameInDb annotation value must not be empty"), property)
-				} else {
-					property.ObName = property.Annotations["nameindb"].Value
-				}
-			} else {
-				property.ObName = property.Name
-			}
-
-			// ObjectBox core internally converts to lowercase so we should check it as this as well
-			var realObName = strings.ToLower(property.ObName)
-			if propertiesByName[realObName] {
-				return propertyError(fmt.Errorf(
-					"duplicate name (note that property names are case insensitive)"), property)
-			} else {
-				propertiesByName[realObName] = true
-			}
-
-			if property.Annotations["uid"] != nil {
-				if len(property.Annotations["uid"].Value) == 0 {
-					// in case the user doesn't provide `uid` value, it's considered in-process of setting up UID
-					// this flag is handled by the merge mechanism and prints the UID of the already existing property
-					property.uidRequest = true
-				} else if uid, err := strconv.ParseUint(property.Annotations["uid"].Value, 10, 64); err != nil {
-					return propertyError(fmt.Errorf("can't parse uid - %s", err), property)
-				} else {
-					property.Uid = uid
-				}
-			}
-
-			entity.Properties = append(entity.Properties, property)
-		}
+	if err := entity.addStructFields(strct); err != nil {
+		return err
 	}
 
 	if len(entity.Properties) == 0 {
@@ -295,6 +213,95 @@ func (binding *Binding) createEntityFromAst(node ast.Node, name string, comments
 	}
 
 	binding.Entities = append(binding.Entities, entity)
+	return nil
+}
+
+func (entity *Entity) addStructFields(strct *ast.StructType) error {
+	var propertyError = func(err error, property *Property) error {
+		return fmt.Errorf("%s on property %s, entity %s", err, property.Name, entity.Name)
+	}
+
+	for _, f := range strct.Fields.List {
+		property := &Property{
+			entity: entity,
+		}
+
+		if len(f.Names) == 0 {
+			property.Name = types.ExprString(f.Type)
+		} else if len(f.Names) == 1 {
+			property.Name = f.Names[0].Name
+		} else {
+			return fmt.Errorf("struct %s has a field with too many names: %v", entity.Name, len(f.Names))
+		}
+
+		if f.Tag != nil {
+			if err := property.setAnnotations(f.Tag.Value); err != nil {
+				return propertyError(err, property)
+			}
+		}
+
+		// transient properties are not stored, thus no need to use it in the binding
+		if property.Annotations["transient"] != nil {
+			continue
+		}
+
+		// first try to setType if it's one of the basic supported types
+		if err := property.setType(types.ExprString(f.Type)); err != nil {
+			// if not, get the underlying type and try again
+			if baseType, err := entity.binding.source.getUnderlyingType(f.Type); err != nil {
+				return propertyError(err, property)
+			} else if err = property.setType(baseType); err != nil {
+				return propertyError(err, property)
+			}
+		}
+
+		if err := property.setObFlags(*f); err != nil {
+			return propertyError(err, property)
+		}
+
+		// if this is an ID, set it as entity.IdProperty
+		if property.Annotations["id"] != nil {
+			if entity.IdProperty != nil {
+				return fmt.Errorf("struct %s has multiple ID properties - %s and %s",
+					entity.Name, entity.IdProperty.Name, property.Name)
+			}
+			entity.IdProperty = property
+		}
+
+		if property.Annotations["nameindb"] != nil {
+			if len(property.Annotations["nameindb"].Value) == 0 {
+				return propertyError(fmt.Errorf("nameInDb annotation value must not be empty"), property)
+			} else {
+				property.ObName = property.Annotations["nameindb"].Value
+			}
+		} else {
+			property.ObName = property.Name
+		}
+
+		// ObjectBox core internally converts to lowercase so we should check it as this as well
+		var realObName = strings.ToLower(property.ObName)
+		if entity.propertiesByName[realObName] {
+			return propertyError(fmt.Errorf(
+				"duplicate name (note that property names are case insensitive)"), property)
+		} else {
+			entity.propertiesByName[realObName] = true
+		}
+
+		if property.Annotations["uid"] != nil {
+			if len(property.Annotations["uid"].Value) == 0 {
+				// in case the user doesn't provide `uid` value, it's considered in-process of setting up UID
+				// this flag is handled by the merge mechanism and prints the UID of the already existing property
+				property.uidRequest = true
+			} else if uid, err := strconv.ParseUint(property.Annotations["uid"].Value, 10, 64); err != nil {
+				return propertyError(fmt.Errorf("can't parse uid - %s", err), property)
+			} else {
+				property.Uid = uid
+			}
+		}
+
+		entity.Properties = append(entity.Properties, property)
+	}
+
 	return nil
 }
 

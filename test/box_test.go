@@ -212,3 +212,18 @@ func TestBoxEmpty(t *testing.T) {
 	assert.NoErr(t, err)
 	assert.Eq(t, true, isEmpty)
 }
+
+func TestBoxPutData(t *testing.T) {
+	env := model.NewTestEnv(t)
+	defer env.Close()
+
+	var inserted = model.Entity47()
+
+	id, err := env.Box.Put(inserted)
+	assert.NoErr(t, err)
+
+	read, err := env.Box.Get(id)
+	assert.NoErr(t, err)
+
+	assert.Eq(t, inserted, read)
+}

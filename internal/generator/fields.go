@@ -16,11 +16,12 @@ type field interface {
 	Name() (string, error)
 	Tag() string
 	Type() typeErrorful
+	TypeInternal() types.Type
 }
 
 type typeErrorful interface {
 	String() string
-	Underlying() (types.Type, error)
+	UnderlyingOrError() (types.Type, error)
 }
 
 //region ast.StructType wrappers
@@ -45,7 +46,12 @@ type astStructField struct {
 
 func (field astStructField) Name() (string, error) {
 	if len(field.Names) == 0 {
-		return types.ExprString(field.Field.Type), nil
+		// in case of an unnamed field, use the type name
+		var typ = types.ExprString(field.Field.Type)
+		if len(typ) >= 1 && typ[0] == '*' {
+			typ = typ[1:] // strip the '*' if it's a pointer type
+		}
+		return typ, nil
 	} else if len(field.Names) == 1 {
 		return field.Names[0].Name, nil
 	} else {
@@ -63,6 +69,9 @@ func (field astStructField) Tag() string {
 func (field astStructField) Type() typeErrorful {
 	return astTypeExpr{Expr: field.Field.Type, source: field.source}
 }
+func (field astStructField) TypeInternal() types.Type {
+	return astTypeExpr{Expr: field.Field.Type, source: field.source}
+}
 
 type astTypeExpr struct {
 	ast.Expr
@@ -73,7 +82,15 @@ func (expr astTypeExpr) String() string {
 	return types.ExprString(expr.Expr)
 }
 
-func (expr astTypeExpr) Underlying() (types.Type, error) {
+func (expr astTypeExpr) Underlying() types.Type {
+	if t, err := expr.source.getUnderlyingType(expr.Expr); err != nil {
+		panic(err)
+	} else {
+		return t
+	}
+}
+
+func (expr astTypeExpr) UnderlyingOrError() (types.Type, error) {
 	if t, err := expr.source.getUnderlyingType(expr.Expr); err != nil {
 		return nil, err
 	} else {
@@ -114,6 +131,10 @@ func (field structField) Type() typeErrorful {
 	return typesTypeErrorful{field.Var.Type()}
 }
 
+func (field structField) TypeInternal() types.Type {
+	return field.Var.Type()
+}
+
 type typesTypeErrorful struct {
 	types.Type
 }
@@ -122,7 +143,7 @@ func (typ typesTypeErrorful) String() string {
 	return typ.Type.String()
 }
 
-func (typ typesTypeErrorful) Underlying() (types.Type, error) {
+func (typ typesTypeErrorful) UnderlyingOrError() (types.Type, error) {
 	return typ.Type.Underlying(), nil
 }
 

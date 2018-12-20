@@ -1,0 +1,105 @@
+{
+  "comment": [
+    "KEEP THIS FILE! Check it into a version control system (VCS) like git.",
+    "ObjectBox manages crucial IDs for your object model. See docs for details.",
+    "If you have VCS merge conflicts, you must resolve them according to ObjectBox docs."
+  ],
+  "entities": [
+    {
+      "id": "1:8717895732742165505",
+      "name": "A",
+      "lastPropertyId": "2:6050128673802995827",
+      "properties": [
+        {
+          "id": "1:2259404117704393152",
+          "name": "Id"
+        },
+        {
+          "id": "2:6050128673802995827",
+          "name": "Name"
+        }
+      ]
+    },
+    {
+      "id": "2:501233450539197794",
+      "name": "B",
+      "lastPropertyId": "4:6044372234677422456",
+      "properties": [
+        {
+          "id": "1:3390393562759376202",
+          "name": "Text"
+        },
+        {
+          "id": "2:2669985732393126063",
+          "name": "Id"
+        },
+        {
+          "id": "3:1774932891286980153",
+          "name": "Value"
+        },
+        {
+          "id": "4:6044372234677422456",
+          "name": "Name"
+        }
+      ]
+    },
+    {
+      "id": "3:8274930044578894929",
+      "name": "C",
+      "lastPropertyId": "3:8325060299420976708",
+      "properties": [
+        {
+          "id": "1:1543572285742637646",
+          "name": "int64"
+        },
+        {
+          "id": "2:2661732831099943416",
+          "name": "val"
+        },
+        {
+          "id": "3:8325060299420976708",
+          "name": "Id"
+        }
+      ]
+    },
+    {
+      "id": "4:7837839688282259259",
+      "name": "D",
+      "lastPropertyId": "2:5617773211005988520",
+      "properties": [
+        {
+          "id": "1:2518412263346885298",
+          "name": "Id"
+        },
+        {
+          "id": "2:5617773211005988520",
+          "name": "Value"
+        }
+      ]
+    },
+    {
+      "id": "5:2339563716805116249",
+      "name": "E",
+      "lastPropertyId": "3:7259475919510918339",
+      "properties": [
+        {
+          "id": "1:7144924247938981575",
+          "name": "Location"
+        },
+        {
+          "id": "2:161231572858529631",
+          "name": "unavailable"
+        },
+        {
+          "id": "3:7259475919510918339",
+          "name": "id"
+        }
+      ]
+    }
+  ],
+  "lastEntityId": "5:2339563716805116249",
+  "lastIndexId": "",
+  "retiredEntityUids": [],
+  "retiredIndexUids": [],
+  "retiredPropertyUids": []
+}

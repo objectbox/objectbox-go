@@ -41,6 +41,7 @@ type Entity struct {
 	Name           string
 	Id             id
 	Uid            uid
+	Fields         []*Field // the tree of struct fields (necessary for embedded structs)
 	Properties     []*Property
 	IdProperty     *Property
 	LastPropertyId modelinfo.IdUid
@@ -66,6 +67,7 @@ type Property struct {
 
 	entity     *Entity
 	uidRequest bool
+	path       string // relative adressing path for embedded structs
 }
 
 type Relation struct {
@@ -79,6 +81,14 @@ type Index struct {
 
 type Annotation struct {
 	Value string
+}
+
+type Field struct {
+	Name      string
+	Type      string
+	IsPointer bool
+	Property  *Property // nil if it's an embedded struct
+	Fields    []*Field  // inner fields, nil if it's a property
 }
 
 func newBinding() (*Binding, error) {
@@ -176,8 +186,10 @@ func (binding *Binding) createEntityFromAst(strct *ast.StructType, name string, 
 		}
 	}
 
-	if err := entity.addFields(astStructFieldList{strct, binding.source}, 0, entity.Name); err != nil {
+	if fields, err := entity.addFields(astStructFieldList{strct, binding.source}, entity.Name); err != nil {
 		return err
+	} else {
+		entity.Fields = fields
 	}
 
 	if len(entity.Properties) == 0 {
@@ -216,28 +228,38 @@ func (binding *Binding) createEntityFromAst(strct *ast.StructType, name string, 
 	return nil
 }
 
-func (entity *Entity) addFields(fields fieldList, path string) error {
+func (entity *Entity) addFields(fields fieldList, path string) ([]*Field, error) {
 	var propertyError = func(err error, property *Property) error {
 		return fmt.Errorf("%s on property %s, entity %s", err, property.Name, path)
 	}
 
+	var fieldsTree []*Field
+
 	for i := 0; i < fields.Length(); i++ {
 		f := fields.Field(i)
 
-		property := &Property{
+		var property = &Property{
 			entity: entity,
+			path:   path,
 		}
 
 		if name, err := f.Name(); err != nil {
 			property.Name = strconv.FormatInt(int64(i), 10) // just for the error message
-			return propertyError(err, property)
+			return nil, propertyError(err, property)
 		} else {
 			property.Name = name
 		}
 
+		// this is used to correctly render embedded-structs initialization template
+		var field = &Field{
+			Name:     property.Name,
+			Property: property,
+		}
+		fieldsTree = append(fieldsTree, field)
+
 		if tag := f.Tag(); tag != "" {
 			if err := property.setAnnotations(tag); err != nil {
-				return propertyError(err, property)
+				return nil, propertyError(err, property)
 			}
 		}
 
@@ -250,20 +272,34 @@ func (entity *Entity) addFields(fields fieldList, path string) error {
 		typ := f.Type()
 		if err := property.setType(typ.String()); err != nil {
 			// if not, get the underlying type and try again
-			baseType, err := typ.Underlying()
+			baseType, err := typ.UnderlyingOrError()
 			if err != nil {
-				return propertyError(err, property)
+				return nil, propertyError(err, property)
 			}
 
 			// in case it's a pointer, get it's underlying type
 			if pointer, isPointer := baseType.(*types.Pointer); isPointer {
 				baseType = pointer.Elem().Underlying()
+				field.IsPointer = true
 			}
 
 			// in case it's an embedded struct, inline all fields
 			if embedded, isStruct := baseType.(*types.Struct); isStruct {
-				if err := entity.addFields(structFieldList{embedded}, path+"/"+property.Name); err != nil {
-					return err
+				if innerFields, err := entity.addFields(structFieldList{embedded}, path+"."+property.Name); err != nil {
+					return nil, err
+				} else {
+					field.Property = nil
+					field.Fields = innerFields
+
+					if namedType, isNamed := f.TypeInternal().(*types.Named); isNamed {
+						field.Type = namedType.Obj().Name()
+					} else {
+						field.Type = typ.String()
+					}
+
+					if len(field.Type) > 1 && field.Type[0] == '*' {
+						field.Type = field.Type[1:] // strip the '*' if it's a pointer type
+					}
 				}
 
 				// this struct itself is not added, just the inner properties
@@ -272,18 +308,18 @@ func (entity *Entity) addFields(fields fieldList, path string) error {
 			}
 
 			if err = property.setType(baseType.String()); err != nil {
-				return propertyError(err, property)
+				return nil, propertyError(err, property)
 			}
 		}
 
 		if err := property.setObFlags(); err != nil {
-			return propertyError(err, property)
+			return nil, propertyError(err, property)
 		}
 
 		// if this is an ID, set it as entity.IdProperty
 		if property.Annotations["id"] != nil {
 			if entity.IdProperty != nil {
-				return fmt.Errorf("struct %s has multiple ID properties - %s and %s",
+				return nil, fmt.Errorf("struct %s has multiple ID properties - %s and %s",
 					entity.Name, entity.IdProperty.Name, property.Name)
 			}
 			entity.IdProperty = property
@@ -291,7 +327,7 @@ func (entity *Entity) addFields(fields fieldList, path string) error {
 
 		if property.Annotations["nameindb"] != nil {
 			if len(property.Annotations["nameindb"].Value) == 0 {
-				return propertyError(fmt.Errorf("nameInDb annotation value must not be empty"), property)
+				return nil, propertyError(fmt.Errorf("nameInDb annotation value must not be empty"), property)
 			} else {
 				property.ObName = property.Annotations["nameindb"].Value
 			}
@@ -302,7 +338,7 @@ func (entity *Entity) addFields(fields fieldList, path string) error {
 		// ObjectBox core internally converts to lowercase so we should check it as this as well
 		var realObName = strings.ToLower(property.ObName)
 		if entity.propertiesByName[realObName] {
-			return propertyError(fmt.Errorf(
+			return nil, propertyError(fmt.Errorf(
 				"duplicate name (note that property names are case insensitive)"), property)
 		} else {
 			entity.propertiesByName[realObName] = true
@@ -314,7 +350,7 @@ func (entity *Entity) addFields(fields fieldList, path string) error {
 				// this flag is handled by the merge mechanism and prints the UID of the already existing property
 				property.uidRequest = true
 			} else if uid, err := strconv.ParseUint(property.Annotations["uid"].Value, 10, 64); err != nil {
-				return propertyError(fmt.Errorf("can't parse uid - %s", err), property)
+				return nil, propertyError(fmt.Errorf("can't parse uid - %s", err), property)
 			} else {
 				property.Uid = uid
 			}
@@ -323,7 +359,7 @@ func (entity *Entity) addFields(fields fieldList, path string) error {
 		entity.Properties = append(entity.Properties, property)
 	}
 
-	return nil
+	return fieldsTree, nil
 }
 
 func (entity *Entity) setAnnotations(comments []*ast.Comment) error {
@@ -604,4 +640,16 @@ func (property *Property) FbvTableOffset() uint16 {
 // called from the template
 func (property *Property) FbSlot() int {
 	return int(property.Id - 1)
+}
+
+// returns full path to the property (in embedded struct)
+// called from the template
+func (property *Property) Path() string {
+	var parts = strings.Split(property.path, ".")
+
+	// strip the first component
+	parts = parts[1:]
+
+	parts = append(parts, property.Name)
+	return strings.Join(parts, ".")
 }

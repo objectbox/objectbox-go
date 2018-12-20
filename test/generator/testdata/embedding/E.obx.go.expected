@@ -8,121 +8,133 @@ import (
 	"github.com/objectbox/objectbox-go/objectbox/fbutils"
 )
 
-type a_EntityInfo struct {
+type e_EntityInfo struct {
 	Id  objectbox.TypeId
 	Uid uint64
 }
 
-var ABinding = a_EntityInfo{
-	Id:  1,
-	Uid: 8717895732742165505,
+var EBinding = e_EntityInfo{
+	Id:  5,
+	Uid: 2339563716805116249,
 }
 
-// A_ contains type-based Property helpers to facilitate some common operations such as Queries.
-var A_ = struct {
-	Id   *objectbox.PropertyUint64
-	Name *objectbox.PropertyString
+// E_ contains type-based Property helpers to facilitate some common operations such as Queries.
+var E_ = struct {
+	Location    *objectbox.PropertyString
+	unavailable *objectbox.PropertyInt
+	id          *objectbox.PropertyUint64
 }{
-	Id: &objectbox.PropertyUint64{
+	Location: &objectbox.PropertyString{
 		Property: &objectbox.Property{
 			Id: 1,
 			Entity: &objectbox.Entity{
-				Id: 1,
+				Id: 5,
 			},
 		},
 	},
-	Name: &objectbox.PropertyString{
+	unavailable: &objectbox.PropertyInt{
 		Property: &objectbox.Property{
 			Id: 2,
 			Entity: &objectbox.Entity{
-				Id: 1,
+				Id: 5,
+			},
+		},
+	},
+	id: &objectbox.PropertyUint64{
+		Property: &objectbox.Property{
+			Id: 3,
+			Entity: &objectbox.Entity{
+				Id: 5,
 			},
 		},
 	},
 }
 
 // GeneratorVersion is called by the ObjectBox to verify the compatibility of the generator used to generate this code
-func (a_EntityInfo) GeneratorVersion() int {
+func (e_EntityInfo) GeneratorVersion() int {
 	return 1
 }
 
 // AddToModel is called by the ObjectBox during model build
-func (a_EntityInfo) AddToModel(model *objectbox.Model) {
-	model.Entity("A", 1, 8717895732742165505)
-	model.Property("Id", objectbox.PropertyType_Long, 1, 2259404117704393152)
+func (e_EntityInfo) AddToModel(model *objectbox.Model) {
+	model.Entity("E", 5, 2339563716805116249)
+	model.Property("Location", objectbox.PropertyType_String, 1, 7144924247938981575)
+	model.Property("unavailable", objectbox.PropertyType_Long, 2, 161231572858529631)
+	model.Property("id", objectbox.PropertyType_Long, 3, 7259475919510918339)
 	model.PropertyFlags(objectbox.PropertyFlags_ID)
-	model.Property("Name", objectbox.PropertyType_String, 2, 6050128673802995827)
-	model.EntityLastPropertyId(2, 6050128673802995827)
+	model.EntityLastPropertyId(3, 7259475919510918339)
 }
 
 // GetId is called by the ObjectBox during Put operations to check for existing ID on an object
-func (a_EntityInfo) GetId(object interface{}) (uint64, error) {
-	return object.(*A).Id.Id, nil
+func (e_EntityInfo) GetId(object interface{}) (uint64, error) {
+	return object.(*E).id, nil
 }
 
 // SetId is called by the ObjectBox during Put to update an ID on an object that has just been inserted
-func (a_EntityInfo) SetId(object interface{}, id uint64) error {
-	object.(*A).Id.Id = id
+func (e_EntityInfo) SetId(object interface{}, id uint64) error {
+	object.(*E).id = id
 	return nil
 }
 
 // Flatten is called by the ObjectBox to transform an object to a FlatBuffer
-func (a_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
-	obj := object.(*A)
-	var offsetName = fbutils.CreateStringOffset(fbb, obj.Name)
+func (e_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
+	obj := object.(*E)
+	var offsetLocation = fbutils.CreateStringOffset(fbb, obj.Location)
 
 	// build the FlatBuffers object
-	fbb.StartObject(2)
-	fbutils.SetUint64Slot(fbb, 0, id)
-	fbutils.SetUOffsetTSlot(fbb, 1, offsetName)
+	fbb.StartObject(3)
+	fbutils.SetUOffsetTSlot(fbb, 0, offsetLocation)
+	fbutils.SetInt64Slot(fbb, 1, int64(obj.unavailable))
+	fbutils.SetUint64Slot(fbb, 2, id)
 }
 
 // ToObject is called by the ObjectBox to load an object from a FlatBuffer
-func (a_EntityInfo) ToObject(bytes []byte) interface{} {
+func (e_EntityInfo) ToObject(bytes []byte) interface{} {
 	table := &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
 
-	return &A{
-		Id: Id{
-			Id: table.GetUint64Slot(4, 0),
+	return &E{
+		other.Trackable: other.Trackable{
+			Location:    fbutils.GetStringSlot(table, 4),
+			unavailable: int(table.GetUint64Slot(6, 0)),
 		},
-		Name: fbutils.GetStringSlot(table, 6),
+		id: table.GetUint64Slot(8, 0),
 	}
 }
 
 // MakeSlice is called by the ObjectBox to construct a new slice to hold the read objects
-func (a_EntityInfo) MakeSlice(capacity int) interface{} {
-	return make([]*A, 0, capacity)
+func (e_EntityInfo) MakeSlice(capacity int) interface{} {
+	return make([]*E, 0, capacity)
 }
 
 // AppendToSlice is called by the ObjectBox to fill the slice of the read objects
-func (a_EntityInfo) AppendToSlice(slice interface{}, object interface{}) interface{} {
-	return append(slice.([]*A), object.(*A))
+func (e_EntityInfo) AppendToSlice(slice interface{}, object interface{}) interface{} {
+	return append(slice.([]*E), object.(*E))
 }
 
-// Box provides CRUD access to A objects
-type ABox struct {
+// Box provides CRUD access to E objects
+type EBox struct {
 	*objectbox.Box
 }
 
-// BoxForA opens a box of A objects
-func BoxForA(ob *objectbox.ObjectBox) *ABox {
-	return &ABox{
-		Box: ob.InternalBox(1),
+// BoxForE opens a box of E objects
+func BoxForE(ob *objectbox.ObjectBox) *EBox {
+	return &EBox{
+		Box: ob.InternalBox(5),
 	}
 }
 
 // Put synchronously inserts/updates a single object.
-// In case the Id.Id is not specified, it would be assigned automatically (auto-increment).
-// When inserting, the A.Id.Id property on the passed object will be assigned the new ID as well.
-func (box *ABox) Put(object *A) (uint64, error) {
+// In case the id is not specified, it would be assigned automatically (auto-increment).
+// When inserting, the E.id property on the passed object will be assigned the new ID as well.
+func (box *EBox) Put(object *E) (uint64, error) {
 	return box.Box.Put(object)
 }
 
 // PutAsync asynchronously inserts/updates a single object.
-// When inserting, the A.Id.Id property on the passed object will be assigned the new ID as well.
+// When inserting, the E.id property on the passed object will be assigned the new ID as well.
 //
 // It's executed on a separate internal thread for better performance.
 //
@@ -139,96 +151,96 @@ func (box *ABox) Put(object *A) (uint64, error) {
 //
 // Note that this method does not give you hard durability guarantees like the synchronous Put provides.
 // There is a small time window (typically 3 ms) in which the data may not have been committed durably yet.
-func (box *ABox) PutAsync(object *A) (uint64, error) {
+func (box *EBox) PutAsync(object *E) (uint64, error) {
 	return box.Box.PutAsync(object)
 }
 
 // PutAll inserts multiple objects in single transaction.
-// In case Id.Ids are not set on the objects, they would be assigned automatically (auto-increment).
+// In case ids are not set on the objects, they would be assigned automatically (auto-increment).
 //
 // Returns: IDs of the put objects (in the same order).
-// When inserting, the A.Id.Id property on the objects in the slice will be assigned the new IDs as well.
+// When inserting, the E.id property on the objects in the slice will be assigned the new IDs as well.
 //
-// Note: In case an error occurs during the transaction, some of the objects may already have the A.Id.Id assigned
+// Note: In case an error occurs during the transaction, some of the objects may already have the E.id assigned
 // even though the transaction has been rolled back and the objects are not stored under those IDs.
 //
 // Note: The slice may be empty or even nil; in both cases, an empty IDs slice and no error is returned.
-func (box *ABox) PutAll(objects []*A) ([]uint64, error) {
+func (box *EBox) PutAll(objects []*E) ([]uint64, error) {
 	return box.Box.PutAll(objects)
 }
 
 // Get reads a single object.
 //
 // Returns nil (and no error) in case the object with the given ID doesn't exist.
-func (box *ABox) Get(id uint64) (*A, error) {
+func (box *EBox) Get(id uint64) (*E, error) {
 	object, err := box.Box.Get(id)
 	if err != nil {
 		return nil, err
 	} else if object == nil {
 		return nil, nil
 	}
-	return object.(*A), nil
+	return object.(*E), nil
 }
 
 // Get reads all stored objects
-func (box *ABox) GetAll() ([]*A, error) {
+func (box *EBox) GetAll() ([]*E, error) {
 	objects, err := box.Box.GetAll()
 	if err != nil {
 		return nil, err
 	}
-	return objects.([]*A), nil
+	return objects.([]*E), nil
 }
 
 // Remove deletes a single object
-func (box *ABox) Remove(object *A) (err error) {
-	return box.Box.Remove(object.Id.Id)
+func (box *EBox) Remove(object *E) (err error) {
+	return box.Box.Remove(object.id)
 }
 
-// Creates a query with the given conditions. Use the fields of the A_ struct to create conditions.
-// Keep the *AQuery if you intend to execute the query multiple times.
+// Creates a query with the given conditions. Use the fields of the E_ struct to create conditions.
+// Keep the *EQuery if you intend to execute the query multiple times.
 // Note: this function panics if you try to create illegal queries; e.g. use properties of an alien type.
 // This is typically a programming error. Use QueryOrError instead if you want the explicit error check.
-func (box *ABox) Query(conditions ...objectbox.Condition) *AQuery {
-	return &AQuery{
+func (box *EBox) Query(conditions ...objectbox.Condition) *EQuery {
+	return &EQuery{
 		box.Box.Query(conditions...),
 	}
 }
 
-// Creates a query with the given conditions. Use the fields of the A_ struct to create conditions.
-// Keep the *AQuery if you intend to execute the query multiple times.
-func (box *ABox) QueryOrError(conditions ...objectbox.Condition) (*AQuery, error) {
+// Creates a query with the given conditions. Use the fields of the E_ struct to create conditions.
+// Keep the *EQuery if you intend to execute the query multiple times.
+func (box *EBox) QueryOrError(conditions ...objectbox.Condition) (*EQuery, error) {
 	if query, err := box.Box.QueryOrError(conditions...); err != nil {
 		return nil, err
 	} else {
-		return &AQuery{query}, nil
+		return &EQuery{query}, nil
 	}
 }
 
 // Query provides a way to search stored objects
 //
-// For example, you can find all A which Id is either 42 or 47:
-// 		box.Query(A_.Id.In(42, 47)).Find()
-type AQuery struct {
+// For example, you can find all E which id is either 42 or 47:
+// 		box.Query(E_.id.In(42, 47)).Find()
+type EQuery struct {
 	*objectbox.Query
 }
 
 // Find returns all objects matching the query
-func (query *AQuery) Find() ([]*A, error) {
+func (query *EQuery) Find() ([]*E, error) {
 	objects, err := query.Query.Find()
 	if err != nil {
 		return nil, err
 	}
-	return objects.([]*A), nil
+	return objects.([]*E), nil
 }
 
 // Offset defines the index of the first object to process (how many objects to skip)
-func (query *AQuery) Offset(offset uint64) *AQuery {
+func (query *EQuery) Offset(offset uint64) *EQuery {
 	query.Query.Offset(offset)
 	return query
 }
 
 // Limit sets the number of elements to process by the query
-func (query *AQuery) Limit(limit uint64) *AQuery {
+func (query *EQuery) Limit(limit uint64) *EQuery {
 	query.Query.Limit(limit)
 	return query
 }

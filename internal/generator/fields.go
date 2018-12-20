@@ -17,6 +17,7 @@ type field interface {
 	Tag() string
 	Type() typeErrorful
 	TypeInternal() types.Type
+	Package() *types.Package
 }
 
 type typeErrorful interface {
@@ -69,8 +70,13 @@ func (field astStructField) Tag() string {
 func (field astStructField) Type() typeErrorful {
 	return astTypeExpr{Expr: field.Field.Type, source: field.source}
 }
+
 func (field astStructField) TypeInternal() types.Type {
 	return astTypeExpr{Expr: field.Field.Type, source: field.source}
+}
+
+func (field astStructField) Package() *types.Package {
+	return types.NewPackage(field.source.dir, field.source.f.Name.Name)
 }
 
 type astTypeExpr struct {
@@ -133,6 +139,10 @@ func (field structField) Type() typeErrorful {
 
 func (field structField) TypeInternal() types.Type {
 	return field.Var.Type()
+}
+
+func (field structField) Package() *types.Package {
+	return field.Var.Pkg()
 }
 
 type typesTypeErrorful struct {

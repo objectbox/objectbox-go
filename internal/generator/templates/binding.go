@@ -35,7 +35,7 @@ var BindingTemplate = template.Must(template.New("binding").Funcs(funcMap).Parse
     {{- end}}
 {{- end -}}
 
-package {{.Binding.Package}}
+package {{.Binding.Package.Name}}
 
 import (
 	"github.com/google/flatbuffers/go"

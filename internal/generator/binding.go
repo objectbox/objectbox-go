@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"go/ast"
 	"go/types"
+	"log"
 	"strconv"
 	"strings"
 
@@ -30,7 +31,7 @@ type uid = uint64
 type id = uint32
 
 type Binding struct {
-	Package  string
+	Package  *types.Package
 	Entities []*Entity
 
 	err    error
@@ -97,7 +98,7 @@ func newBinding() (*Binding, error) {
 
 func (binding *Binding) createFromAst(f *file) (err error) {
 	binding.source = f
-	binding.Package = f.f.Name.Name // this is actually package name, not file name
+	binding.Package = types.NewPackage(f.dir, f.f.Name.Name)
 
 	// this will hold the pointer to the latest GenDecl encountered (parent of the current struct)
 	var prevDecl *ast.GenDecl
@@ -255,7 +256,6 @@ func (entity *Entity) addFields(fields fieldList, path string) ([]*Field, error)
 			Name:     property.Name,
 			Property: property,
 		}
-		fieldsTree = append(fieldsTree, field)
 
 		if tag := f.Tag(); tag != "" {
 			if err := property.setAnnotations(tag); err != nil {
@@ -267,6 +267,16 @@ func (entity *Entity) addFields(fields fieldList, path string) ([]*Field, error)
 		if property.Annotations["transient"] != nil {
 			continue
 		}
+
+		// if the embedded field is from a different package, check if it's available (starts with an upercase letter)
+		if f.Package().Path() != entity.binding.Package.Path() {
+			if len(field.Name) == 0 || field.Name[0] < 65 || field.Name[0] > 90 {
+				log.Printf("Note - skipping unavailable field '%s' on entity %s", property.Name, path)
+				continue
+			}
+		}
+
+		fieldsTree = append(fieldsTree, field)
 
 		// first try to setType if it's one of the basic supported types
 		typ := f.Type()

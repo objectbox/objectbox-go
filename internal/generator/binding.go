@@ -176,7 +176,7 @@ func (binding *Binding) createEntityFromAst(strct *ast.StructType, name string, 
 		}
 	}
 
-	if err := entity.addFields(astStructFieldList{strct, binding.source}); err != nil {
+	if err := entity.addFields(astStructFieldList{strct, binding.source}, 0, entity.Name); err != nil {
 		return err
 	}
 
@@ -216,9 +216,9 @@ func (binding *Binding) createEntityFromAst(strct *ast.StructType, name string, 
 	return nil
 }
 
-func (entity *Entity) addFields(fields fieldList) error {
+func (entity *Entity) addFields(fields fieldList, path string) error {
 	var propertyError = func(err error, property *Property) error {
-		return fmt.Errorf("%s on property %s, entity %s", err, property.Name, entity.Name)
+		return fmt.Errorf("%s on property %s, entity %s", err, property.Name, path)
 	}
 
 	for i := 0; i < fields.Length(); i++ {
@@ -247,14 +247,31 @@ func (entity *Entity) addFields(fields fieldList) error {
 		}
 
 		// first try to setType if it's one of the basic supported types
-		if err := property.setType(f.Type().String()); err != nil {
+		typ := f.Type()
+		if err := property.setType(typ.String()); err != nil {
 			// if not, get the underlying type and try again
-			baseType := f.Type().Underlying()
+			baseType, err := typ.Underlying()
+			if err != nil {
+				return propertyError(err, property)
+			}
 
+			// in case it's a pointer, get it's underlying type
+			if pointer, isPointer := baseType.(*types.Pointer); isPointer {
+				baseType = pointer.Elem().Underlying()
+			}
+
+			// in case it's an embedded struct, inline all fields
 			if embedded, isStruct := baseType.(*types.Struct); isStruct {
-				return entity.addFields(structFieldList{embedded})
+				if err := entity.addFields(structFieldList{embedded}, path+"/"+property.Name); err != nil {
+					return err
+				}
 
-			} else if err = property.setType(baseType.String()); err != nil {
+				// this struct itself is not added, just the inner properties
+				// TODO error on unknown (unhandled) annotations
+				continue
+			}
+
+			if err = property.setType(baseType.String()); err != nil {
 				return propertyError(err, property)
 			}
 		}

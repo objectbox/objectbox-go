@@ -15,7 +15,12 @@ type fieldList interface {
 type field interface {
 	Name() (string, error)
 	Tag() string
-	Type() types.Type
+	Type() typeErrorful
+}
+
+type typeErrorful interface {
+	String() string
+	Underlying() (types.Type, error)
 }
 
 //region ast.StructType wrappers
@@ -55,7 +60,7 @@ func (field astStructField) Tag() string {
 	return ""
 }
 
-func (field astStructField) Type() types.Type {
+func (field astStructField) Type() typeErrorful {
 	return astTypeExpr{Expr: field.Field.Type, source: field.source}
 }
 
@@ -68,11 +73,11 @@ func (expr astTypeExpr) String() string {
 	return types.ExprString(expr.Expr)
 }
 
-func (expr astTypeExpr) Underlying() types.Type {
+func (expr astTypeExpr) Underlying() (types.Type, error) {
 	if t, err := expr.source.getUnderlyingType(expr.Expr); err != nil {
-		panic(err)
+		return nil, err
 	} else {
-		return t
+		return t, nil
 	}
 }
 
@@ -103,6 +108,22 @@ func (field structField) Name() (string, error) {
 
 func (field structField) Tag() string {
 	return field.tag
+}
+
+func (field structField) Type() typeErrorful {
+	return typesTypeErrorful{field.Var.Type()}
+}
+
+type typesTypeErrorful struct {
+	types.Type
+}
+
+func (typ typesTypeErrorful) String() string {
+	return typ.Type.String()
+}
+
+func (typ typesTypeErrorful) Underlying() (types.Type, error) {
+	return typ.Type.Underlying(), nil
 }
 
 //endregion

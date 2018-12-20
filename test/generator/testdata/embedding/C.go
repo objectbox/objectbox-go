@@ -1,6 +1,7 @@
 package object
 
 type C struct {
-	IdAndFloat64Value
-	Id `int64`
+	int64 // embed a simple type
+	val   // embed a named type
+	Id    `int64`
 }

@@ -25,7 +25,6 @@ type Combined struct {
 	Empty
 	Id
 	Float64Value
-	IdAndFloat64Value
 }
 
-type id uint64
+type val uint64

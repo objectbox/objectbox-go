@@ -41,7 +41,9 @@ import (
 	"github.com/google/flatbuffers/go"
 	"github.com/objectbox/objectbox-go/objectbox"
 	"github.com/objectbox/objectbox-go/objectbox/fbutils"
-	{{if .Binding.UsesStrconv}}"strconv"{{end}}
+	{{range $path := .Binding.Imports -}}
+		"{{$path}}"
+	{{end}}
 )
 
 {{range $entity := .Binding.Entities -}}

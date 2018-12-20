@@ -6,6 +6,7 @@ import (
 	"github.com/google/flatbuffers/go"
 	"github.com/objectbox/objectbox-go/objectbox"
 	"github.com/objectbox/objectbox-go/objectbox/fbutils"
+	"github.com/objectbox/objectbox-go/test/generator/testdata/embedding/other"
 )
 
 type e_EntityInfo struct {
@@ -20,9 +21,8 @@ var EBinding = e_EntityInfo{
 
 // E_ contains type-based Property helpers to facilitate some common operations such as Queries.
 var E_ = struct {
-	Location    *objectbox.PropertyString
-	unavailable *objectbox.PropertyInt
-	id          *objectbox.PropertyUint64
+	Location *objectbox.PropertyString
+	id       *objectbox.PropertyUint64
 }{
 	Location: &objectbox.PropertyString{
 		Property: &objectbox.Property{
@@ -32,17 +32,9 @@ var E_ = struct {
 			},
 		},
 	},
-	unavailable: &objectbox.PropertyInt{
-		Property: &objectbox.Property{
-			Id: 2,
-			Entity: &objectbox.Entity{
-				Id: 5,
-			},
-		},
-	},
 	id: &objectbox.PropertyUint64{
 		Property: &objectbox.Property{
-			Id: 3,
+			Id: 2,
 			Entity: &objectbox.Entity{
 				Id: 5,
 			},
@@ -59,10 +51,9 @@ func (e_EntityInfo) GeneratorVersion() int {
 func (e_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("E", 5, 2339563716805116249)
 	model.Property("Location", objectbox.PropertyType_String, 1, 7144924247938981575)
-	model.Property("unavailable", objectbox.PropertyType_Long, 2, 161231572858529631)
-	model.Property("id", objectbox.PropertyType_Long, 3, 7259475919510918339)
+	model.Property("id", objectbox.PropertyType_Long, 2, 161231572858529631)
 	model.PropertyFlags(objectbox.PropertyFlags_ID)
-	model.EntityLastPropertyId(3, 7259475919510918339)
+	model.EntityLastPropertyId(2, 161231572858529631)
 }
 
 // GetId is called by the ObjectBox during Put operations to check for existing ID on an object
@@ -82,10 +73,9 @@ func (e_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uin
 	var offsetLocation = fbutils.CreateStringOffset(fbb, obj.Location)
 
 	// build the FlatBuffers object
-	fbb.StartObject(3)
+	fbb.StartObject(2)
 	fbutils.SetUOffsetTSlot(fbb, 0, offsetLocation)
-	fbutils.SetInt64Slot(fbb, 1, int64(obj.unavailable))
-	fbutils.SetUint64Slot(fbb, 2, id)
+	fbutils.SetUint64Slot(fbb, 1, id)
 }
 
 // ToObject is called by the ObjectBox to load an object from a FlatBuffer
@@ -96,11 +86,10 @@ func (e_EntityInfo) ToObject(bytes []byte) interface{} {
 	}
 
 	return &E{
-		other.Trackable: other.Trackable{
-			Location:    fbutils.GetStringSlot(table, 4),
-			unavailable: int(table.GetUint64Slot(6, 0)),
+		Trackable: other.Trackable{
+			Location: fbutils.GetStringSlot(table, 4),
 		},
-		id: table.GetUint64Slot(8, 0),
+		id: table.GetUint64Slot(6, 0),
 	}
 }
 

@@ -33,6 +33,7 @@ type id = uint32
 type Binding struct {
 	Package  *types.Package
 	Entities []*Entity
+	Imports  map[string]string
 
 	err    error
 	source *file
@@ -99,6 +100,7 @@ func newBinding() (*Binding, error) {
 func (binding *Binding) createFromAst(f *file) (err error) {
 	binding.source = f
 	binding.Package = types.NewPackage(f.dir, f.f.Name.Name)
+	binding.Imports = make(map[string]string)
 
 	// this will hold the pointer to the latest GenDecl encountered (parent of the current struct)
 	var prevDecl *ast.GenDecl
@@ -223,6 +225,8 @@ func (binding *Binding) createEntityFromAst(strct *ast.StructType, name string, 
 	if entity.IdProperty.GoType == "string" {
 		entity.IdProperty.ObType = "Long"
 		entity.IdProperty.FbType = "Uint64"
+
+		entity.binding.Imports["strconv"] = "strconv"
 	}
 
 	binding.Entities = append(binding.Entities, entity)
@@ -274,6 +278,9 @@ func (entity *Entity) addFields(fields fieldList, path string) ([]*Field, error)
 				log.Printf("Note - skipping unavailable field '%s' on entity %s", property.Name, path)
 				continue
 			}
+
+			// import the package. Note that package aliases are not supported yet
+			entity.binding.Imports[f.Package().Path()] = f.Package().Path()
 		}
 
 		fieldsTree = append(fieldsTree, field)
@@ -298,6 +305,7 @@ func (entity *Entity) addFields(fields fieldList, path string) ([]*Field, error)
 				if innerFields, err := entity.addFields(structFieldList{embedded}, path+"."+property.Name); err != nil {
 					return nil, err
 				} else {
+					// apply some struct-related settings
 					field.Property = nil
 					field.Fields = innerFields
 
@@ -307,9 +315,14 @@ func (entity *Entity) addFields(fields fieldList, path string) ([]*Field, error)
 						field.Type = typ.String()
 					}
 
+					// strip the '*' if it's a pointer type
 					if len(field.Type) > 1 && field.Type[0] == '*' {
-						field.Type = field.Type[1:] // strip the '*' if it's a pointer type
+						field.Type = field.Type[1:]
 					}
+
+					// get just the last component from `packagename.typename` for the field name
+					var parts = strings.Split(field.Name, ".")
+					field.Name = parts[len(parts)-1]
 				}
 
 				// this struct itself is not added, just the inner properties
@@ -607,17 +620,6 @@ func (property *Property) setObFlags() error {
 	}
 
 	return nil
-}
-
-// called from the template
-// avoid GO error "imported and not used"
-func (binding *Binding) UsesStrconv() bool {
-	for _, entity := range binding.Entities {
-		if entity.IdProperty.GoType == "string" {
-			return true
-		}
-	}
-	return false
 }
 
 // called from the template

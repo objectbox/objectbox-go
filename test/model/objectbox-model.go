@@ -15,7 +15,8 @@ func ObjectBoxModel() *objectbox.Model {
 	model.RegisterBinding(EntityBinding)
 	model.RegisterBinding(TestStringIdEntityBinding)
 	model.RegisterBinding(EntityByValueBinding)
-	model.LastEntityId(3, 2793387980842421409)
+	model.RegisterBinding(TestEntityInlineBinding)
+	model.LastEntityId(4, 7566870022778519807)
 
 	return model
 }

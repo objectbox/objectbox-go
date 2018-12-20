@@ -109,9 +109,28 @@
           "name": "Id"
         }
       ]
+    },
+    {
+      "id": "4:7566870022778519807",
+      "name": "TestEntityInline",
+      "lastPropertyId": "3:5298431058949014957",
+      "properties": [
+        {
+          "id": "1:6052475349651303914",
+          "name": "Date"
+        },
+        {
+          "id": "2:7019205901062172310",
+          "name": "Value"
+        },
+        {
+          "id": "3:5298431058949014957",
+          "name": "Id"
+        }
+      ]
     }
   ],
-  "lastEntityId": "3:2793387980842421409",
+  "lastEntityId": "4:7566870022778519807",
   "lastIndexId": "",
   "retiredEntityUids": [],
   "retiredIndexUids": [],

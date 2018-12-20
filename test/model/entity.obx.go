@@ -655,3 +655,241 @@ func (query *TestStringIdEntityQuery) Limit(limit uint64) *TestStringIdEntityQue
 	query.Query.Limit(limit)
 	return query
 }
+
+type testEntityInline_EntityInfo struct {
+	Id  objectbox.TypeId
+	Uid uint64
+}
+
+var TestEntityInlineBinding = testEntityInline_EntityInfo{
+	Id:  4,
+	Uid: 7566870022778519807,
+}
+
+// TestEntityInline_ contains type-based Property helpers to facilitate some common operations such as Queries.
+var TestEntityInline_ = struct {
+	Date  *objectbox.PropertyInt64
+	Value *objectbox.PropertyFloat64
+	Id    *objectbox.PropertyUint64
+}{
+	Date: &objectbox.PropertyInt64{
+		Property: &objectbox.Property{
+			Id: 1,
+			Entity: &objectbox.Entity{
+				Id: 4,
+			},
+		},
+	},
+	Value: &objectbox.PropertyFloat64{
+		Property: &objectbox.Property{
+			Id: 2,
+			Entity: &objectbox.Entity{
+				Id: 4,
+			},
+		},
+	},
+	Id: &objectbox.PropertyUint64{
+		Property: &objectbox.Property{
+			Id: 3,
+			Entity: &objectbox.Entity{
+				Id: 4,
+			},
+		},
+	},
+}
+
+// GeneratorVersion is called by the ObjectBox to verify the compatibility of the generator used to generate this code
+func (testEntityInline_EntityInfo) GeneratorVersion() int {
+	return 1
+}
+
+// AddToModel is called by the ObjectBox during model build
+func (testEntityInline_EntityInfo) AddToModel(model *objectbox.Model) {
+	model.Entity("TestEntityInline", 4, 7566870022778519807)
+	model.Property("Date", objectbox.PropertyType_Long, 1, 6052475349651303914)
+	model.Property("Value", objectbox.PropertyType_Double, 2, 7019205901062172310)
+	model.Property("Id", objectbox.PropertyType_Long, 3, 5298431058949014957)
+	model.PropertyFlags(objectbox.PropertyFlags_ID)
+	model.EntityLastPropertyId(3, 5298431058949014957)
+}
+
+// GetId is called by the ObjectBox during Put operations to check for existing ID on an object
+func (testEntityInline_EntityInfo) GetId(object interface{}) (uint64, error) {
+	return object.(*TestEntityInline).Id, nil
+}
+
+// SetId is called by the ObjectBox during Put to update an ID on an object that has just been inserted
+func (testEntityInline_EntityInfo) SetId(object interface{}, id uint64) error {
+	object.(*TestEntityInline).Id = id
+	return nil
+}
+
+// Flatten is called by the ObjectBox to transform an object to a FlatBuffer
+func (testEntityInline_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
+	obj := object.(*TestEntityInline)
+
+	// build the FlatBuffers object
+	fbb.StartObject(3)
+	fbutils.SetInt64Slot(fbb, 0, obj.Date)
+	fbutils.SetFloat64Slot(fbb, 1, obj.Value)
+	fbutils.SetUint64Slot(fbb, 2, id)
+}
+
+// ToObject is called by the ObjectBox to load an object from a FlatBuffer
+func (testEntityInline_EntityInfo) ToObject(bytes []byte) interface{} {
+	table := &flatbuffers.Table{
+		Bytes: bytes,
+		Pos:   flatbuffers.GetUOffsetT(bytes),
+	}
+
+	return &TestEntityInline{
+		BaseWithDate: BaseWithDate{
+			Date: table.GetInt64Slot(4, 0),
+		},
+		BaseWithValue: &BaseWithValue{
+			Value: table.GetFloat64Slot(6, 0),
+		},
+		Id: table.GetUint64Slot(8, 0),
+	}
+}
+
+// MakeSlice is called by the ObjectBox to construct a new slice to hold the read objects
+func (testEntityInline_EntityInfo) MakeSlice(capacity int) interface{} {
+	return make([]*TestEntityInline, 0, capacity)
+}
+
+// AppendToSlice is called by the ObjectBox to fill the slice of the read objects
+func (testEntityInline_EntityInfo) AppendToSlice(slice interface{}, object interface{}) interface{} {
+	return append(slice.([]*TestEntityInline), object.(*TestEntityInline))
+}
+
+// Box provides CRUD access to TestEntityInline objects
+type TestEntityInlineBox struct {
+	*objectbox.Box
+}
+
+// BoxForTestEntityInline opens a box of TestEntityInline objects
+func BoxForTestEntityInline(ob *objectbox.ObjectBox) *TestEntityInlineBox {
+	return &TestEntityInlineBox{
+		Box: ob.InternalBox(4),
+	}
+}
+
+// Put synchronously inserts/updates a single object.
+// In case the Id is not specified, it would be assigned automatically (auto-increment).
+// When inserting, the TestEntityInline.Id property on the passed object will be assigned the new ID as well.
+func (box *TestEntityInlineBox) Put(object *TestEntityInline) (uint64, error) {
+	return box.Box.Put(object)
+}
+
+// PutAsync asynchronously inserts/updates a single object.
+// When inserting, the TestEntityInline.Id property on the passed object will be assigned the new ID as well.
+//
+// It's executed on a separate internal thread for better performance.
+//
+// There are two main use cases:
+//
+// 1) "Put & Forget:" you gain faster puts as you don't have to wait for the transaction to finish.
+//
+// 2) Many small transactions: if your write load is typically a lot of individual puts that happen in parallel,
+// this will merge small transactions into bigger ones. This results in a significant gain in overall throughput.
+//
+//
+// In situations with (extremely) high async load, this method may be throttled (~1ms) or delayed (<1s).
+// In the unlikely event that the object could not be enqueued after delaying, an error will be returned.
+//
+// Note that this method does not give you hard durability guarantees like the synchronous Put provides.
+// There is a small time window (typically 3 ms) in which the data may not have been committed durably yet.
+func (box *TestEntityInlineBox) PutAsync(object *TestEntityInline) (uint64, error) {
+	return box.Box.PutAsync(object)
+}
+
+// PutAll inserts multiple objects in single transaction.
+// In case Ids are not set on the objects, they would be assigned automatically (auto-increment).
+//
+// Returns: IDs of the put objects (in the same order).
+// When inserting, the TestEntityInline.Id property on the objects in the slice will be assigned the new IDs as well.
+//
+// Note: In case an error occurs during the transaction, some of the objects may already have the TestEntityInline.Id assigned
+// even though the transaction has been rolled back and the objects are not stored under those IDs.
+//
+// Note: The slice may be empty or even nil; in both cases, an empty IDs slice and no error is returned.
+func (box *TestEntityInlineBox) PutAll(objects []*TestEntityInline) ([]uint64, error) {
+	return box.Box.PutAll(objects)
+}
+
+// Get reads a single object.
+//
+// Returns nil (and no error) in case the object with the given ID doesn't exist.
+func (box *TestEntityInlineBox) Get(id uint64) (*TestEntityInline, error) {
+	object, err := box.Box.Get(id)
+	if err != nil {
+		return nil, err
+	} else if object == nil {
+		return nil, nil
+	}
+	return object.(*TestEntityInline), nil
+}
+
+// Get reads all stored objects
+func (box *TestEntityInlineBox) GetAll() ([]*TestEntityInline, error) {
+	objects, err := box.Box.GetAll()
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*TestEntityInline), nil
+}
+
+// Remove deletes a single object
+func (box *TestEntityInlineBox) Remove(object *TestEntityInline) (err error) {
+	return box.Box.Remove(object.Id)
+}
+
+// Creates a query with the given conditions. Use the fields of the TestEntityInline_ struct to create conditions.
+// Keep the *TestEntityInlineQuery if you intend to execute the query multiple times.
+// Note: this function panics if you try to create illegal queries; e.g. use properties of an alien type.
+// This is typically a programming error. Use QueryOrError instead if you want the explicit error check.
+func (box *TestEntityInlineBox) Query(conditions ...objectbox.Condition) *TestEntityInlineQuery {
+	return &TestEntityInlineQuery{
+		box.Box.Query(conditions...),
+	}
+}
+
+// Creates a query with the given conditions. Use the fields of the TestEntityInline_ struct to create conditions.
+// Keep the *TestEntityInlineQuery if you intend to execute the query multiple times.
+func (box *TestEntityInlineBox) QueryOrError(conditions ...objectbox.Condition) (*TestEntityInlineQuery, error) {
+	if query, err := box.Box.QueryOrError(conditions...); err != nil {
+		return nil, err
+	} else {
+		return &TestEntityInlineQuery{query}, nil
+	}
+}
+
+// Query provides a way to search stored objects
+//
+// For example, you can find all TestEntityInline which Id is either 42 or 47:
+// 		box.Query(TestEntityInline_.Id.In(42, 47)).Find()
+type TestEntityInlineQuery struct {
+	*objectbox.Query
+}
+
+// Find returns all objects matching the query
+func (query *TestEntityInlineQuery) Find() ([]*TestEntityInline, error) {
+	objects, err := query.Query.Find()
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*TestEntityInline), nil
+}
+
+// Offset defines the index of the first object to process (how many objects to skip)
+func (query *TestEntityInlineQuery) Offset(offset uint64) *TestEntityInlineQuery {
+	query.Query.Offset(offset)
+	return query
+}
+
+// Limit sets the number of elements to process by the query
+func (query *TestEntityInlineQuery) Limit(limit uint64) *TestEntityInlineQuery {
+	query.Query.Limit(limit)
+	return query
+}

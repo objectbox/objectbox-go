@@ -16,6 +16,8 @@
 
 package model
 
+import "time"
+
 //go:generate objectbox-gogen
 
 // Tests all available GO & ObjectBox types
@@ -39,9 +41,8 @@ type Entity struct {
 	Rune       rune
 	Float32    float32
 	Float64    float64
-	Date       int64 `date`
-	// TODO Complex64  complex64
-	// TODO Complex128 complex128
+	Date       time.Time  `date type:"int64" converter:"timeInt64"`
+	Complex128 complex128 `type:"[]byte" converter:"complex128Bytes"`
 }
 
 type TestStringIdEntity struct {

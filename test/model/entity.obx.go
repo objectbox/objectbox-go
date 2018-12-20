@@ -40,6 +40,7 @@ var Entity_ = struct {
 	Float32    *objectbox.PropertyFloat32
 	Float64    *objectbox.PropertyFloat64
 	Date       *objectbox.PropertyInt64
+	Complex128 *objectbox.PropertyByteVector
 }{
 	Id: &objectbox.PropertyUint64{
 		Property: &objectbox.Property{
@@ -193,6 +194,14 @@ var Entity_ = struct {
 			},
 		},
 	},
+	Complex128: &objectbox.PropertyByteVector{
+		Property: &objectbox.Property{
+			Id: 20,
+			Entity: &objectbox.Entity{
+				Id: 1,
+			},
+		},
+	},
 }
 
 // GeneratorVersion is called by the ObjectBox to verify the compatibility of the generator used to generate this code
@@ -223,7 +232,8 @@ func (entity_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Property("Float32", objectbox.PropertyType_Float, 17, 2321055489159952634)
 	model.Property("Float64", objectbox.PropertyType_Double, 18, 681625187526498317)
 	model.Property("Date", objectbox.PropertyType_Date, 19, 2927532418453906842)
-	model.EntityLastPropertyId(19, 2927532418453906842)
+	model.Property("Complex128", objectbox.PropertyType_ByteVector, 20, 2323084480359838337)
+	model.EntityLastPropertyId(20, 2323084480359838337)
 }
 
 // GetId is called by the ObjectBox during Put operations to check for existing ID on an object
@@ -242,9 +252,10 @@ func (entity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, i
 	obj := object.(*Entity)
 	var offsetString = fbutils.CreateStringOffset(fbb, obj.String)
 	var offsetByteVector = fbutils.CreateByteVectorOffset(fbb, obj.ByteVector)
+	var offsetComplex128 = fbutils.CreateByteVectorOffset(fbb, complex128BytesToDatabaseValue(obj.Complex128))
 
 	// build the FlatBuffers object
-	fbb.StartObject(19)
+	fbb.StartObject(20)
 	fbutils.SetUint64Slot(fbb, 0, id)
 	fbutils.SetInt64Slot(fbb, 1, int64(obj.Int))
 	fbutils.SetInt8Slot(fbb, 2, obj.Int8)
@@ -263,7 +274,8 @@ func (entity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, i
 	fbutils.SetInt32Slot(fbb, 15, obj.Rune)
 	fbutils.SetFloat32Slot(fbb, 16, obj.Float32)
 	fbutils.SetFloat64Slot(fbb, 17, obj.Float64)
-	fbutils.SetInt64Slot(fbb, 18, obj.Date)
+	fbutils.SetInt64Slot(fbb, 18, timeInt64ToDatabaseValue(obj.Date))
+	fbutils.SetUOffsetTSlot(fbb, 19, offsetComplex128)
 }
 
 // ToObject is called by the ObjectBox to load an object from a FlatBuffer
@@ -292,7 +304,8 @@ func (entity_EntityInfo) ToObject(bytes []byte) interface{} {
 		Rune:       rune(table.GetInt32Slot(34, 0)),
 		Float32:    table.GetFloat32Slot(36, 0),
 		Float64:    table.GetFloat64Slot(38, 0),
-		Date:       table.GetInt64Slot(40, 0),
+		Date:       timeInt64ToEntityProperty(table.GetInt64Slot(40, 0)),
+		Complex128: complex128BytesToEntityProperty(fbutils.GetByteVectorSlot(table, 42)),
 	}
 }
 

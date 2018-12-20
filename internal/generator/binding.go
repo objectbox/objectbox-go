@@ -24,6 +24,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/pkg/errors"
+
 	"github.com/objectbox/objectbox-go/internal/generator/modelinfo"
 )
 
@@ -66,10 +68,11 @@ type Property struct {
 	FbType      string
 	Relation    *Relation
 	Index       *Index
+	Converter   *string
 
 	entity     *Entity
 	uidRequest bool
-	path       string // relative adressing path for embedded structs
+	path       string // relative addressing path for embedded structs
 }
 
 type Relation struct {
@@ -285,58 +288,72 @@ func (entity *Entity) addFields(fields fieldList, path string) ([]*Field, error)
 
 		fieldsTree = append(fieldsTree, field)
 
-		// first try to setType if it's one of the basic supported types
-		typ := f.Type()
-		if err := property.setType(typ.String()); err != nil {
-			// if not, get the underlying type and try again
-			baseType, err := typ.UnderlyingOrError()
-			if err != nil {
+		if property.Annotations["type"] != nil {
+			if err := property.setType(property.Annotations["type"].Value); err != nil {
 				return nil, propertyError(err, property)
 			}
-
-			// in case it's a pointer, get it's underlying type
-			if pointer, isPointer := baseType.(*types.Pointer); isPointer {
-				baseType = pointer.Elem().Underlying()
-				field.IsPointer = true
-			}
-
-			// in case it's an embedded struct, inline all fields
-			if embedded, isStruct := baseType.(*types.Struct); isStruct {
-				if innerFields, err := entity.addFields(structFieldList{embedded}, path+"."+property.Name); err != nil {
-					return nil, err
-				} else {
-					// apply some struct-related settings
-					field.Property = nil
-					field.Fields = innerFields
-
-					if namedType, isNamed := f.TypeInternal().(*types.Named); isNamed {
-						field.Type = namedType.Obj().Name()
-					} else {
-						field.Type = typ.String()
-					}
-
-					// strip the '*' if it's a pointer type
-					if len(field.Type) > 1 && field.Type[0] == '*' {
-						field.Type = field.Type[1:]
-					}
-
-					// get just the last component from `packagename.typename` for the field name
-					var parts = strings.Split(field.Name, ".")
-					field.Name = parts[len(parts)-1]
+		} else {
+			// try to setType if it's one of the basic supported types
+			typ := f.Type()
+			if err := property.setType(typ.String()); err != nil {
+				// if not, get the underlying type and try again
+				baseType, err := typ.UnderlyingOrError()
+				if err != nil {
+					return nil, propertyError(err, property)
 				}
 
-				// this struct itself is not added, just the inner properties
-				// TODO error on unknown (unhandled) annotations
-				continue
-			}
+				// in case it's a pointer, get it's underlying type
+				if pointer, isPointer := baseType.(*types.Pointer); isPointer {
+					baseType = pointer.Elem().Underlying()
+					field.IsPointer = true
+				}
 
-			if err = property.setType(baseType.String()); err != nil {
-				return nil, propertyError(err, property)
+				// in case it's an embedded struct, inline all fields
+				if embedded, isStruct := baseType.(*types.Struct); isStruct {
+					if innerFields, err := entity.addFields(structFieldList{embedded}, path+"."+property.Name); err != nil {
+						return nil, err
+					} else {
+						// apply some struct-related settings
+						field.Property = nil
+						field.Fields = innerFields
+
+						if namedType, isNamed := f.TypeInternal().(*types.Named); isNamed {
+							field.Type = namedType.Obj().Name()
+						} else {
+							field.Type = typ.String()
+						}
+
+						// strip the '*' if it's a pointer type
+						if len(field.Type) > 1 && field.Type[0] == '*' {
+							field.Type = field.Type[1:]
+						}
+
+						// get just the last component from `packagename.typename` for the field name
+						var parts = strings.Split(field.Name, ".")
+						field.Name = parts[len(parts)-1]
+					}
+
+					// this struct itself is not added, just the inner properties
+					// TODO error on unknown (unhandled) Annotations
+					continue
+				}
+
+				if err = property.setType(baseType.String()); err != nil {
+					return nil, propertyError(err, property)
+				}
 			}
 		}
 
 		if err := property.setObFlags(); err != nil {
 			return nil, propertyError(err, property)
+		}
+
+		if property.Annotations["converter"] != nil {
+			if property.Annotations["type"] == nil {
+				// TODO this could probably be derived from the type-checker results - see getUnderlyingType()
+				return nil, propertyError(errors.New("type annotation has to be specified when using converters"), property)
+			}
+			property.Converter = &property.Annotations["converter"].Value
 		}
 
 		// if this is an ID, set it as entity.IdProperty

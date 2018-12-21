@@ -61,7 +61,7 @@ func (taskByValue_EntityInfo) SetId(object interface{}, id uint64) error {
 		obj.Id = id
 	} else {
 		// NOTE while this can't update, it will at least behave consistently (panic in case of a wrong type)
-		_ = object.(EntityByValue).Id
+		_ = object.(TaskByValue).Id
 	}
 	return nil
 }
@@ -285,7 +285,7 @@ func (taskStringByValue_EntityInfo) SetId(object interface{}, id uint64) error {
 		obj.Id = strconv.FormatUint(id, 10)
 	} else {
 		// NOTE while this can't update, it will at least behave consistently (panic in case of a wrong type)
-		_ = object.(EntityByValue).Id
+		_ = object.(TaskStringByValue).Id
 	}
 	return nil
 }

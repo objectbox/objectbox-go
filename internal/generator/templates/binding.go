@@ -130,7 +130,7 @@ func ({{$entityNameCamel}}_EntityInfo) SetId(object interface{}, id uint64) erro
 				obj.{{$entity.IdProperty.Name}} = strconv.FormatUint(id, 10)
 			} else {
 				// NOTE while this can't update, it will at least behave consistently (panic in case of a wrong type)
-				_ = object.(EntityByValue).{{$entity.IdProperty.Name}}
+				_ = object.({{$entity.Name}}).{{$entity.IdProperty.Name}}
 			}
 		{{- else -}}
 			object.(*{{$entity.Name}}).{{$entity.IdProperty.Name}} = strconv.FormatUint(id, 10)
@@ -141,7 +141,7 @@ func ({{$entityNameCamel}}_EntityInfo) SetId(object interface{}, id uint64) erro
 				obj.{{$entity.IdProperty.Name}} = id
 			} else {
 				// NOTE while this can't update, it will at least behave consistently (panic in case of a wrong type)
-				_ = object.(EntityByValue).{{$entity.IdProperty.Name}}
+				_ = object.({{$entity.Name}}).{{$entity.IdProperty.Name}}
 			}
 		{{- else -}}
 			object.(*{{$entity.Name}}).{{$entity.IdProperty.Name}} = id

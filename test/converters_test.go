@@ -29,7 +29,7 @@ func TestTimeConverter(t *testing.T) {
 	var env = model.NewTestEnv(t)
 	defer env.Close()
 
-	date, err := time.Parse(time.RFC3339, "2018-11-28T12:16:42+07:00")
+	date, err := time.Parse(time.RFC3339, "2018-11-28T12:16:42.145+07:00")
 	assert.NoErr(t, err)
 
 	id := env.PutEntity(&model.Entity{Date: date})
@@ -37,7 +37,7 @@ func TestTimeConverter(t *testing.T) {
 
 	read, err := env.Box.Get(id)
 	assert.NoErr(t, err)
-	assert.Eq(t, date.Unix(), read.Date.Unix())
+	assert.Eq(t, date.UnixNano(), read.Date.UnixNano())
 }
 
 func TestComplex128Converter(t *testing.T) {

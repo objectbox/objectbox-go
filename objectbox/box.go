@@ -95,12 +95,18 @@ func (box *Box) idForPut(idCandidate uint64) (id uint64, err error) {
 // this will merge small transactions into bigger ones. This results in a significant gain in overall throughput.
 //
 //
-// In situations with (extremely) high async load, this method may be throttled (~1ms) or delayed (<1s).
-// In the unlikely event that the object could not be enqueued after delaying, an error will be returned.
+// In situations with (extremely) high async load, this method may be throttled (~1ms) or delayed
+// up to options.putAsyncTimeout (10 seconds by default). In the unlikely event that the object could
+// not be enqueued after delaying (because of a full queue), an error will be returned.
 //
 // Note that this method does not give you hard durability guarantees like the synchronous Put provides.
-// There is a small time window (typically 3 ms) in which the data may not have been committed durably yet.
+// There is a small time window in which the data may not have been committed durably yet.
 func (box *Box) PutAsync(object interface{}) (id uint64, err error) {
+	return box.PutAsyncWithTimeout(object, box.objectBox.options.putAsyncTimeout)
+}
+
+// Same as PutAsync but with a custom enqueue timeout
+func (box *Box) PutAsyncWithTimeout(object interface{}, timeoutMs uint) (id uint64, err error) {
 	idFromObject, err := box.binding.GetId(object)
 	if err != nil {
 		return
@@ -121,7 +127,7 @@ func (box *Box) PutAsync(object interface{}) (id uint64, err error) {
 	box.binding.Flatten(object, fbb, id)
 
 	checkForPreviousValue := idFromObject != 0
-	if err = box.finishFbbAndPutAsync(fbb, id, checkForPreviousValue); err != nil {
+	if err = box.finishFbbAndPutAsync(fbb, id, checkForPreviousValue, timeoutMs); err != nil {
 		return 0, err
 	}
 
@@ -136,12 +142,12 @@ func (box *Box) PutAsync(object interface{}) (id uint64, err error) {
 	return id, nil
 }
 
-func (box *Box) finishFbbAndPutAsync(fbb *flatbuffers.Builder, id uint64, checkForPreviousObject bool) (err error) {
+func (box *Box) finishFbbAndPutAsync(fbb *flatbuffers.Builder, id uint64, checkForPreviousObject bool, timeoutMs uint) (err error) {
 	fbb.Finish(fbb.EndObject())
 	bytes := fbb.FinishedBytes()
 
 	rc := C.obx_box_put_async(box.box,
-		C.obx_id(id), unsafe.Pointer(&bytes[0]), C.size_t(len(bytes)), C.bool(checkForPreviousObject), 1000)
+		C.obx_id(id), unsafe.Pointer(&bytes[0]), C.size_t(len(bytes)), C.bool(checkForPreviousObject), C.uint64_t(timeoutMs))
 	if rc != 0 {
 		err = createError()
 	}

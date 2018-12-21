@@ -50,6 +50,11 @@ type ObjectBox struct {
 	bindingsByName map[string]ObjectBinding
 	boxes          map[TypeId]*Box
 	boxesMutex     *sync.Mutex
+	options        options
+}
+
+type options struct {
+	putAsyncTimeout uint
 }
 
 type txnFun func(transaction *Transaction) error

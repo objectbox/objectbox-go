@@ -34,9 +34,10 @@ type Builder struct {
 	model *Model
 	Error error
 
-	name        string
-	maxSizeInKb uint64
-	maxReaders  uint
+	name            string
+	maxSizeInKb     uint64
+	maxReaders      uint
+	putAsyncTimeout uint
 }
 
 func NewBuilder() *Builder {
@@ -52,7 +53,10 @@ func NewBuilder() *Builder {
 			">>> Please run install.sh for a full upgrade <<<\n" +
 			"Or check https://github.com/objectbox/objectbox-c for info about the required library.")
 	}
-	return &Builder{}
+	return &Builder{
+		// defaults
+		putAsyncTimeout: 10000, // 10s
+	}
 }
 
 // Directory configures the path where the database is stored
@@ -70,6 +74,12 @@ func (builder *Builder) MaxSizeInKb(maxSizeInKb uint64) *Builder {
 // Maximum (concurrent) readers (default: 126). Increase only if you are getting errors (highly concurrent scenarios).
 func (builder *Builder) MaxReaders(maxReaders uint) *Builder {
 	builder.maxReaders = maxReaders
+	return builder
+}
+
+// Configures PutAsync enqueue timeout (default is 10 seconds). See Box.PutAsync method doc for more information.
+func (builder *Builder) PutAsyncTimeout(milliseconds uint) *Builder {
+	builder.putAsyncTimeout = milliseconds
 	return builder
 }
 
@@ -133,5 +143,6 @@ func (builder *Builder) BuildOrError() (*ObjectBox, error) {
 		bindingsByName: builder.model.bindingsByName,
 		boxes:          make(map[TypeId]*Box, len(builder.model.bindingsById)),
 		boxesMutex:     &sync.Mutex{},
+		options:        options{putAsyncTimeout: builder.putAsyncTimeout},
 	}, nil
 }

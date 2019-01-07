@@ -127,7 +127,7 @@ func entity47(coef int) *Entity {
 		Uint64:       47 * uint64(coef),
 		Bool:         Bool,
 		String:       String,
-		StringVector: []string{fmt.Sprintf("first-%d", coef), fmt.Sprintf("second-%d", coef)},
+		StringVector: []string{fmt.Sprintf("first-%d", coef), fmt.Sprintf("second-%d", coef), ""},
 		Byte:         47 * byte(coef),
 		ByteVector:   []byte{1 * byte(coef), 2 * byte(coef), 3 * byte(coef), 5 * byte(coef), 8 * byte(coef)},
 		Rune:         47 * rune(coef),

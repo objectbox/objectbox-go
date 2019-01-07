@@ -27,7 +27,7 @@ var Event_ = struct {
 	Picture *objectbox.PropertyByteVector
 }{
 	Id: &objectbox.PropertyUint64{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 1,
 			Entity: &objectbox.Entity{
 				Id: 1,
@@ -35,7 +35,7 @@ var Event_ = struct {
 		},
 	},
 	Uid: &objectbox.PropertyString{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 4,
 			Entity: &objectbox.Entity{
 				Id: 1,
@@ -43,7 +43,7 @@ var Event_ = struct {
 		},
 	},
 	Device: &objectbox.PropertyString{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 2,
 			Entity: &objectbox.Entity{
 				Id: 1,
@@ -51,7 +51,7 @@ var Event_ = struct {
 		},
 	},
 	Date: &objectbox.PropertyInt64{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 3,
 			Entity: &objectbox.Entity{
 				Id: 1,
@@ -59,7 +59,7 @@ var Event_ = struct {
 		},
 	},
 	Picture: &objectbox.PropertyByteVector{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 5,
 			Entity: &objectbox.Entity{
 				Id: 1,
@@ -294,7 +294,7 @@ var Reading_ = struct {
 	ValueFloating32 *objectbox.PropertyFloat32
 }{
 	Id: &objectbox.PropertyUint64{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 1,
 			Entity: &objectbox.Entity{
 				Id: 2,
@@ -302,7 +302,7 @@ var Reading_ = struct {
 		},
 	},
 	Date: &objectbox.PropertyInt64{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 2,
 			Entity: &objectbox.Entity{
 				Id: 2,
@@ -310,7 +310,7 @@ var Reading_ = struct {
 		},
 	},
 	EventId: &objectbox.PropertyUint64{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 3,
 			Entity: &objectbox.Entity{
 				Id: 2,
@@ -318,7 +318,7 @@ var Reading_ = struct {
 		},
 	},
 	ValueName: &objectbox.PropertyString{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 4,
 			Entity: &objectbox.Entity{
 				Id: 2,
@@ -326,7 +326,7 @@ var Reading_ = struct {
 		},
 	},
 	ValueString: &objectbox.PropertyString{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 5,
 			Entity: &objectbox.Entity{
 				Id: 2,
@@ -334,7 +334,7 @@ var Reading_ = struct {
 		},
 	},
 	ValueInteger: &objectbox.PropertyInt64{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 6,
 			Entity: &objectbox.Entity{
 				Id: 2,
@@ -342,7 +342,7 @@ var Reading_ = struct {
 		},
 	},
 	ValueFloating: &objectbox.PropertyFloat64{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 7,
 			Entity: &objectbox.Entity{
 				Id: 2,
@@ -350,7 +350,7 @@ var Reading_ = struct {
 		},
 	},
 	ValueInt32: &objectbox.PropertyInt32{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 8,
 			Entity: &objectbox.Entity{
 				Id: 2,
@@ -358,7 +358,7 @@ var Reading_ = struct {
 		},
 	},
 	ValueFloating32: &objectbox.PropertyFloat32{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 9,
 			Entity: &objectbox.Entity{
 				Id: 2,

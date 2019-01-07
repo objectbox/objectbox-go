@@ -27,7 +27,7 @@ var Entity_ = struct {
 	Float64 *objectbox.PropertyFloat64
 }{
 	Id: &objectbox.PropertyUint64{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 1,
 			Entity: &objectbox.Entity{
 				Id: 1,
@@ -35,7 +35,7 @@ var Entity_ = struct {
 		},
 	},
 	Int32: &objectbox.PropertyInt32{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 2,
 			Entity: &objectbox.Entity{
 				Id: 1,
@@ -43,7 +43,7 @@ var Entity_ = struct {
 		},
 	},
 	Int64: &objectbox.PropertyInt64{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 3,
 			Entity: &objectbox.Entity{
 				Id: 1,
@@ -51,7 +51,7 @@ var Entity_ = struct {
 		},
 	},
 	String: &objectbox.PropertyString{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 4,
 			Entity: &objectbox.Entity{
 				Id: 1,
@@ -59,7 +59,7 @@ var Entity_ = struct {
 		},
 	},
 	Float64: &objectbox.PropertyFloat64{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 5,
 			Entity: &objectbox.Entity{
 				Id: 1,

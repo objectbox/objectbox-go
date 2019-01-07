@@ -30,7 +30,7 @@ var Task_ = struct {
 	GroupId *objectbox.PropertyUint64
 }{
 	Id: &objectbox.PropertyUint64{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 1,
 			Entity: &objectbox.Entity{
 				Id: 1,
@@ -38,7 +38,7 @@ var Task_ = struct {
 		},
 	},
 	Uid: &objectbox.PropertyString{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 2,
 			Entity: &objectbox.Entity{
 				Id: 1,
@@ -46,7 +46,7 @@ var Task_ = struct {
 		},
 	},
 	Name: &objectbox.PropertyString{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 3,
 			Entity: &objectbox.Entity{
 				Id: 1,
@@ -54,7 +54,7 @@ var Task_ = struct {
 		},
 	},
 	Place: &objectbox.PropertyString{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 4,
 			Entity: &objectbox.Entity{
 				Id: 1,
@@ -62,7 +62,7 @@ var Task_ = struct {
 		},
 	},
 	Source: &objectbox.PropertyString{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 5,
 			Entity: &objectbox.Entity{
 				Id: 1,
@@ -70,7 +70,7 @@ var Task_ = struct {
 		},
 	},
 	Text: &objectbox.PropertyString{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 6,
 			Entity: &objectbox.Entity{
 				Id: 1,
@@ -78,7 +78,7 @@ var Task_ = struct {
 		},
 	},
 	Date: &objectbox.PropertyUint64{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 7,
 			Entity: &objectbox.Entity{
 				Id: 1,
@@ -86,7 +86,7 @@ var Task_ = struct {
 		},
 	},
 	GroupId: &objectbox.PropertyUint64{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 8,
 			Entity: &objectbox.Entity{
 				Id: 1,
@@ -329,7 +329,7 @@ var Group_ = struct {
 	Id *objectbox.PropertyUint64
 }{
 	Id: &objectbox.PropertyUint64{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 1,
 			Entity: &objectbox.Entity{
 				Id: 2,

@@ -58,7 +58,7 @@ var {{$entity.Name}}_ = struct {
 			{{- if and (eq $entity.IdProperty.Name $property.Name) (eq $entity.IdProperty.GoType "string")}}PropertyUint64
 			{{- else}}Property{{$property.GoType | TypeIdentifier}}
 			{{- end}}{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: {{$property.Id}},
 			Entity: &objectbox.Entity{
 				Id: {{$entity.Id}},

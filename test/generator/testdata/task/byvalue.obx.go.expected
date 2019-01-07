@@ -16,7 +16,7 @@ type taskByValue_EntityInfo struct {
 
 var TaskByValueBinding = taskByValue_EntityInfo{
 	Id:  3,
-	Uid: 2339563716805116249,
+	Uid: 2661732831099943416,
 }
 
 // TaskByValue_ contains type-based Property helpers to facilitate some common operations such as Queries.
@@ -40,10 +40,10 @@ func (taskByValue_EntityInfo) GeneratorVersion() int {
 
 // AddToModel is called by the ObjectBox during model build
 func (taskByValue_EntityInfo) AddToModel(model *objectbox.Model) {
-	model.Entity("TaskByValue", 3, 2339563716805116249)
-	model.Property("Id", objectbox.PropertyType_Long, 1, 7144924247938981575)
+	model.Entity("TaskByValue", 3, 2661732831099943416)
+	model.Property("Id", objectbox.PropertyType_Long, 1, 8325060299420976708)
 	model.PropertyFlags(objectbox.PropertyFlags_ID)
-	model.EntityLastPropertyId(1, 7144924247938981575)
+	model.EntityLastPropertyId(1, 8325060299420976708)
 }
 
 // GetId is called by the ObjectBox during Put operations to check for existing ID on an object
@@ -234,7 +234,7 @@ type taskStringByValue_EntityInfo struct {
 
 var TaskStringByValueBinding = taskStringByValue_EntityInfo{
 	Id:  4,
-	Uid: 161231572858529631,
+	Uid: 7837839688282259259,
 }
 
 // TaskStringByValue_ contains type-based Property helpers to facilitate some common operations such as Queries.
@@ -258,10 +258,10 @@ func (taskStringByValue_EntityInfo) GeneratorVersion() int {
 
 // AddToModel is called by the ObjectBox during model build
 func (taskStringByValue_EntityInfo) AddToModel(model *objectbox.Model) {
-	model.Entity("TaskStringByValue", 4, 161231572858529631)
-	model.Property("Id", objectbox.PropertyType_Long, 1, 7259475919510918339)
+	model.Entity("TaskStringByValue", 4, 7837839688282259259)
+	model.Property("Id", objectbox.PropertyType_Long, 1, 2518412263346885298)
 	model.PropertyFlags(objectbox.PropertyFlags_ID)
-	model.EntityLastPropertyId(1, 7259475919510918339)
+	model.EntityLastPropertyId(1, 2518412263346885298)
 }
 
 // GetId is called by the ObjectBox during Put operations to check for existing ID on an object

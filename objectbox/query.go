@@ -212,12 +212,12 @@ func (query *Query) find(cursor *cursor) (slice interface{}, err error) {
 	return cursor.cBytesArrayToObjects(cBytesArray), nil
 }
 
-type anyProperty interface {
+type Property interface {
 	propertyId() TypeId
 	entityId() TypeId
 }
 
-func (query *Query) SetStringParams(property anyProperty, values ...string) error {
+func (query *Query) SetStringParams(property Property, values ...string) error {
 	var rc = 0
 	if len(values) == 0 {
 		return fmt.Errorf("no values given")
@@ -237,7 +237,7 @@ func (query *Query) SetStringParams(property anyProperty, values ...string) erro
 	return nil
 }
 
-func (query *Query) SetStringParamsIn(property anyProperty, values ...string) error {
+func (query *Query) SetStringParamsIn(property Property, values ...string) error {
 	var rc = 0
 	if len(values) == 0 {
 		return fmt.Errorf("no values given")
@@ -254,7 +254,7 @@ func (query *Query) SetStringParamsIn(property anyProperty, values ...string) er
 	return nil
 }
 
-func (query *Query) SetInt64Params(property anyProperty, values ...int64) error {
+func (query *Query) SetInt64Params(property Property, values ...int64) error {
 	var rc = 0
 	if len(values) == 0 {
 		return fmt.Errorf("no values given")
@@ -275,7 +275,7 @@ func (query *Query) SetInt64Params(property anyProperty, values ...int64) error 
 	return nil
 }
 
-func (query *Query) SetInt64ParamsIn(property anyProperty, values ...int64) error {
+func (query *Query) SetInt64ParamsIn(property Property, values ...int64) error {
 	var rc = 0
 	if len(values) == 0 {
 		return fmt.Errorf("no values given")
@@ -290,7 +290,7 @@ func (query *Query) SetInt64ParamsIn(property anyProperty, values ...int64) erro
 	return nil
 }
 
-func (query *Query) SetInt32ParamsIn(property anyProperty, values ...int32) error {
+func (query *Query) SetInt32ParamsIn(property Property, values ...int32) error {
 	var rc = 0
 	if len(values) == 0 {
 		return fmt.Errorf("no values given")
@@ -305,7 +305,7 @@ func (query *Query) SetInt32ParamsIn(property anyProperty, values ...int32) erro
 	return nil
 }
 
-func (query *Query) SetFloat64Params(property anyProperty, values ...float64) error {
+func (query *Query) SetFloat64Params(property Property, values ...float64) error {
 	var rc = 0
 	if len(values) == 0 {
 		return fmt.Errorf("no values given")
@@ -326,7 +326,7 @@ func (query *Query) SetFloat64Params(property anyProperty, values ...float64) er
 	return nil
 }
 
-func (query *Query) SetBytesParams(property anyProperty, values ...[]byte) error {
+func (query *Query) SetBytesParams(property Property, values ...[]byte) error {
 	var rc = 0
 	if len(values) == 0 {
 		return fmt.Errorf("no values given")

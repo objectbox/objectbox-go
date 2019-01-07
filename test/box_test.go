@@ -224,6 +224,28 @@ func TestBoxPutData(t *testing.T) {
 
 	read, err := env.Box.Get(id)
 	assert.NoErr(t, err)
-
 	assert.Eq(t, inserted, read)
+
+	// test empty vectors
+	inserted.StringVector = []string{}
+	inserted.ByteVector = []byte{}
+
+	id, err = env.Box.Put(inserted)
+	assert.NoErr(t, err)
+
+	read, err = env.Box.Get(id)
+	assert.NoErr(t, err)
+	assert.Eq(t, *inserted, *read)
+
+	// test nil vectors
+	inserted.StringVector = nil
+	inserted.ByteVector = nil
+
+	id, err = env.Box.Put(inserted)
+	assert.NoErr(t, err)
+
+	read, err = env.Box.Get(id)
+	assert.NoErr(t, err)
+	assert.Eq(t, *inserted, *read)
+
 }

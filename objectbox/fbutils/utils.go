@@ -28,15 +28,15 @@ func CreateStringOffset(fbb *flatbuffers.Builder, value string) flatbuffers.UOff
 }
 
 func CreateByteVectorOffset(fbb *flatbuffers.Builder, value []byte) flatbuffers.UOffsetT {
-	if len(value) > 0 {
-		return fbb.CreateByteVector(value)
-	} else {
+	if value == nil {
 		return 0
 	}
+
+	return fbb.CreateByteVector(value)
 }
 
 func CreateStringVectorOffset(fbb *flatbuffers.Builder, values []string) flatbuffers.UOffsetT {
-	if len(values) == 0 {
+	if values == nil {
 		return 0
 	}
 

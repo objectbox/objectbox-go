@@ -20,8 +20,11 @@ import (
 	"fmt"
 	"go/ast"
 	"go/types"
+	"log"
 	"strconv"
 	"strings"
+
+	"github.com/pkg/errors"
 
 	"github.com/objectbox/objectbox-go/internal/generator/modelinfo"
 )
@@ -30,8 +33,9 @@ type uid = uint64
 type id = uint32
 
 type Binding struct {
-	Package  string
+	Package  *types.Package
 	Entities []*Entity
+	Imports  map[string]string
 
 	err    error
 	source *file
@@ -41,13 +45,15 @@ type Entity struct {
 	Name           string
 	Id             id
 	Uid            uid
+	Fields         []*Field // the tree of struct fields (necessary for embedded structs)
 	Properties     []*Property
 	IdProperty     *Property
 	LastPropertyId modelinfo.IdUid
 	Annotations    map[string]*Annotation
 
-	binding    *Binding // parent
-	uidRequest bool
+	binding          *Binding // parent
+	uidRequest       bool
+	propertiesByName map[string]bool
 }
 
 type Property struct {
@@ -62,9 +68,11 @@ type Property struct {
 	FbType      string
 	Relation    *Relation
 	Index       *Index
+	Converter   *string
 
 	entity     *Entity
 	uidRequest bool
+	path       string // relative addressing path for embedded structs
 }
 
 type Relation struct {
@@ -80,13 +88,22 @@ type Annotation struct {
 	Value string
 }
 
+type Field struct {
+	Name      string
+	Type      string
+	IsPointer bool
+	Property  *Property // nil if it's an embedded struct
+	Fields    []*Field  // inner fields, nil if it's a property
+}
+
 func newBinding() (*Binding, error) {
 	return &Binding{}, nil
 }
 
 func (binding *Binding) createFromAst(f *file) (err error) {
 	binding.source = f
-	binding.Package = f.f.Name.Name // this is actually package name, not file name
+	binding.Package = types.NewPackage(f.dir, f.f.Name.Name)
+	binding.Imports = make(map[string]string)
 
 	// this will hold the pointer to the latest GenDecl encountered (parent of the current struct)
 	var prevDecl *ast.GenDecl
@@ -150,14 +167,15 @@ func (binding *Binding) entityLoader(node ast.Node, prevDecl **ast.GenDecl) bool
 	return false
 }
 
-func (binding *Binding) createEntityFromAst(node ast.Node, name string, comments []*ast.Comment) (err error) {
+func (binding *Binding) createEntityFromAst(strct *ast.StructType, name string, comments []*ast.Comment) error {
 	entity := &Entity{
-		binding: binding,
-		Name:    name,
+		binding:          binding,
+		Name:             name,
+		propertiesByName: make(map[string]bool),
 	}
 
 	if comments != nil {
-		if err = entity.setAnnotations(comments); err != nil {
+		if err := entity.setAnnotations(comments); err != nil {
 			return fmt.Errorf("%s on entity %s", err, entity.Name)
 		}
 	}
@@ -174,92 +192,10 @@ func (binding *Binding) createEntityFromAst(node ast.Node, name string, comments
 		}
 	}
 
-	propertiesByName := make(map[string]bool)
-
-	var propertyError = func(err error, property *Property) error {
-		return fmt.Errorf("%s on property %s, entity %s", err, property.Name, entity.Name)
-	}
-
-	switch t := node.(type) {
-	case *ast.StructType:
-		for _, f := range t.Fields.List {
-			if len(f.Names) != 1 {
-				return fmt.Errorf("struct %s has a f with an invalid number of names, one expected, got %v",
-					entity.Name, len(f.Names))
-			}
-
-			property := &Property{
-				entity: entity,
-				Name:   f.Names[0].Name,
-			}
-
-			if f.Tag != nil {
-				if err = property.setAnnotations(f.Tag.Value); err != nil {
-					return propertyError(err, property)
-				}
-			}
-
-			// transient properties are not stored, thus no need to use it in the binding
-			if property.Annotations["transient"] != nil {
-				continue
-			}
-
-			// first try to setType if it's one of the basic supported types
-			if err = property.setType(types.ExprString(f.Type)); err != nil {
-				// if not, get the underlying type and try again
-				if baseType, err := binding.source.getUnderlyingType(f.Type); err != nil {
-					return propertyError(err, property)
-				} else if err = property.setType(baseType); err != nil {
-					return propertyError(err, property)
-				}
-			}
-
-			if err = property.setObFlags(*f); err != nil {
-				return propertyError(err, property)
-			}
-
-			// if this is an ID, set it as entity.IdProperty
-			if property.Annotations["id"] != nil {
-				if entity.IdProperty != nil {
-					return fmt.Errorf("struct %s has multiple ID properties - %s and %s",
-						entity.Name, entity.IdProperty.Name, property.Name)
-				}
-				entity.IdProperty = property
-			}
-
-			if property.Annotations["nameindb"] != nil {
-				if len(property.Annotations["nameindb"].Value) == 0 {
-					return propertyError(fmt.Errorf("nameInDb annotation value must not be empty"), property)
-				} else {
-					property.ObName = property.Annotations["nameindb"].Value
-				}
-			} else {
-				property.ObName = property.Name
-			}
-
-			// ObjectBox core internally converts to lowercase so we should check it as this as well
-			var realObName = strings.ToLower(property.ObName)
-			if propertiesByName[realObName] {
-				return propertyError(fmt.Errorf(
-					"duplicate name (note that property names are case insensitive)"), property)
-			} else {
-				propertiesByName[realObName] = true
-			}
-
-			if property.Annotations["uid"] != nil {
-				if len(property.Annotations["uid"].Value) == 0 {
-					// in case the user doesn't provide `uid` value, it's considered in-process of setting up UID
-					// this flag is handled by the merge mechanism and prints the UID of the already existing property
-					property.uidRequest = true
-				} else if uid, err := strconv.ParseUint(property.Annotations["uid"].Value, 10, 64); err != nil {
-					return propertyError(fmt.Errorf("can't parse uid - %s", err), property)
-				} else {
-					property.Uid = uid
-				}
-			}
-
-			entity.Properties = append(entity.Properties, property)
-		}
+	if fields, err := entity.addFields(astStructFieldList{strct, binding.source}, entity.Name); err != nil {
+		return err
+	} else {
+		entity.Fields = fields
 	}
 
 	if len(entity.Properties) == 0 {
@@ -292,10 +228,178 @@ func (binding *Binding) createEntityFromAst(node ast.Node, name string, comments
 	if entity.IdProperty.GoType == "string" {
 		entity.IdProperty.ObType = "Long"
 		entity.IdProperty.FbType = "Uint64"
+
+		entity.binding.Imports["strconv"] = "strconv"
 	}
 
 	binding.Entities = append(binding.Entities, entity)
 	return nil
+}
+
+func (entity *Entity) addFields(fields fieldList, path string) ([]*Field, error) {
+	var propertyError = func(err error, property *Property) error {
+		return fmt.Errorf("%s on property %s, entity %s", err, property.Name, path)
+	}
+
+	var fieldsTree []*Field
+
+	for i := 0; i < fields.Length(); i++ {
+		f := fields.Field(i)
+
+		var property = &Property{
+			entity: entity,
+			path:   path,
+		}
+
+		if name, err := f.Name(); err != nil {
+			property.Name = strconv.FormatInt(int64(i), 10) // just for the error message
+			return nil, propertyError(err, property)
+		} else {
+			property.Name = name
+		}
+
+		// this is used to correctly render embedded-structs initialization template
+		var field = &Field{
+			Name:     property.Name,
+			Property: property,
+		}
+
+		if tag := f.Tag(); tag != "" {
+			if err := property.setAnnotations(tag); err != nil {
+				return nil, propertyError(err, property)
+			}
+		}
+
+		// transient properties are not stored, thus no need to use it in the binding
+		if property.Annotations["transient"] != nil {
+			continue
+		}
+
+		// if the embedded field is from a different package, check if it's available (starts with an upercase letter)
+		if f.Package().Path() != entity.binding.Package.Path() {
+			if len(field.Name) == 0 || field.Name[0] < 65 || field.Name[0] > 90 {
+				log.Printf("Note - skipping unavailable field '%s' on entity %s", property.Name, path)
+				continue
+			}
+
+			// import the package. Note that package aliases are not supported yet
+			entity.binding.Imports[f.Package().Path()] = f.Package().Path()
+		}
+
+		fieldsTree = append(fieldsTree, field)
+
+		if property.Annotations["type"] != nil {
+			if err := property.setType(property.Annotations["type"].Value); err != nil {
+				return nil, propertyError(err, property)
+			}
+		} else {
+			// try to setType if it's one of the basic supported types
+			typ := f.Type()
+			if err := property.setType(typ.String()); err != nil {
+				// if not, get the underlying type and try again
+				baseType, err := typ.UnderlyingOrError()
+				if err != nil {
+					return nil, propertyError(err, property)
+				}
+
+				// in case it's a pointer, get it's underlying type
+				if pointer, isPointer := baseType.(*types.Pointer); isPointer {
+					baseType = pointer.Elem().Underlying()
+					field.IsPointer = true
+				}
+
+				// in case it's an embedded struct, inline all fields
+				if embedded, isStruct := baseType.(*types.Struct); isStruct {
+					if innerFields, err := entity.addFields(structFieldList{embedded}, path+"."+property.Name); err != nil {
+						return nil, err
+					} else {
+						// apply some struct-related settings
+						field.Property = nil
+						field.Fields = innerFields
+
+						if namedType, isNamed := f.TypeInternal().(*types.Named); isNamed {
+							field.Type = namedType.Obj().Name()
+						} else {
+							field.Type = typ.String()
+						}
+
+						// strip the '*' if it's a pointer type
+						if len(field.Type) > 1 && field.Type[0] == '*' {
+							field.Type = field.Type[1:]
+						}
+
+						// get just the last component from `packagename.typename` for the field name
+						var parts = strings.Split(field.Name, ".")
+						field.Name = parts[len(parts)-1]
+					}
+
+					// this struct itself is not added, just the inner properties
+					// TODO error on unknown (unhandled) Annotations
+					continue
+				}
+
+				if err = property.setType(baseType.String()); err != nil {
+					return nil, propertyError(err, property)
+				}
+			}
+		}
+
+		if err := property.setObFlags(); err != nil {
+			return nil, propertyError(err, property)
+		}
+
+		if property.Annotations["converter"] != nil {
+			if property.Annotations["type"] == nil {
+				// TODO this could probably be derived from the type-checker results - see getUnderlyingType()
+				return nil, propertyError(errors.New("type annotation has to be specified when using converters"), property)
+			}
+			property.Converter = &property.Annotations["converter"].Value
+		}
+
+		// if this is an ID, set it as entity.IdProperty
+		if property.Annotations["id"] != nil {
+			if entity.IdProperty != nil {
+				return nil, fmt.Errorf("struct %s has multiple ID properties - %s and %s",
+					entity.Name, entity.IdProperty.Name, property.Name)
+			}
+			entity.IdProperty = property
+		}
+
+		if property.Annotations["nameindb"] != nil {
+			if len(property.Annotations["nameindb"].Value) == 0 {
+				return nil, propertyError(fmt.Errorf("nameInDb annotation value must not be empty"), property)
+			} else {
+				property.ObName = property.Annotations["nameindb"].Value
+			}
+		} else {
+			property.ObName = property.Name
+		}
+
+		// ObjectBox core internally converts to lowercase so we should check it as this as well
+		var realObName = strings.ToLower(property.ObName)
+		if entity.propertiesByName[realObName] {
+			return nil, propertyError(fmt.Errorf(
+				"duplicate name (note that property names are case insensitive)"), property)
+		} else {
+			entity.propertiesByName[realObName] = true
+		}
+
+		if property.Annotations["uid"] != nil {
+			if len(property.Annotations["uid"].Value) == 0 {
+				// in case the user doesn't provide `uid` value, it's considered in-process of setting up UID
+				// this flag is handled by the merge mechanism and prints the UID of the already existing property
+				property.uidRequest = true
+			} else if uid, err := strconv.ParseUint(property.Annotations["uid"].Value, 10, 64); err != nil {
+				return nil, propertyError(fmt.Errorf("can't parse uid - %s", err), property)
+			} else {
+				property.Uid = uid
+			}
+		}
+
+		entity.Properties = append(entity.Properties, property)
+	}
+
+	return fieldsTree, nil
 }
 
 func (entity *Entity) setAnnotations(comments []*ast.Comment) error {
@@ -492,7 +596,7 @@ func (property *Property) setIndex() error {
 	}
 }
 
-func (property *Property) setObFlags(f ast.Field) error {
+func (property *Property) setObFlags() error {
 	if property.Annotations["id"] != nil {
 		property.addObFlag("ID")
 	}
@@ -539,17 +643,6 @@ func (property *Property) setObFlags(f ast.Field) error {
 }
 
 // called from the template
-// avoid GO error "imported and not used"
-func (binding *Binding) UsesStrconv() bool {
-	for _, entity := range binding.Entities {
-		if entity.IdProperty.GoType == "string" {
-			return true
-		}
-	}
-	return false
-}
-
-// called from the template
 // avoid GO error "variable declared and not used"
 func (entity *Entity) HasNonIdProperty() bool {
 	for _, prop := range entity.Properties {
@@ -579,4 +672,16 @@ func (property *Property) FbvTableOffset() uint16 {
 // called from the template
 func (property *Property) FbSlot() int {
 	return int(property.Id - 1)
+}
+
+// returns full path to the property (in embedded struct)
+// called from the template
+func (property *Property) Path() string {
+	var parts = strings.Split(property.path, ".")
+
+	// strip the first component
+	parts = parts[1:]
+
+	parts = append(parts, property.Name)
+	return strings.Join(parts, ".")
 }

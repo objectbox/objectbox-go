@@ -106,6 +106,16 @@ func generateAllFiles(t *testing.T, overwriteExpected bool, dir string, modelInf
 
 	var modelFile = generator.ModelFile(modelInfoFile)
 
+	// remove generated files during development (they might be syntactically wrong)
+	if overwriteExpected {
+		inputFiles, err := filepath.Glob(filepath.Join(dir, "*.obx.go"))
+		assert.NoErr(t, err)
+
+		for _, sourceFile := range inputFiles {
+			assert.NoErr(t, os.Remove(sourceFile))
+		}
+	}
+
 	// process all *.go files in the directory
 	inputFiles, err := filepath.Glob(filepath.Join(dir, "*.go"))
 	assert.NoErr(t, err)

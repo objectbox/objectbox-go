@@ -17,14 +17,13 @@
 package generator
 
 import (
+	"errors"
 	"fmt"
 	"go/ast"
 	"go/types"
 	"log"
 	"strconv"
 	"strings"
-
-	"github.com/pkg/errors"
 
 	"github.com/objectbox/objectbox-go/internal/generator/modelinfo"
 )

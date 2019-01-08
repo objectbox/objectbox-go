@@ -43,7 +43,7 @@ var Entity_ = struct {
 	Complex128 *objectbox.PropertyByteVector
 }{
 	Id: &objectbox.PropertyUint64{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 1,
 			Entity: &objectbox.Entity{
 				Id: 1,
@@ -51,7 +51,7 @@ var Entity_ = struct {
 		},
 	},
 	Int: &objectbox.PropertyInt{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 2,
 			Entity: &objectbox.Entity{
 				Id: 1,
@@ -59,7 +59,7 @@ var Entity_ = struct {
 		},
 	},
 	Int8: &objectbox.PropertyInt8{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 3,
 			Entity: &objectbox.Entity{
 				Id: 1,
@@ -67,7 +67,7 @@ var Entity_ = struct {
 		},
 	},
 	Int16: &objectbox.PropertyInt16{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 4,
 			Entity: &objectbox.Entity{
 				Id: 1,
@@ -75,7 +75,7 @@ var Entity_ = struct {
 		},
 	},
 	Int32: &objectbox.PropertyInt32{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 5,
 			Entity: &objectbox.Entity{
 				Id: 1,
@@ -83,7 +83,7 @@ var Entity_ = struct {
 		},
 	},
 	Int64: &objectbox.PropertyInt64{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 6,
 			Entity: &objectbox.Entity{
 				Id: 1,
@@ -91,7 +91,7 @@ var Entity_ = struct {
 		},
 	},
 	Uint: &objectbox.PropertyUint{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 7,
 			Entity: &objectbox.Entity{
 				Id: 1,
@@ -99,7 +99,7 @@ var Entity_ = struct {
 		},
 	},
 	Uint8: &objectbox.PropertyUint8{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 8,
 			Entity: &objectbox.Entity{
 				Id: 1,
@@ -107,7 +107,7 @@ var Entity_ = struct {
 		},
 	},
 	Uint16: &objectbox.PropertyUint16{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 9,
 			Entity: &objectbox.Entity{
 				Id: 1,
@@ -115,7 +115,7 @@ var Entity_ = struct {
 		},
 	},
 	Uint32: &objectbox.PropertyUint32{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 10,
 			Entity: &objectbox.Entity{
 				Id: 1,
@@ -123,7 +123,7 @@ var Entity_ = struct {
 		},
 	},
 	Uint64: &objectbox.PropertyUint64{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 11,
 			Entity: &objectbox.Entity{
 				Id: 1,
@@ -131,7 +131,7 @@ var Entity_ = struct {
 		},
 	},
 	Bool: &objectbox.PropertyBool{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 12,
 			Entity: &objectbox.Entity{
 				Id: 1,
@@ -139,7 +139,7 @@ var Entity_ = struct {
 		},
 	},
 	String: &objectbox.PropertyString{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 13,
 			Entity: &objectbox.Entity{
 				Id: 1,
@@ -147,7 +147,7 @@ var Entity_ = struct {
 		},
 	},
 	Byte: &objectbox.PropertyByte{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 14,
 			Entity: &objectbox.Entity{
 				Id: 1,
@@ -155,7 +155,7 @@ var Entity_ = struct {
 		},
 	},
 	ByteVector: &objectbox.PropertyByteVector{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 15,
 			Entity: &objectbox.Entity{
 				Id: 1,
@@ -163,7 +163,7 @@ var Entity_ = struct {
 		},
 	},
 	Rune: &objectbox.PropertyRune{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 16,
 			Entity: &objectbox.Entity{
 				Id: 1,
@@ -171,7 +171,7 @@ var Entity_ = struct {
 		},
 	},
 	Float32: &objectbox.PropertyFloat32{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 17,
 			Entity: &objectbox.Entity{
 				Id: 1,
@@ -179,7 +179,7 @@ var Entity_ = struct {
 		},
 	},
 	Float64: &objectbox.PropertyFloat64{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 18,
 			Entity: &objectbox.Entity{
 				Id: 1,
@@ -187,7 +187,7 @@ var Entity_ = struct {
 		},
 	},
 	Date: &objectbox.PropertyInt64{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 19,
 			Entity: &objectbox.Entity{
 				Id: 1,
@@ -465,7 +465,7 @@ var TestStringIdEntity_ = struct {
 	Id *objectbox.PropertyUint64
 }{
 	Id: &objectbox.PropertyUint64{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 1,
 			Entity: &objectbox.Entity{
 				Id: 2,

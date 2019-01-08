@@ -20,21 +20,6 @@ package objectbox
 #cgo LDFLAGS: -lobjectbox
 #include <stdlib.h>
 #include "objectbox.h"
-
-
-static char**newCharArray(int size) {
-        return calloc(sizeof(char*), size);
-}
-
-static void setArrayString(const char **array, size_t index, const char *value) {
-        array[index] = value;
-}
-
-static void freeCharArray(char **a, int size) {
-        for (size_t i = 0; i < size; i++)
-                free(a[i]);
-        free(a);
-}
 */
 import "C"
 import (
@@ -142,7 +127,7 @@ func (qb *QueryBuilder) getConditionId(cid C.obx_qb_cond) ConditionId {
 	return ConditionId(cid)
 }
 
-func (qb *QueryBuilder) Null(property *Property) (ConditionId, error) {
+func (qb *QueryBuilder) Null(property *BaseProperty) (ConditionId, error) {
 	var cid ConditionId
 
 	if qb.Err == nil && qb.checkEntityId(property.Entity.Id) {
@@ -152,7 +137,7 @@ func (qb *QueryBuilder) Null(property *Property) (ConditionId, error) {
 	return cid, qb.Err
 }
 
-func (qb *QueryBuilder) NotNull(property *Property) (ConditionId, error) {
+func (qb *QueryBuilder) NotNull(property *BaseProperty) (ConditionId, error) {
 	var cid ConditionId
 
 	if qb.Err == nil && qb.checkEntityId(property.Entity.Id) {
@@ -162,7 +147,7 @@ func (qb *QueryBuilder) NotNull(property *Property) (ConditionId, error) {
 	return cid, qb.Err
 }
 
-func (qb *QueryBuilder) StringEquals(property *Property, value string, caseSensitive bool) (ConditionId, error) {
+func (qb *QueryBuilder) StringEquals(property *BaseProperty, value string, caseSensitive bool) (ConditionId, error) {
 	var cid ConditionId
 
 	if qb.Err == nil && qb.checkEntityId(property.Entity.Id) {
@@ -174,23 +159,19 @@ func (qb *QueryBuilder) StringEquals(property *Property, value string, caseSensi
 	return cid, qb.Err
 }
 
-func (qb *QueryBuilder) StringIn(property *Property, values []string, caseSensitive bool) (ConditionId, error) {
+func (qb *QueryBuilder) StringIn(property *BaseProperty, values []string, caseSensitive bool) (ConditionId, error) {
 	var cid ConditionId
 
 	if qb.Err == nil && qb.checkEntityId(property.Entity.Id) {
-		cStringArray := C.newCharArray(C.int(len(values)))
-		defer C.freeCharArray(cStringArray, C.int(len(values)))
-		for i, s := range values {
-			C.setArrayString(cStringArray, C.size_t(i), C.CString(s))
-		}
-
-		cid = qb.getConditionId(C.obx_qb_string_in(qb.cqb, C.obx_schema_id(property.Id), cStringArray, C.int(len(values)), C.bool(caseSensitive)))
+		cStringArray := goStringArrayToC(values)
+		defer cStringArray.free()
+		cid = qb.getConditionId(C.obx_qb_string_in(qb.cqb, C.obx_schema_id(property.Id), cStringArray.cArray, C.int(cStringArray.size), C.bool(caseSensitive)))
 	}
 
 	return cid, qb.Err
 }
 
-func (qb *QueryBuilder) StringContains(property *Property, value string, caseSensitive bool) (ConditionId, error) {
+func (qb *QueryBuilder) StringContains(property *BaseProperty, value string, caseSensitive bool) (ConditionId, error) {
 	var cid ConditionId
 
 	if qb.Err == nil && qb.checkEntityId(property.Entity.Id) {
@@ -202,7 +183,7 @@ func (qb *QueryBuilder) StringContains(property *Property, value string, caseSen
 	return cid, qb.Err
 }
 
-func (qb *QueryBuilder) StringHasPrefix(property *Property, value string, caseSensitive bool) (ConditionId, error) {
+func (qb *QueryBuilder) StringHasPrefix(property *BaseProperty, value string, caseSensitive bool) (ConditionId, error) {
 	var cid ConditionId
 
 	if qb.Err == nil && qb.checkEntityId(property.Entity.Id) {
@@ -214,7 +195,7 @@ func (qb *QueryBuilder) StringHasPrefix(property *Property, value string, caseSe
 	return cid, qb.Err
 }
 
-func (qb *QueryBuilder) StringHasSuffix(property *Property, value string, caseSensitive bool) (ConditionId, error) {
+func (qb *QueryBuilder) StringHasSuffix(property *BaseProperty, value string, caseSensitive bool) (ConditionId, error) {
 	var cid ConditionId
 
 	if qb.Err == nil && qb.checkEntityId(property.Entity.Id) {
@@ -226,7 +207,7 @@ func (qb *QueryBuilder) StringHasSuffix(property *Property, value string, caseSe
 	return cid, qb.Err
 }
 
-func (qb *QueryBuilder) StringNotEquals(property *Property, value string, caseSensitive bool) (ConditionId, error) {
+func (qb *QueryBuilder) StringNotEquals(property *BaseProperty, value string, caseSensitive bool) (ConditionId, error) {
 	var cid ConditionId
 
 	if qb.Err == nil && qb.checkEntityId(property.Entity.Id) {
@@ -238,7 +219,7 @@ func (qb *QueryBuilder) StringNotEquals(property *Property, value string, caseSe
 	return cid, qb.Err
 }
 
-func (qb *QueryBuilder) StringGreater(property *Property, value string, caseSensitive bool, withEqual bool) (ConditionId, error) {
+func (qb *QueryBuilder) StringGreater(property *BaseProperty, value string, caseSensitive bool, withEqual bool) (ConditionId, error) {
 	var cid ConditionId
 
 	if qb.Err == nil && qb.checkEntityId(property.Entity.Id) {
@@ -250,7 +231,7 @@ func (qb *QueryBuilder) StringGreater(property *Property, value string, caseSens
 	return cid, qb.Err
 }
 
-func (qb *QueryBuilder) StringLess(property *Property, value string, caseSensitive bool, withEqual bool) (ConditionId, error) {
+func (qb *QueryBuilder) StringLess(property *BaseProperty, value string, caseSensitive bool, withEqual bool) (ConditionId, error) {
 	var cid ConditionId
 
 	if qb.Err == nil && qb.checkEntityId(property.Entity.Id) {
@@ -262,7 +243,7 @@ func (qb *QueryBuilder) StringLess(property *Property, value string, caseSensiti
 	return cid, qb.Err
 }
 
-func (qb *QueryBuilder) IntBetween(property *Property, value1 int64, value2 int64) (ConditionId, error) {
+func (qb *QueryBuilder) IntBetween(property *BaseProperty, value1 int64, value2 int64) (ConditionId, error) {
 	var cid ConditionId
 
 	if qb.Err == nil && qb.checkEntityId(property.Entity.Id) {
@@ -272,7 +253,7 @@ func (qb *QueryBuilder) IntBetween(property *Property, value1 int64, value2 int6
 	return cid, qb.Err
 }
 
-func (qb *QueryBuilder) IntEqual(property *Property, value int64) (ConditionId, error) {
+func (qb *QueryBuilder) IntEqual(property *BaseProperty, value int64) (ConditionId, error) {
 	var cid ConditionId
 
 	if qb.Err == nil && qb.checkEntityId(property.Entity.Id) {
@@ -282,7 +263,7 @@ func (qb *QueryBuilder) IntEqual(property *Property, value int64) (ConditionId, 
 	return cid, qb.Err
 }
 
-func (qb *QueryBuilder) IntNotEqual(property *Property, value int64) (ConditionId, error) {
+func (qb *QueryBuilder) IntNotEqual(property *BaseProperty, value int64) (ConditionId, error) {
 	var cid ConditionId
 
 	if qb.Err == nil && qb.checkEntityId(property.Entity.Id) {
@@ -292,7 +273,7 @@ func (qb *QueryBuilder) IntNotEqual(property *Property, value int64) (ConditionI
 	return cid, qb.Err
 }
 
-func (qb *QueryBuilder) IntGreater(property *Property, value int64) (ConditionId, error) {
+func (qb *QueryBuilder) IntGreater(property *BaseProperty, value int64) (ConditionId, error) {
 	var cid ConditionId
 
 	if qb.Err == nil && qb.checkEntityId(property.Entity.Id) {
@@ -302,7 +283,7 @@ func (qb *QueryBuilder) IntGreater(property *Property, value int64) (ConditionId
 	return cid, qb.Err
 }
 
-func (qb *QueryBuilder) IntLess(property *Property, value int64) (ConditionId, error) {
+func (qb *QueryBuilder) IntLess(property *BaseProperty, value int64) (ConditionId, error) {
 	var cid ConditionId
 
 	if qb.Err == nil && qb.checkEntityId(property.Entity.Id) {
@@ -312,7 +293,7 @@ func (qb *QueryBuilder) IntLess(property *Property, value int64) (ConditionId, e
 	return cid, qb.Err
 }
 
-func (qb *QueryBuilder) Int64In(property *Property, values []int64) (ConditionId, error) {
+func (qb *QueryBuilder) Int64In(property *BaseProperty, values []int64) (ConditionId, error) {
 	var cid ConditionId
 
 	if qb.Err == nil && qb.checkEntityId(property.Entity.Id) {
@@ -322,7 +303,7 @@ func (qb *QueryBuilder) Int64In(property *Property, values []int64) (ConditionId
 	return cid, qb.Err
 }
 
-func (qb *QueryBuilder) Int64NotIn(property *Property, values []int64) (ConditionId, error) {
+func (qb *QueryBuilder) Int64NotIn(property *BaseProperty, values []int64) (ConditionId, error) {
 	var cid ConditionId
 
 	if qb.Err == nil && qb.checkEntityId(property.Entity.Id) {
@@ -332,7 +313,7 @@ func (qb *QueryBuilder) Int64NotIn(property *Property, values []int64) (Conditio
 	return cid, qb.Err
 }
 
-func (qb *QueryBuilder) Int32In(property *Property, values []int32) (ConditionId, error) {
+func (qb *QueryBuilder) Int32In(property *BaseProperty, values []int32) (ConditionId, error) {
 	var cid ConditionId
 
 	if qb.Err == nil && qb.checkEntityId(property.Entity.Id) {
@@ -342,7 +323,7 @@ func (qb *QueryBuilder) Int32In(property *Property, values []int32) (ConditionId
 	return cid, qb.Err
 }
 
-func (qb *QueryBuilder) Int32NotIn(property *Property, values []int32) (ConditionId, error) {
+func (qb *QueryBuilder) Int32NotIn(property *BaseProperty, values []int32) (ConditionId, error) {
 	var cid ConditionId
 
 	if qb.Err == nil && qb.checkEntityId(property.Entity.Id) {
@@ -352,7 +333,7 @@ func (qb *QueryBuilder) Int32NotIn(property *Property, values []int32) (Conditio
 	return cid, qb.Err
 }
 
-func (qb *QueryBuilder) DoubleGreater(property *Property, value float64) (ConditionId, error) {
+func (qb *QueryBuilder) DoubleGreater(property *BaseProperty, value float64) (ConditionId, error) {
 	var cid ConditionId
 
 	if qb.Err == nil && qb.checkEntityId(property.Entity.Id) {
@@ -362,7 +343,7 @@ func (qb *QueryBuilder) DoubleGreater(property *Property, value float64) (Condit
 	return cid, qb.Err
 }
 
-func (qb *QueryBuilder) DoubleLess(property *Property, value float64) (ConditionId, error) {
+func (qb *QueryBuilder) DoubleLess(property *BaseProperty, value float64) (ConditionId, error) {
 	var cid ConditionId
 
 	if qb.Err == nil && qb.checkEntityId(property.Entity.Id) {
@@ -372,7 +353,7 @@ func (qb *QueryBuilder) DoubleLess(property *Property, value float64) (Condition
 	return cid, qb.Err
 }
 
-func (qb *QueryBuilder) DoubleBetween(property *Property, valueA float64, valueB float64) (ConditionId, error) {
+func (qb *QueryBuilder) DoubleBetween(property *BaseProperty, valueA float64, valueB float64) (ConditionId, error) {
 	var cid ConditionId
 
 	if qb.Err == nil && qb.checkEntityId(property.Entity.Id) {
@@ -382,31 +363,31 @@ func (qb *QueryBuilder) DoubleBetween(property *Property, valueA float64, valueB
 	return cid, qb.Err
 }
 
-func (qb *QueryBuilder) BytesEqual(property *Property, value []byte) (ConditionId, error) {
+func (qb *QueryBuilder) BytesEqual(property *BaseProperty, value []byte) (ConditionId, error) {
 	var cid ConditionId
 
 	if qb.Err == nil && qb.checkEntityId(property.Entity.Id) {
-		cid = qb.getConditionId(C.obx_qb_bytes_equal(qb.cqb, C.obx_schema_id(property.Id), unsafe.Pointer(&value[0]), C.size_t(len(value))))
+		cid = qb.getConditionId(C.obx_qb_bytes_equal(qb.cqb, C.obx_schema_id(property.Id), cBytesPtr(value), C.size_t(len(value))))
 	}
 
 	return cid, qb.Err
 }
 
-func (qb *QueryBuilder) BytesGreater(property *Property, value []byte, withEqual bool) (ConditionId, error) {
+func (qb *QueryBuilder) BytesGreater(property *BaseProperty, value []byte, withEqual bool) (ConditionId, error) {
 	var cid ConditionId
 
 	if qb.Err == nil && qb.checkEntityId(property.Entity.Id) {
-		cid = qb.getConditionId(C.obx_qb_bytes_greater(qb.cqb, C.obx_schema_id(property.Id), unsafe.Pointer(&value[0]), C.size_t(len(value)), C.bool(withEqual)))
+		cid = qb.getConditionId(C.obx_qb_bytes_greater(qb.cqb, C.obx_schema_id(property.Id), cBytesPtr(value), C.size_t(len(value)), C.bool(withEqual)))
 	}
 
 	return cid, qb.Err
 }
 
-func (qb *QueryBuilder) BytesLess(property *Property, value []byte, withEqual bool) (ConditionId, error) {
+func (qb *QueryBuilder) BytesLess(property *BaseProperty, value []byte, withEqual bool) (ConditionId, error) {
 	var cid ConditionId
 
 	if qb.Err == nil && qb.checkEntityId(property.Entity.Id) {
-		cid = qb.getConditionId(C.obx_qb_bytes_less(qb.cqb, C.obx_schema_id(property.Id), unsafe.Pointer(&value[0]), C.size_t(len(value)), C.bool(withEqual)))
+		cid = qb.getConditionId(C.obx_qb_bytes_less(qb.cqb, C.obx_schema_id(property.Id), cBytesPtr(value), C.size_t(len(value)), C.bool(withEqual)))
 	}
 
 	return cid, qb.Err

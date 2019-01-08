@@ -20,6 +20,21 @@ package objectbox
 #cgo LDFLAGS: -lobjectbox
 #include <stdlib.h>
 #include "objectbox.h"
+
+char** newCharArray(int size) {
+	return calloc(sizeof(char*), size);
+}
+
+void setArrayString(const char **array, size_t index, const char *value) {
+    array[index] = value;
+}
+
+void freeCharArray(char **a, int size) {
+    for (size_t i = 0; i < size; i++) {
+    	free(a[i]);
+    }
+    free(a);
+}
 */
 import "C"
 import (
@@ -85,4 +100,35 @@ func cIdsArrayToGo(cArray *C.OBX_id_array) *idsArray {
 		}
 	}
 	return &idsArray{ids, cArray}
+}
+
+type stringArray struct {
+	cArray **C.char
+	size   int
+}
+
+func (array *stringArray) free() {
+	if array.cArray != nil {
+		C.freeCharArray(array.cArray, C.int(array.size))
+		array.cArray = nil
+	}
+}
+
+func goStringArrayToC(values []string) *stringArray {
+	result := &stringArray{
+		cArray: C.newCharArray(C.int(len(values))),
+		size:   len(values),
+	}
+	for i, s := range values {
+		C.setArrayString(result.cArray, C.size_t(i), C.CString(s))
+	}
+	return result
+}
+
+func cBytesPtr(value []byte) unsafe.Pointer {
+	if len(value) >= 1 {
+		return unsafe.Pointer(&value[0])
+	} else {
+		return nil
+	}
 }

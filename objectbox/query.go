@@ -212,22 +212,134 @@ func (query *Query) find(cursor *cursor) (slice interface{}, err error) {
 	return cursor.cBytesArrayToObjects(cBytesArray), nil
 }
 
-// Internal & temporary API
-func (query *Query) InternalSetParamString(propertyId TypeId, value string) (err error) {
-	cvalue := C.CString(value)
-	defer C.free(unsafe.Pointer(cvalue))
-	rc := C.obx_query_string_param(query.cQuery, 0, C.obx_schema_id(propertyId), cvalue)
-	if rc != 0 {
-		return createError()
-	}
-	return
+type Property interface {
+	propertyId() TypeId
+	entityId() TypeId
 }
 
-// Internal & temporary API
-func (query *Query) InternalSetParamInt(propertyId TypeId, value int64) (err error) {
-	rc := C.obx_query_int_param(query.cQuery, 0, C.obx_schema_id(propertyId), C.int64_t(value))
+func (query *Query) SetStringParams(property Property, values ...string) error {
+	var rc = 0
+	if len(values) == 0 {
+		return fmt.Errorf("no values given")
+
+	} else if len(values) == 1 {
+		cString := C.CString(values[0])
+		defer C.free(unsafe.Pointer(cString))
+		rc = int(C.obx_query_string_param(query.cQuery, C.obx_schema_id(property.entityId()), C.obx_schema_id(property.propertyId()), cString))
+
+	} else {
+		return fmt.Errorf("too many values given")
+	}
+
 	if rc != 0 {
 		return createError()
 	}
-	return
+	return nil
+}
+
+func (query *Query) SetStringParamsIn(property Property, values ...string) error {
+	var rc = 0
+	if len(values) == 0 {
+		return fmt.Errorf("no values given")
+
+	} else {
+		cStringArray := goStringArrayToC(values)
+		defer cStringArray.free()
+		rc = int(C.obx_query_string_params_in(query.cQuery, C.obx_schema_id(property.entityId()), C.obx_schema_id(property.propertyId()), cStringArray.cArray, C.int(cStringArray.size)))
+	}
+
+	if rc != 0 {
+		return createError()
+	}
+	return nil
+}
+
+func (query *Query) SetInt64Params(property Property, values ...int64) error {
+	var rc = 0
+	if len(values) == 0 {
+		return fmt.Errorf("no values given")
+
+	} else if len(values) == 1 {
+		rc = int(C.obx_query_int_param(query.cQuery, C.obx_schema_id(property.entityId()), C.obx_schema_id(property.propertyId()), C.int64_t(values[0])))
+
+	} else if len(values) == 2 {
+		rc = int(C.obx_query_int_params(query.cQuery, C.obx_schema_id(property.entityId()), C.obx_schema_id(property.propertyId()), C.int64_t(values[0]), C.int64_t(values[1])))
+
+	} else {
+		return fmt.Errorf("too many values given")
+	}
+
+	if rc != 0 {
+		return createError()
+	}
+	return nil
+}
+
+func (query *Query) SetInt64ParamsIn(property Property, values ...int64) error {
+	var rc = 0
+	if len(values) == 0 {
+		return fmt.Errorf("no values given")
+
+	} else {
+		rc = int(C.obx_query_int64_params_in(query.cQuery, C.obx_schema_id(property.entityId()), C.obx_schema_id(property.propertyId()), (*C.int64_t)(unsafe.Pointer(&values[0])), C.int(len(values))))
+	}
+
+	if rc != 0 {
+		return createError()
+	}
+	return nil
+}
+
+func (query *Query) SetInt32ParamsIn(property Property, values ...int32) error {
+	var rc = 0
+	if len(values) == 0 {
+		return fmt.Errorf("no values given")
+
+	} else {
+		rc = int(C.obx_query_int32_params_in(query.cQuery, C.obx_schema_id(property.entityId()), C.obx_schema_id(property.propertyId()), (*C.int32_t)(unsafe.Pointer(&values[0])), C.int(len(values))))
+	}
+
+	if rc != 0 {
+		return createError()
+	}
+	return nil
+}
+
+func (query *Query) SetFloat64Params(property Property, values ...float64) error {
+	var rc = 0
+	if len(values) == 0 {
+		return fmt.Errorf("no values given")
+
+	} else if len(values) == 1 {
+		rc = int(C.obx_query_double_param(query.cQuery, C.obx_schema_id(property.entityId()), C.obx_schema_id(property.propertyId()), C.double(values[0])))
+
+	} else if len(values) == 2 {
+		rc = int(C.obx_query_double_params(query.cQuery, C.obx_schema_id(property.entityId()), C.obx_schema_id(property.propertyId()), C.double(values[0]), C.double(values[1])))
+
+	} else {
+		return fmt.Errorf("too many values given")
+	}
+
+	if rc != 0 {
+		return createError()
+	}
+	return nil
+}
+
+func (query *Query) SetBytesParams(property Property, values ...[]byte) error {
+	var rc = 0
+	if len(values) == 0 {
+		return fmt.Errorf("no values given")
+
+	} else if len(values) == 1 {
+		rc = int(C.obx_query_bytes_param(query.cQuery, C.obx_schema_id(property.entityId()), C.obx_schema_id(property.propertyId()), cBytesPtr(values[0]), C.size_t(len(values[0]))))
+
+	} else {
+		return fmt.Errorf("too many values given")
+	}
+
+	if rc != 0 {
+		return createError()
+	}
+	return nil
 }

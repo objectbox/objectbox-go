@@ -23,7 +23,7 @@ var EntityByValue_ = struct {
 	Id *objectbox.PropertyUint64
 }{
 	Id: &objectbox.PropertyUint64{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 1,
 			Entity: &objectbox.Entity{
 				Id: 3,

@@ -24,7 +24,7 @@ var B_ = struct {
 	New *objectbox.PropertyInt
 }{
 	Id: &objectbox.PropertyUint64{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 1,
 			Entity: &objectbox.Entity{
 				Id: 2,
@@ -32,7 +32,7 @@ var B_ = struct {
 		},
 	},
 	New: &objectbox.PropertyInt{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 3,
 			Entity: &objectbox.Entity{
 				Id: 2,

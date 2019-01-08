@@ -24,7 +24,7 @@ var D_ = struct {
 	Value *objectbox.PropertyFloat64
 }{
 	Id: &objectbox.PropertyUint64{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 1,
 			Entity: &objectbox.Entity{
 				Id: 4,
@@ -32,7 +32,7 @@ var D_ = struct {
 		},
 	},
 	Value: &objectbox.PropertyFloat64{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 2,
 			Entity: &objectbox.Entity{
 				Id: 4,

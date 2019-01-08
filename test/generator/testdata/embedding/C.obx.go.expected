@@ -25,7 +25,7 @@ var C_ = struct {
 	Id    *objectbox.PropertyUint64
 }{
 	int64: &objectbox.PropertyInt64{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 1,
 			Entity: &objectbox.Entity{
 				Id: 3,
@@ -33,7 +33,7 @@ var C_ = struct {
 		},
 	},
 	val: &objectbox.PropertyUint64{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 2,
 			Entity: &objectbox.Entity{
 				Id: 3,
@@ -41,7 +41,7 @@ var C_ = struct {
 		},
 	},
 	Id: &objectbox.PropertyUint64{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 3,
 			Entity: &objectbox.Entity{
 				Id: 3,

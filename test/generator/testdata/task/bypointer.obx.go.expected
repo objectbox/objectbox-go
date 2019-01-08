@@ -42,7 +42,7 @@ var Task_ = struct {
 			},
 		},
 	},
-	Name: &objectbox.PropertyString{
+	Text: &objectbox.PropertyString{
 		BaseProperty: &objectbox.BaseProperty{
 			Id: 3,
 			Entity: &objectbox.Entity{
@@ -50,7 +50,7 @@ var Task_ = struct {
 			},
 		},
 	},
-	Place: &objectbox.PropertyString{
+	Date: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
 			Id: 4,
 			Entity: &objectbox.Entity{
@@ -58,33 +58,9 @@ var Task_ = struct {
 			},
 		},
 	},
-	Source: &objectbox.PropertyString{
-		BaseProperty: &objectbox.BaseProperty{
-			Id: 5,
-			Entity: &objectbox.Entity{
-				Id: 1,
-			},
-		},
-	},
-	Text: &objectbox.PropertyString{
-		BaseProperty: &objectbox.BaseProperty{
-			Id: 6,
-			Entity: &objectbox.Entity{
-				Id: 1,
-			},
-		},
-	},
-	Date: &objectbox.PropertyUint64{
-		BaseProperty: &objectbox.BaseProperty{
-			Id: 7,
-			Entity: &objectbox.Entity{
-				Id: 1,
-			},
-		},
-	},
 	GroupId: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 8,
+			Id: 5,
 			Entity: &objectbox.Entity{
 				Id: 1,
 			},

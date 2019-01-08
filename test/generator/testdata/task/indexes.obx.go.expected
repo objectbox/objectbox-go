@@ -29,7 +29,7 @@ var TaskIndexed_ = struct {
 	Source   *objectbox.PropertyString
 }{
 	Id: &objectbox.PropertyUint64{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 1,
 			Entity: &objectbox.Entity{
 				Id: 5,
@@ -37,7 +37,7 @@ var TaskIndexed_ = struct {
 		},
 	},
 	Uid: &objectbox.PropertyString{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 2,
 			Entity: &objectbox.Entity{
 				Id: 5,
@@ -45,7 +45,7 @@ var TaskIndexed_ = struct {
 		},
 	},
 	Name: &objectbox.PropertyString{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 3,
 			Entity: &objectbox.Entity{
 				Id: 5,
@@ -53,7 +53,7 @@ var TaskIndexed_ = struct {
 		},
 	},
 	Priority: &objectbox.PropertyInt{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 4,
 			Entity: &objectbox.Entity{
 				Id: 5,
@@ -61,7 +61,7 @@ var TaskIndexed_ = struct {
 		},
 	},
 	Group: &objectbox.PropertyString{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 5,
 			Entity: &objectbox.Entity{
 				Id: 5,
@@ -69,7 +69,7 @@ var TaskIndexed_ = struct {
 		},
 	},
 	Place: &objectbox.PropertyString{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 6,
 			Entity: &objectbox.Entity{
 				Id: 5,
@@ -77,7 +77,7 @@ var TaskIndexed_ = struct {
 		},
 	},
 	Source: &objectbox.PropertyString{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 7,
 			Entity: &objectbox.Entity{
 				Id: 5,

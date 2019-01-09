@@ -99,10 +99,12 @@ func (env *TestEnv) PutEntity(entity *Entity) uint64 {
 	return id
 }
 
+// create a test entity ("47" because int fields are multiples of 47)
 func Entity47() *Entity {
 	return entity47(1)
 }
 
+// create a test entity ("47" because int fields are multiples of 47)
 func entity47(coef int) *Entity {
 	// NOTE, it doesn't really matter that we overflow the smaller types
 	var Bool = coef%2 == 1

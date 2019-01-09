@@ -213,6 +213,7 @@ func TestBoxEmpty(t *testing.T) {
 	assert.Eq(t, true, isEmpty)
 }
 
+// Includes testing the default string vector (containing 2 normal values and one "")
 func TestBoxPutData(t *testing.T) {
 	env := model.NewTestEnv(t)
 	defer env.Close()
@@ -225,15 +226,22 @@ func TestBoxPutData(t *testing.T) {
 	read, err := env.Box.Get(id)
 	assert.NoErr(t, err)
 	assert.Eq(t, inserted, read)
+}
+
+func TestBoxPutAndGetStringVectorsEmptyAndNil(t *testing.T) {
+	env := model.NewTestEnv(t)
+	defer env.Close()
+
+	var inserted = model.Entity47()
 
 	// test empty vectors
 	inserted.StringVector = []string{}
 	inserted.ByteVector = []byte{}
 
-	id, err = env.Box.Put(inserted)
+	id, err := env.Box.Put(inserted)
 	assert.NoErr(t, err)
 
-	read, err = env.Box.Get(id)
+	read, err := env.Box.Get(id)
 	assert.NoErr(t, err)
 	assert.Eq(t, *inserted, *read)
 
@@ -247,5 +255,4 @@ func TestBoxPutData(t *testing.T) {
 	read, err = env.Box.Get(id)
 	assert.NoErr(t, err)
 	assert.Eq(t, *inserted, *read)
-
 }

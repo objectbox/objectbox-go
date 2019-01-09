@@ -21,26 +21,27 @@ var EntityBinding = entity_EntityInfo{
 
 // Entity_ contains type-based Property helpers to facilitate some common operations such as Queries.
 var Entity_ = struct {
-	Id         *objectbox.PropertyUint64
-	Int        *objectbox.PropertyInt
-	Int8       *objectbox.PropertyInt8
-	Int16      *objectbox.PropertyInt16
-	Int32      *objectbox.PropertyInt32
-	Int64      *objectbox.PropertyInt64
-	Uint       *objectbox.PropertyUint
-	Uint8      *objectbox.PropertyUint8
-	Uint16     *objectbox.PropertyUint16
-	Uint32     *objectbox.PropertyUint32
-	Uint64     *objectbox.PropertyUint64
-	Bool       *objectbox.PropertyBool
-	String     *objectbox.PropertyString
-	Byte       *objectbox.PropertyByte
-	ByteVector *objectbox.PropertyByteVector
-	Rune       *objectbox.PropertyRune
-	Float32    *objectbox.PropertyFloat32
-	Float64    *objectbox.PropertyFloat64
-	Date       *objectbox.PropertyInt64
-	Complex128 *objectbox.PropertyByteVector
+	Id           *objectbox.PropertyUint64
+	Int          *objectbox.PropertyInt
+	Int8         *objectbox.PropertyInt8
+	Int16        *objectbox.PropertyInt16
+	Int32        *objectbox.PropertyInt32
+	Int64        *objectbox.PropertyInt64
+	Uint         *objectbox.PropertyUint
+	Uint8        *objectbox.PropertyUint8
+	Uint16       *objectbox.PropertyUint16
+	Uint32       *objectbox.PropertyUint32
+	Uint64       *objectbox.PropertyUint64
+	Bool         *objectbox.PropertyBool
+	String       *objectbox.PropertyString
+	StringVector *objectbox.PropertyStringVector
+	Byte         *objectbox.PropertyByte
+	ByteVector   *objectbox.PropertyByteVector
+	Rune         *objectbox.PropertyRune
+	Float32      *objectbox.PropertyFloat32
+	Float64      *objectbox.PropertyFloat64
+	Date         *objectbox.PropertyInt64
+	Complex128   *objectbox.PropertyByteVector
 }{
 	Id: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
@@ -146,6 +147,14 @@ var Entity_ = struct {
 			},
 		},
 	},
+	StringVector: &objectbox.PropertyStringVector{
+		BaseProperty: &objectbox.BaseProperty{
+			Id: 21,
+			Entity: &objectbox.Entity{
+				Id: 1,
+			},
+		},
+	},
 	Byte: &objectbox.PropertyByte{
 		BaseProperty: &objectbox.BaseProperty{
 			Id: 14,
@@ -195,7 +204,7 @@ var Entity_ = struct {
 		},
 	},
 	Complex128: &objectbox.PropertyByteVector{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 20,
 			Entity: &objectbox.Entity{
 				Id: 1,
@@ -226,6 +235,7 @@ func (entity_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Property("Uint64", objectbox.PropertyType_Long, 11, 6159011311237949479)
 	model.Property("Bool", objectbox.PropertyType_Bool, 12, 13717766026420552)
 	model.Property("String", objectbox.PropertyType_String, 13, 3525810560076343996)
+	model.Property("StringVector", objectbox.PropertyType_StringVector, 21, 3893192683529392073)
 	model.Property("Byte", objectbox.PropertyType_Byte, 14, 4035373893984224671)
 	model.Property("ByteVector", objectbox.PropertyType_ByteVector, 15, 1294888641203478533)
 	model.Property("Rune", objectbox.PropertyType_Int, 16, 445652208596094853)
@@ -233,7 +243,7 @@ func (entity_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Property("Float64", objectbox.PropertyType_Double, 18, 681625187526498317)
 	model.Property("Date", objectbox.PropertyType_Date, 19, 2927532418453906842)
 	model.Property("Complex128", objectbox.PropertyType_ByteVector, 20, 2323084480359838337)
-	model.EntityLastPropertyId(20, 2323084480359838337)
+	model.EntityLastPropertyId(21, 3893192683529392073)
 }
 
 // GetId is called by the ObjectBox during Put operations to check for existing ID on an object
@@ -251,11 +261,12 @@ func (entity_EntityInfo) SetId(object interface{}, id uint64) error {
 func (entity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
 	obj := object.(*Entity)
 	var offsetString = fbutils.CreateStringOffset(fbb, obj.String)
+	var offsetStringVector = fbutils.CreateStringVectorOffset(fbb, obj.StringVector)
 	var offsetByteVector = fbutils.CreateByteVectorOffset(fbb, obj.ByteVector)
 	var offsetComplex128 = fbutils.CreateByteVectorOffset(fbb, complex128BytesToDatabaseValue(obj.Complex128))
 
 	// build the FlatBuffers object
-	fbb.StartObject(20)
+	fbb.StartObject(21)
 	fbutils.SetUint64Slot(fbb, 0, id)
 	fbutils.SetInt64Slot(fbb, 1, int64(obj.Int))
 	fbutils.SetInt8Slot(fbb, 2, obj.Int8)
@@ -269,6 +280,7 @@ func (entity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, i
 	fbutils.SetUint64Slot(fbb, 10, obj.Uint64)
 	fbutils.SetBoolSlot(fbb, 11, obj.Bool)
 	fbutils.SetUOffsetTSlot(fbb, 12, offsetString)
+	fbutils.SetUOffsetTSlot(fbb, 20, offsetStringVector)
 	fbutils.SetByteSlot(fbb, 13, obj.Byte)
 	fbutils.SetUOffsetTSlot(fbb, 14, offsetByteVector)
 	fbutils.SetInt32Slot(fbb, 15, obj.Rune)
@@ -286,26 +298,27 @@ func (entity_EntityInfo) ToObject(bytes []byte) interface{} {
 	}
 
 	return &Entity{
-		Id:         table.GetUint64Slot(4, 0),
-		Int:        int(table.GetUint64Slot(6, 0)),
-		Int8:       table.GetInt8Slot(8, 0),
-		Int16:      table.GetInt16Slot(10, 0),
-		Int32:      table.GetInt32Slot(12, 0),
-		Int64:      table.GetInt64Slot(14, 0),
-		Uint:       uint(table.GetUint64Slot(16, 0)),
-		Uint8:      table.GetUint8Slot(18, 0),
-		Uint16:     table.GetUint16Slot(20, 0),
-		Uint32:     table.GetUint32Slot(22, 0),
-		Uint64:     table.GetUint64Slot(24, 0),
-		Bool:       table.GetBoolSlot(26, false),
-		String:     fbutils.GetStringSlot(table, 28),
-		Byte:       table.GetByteSlot(30, 0),
-		ByteVector: fbutils.GetByteVectorSlot(table, 32),
-		Rune:       rune(table.GetInt32Slot(34, 0)),
-		Float32:    table.GetFloat32Slot(36, 0),
-		Float64:    table.GetFloat64Slot(38, 0),
-		Date:       timeInt64ToEntityProperty(table.GetInt64Slot(40, 0)),
-		Complex128: complex128BytesToEntityProperty(fbutils.GetByteVectorSlot(table, 42)),
+		Id:           table.GetUint64Slot(4, 0),
+		Int:          int(table.GetUint64Slot(6, 0)),
+		Int8:         table.GetInt8Slot(8, 0),
+		Int16:        table.GetInt16Slot(10, 0),
+		Int32:        table.GetInt32Slot(12, 0),
+		Int64:        table.GetInt64Slot(14, 0),
+		Uint:         uint(table.GetUint64Slot(16, 0)),
+		Uint8:        table.GetUint8Slot(18, 0),
+		Uint16:       table.GetUint16Slot(20, 0),
+		Uint32:       table.GetUint32Slot(22, 0),
+		Uint64:       table.GetUint64Slot(24, 0),
+		Bool:         table.GetBoolSlot(26, false),
+		String:       fbutils.GetStringSlot(table, 28),
+		StringVector: fbutils.GetStringVectorSlot(table, 44),
+		Byte:         table.GetByteSlot(30, 0),
+		ByteVector:   fbutils.GetByteVectorSlot(table, 32),
+		Rune:         rune(table.GetInt32Slot(34, 0)),
+		Float32:      table.GetFloat32Slot(36, 0),
+		Float64:      table.GetFloat64Slot(38, 0),
+		Date:         timeInt64ToEntityProperty(table.GetInt64Slot(40, 0)),
+		Complex128:   complex128BytesToEntityProperty(fbutils.GetByteVectorSlot(table, 42)),
 	}
 }
 
@@ -686,7 +699,7 @@ var TestEntityInline_ = struct {
 	Id    *objectbox.PropertyUint64
 }{
 	Date: &objectbox.PropertyInt64{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 1,
 			Entity: &objectbox.Entity{
 				Id: 4,
@@ -694,7 +707,7 @@ var TestEntityInline_ = struct {
 		},
 	},
 	Value: &objectbox.PropertyFloat64{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 2,
 			Entity: &objectbox.Entity{
 				Id: 4,
@@ -702,7 +715,7 @@ var TestEntityInline_ = struct {
 		},
 	},
 	Id: &objectbox.PropertyUint64{
-		Property: &objectbox.Property{
+		BaseProperty: &objectbox.BaseProperty{
 			Id: 3,
 			Entity: &objectbox.Entity{
 				Id: 4,

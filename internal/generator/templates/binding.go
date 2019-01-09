@@ -30,7 +30,7 @@ var BindingTemplate = template.Must(template.New("binding").Funcs(funcMap).Parse
     {{- else if eq .GoType "uint"}} uint(table.GetUint64Slot({{.FbvTableOffset}}, 0))
 	{{- else if eq .GoType "rune"}} rune(table.GetInt32Slot({{.FbvTableOffset}}, 0))
 	{{- else if and (eq .GoType "string") (eq .FbType "Uint64")}} strconv.FormatUint(table.GetUint64Slot({{.FbvTableOffset}}, 0), 10)
-	{{- else if eq .FbType "UOffsetT"}} fbutils.Get{{$property.ObType}}Slot(table, {{.FbvTableOffset}})
+	{{- else if eq .FbType "UOffsetT"}} fbutils.Get{{.ObType}}Slot(table, {{.FbvTableOffset}})
     {{- else}} table.Get{{.GoType | StringTitle}}Slot({{.FbvTableOffset}}, 0)
     {{- end}}
 	{{- if .Converter}}){{end}}

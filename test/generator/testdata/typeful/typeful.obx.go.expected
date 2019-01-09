@@ -20,25 +20,26 @@ var TypefulBinding = typeful_EntityInfo{
 
 // Typeful_ contains type-based Property helpers to facilitate some common operations such as Queries.
 var Typeful_ = struct {
-	Id         *objectbox.PropertyUint64
-	Int        *objectbox.PropertyInt
-	Int8       *objectbox.PropertyInt8
-	Int16      *objectbox.PropertyInt16
-	Int32      *objectbox.PropertyInt32
-	Int64      *objectbox.PropertyInt64
-	Uint       *objectbox.PropertyUint
-	Uint8      *objectbox.PropertyUint8
-	Uint16     *objectbox.PropertyUint16
-	Uint32     *objectbox.PropertyUint32
-	Uint64     *objectbox.PropertyUint64
-	Bool       *objectbox.PropertyBool
-	String     *objectbox.PropertyString
-	Byte       *objectbox.PropertyByte
-	ByteVector *objectbox.PropertyByteVector
-	Rune       *objectbox.PropertyRune
-	Float32    *objectbox.PropertyFloat32
-	Float64    *objectbox.PropertyFloat64
-	Date       *objectbox.PropertyInt64
+	Id           *objectbox.PropertyUint64
+	Int          *objectbox.PropertyInt
+	Int8         *objectbox.PropertyInt8
+	Int16        *objectbox.PropertyInt16
+	Int32        *objectbox.PropertyInt32
+	Int64        *objectbox.PropertyInt64
+	Uint         *objectbox.PropertyUint
+	Uint8        *objectbox.PropertyUint8
+	Uint16       *objectbox.PropertyUint16
+	Uint32       *objectbox.PropertyUint32
+	Uint64       *objectbox.PropertyUint64
+	Bool         *objectbox.PropertyBool
+	String       *objectbox.PropertyString
+	StringVector *objectbox.PropertyStringVector
+	Byte         *objectbox.PropertyByte
+	ByteVector   *objectbox.PropertyByteVector
+	Rune         *objectbox.PropertyRune
+	Float32      *objectbox.PropertyFloat32
+	Float64      *objectbox.PropertyFloat64
+	Date         *objectbox.PropertyInt64
 }{
 	Id: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
@@ -144,7 +145,7 @@ var Typeful_ = struct {
 			},
 		},
 	},
-	Byte: &objectbox.PropertyByte{
+	StringVector: &objectbox.PropertyStringVector{
 		BaseProperty: &objectbox.BaseProperty{
 			Id: 14,
 			Entity: &objectbox.Entity{
@@ -152,7 +153,7 @@ var Typeful_ = struct {
 			},
 		},
 	},
-	ByteVector: &objectbox.PropertyByteVector{
+	Byte: &objectbox.PropertyByte{
 		BaseProperty: &objectbox.BaseProperty{
 			Id: 15,
 			Entity: &objectbox.Entity{
@@ -160,7 +161,7 @@ var Typeful_ = struct {
 			},
 		},
 	},
-	Rune: &objectbox.PropertyRune{
+	ByteVector: &objectbox.PropertyByteVector{
 		BaseProperty: &objectbox.BaseProperty{
 			Id: 16,
 			Entity: &objectbox.Entity{
@@ -168,7 +169,7 @@ var Typeful_ = struct {
 			},
 		},
 	},
-	Float32: &objectbox.PropertyFloat32{
+	Rune: &objectbox.PropertyRune{
 		BaseProperty: &objectbox.BaseProperty{
 			Id: 17,
 			Entity: &objectbox.Entity{
@@ -176,7 +177,7 @@ var Typeful_ = struct {
 			},
 		},
 	},
-	Float64: &objectbox.PropertyFloat64{
+	Float32: &objectbox.PropertyFloat32{
 		BaseProperty: &objectbox.BaseProperty{
 			Id: 18,
 			Entity: &objectbox.Entity{
@@ -184,9 +185,17 @@ var Typeful_ = struct {
 			},
 		},
 	},
-	Date: &objectbox.PropertyInt64{
+	Float64: &objectbox.PropertyFloat64{
 		BaseProperty: &objectbox.BaseProperty{
 			Id: 19,
+			Entity: &objectbox.Entity{
+				Id: 2,
+			},
+		},
+	},
+	Date: &objectbox.PropertyInt64{
+		BaseProperty: &objectbox.BaseProperty{
+			Id: 20,
 			Entity: &objectbox.Entity{
 				Id: 2,
 			},
@@ -216,13 +225,14 @@ func (typeful_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Property("Uint64", objectbox.PropertyType_Long, 11, 161231572858529631)
 	model.Property("Bool", objectbox.PropertyType_Bool, 12, 7259475919510918339)
 	model.Property("String", objectbox.PropertyType_String, 13, 7373105480197164748)
-	model.Property("Byte", objectbox.PropertyType_Byte, 14, 3287288577352441706)
-	model.Property("ByteVector", objectbox.PropertyType_ByteVector, 15, 3930927879439176946)
-	model.Property("Rune", objectbox.PropertyType_Int, 16, 4706154865122290029)
-	model.Property("Float32", objectbox.PropertyType_Float, 17, 2217592893536642650)
-	model.Property("Float64", objectbox.PropertyType_Double, 18, 1929546706668609706)
-	model.Property("Date", objectbox.PropertyType_Date, 19, 6392442863481646880)
-	model.EntityLastPropertyId(19, 6392442863481646880)
+	model.Property("StringVector", objectbox.PropertyType_StringVector, 14, 3287288577352441706)
+	model.Property("Byte", objectbox.PropertyType_Byte, 15, 3930927879439176946)
+	model.Property("ByteVector", objectbox.PropertyType_ByteVector, 16, 4706154865122290029)
+	model.Property("Rune", objectbox.PropertyType_Int, 17, 2217592893536642650)
+	model.Property("Float32", objectbox.PropertyType_Float, 18, 1929546706668609706)
+	model.Property("Float64", objectbox.PropertyType_Double, 19, 6392442863481646880)
+	model.Property("Date", objectbox.PropertyType_Date, 20, 3706853784096366226)
+	model.EntityLastPropertyId(20, 3706853784096366226)
 }
 
 // GetId is called by the ObjectBox during Put operations to check for existing ID on an object
@@ -240,10 +250,11 @@ func (typeful_EntityInfo) SetId(object interface{}, id uint64) error {
 func (typeful_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
 	obj := object.(*Typeful)
 	var offsetString = fbutils.CreateStringOffset(fbb, obj.String)
+	var offsetStringVector = fbutils.CreateStringVectorOffset(fbb, obj.StringVector)
 	var offsetByteVector = fbutils.CreateByteVectorOffset(fbb, obj.ByteVector)
 
 	// build the FlatBuffers object
-	fbb.StartObject(19)
+	fbb.StartObject(20)
 	fbutils.SetUint64Slot(fbb, 0, id)
 	fbutils.SetInt64Slot(fbb, 1, int64(obj.Int))
 	fbutils.SetInt8Slot(fbb, 2, obj.Int8)
@@ -257,12 +268,13 @@ func (typeful_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, 
 	fbutils.SetUint64Slot(fbb, 10, obj.Uint64)
 	fbutils.SetBoolSlot(fbb, 11, obj.Bool)
 	fbutils.SetUOffsetTSlot(fbb, 12, offsetString)
-	fbutils.SetByteSlot(fbb, 13, obj.Byte)
-	fbutils.SetUOffsetTSlot(fbb, 14, offsetByteVector)
-	fbutils.SetInt32Slot(fbb, 15, obj.Rune)
-	fbutils.SetFloat32Slot(fbb, 16, obj.Float32)
-	fbutils.SetFloat64Slot(fbb, 17, obj.Float64)
-	fbutils.SetInt64Slot(fbb, 18, obj.Date)
+	fbutils.SetUOffsetTSlot(fbb, 13, offsetStringVector)
+	fbutils.SetByteSlot(fbb, 14, obj.Byte)
+	fbutils.SetUOffsetTSlot(fbb, 15, offsetByteVector)
+	fbutils.SetInt32Slot(fbb, 16, obj.Rune)
+	fbutils.SetFloat32Slot(fbb, 17, obj.Float32)
+	fbutils.SetFloat64Slot(fbb, 18, obj.Float64)
+	fbutils.SetInt64Slot(fbb, 19, obj.Date)
 }
 
 // ToObject is called by the ObjectBox to load an object from a FlatBuffer
@@ -273,25 +285,26 @@ func (typeful_EntityInfo) ToObject(bytes []byte) interface{} {
 	}
 
 	return &Typeful{
-		Id:         table.GetUint64Slot(4, 0),
-		Int:        int(table.GetUint64Slot(6, 0)),
-		Int8:       table.GetInt8Slot(8, 0),
-		Int16:      table.GetInt16Slot(10, 0),
-		Int32:      table.GetInt32Slot(12, 0),
-		Int64:      table.GetInt64Slot(14, 0),
-		Uint:       uint(table.GetUint64Slot(16, 0)),
-		Uint8:      table.GetUint8Slot(18, 0),
-		Uint16:     table.GetUint16Slot(20, 0),
-		Uint32:     table.GetUint32Slot(22, 0),
-		Uint64:     table.GetUint64Slot(24, 0),
-		Bool:       table.GetBoolSlot(26, false),
-		String:     fbutils.GetStringSlot(table, 28),
-		Byte:       table.GetByteSlot(30, 0),
-		ByteVector: fbutils.GetByteVectorSlot(table, 32),
-		Rune:       rune(table.GetInt32Slot(34, 0)),
-		Float32:    table.GetFloat32Slot(36, 0),
-		Float64:    table.GetFloat64Slot(38, 0),
-		Date:       table.GetInt64Slot(40, 0),
+		Id:           table.GetUint64Slot(4, 0),
+		Int:          int(table.GetUint64Slot(6, 0)),
+		Int8:         table.GetInt8Slot(8, 0),
+		Int16:        table.GetInt16Slot(10, 0),
+		Int32:        table.GetInt32Slot(12, 0),
+		Int64:        table.GetInt64Slot(14, 0),
+		Uint:         uint(table.GetUint64Slot(16, 0)),
+		Uint8:        table.GetUint8Slot(18, 0),
+		Uint16:       table.GetUint16Slot(20, 0),
+		Uint32:       table.GetUint32Slot(22, 0),
+		Uint64:       table.GetUint64Slot(24, 0),
+		Bool:         table.GetBoolSlot(26, false),
+		String:       fbutils.GetStringSlot(table, 28),
+		StringVector: fbutils.GetStringVectorSlot(table, 30),
+		Byte:         table.GetByteSlot(32, 0),
+		ByteVector:   fbutils.GetByteVectorSlot(table, 34),
+		Rune:         rune(table.GetInt32Slot(36, 0)),
+		Float32:      table.GetFloat32Slot(38, 0),
+		Float64:      table.GetFloat64Slot(40, 0),
+		Date:         table.GetInt64Slot(42, 0),
 	}
 }
 

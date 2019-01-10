@@ -150,8 +150,8 @@ func (query *Query) Remove() (count uint64, err error) {
 	return
 }
 
-// Describe returns a string representation of the query
-func (query *Query) Describe() (string, error) {
+// DescribeParams returns a string representation of the query conditions
+func (query *Query) DescribeParams() (string, error) {
 	if query.cQuery == nil {
 		return "", query.errorClosed()
 	}

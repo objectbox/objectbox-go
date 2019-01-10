@@ -27,7 +27,7 @@ import (
 	"github.com/objectbox/objectbox-go/test/model"
 )
 
-// tests all queries using the Describe method which serializes the query to string
+// tests all queries using the DescribeParams method which serializes the query to string
 func TestQueries(t *testing.T) {
 	env := model.NewTestEnv(t)
 	defer env.Close()
@@ -400,7 +400,7 @@ type s = []string
 type queryTestCase struct {
 	// using short variable names because the IDE auto-fills (displays) them in the value initialization
 	c int // expected Query.Count()
-	d s   // expected Query.Describe()
+	d s   // expected Query.DescribeParams()
 	q *model.EntityQuery
 	f func(*model.EntityQuery) error // function to configure & check query before executing
 }
@@ -449,8 +449,8 @@ func testQueries(t *testing.T, env *model.TestEnv, options queryTestOptions, tes
 			return false
 		}
 
-		// Describe
-		if actualDesc, err := query.Describe(); err != nil {
+		// DescribeParams
+		if actualDesc, err := query.DescribeParams(); err != nil {
 			assert.Failf(t, "case #%d {%s} - %s", i, desc, err)
 		} else if actualDesc = strings.Replace(actualDesc, "\n", "", -1); !isExpected(actualDesc) {
 			assert.Failf(t, "case #%d expected one of %v, but got {%s}", i, desc, actualDesc)

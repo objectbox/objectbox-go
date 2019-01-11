@@ -20,6 +20,7 @@ package objectbox
 #cgo LDFLAGS: -lobjectbox
 #include <stdlib.h>
 #include "objectbox.h"
+#include "datavisitor.h"
 */
 import "C"
 import (
@@ -195,12 +196,41 @@ func (query *Query) find(cursor *cursor) (slice interface{}, err error) {
 	if query.cQuery == nil {
 		return 0, query.errorClosed()
 	}
-	cBytesArray := C.obx_query_find(query.cQuery, cursor.cursor, C.uint64_t(query.offset), C.uint64_t(query.limit))
-	if cBytesArray == nil {
+
+	if !supportsBytesArray {
+		return query.findSequential(cursor)
+	} else {
+		cBytesArray := C.obx_query_find(query.cQuery, cursor.cursor, C.uint64_t(query.offset), C.uint64_t(query.limit))
+		if cBytesArray == nil {
+			return nil, createError()
+		}
+		return cursor.cBytesArrayToObjects(cBytesArray), nil
+	}
+}
+
+func (query *Query) findSequential(cursor *cursor) (slice interface{}, err error) {
+	if query.cQuery == nil {
+		return 0, query.errorClosed()
+	}
+
+	var visitorId uint32
+	visitorId, err = dataVisitorRegister(func(bytes []byte) bool {
+		object := cursor.binding.ToObject(bytes)
+		slice = cursor.binding.AppendToSlice(slice, object)
+		return true
+	})
+	if err != nil {
+		return nil, err
+	}
+	defer dataVisitorUnregister(visitorId)
+
+	slice = cursor.binding.MakeSlice(defaultSliceCapacity)
+	rc := C.obx_query_visit(query.cQuery, cursor.cursor, C.data_visitor, unsafe.Pointer(&visitorId), C.uint64_t(query.offset), C.uint64_t(query.limit))
+	if rc != 0 {
 		return nil, createError()
 	}
 
-	return cursor.cBytesArrayToObjects(cBytesArray), nil
+	return slice, nil
 }
 
 type Property interface {

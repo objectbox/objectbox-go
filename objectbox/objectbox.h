@@ -435,7 +435,7 @@ OBX_query* obx_query_create(OBX_query_builder* builder);
 obx_err obx_query_close(OBX_query* query);
 
 OBX_bytes_array* obx_query_find(OBX_query* query, OBX_cursor* cursor, uint64_t offset, uint64_t limit);
-OBX_id_array* obx_query_find_ids(OBX_query* query, OBX_cursor* cursor);
+OBX_id_array* obx_query_find_ids(OBX_query* query, OBX_cursor* cursor, uint64_t offset, uint64_t limit);
 obx_err obx_query_count(OBX_query* query, OBX_cursor* cursor, uint64_t* count);
 
 /// Removes (deletes!) all matching entities.

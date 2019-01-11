@@ -106,15 +106,6 @@ func (query *Query) FindIds() (ids []uint64, err error) {
 		return errInner
 	})
 
-	// TODO pass offset & limit to the underlying C call for more efficiency (not supported yet by the C-API)
-	if query.offset != 0 || query.limit != 0 && err == nil && ids != nil {
-		var endOffset = uint64(len(ids))
-		if query.limit != 0 && query.offset+query.limit < endOffset {
-			endOffset = query.offset + query.limit
-		}
-		return ids[query.offset:endOffset], nil
-	}
-
 	return
 }
 
@@ -189,7 +180,7 @@ func (query *Query) findIds(cursor *cursor) (ids []uint64, err error) {
 	if query.cQuery == nil {
 		return nil, query.errorClosed()
 	}
-	cIdsArray := C.obx_query_find_ids(query.cQuery, cursor.cursor)
+	cIdsArray := C.obx_query_find_ids(query.cQuery, cursor.cursor, C.uint64_t(query.offset), C.uint64_t(query.limit))
 	if cIdsArray == nil {
 		return nil, createError()
 	}

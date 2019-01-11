@@ -175,7 +175,7 @@ func (ob *ObjectBox) runWithCursor(typeId TypeId, readOnly bool, cursorFun curso
 // SetDebugFlags configures debug logging of the ObjectBox core.
 // See DebugFlags_* constants
 func (ob *ObjectBox) SetDebugFlags(flags uint) error {
-	rc := C.obx_store_debug_flags(ob.store, C.OBDebugFlags(flags))
+	rc := C.obx_store_debug_flags(ob.store, C.OBXDebugFlags(flags))
 	if rc != 0 {
 		return createError()
 	}

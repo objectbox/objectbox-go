@@ -41,7 +41,7 @@ extern "C" {
 // Note that you should use methods with prefix obx_version_ to check when linking against the dynamic library
 #define OBX_VERSION_MAJOR 0
 #define OBX_VERSION_MINOR 4
-#define OBX_VERSION_PATCH 101  // values >= 100 are reserved for dev releases leading to the next minor/major increase
+#define OBX_VERSION_PATCH 103  // values >= 100 are reserved for dev releases leading to the next minor/major increase
 
 /// Returns the version of the library as ints. Pointers may be null
 void obx_version(int* major, int* minor, int* patch);
@@ -56,6 +56,16 @@ const char* obx_version_string(void);
 /// Returns the version of the ObjectBox core to be printed.
 /// The format may change, do not rely on its current form.
 const char* obx_version_core_string(void);
+
+//----------------------------------------------
+// Utilities
+//----------------------------------------------
+
+/// delete the store files from the given directory
+int obx_remove_db_files(char const* directory);
+
+/// checks whether functions returning OBX_bytes_array are fully supported (depends on build, invariant during runtime)
+bool obx_supports_bytes_array();
 
 //----------------------------------------------
 // Return codes
@@ -116,6 +126,12 @@ typedef uint64_t obx_id;
 /// Error code returned by an obx_* function
 typedef int obx_err;
 
+/// The callback for reading data one-by-one
+/// @param arg is a pass-through argument passed to the called API
+/// @param data is the read data buffer
+/// @param size specifies the length of the read data
+typedef bool obx_data_visitor(void* arg, const void* data, size_t size);
+
 //----------------------------------------------
 // Error info
 //----------------------------------------------
@@ -132,56 +148,56 @@ void obx_last_error_clear(void);
 // Model
 //----------------------------------------------
 typedef enum {
-    PropertyType_Bool = 1,
-    PropertyType_Byte = 2,
-    PropertyType_Short = 3,
-    PropertyType_Char = 4,
-    PropertyType_Int = 5,
-    PropertyType_Long = 6,
-    PropertyType_Float = 7,
-    PropertyType_Double = 8,
-    PropertyType_String = 9,
-    PropertyType_Date = 10,
-    PropertyType_Relation = 11,
-    PropertyType_ByteVector = 23,
-    PropertyType_StringVector = 30,
-} OBPropertyType;
+    OBXPropertyType_Bool = 1,
+    OBXPropertyType_Byte = 2,
+    OBXPropertyType_Short = 3,
+    OBXPropertyType_Char = 4,
+    OBXPropertyType_Int = 5,
+    OBXPropertyType_Long = 6,
+    OBXPropertyType_Float = 7,
+    OBXPropertyType_Double = 8,
+    OBXPropertyType_String = 9,
+    OBXPropertyType_Date = 10,
+    OBXPropertyType_Relation = 11,
+    OBXPropertyType_ByteVector = 23,
+    OBXPropertyType_StringVector = 30,
+} OBXPropertyType;
 
 /// Not really an enum, but binary flags to use across languages
 typedef enum {
     /// One long property on an entity must be the ID
-    PropertyFlags_ID = 1,
+    OBXPropertyFlags_ID = 1,
 
     /// On languages like Java, a non-primitive type is used (aka wrapper types, allowing null)
-    PropertyFlags_NON_PRIMITIVE_TYPE = 2,
+    OBXPropertyFlags_NON_PRIMITIVE_TYPE = 2,
 
     /// Unused yet
-    PropertyFlags_NOT_NULL = 4,
-    PropertyFlags_INDEXED = 8,
-    PropertyFlags_RESERVED = 16,
+    OBXPropertyFlags_NOT_NULL = 4,
+    OBXPropertyFlags_INDEXED = 8,
+    OBXPropertyFlags_RESERVED = 16,
     /// Unused yet: Unique index
-    PropertyFlags_UNIQUE = 32,
+    OBXPropertyFlags_UNIQUE = 32,
     /// Unused yet: Use a persisted sequence to enforce ID to rise monotonic (no ID reuse)
-    PropertyFlags_ID_MONOTONIC_SEQUENCE = 64,
+    OBXPropertyFlags_ID_MONOTONIC_SEQUENCE = 64,
     /// Allow IDs to be assigned by the developer
-    PropertyFlags_ID_SELF_ASSIGNABLE = 128,
+    OBXPropertyFlags_ID_SELF_ASSIGNABLE = 128,
     /// Unused yet
-    PropertyFlags_INDEX_PARTIAL_SKIP_NULL = 256,
+    OBXPropertyFlags_INDEX_PARTIAL_SKIP_NULL = 256,
     /// Unused yet, used by References for 1) back-references and 2) to clear references to deleted objects (required
     /// for ID reuse)
-    PropertyFlags_INDEX_PARTIAL_SKIP_ZERO = 512,
+    OBXPropertyFlags_INDEX_PARTIAL_SKIP_ZERO = 512,
     /// Virtual properties may not have a dedicated field in their entity class, e.g. target IDs of to-one relations
-    PropertyFlags_VIRTUAL = 1024,
+    OBXPropertyFlags_VIRTUAL = 1024,
     /// Index uses a 32 bit hash instead of the value
     /// (32 bits is shorter on disk, runs well on 32 bit systems, and should be OK even with a few collisions)
 
-    PropertyFlags_INDEX_HASH = 2048,
+    OBXPropertyFlags_INDEX_HASH = 2048,
     /// Index uses a 64 bit hash instead of the value
     /// (recommended mostly for 64 bit machines with values longer >200 bytes; small values are faster with a 32 bit
     /// hash)
-    PropertyFlags_INDEX_HASH64 = 4096
+    OBXPropertyFlags_INDEX_HASH64 = 4096
 
-} OBPropertyFlags;
+} OBXPropertyFlags;
 
 struct OBX_model;
 typedef struct OBX_model OBX_model;
@@ -191,12 +207,15 @@ OBX_model* obx_model_create(void);
 /// Only call when not calling obx_store_open (which will free it internally)
 obx_err obx_model_free(OBX_model* model);
 
+obx_err obx_model_error_code(OBX_model* model);
+const char* obx_model_error_message(OBX_model* model);
+
 obx_err obx_model_entity(OBX_model* model, const char* name, obx_schema_id entity_id, obx_uid entity_uid);
 
-obx_err obx_model_property(OBX_model* model, const char* name, OBPropertyType type, obx_schema_id property_id,
+obx_err obx_model_property(OBX_model* model, const char* name, OBXPropertyType type, obx_schema_id property_id,
                            obx_uid property_uid);
 
-obx_err obx_model_property_flags(OBX_model* model, OBPropertyFlags flags);
+obx_err obx_model_property_flags(OBX_model* model, OBXPropertyFlags flags);
 
 obx_err obx_model_property_relation(OBX_model* model, const char* target_entity, obx_schema_id index_id,
                                     obx_uid index_uid);
@@ -220,7 +239,7 @@ typedef struct OBX_store OBX_store;
 
 typedef struct OBX_store_options {
     /// Use NULL for default value ("objectbox")
-    char* directory;
+    const char* directory;
 
     /// Use zero for default value
     uint64_t maxDbSizeInKByte;
@@ -233,12 +252,12 @@ typedef struct OBX_store_options {
 } OBX_store_options;
 
 typedef enum {
-    DebugFlags_LOG_TRANSACTIONS_READ = 1,
-    DebugFlags_LOG_TRANSACTIONS_WRITE = 2,
-    DebugFlags_LOG_QUERIES = 4,
-    DebugFlags_LOG_QUERY_PARAMETERS = 8,
-    DebugFlags_LOG_ASYNC_QUEUE = 16,
-} OBDebugFlags;
+    OBXDebugFlags_LOG_TRANSACTIONS_READ = 1,
+    OBXDebugFlags_LOG_TRANSACTIONS_WRITE = 2,
+    OBXDebugFlags_LOG_QUERIES = 4,
+    OBXDebugFlags_LOG_QUERY_PARAMETERS = 8,
+    OBXDebugFlags_LOG_ASYNC_QUEUE = 16,
+} OBXDebugFlags;
 
 typedef struct OBX_bytes {
     void* data;
@@ -266,7 +285,7 @@ obx_schema_id obx_store_entity_property_id(OBX_store* store, obx_schema_id entit
 
 obx_err obx_store_await_async_completion(OBX_store* store);
 
-obx_err obx_store_debug_flags(OBX_store* store, OBDebugFlags flags);
+obx_err obx_store_debug_flags(OBX_store* store, OBXDebugFlags flags);
 
 obx_err obx_store_close(OBX_store* store);
 
@@ -358,6 +377,27 @@ obx_err obx_box_put_async(OBX_box* box, obx_id id, const void* data, size_t size
 //----------------------------------------------
 // Query Builder
 //----------------------------------------------
+
+/// Not really an enum, but binary flags to use across languages
+typedef enum {
+    /// Reverts the order from ascending (default) to descending.
+    OBXOrderFlags_DESCENDING = 1,
+
+    /// Makes upper case letters (e.g. "Z") be sorted before lower case letters (e.g. "a").
+    /// If not specified, the default is case insensitive for ASCII characters.
+    OBXOrderFlags_CASE_SENSITIVE = 2,
+
+    /// For scalars only: changes the comparison to unsigned (default is signed).
+    OBXOrderFlags_UNSIGNED = 4,
+
+    /// null values will be put last.
+    /// If not specified, by default null values will be put first.
+    OBXOrderFlags_NULLS_LAST = 8,
+
+    /// null values should be treated equal to zero (scalars only).
+    OBXOrderFlags_NULLS_ZERO = 16,
+} OBXOrderFlags;
+
 struct OBX_query_builder;
 typedef struct OBX_query_builder OBX_query_builder;
 
@@ -425,6 +465,8 @@ obx_qb_cond obx_qb_any(OBX_query_builder* builder, const obx_qb_cond conditions[
 
 obx_err obx_qb_param_alias(OBX_query_builder* builder, const char* alias);
 
+obx_err obx_qb_order(OBX_query_builder* builder, obx_schema_id property_id, OBXOrderFlags flags);
+
 //----------------------------------------------
 // Query
 //----------------------------------------------
@@ -434,6 +476,8 @@ typedef struct OBX_query OBX_query;
 OBX_query* obx_query_create(OBX_query_builder* builder);
 obx_err obx_query_close(OBX_query* query);
 
+obx_err obx_query_visit(OBX_query* query, OBX_cursor* cursor, obx_data_visitor* visitor, void* visitor_arg,
+                        uint64_t offset, uint64_t limit);
 OBX_bytes_array* obx_query_find(OBX_query* query, OBX_cursor* cursor, uint64_t offset, uint64_t limit);
 OBX_id_array* obx_query_find_ids(OBX_query* query, OBX_cursor* cursor, uint64_t offset, uint64_t limit);
 obx_err obx_query_count(OBX_query* query, OBX_cursor* cursor, uint64_t* count);

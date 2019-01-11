@@ -67,7 +67,7 @@ func (cursor *cursor) getBytes(id uint64) (bytes []byte, err error) {
 	dataPtr := unsafe.Pointer(data) // Need ptr to an unsafe ptr here
 	rc := C.obx_cursor_get(cursor.cursor, C.obx_id(id), &dataPtr, &dataSize)
 	if rc != 0 {
-		if rc != 404 {
+		if rc != C.OBX_NOT_FOUND {
 			err = createError()
 		}
 		return
@@ -82,7 +82,7 @@ func (cursor *cursor) First() (bytes []byte, err error) {
 	dataPtr := unsafe.Pointer(data) // Need ptr to an unsafe ptr here
 	rc := C.obx_cursor_first(cursor.cursor, &dataPtr, &dataSize)
 	if rc != 0 {
-		if rc != 404 {
+		if rc != C.OBX_NOT_FOUND {
 			err = createError()
 		}
 		return
@@ -97,7 +97,7 @@ func (cursor *cursor) Next() (bytes []byte, err error) {
 	dataPtr := unsafe.Pointer(data) // Need ptr to an unsafe ptr here
 	rc := C.obx_cursor_next(cursor.cursor, &dataPtr, &dataSize)
 	if rc != 0 {
-		if rc != 404 {
+		if rc != C.OBX_NOT_FOUND {
 			err = createError()
 		}
 		return

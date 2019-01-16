@@ -212,12 +212,23 @@ func (query *Query) find(cursor *cursor) (slice interface{}, err error) {
 	return cursor.cBytesArrayToObjects(cBytesArray), nil
 }
 
+func (query *Query) checkEntityId(entityId TypeId) error {
+	if query.typeId != entityId {
+		return fmt.Errorf("property from a different entity %d passed, expected %d", entityId, query.typeId)
+	}
+	return nil
+}
+
 type Property interface {
 	propertyId() TypeId
 	entityId() TypeId
 }
 
 func (query *Query) SetStringParams(property Property, values ...string) error {
+	if err := query.checkEntityId(property.entityId()); err != nil {
+		return err
+	}
+
 	var rc = 0
 	if len(values) == 0 {
 		return fmt.Errorf("no values given")
@@ -238,6 +249,10 @@ func (query *Query) SetStringParams(property Property, values ...string) error {
 }
 
 func (query *Query) SetStringParamsIn(property Property, values ...string) error {
+	if err := query.checkEntityId(property.entityId()); err != nil {
+		return err
+	}
+
 	var rc = 0
 	if len(values) == 0 {
 		return fmt.Errorf("no values given")
@@ -255,6 +270,10 @@ func (query *Query) SetStringParamsIn(property Property, values ...string) error
 }
 
 func (query *Query) SetInt64Params(property Property, values ...int64) error {
+	if err := query.checkEntityId(property.entityId()); err != nil {
+		return err
+	}
+
 	var rc = 0
 	if len(values) == 0 {
 		return fmt.Errorf("no values given")
@@ -276,6 +295,10 @@ func (query *Query) SetInt64Params(property Property, values ...int64) error {
 }
 
 func (query *Query) SetInt64ParamsIn(property Property, values ...int64) error {
+	if err := query.checkEntityId(property.entityId()); err != nil {
+		return err
+	}
+
 	var rc = 0
 	if len(values) == 0 {
 		return fmt.Errorf("no values given")
@@ -291,6 +314,10 @@ func (query *Query) SetInt64ParamsIn(property Property, values ...int64) error {
 }
 
 func (query *Query) SetInt32ParamsIn(property Property, values ...int32) error {
+	if err := query.checkEntityId(property.entityId()); err != nil {
+		return err
+	}
+
 	var rc = 0
 	if len(values) == 0 {
 		return fmt.Errorf("no values given")
@@ -306,6 +333,10 @@ func (query *Query) SetInt32ParamsIn(property Property, values ...int32) error {
 }
 
 func (query *Query) SetFloat64Params(property Property, values ...float64) error {
+	if err := query.checkEntityId(property.entityId()); err != nil {
+		return err
+	}
+
 	var rc = 0
 	if len(values) == 0 {
 		return fmt.Errorf("no values given")
@@ -327,6 +358,10 @@ func (query *Query) SetFloat64Params(property Property, values ...float64) error
 }
 
 func (query *Query) SetBytesParams(property Property, values ...[]byte) error {
+	if err := query.checkEntityId(property.entityId()); err != nil {
+		return err
+	}
+
 	var rc = 0
 	if len(values) == 0 {
 		return fmt.Errorf("no values given")

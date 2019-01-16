@@ -384,14 +384,28 @@ func TestQueryWrongEntity(t *testing.T) {
 	// try to use condition on a different entity than the one in the box
 	var box = model.BoxForEntity(env.ObjectBox)
 
-	var setWrongCondition = func() {
+	// test Box.Query
+	func() {
 		defer assert.MustPanic(t, regexp.MustCompile(fmt.Sprintf(
 			"property from a different entity %d passed, expected %d", model.EntityByValueBinding.Id, model.EntityBinding.Id)))
 
 		box.Query(model.EntityByValue_.Id.Equals(1))
+	}()
+
+	// test Query.Set*Param
+	{
+		var expected = fmt.Errorf("property from a different entity %d passed, expected %d", model.EntityByValueBinding.Id, model.EntityBinding.Id)
+		var query = box.Query(model.Entity_.Id.Equals(0))
+
+		assert.Eq(t, expected, query.SetBytesParams(model.EntityByValue_.Id, []byte{}))
+		assert.Eq(t, expected, query.SetFloat64Params(model.EntityByValue_.Id, 1))
+		assert.Eq(t, expected, query.SetInt32ParamsIn(model.EntityByValue_.Id, 1))
+		assert.Eq(t, expected, query.SetInt64ParamsIn(model.EntityByValue_.Id, 1))
+		assert.Eq(t, expected, query.SetInt64Params(model.EntityByValue_.Id, 1))
+		assert.Eq(t, expected, query.SetStringParamsIn(model.EntityByValue_.Id, ""))
+		assert.Eq(t, expected, query.SetStringParams(model.EntityByValue_.Id, ""))
 	}
 
-	setWrongCondition()
 }
 
 // define some type aliases to keep the test-case definitions short & readable

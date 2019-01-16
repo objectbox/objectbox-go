@@ -15,4 +15,6 @@
  */
 
 // this file is included from different parts of the program that need to reference C.data_visitor
+#include "objectbox.h"
+
 obx_data_visitor* data_visitor;

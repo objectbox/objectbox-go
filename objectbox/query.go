@@ -197,14 +197,14 @@ func (query *Query) find(cursor *cursor) (slice interface{}, err error) {
 		return 0, query.errorClosed()
 	}
 
-	if !supportsBytesArray {
-		return query.findSequential(cursor)
-	} else {
+	if supportsBytesArray {
 		cBytesArray := C.obx_query_find(query.cQuery, cursor.cursor, C.uint64_t(query.offset), C.uint64_t(query.limit))
 		if cBytesArray == nil {
 			return nil, createError()
 		}
 		return cursor.cBytesArrayToObjects(cBytesArray), nil
+	} else {
+		return query.findSequential(cursor)
 	}
 }
 

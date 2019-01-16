@@ -56,14 +56,14 @@ func (cursor *cursor) Get(id uint64) (object interface{}, err error) {
 }
 
 func (cursor *cursor) GetAll() (slice interface{}, err error) {
-	if !supportsBytesArray {
-		return cursor.getAllSequential()
-	} else {
+	if supportsBytesArray {
 		cBytesArray := C.obx_cursor_get_all(cursor.cursor)
 		if cBytesArray == nil {
 			return nil, createError()
 		}
 		return cursor.cBytesArrayToObjects(cBytesArray), nil
+	} else {
+		return cursor.getAllSequential()
 	}
 }
 

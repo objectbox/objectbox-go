@@ -62,6 +62,9 @@ func TestQueries(t *testing.T) {
 		{2, s{`String in ["VAL-1", "val-860714888"]`, `String in ["val-860714888", "VAL-1"]`}, box.Query(E.String.In(true, "VAL-1", "val-860714888")), nil},
 		{3, s{`String in(i) ["val-1", "val-860714888"]`, `String in(i) ["val-860714888", "val-1"]`}, box.Query(E.String.In(false, "VAL-1", "val-860714888")), nil},
 
+		{2, s{`StringVector contains "first-1"`}, box.Query(E.StringVector.Contains("first-1", true)), nil},
+		{2, s{`StringVector contains(i) "FIRST-1"`}, box.Query(E.StringVector.Contains("FIRST-1", false)), nil},
+
 		{1, s{`Int64 == 0`}, box.Query(E.Int64.Equals(0)), nil},
 		{2, s{`Int64 == 47`}, box.Query(E.Int64.Equals(e.Int64)), nil},
 		{998, s{`Int64 != 47`}, box.Query(E.Int64.NotEquals(e.Int64)), nil},
@@ -245,6 +248,9 @@ func TestQueryParams(t *testing.T) {
 		{2, s{`String in ["VAL-1", "val-860714888"]`, `String in ["val-860714888", "VAL-1"]`},
 			box.Query(E.String.In(true, "", "")),
 			func(q *eq) error { return q.SetStringParamsIn(E.String, "val-860714888", "VAL-1") }},
+
+		{2, s{`StringVector contains "first-1"`}, box.Query(E.StringVector.Contains("", true)),
+			func(q *eq) error { return q.SetStringParams(E.StringVector, "first-1") }},
 
 		{2, s{`Int64 == 47`}, box.Query(E.Int64.Equals(0)),
 			func(q *eq) error { return q.SetInt64Params(E.Int64, e.Int64) }},

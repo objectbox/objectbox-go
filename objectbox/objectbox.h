@@ -41,7 +41,7 @@ extern "C" {
 // Note that you should use methods with prefix obx_version_ to check when linking against the dynamic library
 #define OBX_VERSION_MAJOR 0
 #define OBX_VERSION_MINOR 4
-#define OBX_VERSION_PATCH 103  // values >= 100 are reserved for dev releases leading to the next minor/major increase
+#define OBX_VERSION_PATCH 104  // values >= 100 are reserved for dev releases leading to the next minor/major increase
 
 /// Returns the version of the library as ints. Pointers may be null
 void obx_version(int* major, int* minor, int* patch);
@@ -222,6 +222,10 @@ obx_err obx_model_property_relation(OBX_model* model, const char* target_entity,
 
 obx_err obx_model_property_index_id(OBX_model* model, obx_schema_id index_id, obx_uid index_uid);
 
+/// Add a standalone relation between the active entity and the target entity to the model
+obx_err obx_model_relation(OBX_model* model, obx_schema_id relation_id, obx_schema_id relation_uid,
+                           obx_schema_id target_id, obx_schema_id target_uid);
+
 void obx_model_last_entity_id(OBX_model*, obx_schema_id entity_id, obx_uid entity_uid);
 
 void obx_model_last_index_id(OBX_model* model, obx_schema_id index_id, obx_uid index_uid);
@@ -357,6 +361,10 @@ OBX_bytes_array* obx_cursor_backlink_bytes(OBX_cursor* cursor, obx_schema_id ent
 OBX_id_array* obx_cursor_backlink_ids(OBX_cursor* cursor, obx_schema_id entity_id, obx_schema_id property_id,
                                       obx_id id);
 
+obx_err obx_cursor_rel_put(OBX_cursor* cursor, obx_schema_id relation_id, obx_id source_id, obx_id target_id);
+obx_err obx_cursor_rel_remove(OBX_cursor* cursor, obx_schema_id relation_id, obx_id source_id, obx_id target_id);
+OBX_id_array* obx_cursor_rel_ids(OBX_cursor* cursor, obx_schema_id relation_id, obx_id source_id);
+
 //----------------------------------------------
 // Box
 //----------------------------------------------
@@ -432,6 +440,9 @@ obx_qb_cond obx_qb_string_less(OBX_query_builder* builder, obx_schema_id propert
 obx_qb_cond obx_qb_string_in(OBX_query_builder* builder, obx_schema_id property_id, const char* values[], int count,
                              bool case_sensitive);
 
+obx_qb_cond obx_qb_strings_contain(OBX_query_builder* builder, obx_schema_id property_id, const char* value,
+                                   bool case_sensitive);
+
 obx_qb_cond obx_qb_int_equal(OBX_query_builder* builder, obx_schema_id property_id, int64_t value);
 obx_qb_cond obx_qb_int_not_equal(OBX_query_builder* builder, obx_schema_id property_id, int64_t value);
 obx_qb_cond obx_qb_int_greater(OBX_query_builder* builder, obx_schema_id property_id, int64_t value);
@@ -466,6 +477,9 @@ obx_qb_cond obx_qb_any(OBX_query_builder* builder, const obx_qb_cond conditions[
 obx_err obx_qb_param_alias(OBX_query_builder* builder, const char* alias);
 
 obx_err obx_qb_order(OBX_query_builder* builder, obx_schema_id property_id, OBXOrderFlags flags);
+
+OBX_query_builder* obx_qb_link_property(OBX_query_builder* builder, obx_schema_id owner_id, obx_schema_id prop_id,
+                                        obx_schema_id target_id, int backlink);
 
 //----------------------------------------------
 // Query

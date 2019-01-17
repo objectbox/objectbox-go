@@ -243,6 +243,18 @@ func (qb *QueryBuilder) StringLess(property *BaseProperty, value string, caseSen
 	return cid, qb.Err
 }
 
+func (qb *QueryBuilder) StringVectorContains(property *BaseProperty, value string, caseSensitive bool) (ConditionId, error) {
+	var cid ConditionId
+
+	if qb.Err == nil && qb.checkEntityId(property.Entity.Id) {
+		cvalue := C.CString(value)
+		defer C.free(unsafe.Pointer(cvalue))
+		cid = qb.getConditionId(C.obx_qb_strings_contain(qb.cqb, C.obx_schema_id(property.Id), cvalue, C.bool(caseSensitive)))
+	}
+
+	return cid, qb.Err
+}
+
 func (qb *QueryBuilder) IntBetween(property *BaseProperty, value1 int64, value2 int64) (ConditionId, error) {
 	var cid ConditionId
 

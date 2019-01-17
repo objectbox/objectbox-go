@@ -140,12 +140,21 @@ func (builder *Builder) BuildOrError() (*ObjectBox, error) {
 		return nil, createError()
 	}
 
-	return &ObjectBox{
+	ob := &ObjectBox{
 		store:          cStore,
 		bindingsById:   builder.model.bindingsById,
 		bindingsByName: builder.model.bindingsByName,
 		boxes:          make(map[TypeId]*Box, len(builder.model.bindingsById)),
 		boxesMutex:     &sync.Mutex{},
-		options:        options{putAsyncTimeout: builder.putAsyncTimeout},
-	}, nil
+		entities:       make(map[TypeId]*entity),
+		options: options{
+			putAsyncTimeout:  builder.putAsyncTimeout,
+			alwaysAwaitAsync: true,
+		},
+	}
+
+	for id := range builder.model.bindingsById {
+		ob.entities[id] = &entity{id: id, objectBox: ob}
+	}
+	return ob, nil
 }

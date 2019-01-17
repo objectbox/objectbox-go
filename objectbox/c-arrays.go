@@ -59,20 +59,18 @@ func (bytesArray *bytesArray) free() {
 func cBytesArrayToGo(cBytesArray *C.OBX_bytes_array) *bytesArray {
 	size := int(cBytesArray.count)
 	plainBytesArray := make([][]byte, size)
+
 	if size > 0 {
-		// Previous alternative without reflect:
-		//   https://github.com/golang/go/wiki/cgo#turning-c-arrays-into-go-slices (2012)
-		//   On a RPi 3, the size with 1<<30 did not work, but 1<<27 did
-		// Raul measured both variants and did notice a visible perf impact (Go 1.11.2)
-		var goBytesArray []C.OBX_bytes
-		header := (*reflect.SliceHeader)(unsafe.Pointer(&goBytesArray))
+		var sliceOfCBytes []C.OBX_bytes
+		header := (*reflect.SliceHeader)(unsafe.Pointer(&sliceOfCBytes))
 		*header = reflect.SliceHeader{Data: uintptr(unsafe.Pointer(cBytesArray.bytes)), Len: size, Cap: size}
+
 		for i := 0; i < size; i++ {
-			cBytes := goBytesArray[i]
-			dataBytes := C.GoBytes(cBytes.data, C.int(cBytes.size))
-			plainBytesArray[i] = dataBytes
+			cBytes := sliceOfCBytes[i]
+			cVoidPtrToByteSlice(unsafe.Pointer(cBytes.data), int(cBytes.size), &(plainBytesArray[i]))
 		}
 	}
+
 	return &bytesArray{plainBytesArray, cBytesArray}
 }
 
@@ -131,4 +129,10 @@ func cBytesPtr(value []byte) unsafe.Pointer {
 	} else {
 		return nil
 	}
+}
+
+// NOTE watch https://github.com/golang/go/issues/19367
+func cVoidPtrToByteSlice(data unsafe.Pointer, size int, bytes *[]byte) {
+	header := (*reflect.SliceHeader)(unsafe.Pointer(bytes))
+	*header = reflect.SliceHeader{Data: uintptr(data), Len: size, Cap: size}
 }

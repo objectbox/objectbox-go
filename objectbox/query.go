@@ -20,6 +20,7 @@ package objectbox
 #cgo LDFLAGS: -lobjectbox
 #include <stdlib.h>
 #include "objectbox.h"
+#include "datavisitor.h"
 */
 import "C"
 import (
@@ -106,15 +107,6 @@ func (query *Query) FindIds() (ids []uint64, err error) {
 		return errInner
 	})
 
-	// TODO pass offset & limit to the underlying C call for more efficiency (not supported yet by the C-API)
-	if query.offset != 0 || query.limit != 0 && err == nil && ids != nil {
-		var endOffset = uint64(len(ids))
-		if query.limit != 0 && query.offset+query.limit < endOffset {
-			endOffset = query.offset + query.limit
-		}
-		return ids[query.offset:endOffset], nil
-	}
-
 	return
 }
 
@@ -189,7 +181,7 @@ func (query *Query) findIds(cursor *cursor) (ids []uint64, err error) {
 	if query.cQuery == nil {
 		return nil, query.errorClosed()
 	}
-	cIdsArray := C.obx_query_find_ids(query.cQuery, cursor.cursor)
+	cIdsArray := C.obx_query_find_ids(query.cQuery, cursor.cursor, C.uint64_t(query.offset), C.uint64_t(query.limit))
 	if cIdsArray == nil {
 		return nil, createError()
 	}
@@ -204,12 +196,41 @@ func (query *Query) find(cursor *cursor) (slice interface{}, err error) {
 	if query.cQuery == nil {
 		return 0, query.errorClosed()
 	}
-	cBytesArray := C.obx_query_find(query.cQuery, cursor.cursor, C.uint64_t(query.offset), C.uint64_t(query.limit))
-	if cBytesArray == nil {
+
+	if supportsBytesArray {
+		cBytesArray := C.obx_query_find(query.cQuery, cursor.cursor, C.uint64_t(query.offset), C.uint64_t(query.limit))
+		if cBytesArray == nil {
+			return nil, createError()
+		}
+		return cursor.cBytesArrayToObjects(cBytesArray), nil
+	} else {
+		return query.findSequential(cursor)
+	}
+}
+
+func (query *Query) findSequential(cursor *cursor) (slice interface{}, err error) {
+	if query.cQuery == nil {
+		return 0, query.errorClosed()
+	}
+
+	var visitorId uint32
+	visitorId, err = dataVisitorRegister(func(bytes []byte) bool {
+		object := cursor.binding.ToObject(bytes)
+		slice = cursor.binding.AppendToSlice(slice, object)
+		return true
+	})
+	if err != nil {
+		return nil, err
+	}
+	defer dataVisitorUnregister(visitorId)
+
+	slice = cursor.binding.MakeSlice(defaultSliceCapacity)
+	rc := C.obx_query_visit(query.cQuery, cursor.cursor, C.data_visitor, unsafe.Pointer(&visitorId), C.uint64_t(query.offset), C.uint64_t(query.limit))
+	if rc != 0 {
 		return nil, createError()
 	}
 
-	return cursor.cBytesArrayToObjects(cBytesArray), nil
+	return slice, nil
 }
 
 func (query *Query) checkEntityId(entityId TypeId) error {

@@ -41,7 +41,10 @@ type Builder struct {
 }
 
 func NewBuilder() *Builder {
-	if !C.obx_version_is_at_least(0, 4, 0) {
+	// these constants are based on the objectbox.h file, not on the loaded library
+	var obxMinVersion = Version{C.OBX_VERSION_MAJOR, C.OBX_VERSION_MINOR, C.OBX_VERSION_PATCH}
+
+	if !C.obx_version_is_at_least(C.int(obxMinVersion.Major), C.int(obxMinVersion.Minor), C.int(obxMinVersion.Patch)) {
 		var version string
 		msg := C.obx_version_string()
 		if msg == nil {
@@ -49,7 +52,7 @@ func NewBuilder() *Builder {
 		} else {
 			version = C.GoString(msg)
 		}
-		panic("Minimum libobjectbox version 0.4.0 required, but found " + version + ":\n." +
+		panic("Minimum libobjectbox version " + obxMinVersion.String() + " required, but found " + version + ":\n." +
 			">>> Please run install.sh for a full upgrade <<<\n" +
 			"Or check https://github.com/objectbox/objectbox-c for info about the required library.")
 	}

@@ -36,6 +36,8 @@ type cursor struct {
 	fbb     *flatbuffers.Builder
 }
 
+const defaultSliceCapacity = 16
+
 func (cursor *cursor) Close() error {
 	rc := C.obx_cursor_close(cursor.cursor)
 	cursor.cursor = nil
@@ -54,11 +56,32 @@ func (cursor *cursor) Get(id uint64) (object interface{}, err error) {
 }
 
 func (cursor *cursor) GetAll() (slice interface{}, err error) {
-	cBytesArray := C.obx_cursor_get_all(cursor.cursor)
-	if cBytesArray == nil {
-		return nil, createError()
+	if supportsBytesArray {
+		cBytesArray := C.obx_cursor_get_all(cursor.cursor)
+		if cBytesArray == nil {
+			return nil, createError()
+		}
+		return cursor.cBytesArrayToObjects(cBytesArray), nil
+	} else {
+		return cursor.getAllSequential()
 	}
-	return cursor.cBytesArrayToObjects(cBytesArray), nil
+}
+
+func (cursor *cursor) getAllSequential() (slice interface{}, err error) {
+	binding := cursor.binding
+	slice = cursor.binding.MakeSlice(defaultSliceCapacity)
+
+	var bytes []byte
+	for bytes, err = cursor.first(); bytes != nil && err == nil; bytes, err = cursor.next() {
+		object := binding.ToObject(bytes)
+		slice = binding.AppendToSlice(slice, object)
+	}
+
+	if err != nil {
+		slice = nil
+	}
+
+	return slice, err
 }
 
 func (cursor *cursor) getBytes(id uint64) (bytes []byte, err error) {
@@ -67,7 +90,7 @@ func (cursor *cursor) getBytes(id uint64) (bytes []byte, err error) {
 	dataPtr := unsafe.Pointer(data) // Need ptr to an unsafe ptr here
 	rc := C.obx_cursor_get(cursor.cursor, C.obx_id(id), &dataPtr, &dataSize)
 	if rc != 0 {
-		if rc != 404 {
+		if rc != C.OBX_NOT_FOUND {
 			err = createError()
 		}
 		return
@@ -76,13 +99,13 @@ func (cursor *cursor) getBytes(id uint64) (bytes []byte, err error) {
 	return
 }
 
-func (cursor *cursor) First() (bytes []byte, err error) {
+func (cursor *cursor) first() (bytes []byte, err error) {
 	var data *C.void
 	var dataSize C.size_t
 	dataPtr := unsafe.Pointer(data) // Need ptr to an unsafe ptr here
 	rc := C.obx_cursor_first(cursor.cursor, &dataPtr, &dataSize)
 	if rc != 0 {
-		if rc != 404 {
+		if rc != C.OBX_NOT_FOUND {
 			err = createError()
 		}
 		return
@@ -91,13 +114,13 @@ func (cursor *cursor) First() (bytes []byte, err error) {
 	return
 }
 
-func (cursor *cursor) Next() (bytes []byte, err error) {
+func (cursor *cursor) next() (bytes []byte, err error) {
 	var data *C.void
 	var dataSize C.size_t
 	dataPtr := unsafe.Pointer(data) // Need ptr to an unsafe ptr here
 	rc := C.obx_cursor_next(cursor.cursor, &dataPtr, &dataSize)
 	if rc != 0 {
-		if rc != 404 {
+		if rc != C.OBX_NOT_FOUND {
 			err = createError()
 		}
 		return

@@ -200,7 +200,7 @@ func (model *Model) Property(name string, propertyType int, id TypeId, uid uint6
 	cname := C.CString(name)
 	defer C.free(unsafe.Pointer(cname))
 
-	rc := C.obx_model_property(model.model, cname, C.OBPropertyType(propertyType), C.obx_schema_id(id), C.obx_uid(uid))
+	rc := C.obx_model_property(model.model, cname, C.OBXPropertyType(propertyType), C.obx_schema_id(id), C.obx_uid(uid))
 	if rc != 0 {
 		model.Error = createError()
 	}
@@ -211,7 +211,7 @@ func (model *Model) PropertyFlags(propertyFlags int) {
 	if model.Error != nil {
 		return
 	}
-	rc := C.obx_model_property_flags(model.model, C.OBPropertyFlags(propertyFlags))
+	rc := C.obx_model_property_flags(model.model, C.OBXPropertyFlags(propertyFlags))
 	if rc != 0 {
 		model.Error = createError()
 	}

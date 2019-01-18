@@ -78,6 +78,5 @@ func (txn *Transaction) CursorForName(entitySchemaName string) (*cursor, error) 
 	if ccursor == nil {
 		return nil, createError()
 	}
-	// TODO fix typeId here
 	return &cursor{ccursor, binding, flatbuffers.NewBuilder(512)}, nil
 }

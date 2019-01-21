@@ -6,7 +6,6 @@ import (
 	"github.com/google/flatbuffers/go"
 	"github.com/objectbox/objectbox-go/objectbox"
 	"github.com/objectbox/objectbox-go/objectbox/fbutils"
-	"strconv"
 )
 
 type stringIdEntity_EntityInfo struct {
@@ -48,17 +47,12 @@ func (stringIdEntity_EntityInfo) AddToModel(model *objectbox.Model) {
 
 // GetId is called by the ObjectBox during Put operations to check for existing ID on an object
 func (stringIdEntity_EntityInfo) GetId(object interface{}) (uint64, error) {
-	var strId = object.(*StringIdEntity).Id
-	if len(strId) == 0 {
-		return 0, nil
-	} else {
-		return strconv.ParseUint(strId, 10, 64)
-	}
+	return objectbox.StringIdConvertToDatabaseValue(object.(*StringIdEntity).Id), nil
 }
 
 // SetId is called by the ObjectBox during Put to update an ID on an object that has just been inserted
 func (stringIdEntity_EntityInfo) SetId(object interface{}, id uint64) error {
-	object.(*StringIdEntity).Id = strconv.FormatUint(id, 10)
+	object.(*StringIdEntity).Id = objectbox.StringIdConvertToEntityProperty(id)
 	return nil
 }
 
@@ -78,7 +72,7 @@ func (stringIdEntity_EntityInfo) ToObject(bytes []byte) interface{} {
 	}
 
 	return &StringIdEntity{
-		Id: strconv.FormatUint(table.GetUint64Slot(4, 0), 10),
+		Id: objectbox.StringIdConvertToEntityProperty(table.GetUint64Slot(4, 0)),
 	}
 }
 
@@ -171,12 +165,7 @@ func (box *StringIdEntityBox) GetAll() ([]*StringIdEntity, error) {
 
 // Remove deletes a single object
 func (box *StringIdEntityBox) Remove(object *StringIdEntity) (err error) {
-	idUint64, parseErr := strconv.ParseUint(object.Id, 10, 64)
-	if parseErr != nil {
-		return parseErr
-	}
-
-	return box.Box.Remove(idUint64)
+	return box.Box.Remove(objectbox.StringIdConvertToDatabaseValue(object.Id))
 }
 
 // Creates a query with the given conditions. Use the fields of the StringIdEntity_ struct to create conditions.

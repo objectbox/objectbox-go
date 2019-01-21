@@ -225,10 +225,14 @@ func (binding *Binding) createEntityFromAst(strct *ast.StructType, name string, 
 
 	// special handling for string IDs = they are transformed to uint64 in the binding
 	if entity.IdProperty.GoType == "string" {
-		entity.IdProperty.ObType = "Long"
-		entity.IdProperty.FbType = "Uint64"
+		if err := entity.IdProperty.setType("uint64"); err != nil {
+			return fmt.Errorf("%s on property %s, entity %s", err, entity.IdProperty.Name, entity.Name)
+		}
 
-		entity.binding.Imports["strconv"] = "strconv"
+		if entity.IdProperty.Annotations["converter"] == nil {
+			var converter = "objectbox.StringIdConvert"
+			entity.IdProperty.Converter = &converter
+		}
 	}
 
 	binding.Entities = append(binding.Entities, entity)

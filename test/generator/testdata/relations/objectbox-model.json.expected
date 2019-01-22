@@ -16,7 +16,7 @@
         },
         {
           "id": "2:6050128673802995827",
-          "name": "GroupId",
+          "name": "Group",
           "indexId": "1:501233450539197794"
         }
       ]
@@ -24,28 +24,22 @@
     {
       "id": "2:3390393562759376202",
       "name": "TaskRelPtr",
-      "lastPropertyId": "1:2669985732393126063",
+      "lastPropertyId": "2:1774932891286980153",
       "properties": [
         {
           "id": "1:2669985732393126063",
           "name": "Id"
-        }
-      ]
-    },
-    {
-      "id": "3:1774932891286980153",
-      "name": "TaskRelValue",
-      "lastPropertyId": "1:6044372234677422456",
-      "properties": [
+        },
         {
-          "id": "1:6044372234677422456",
-          "name": "Id"
+          "id": "2:1774932891286980153",
+          "name": "Group",
+          "indexId": "2:6044372234677422456"
         }
       ]
     },
     {
-      "id": "4:8274930044578894929",
-      "name": "Group",
+      "id": "3:8274930044578894929",
+      "name": "TaskRelValue",
       "lastPropertyId": "2:2661732831099943416",
       "properties": [
         {
@@ -54,13 +48,29 @@
         },
         {
           "id": "2:2661732831099943416",
+          "name": "Group",
+          "indexId": "3:8325060299420976708"
+        }
+      ]
+    },
+    {
+      "id": "4:7837839688282259259",
+      "name": "Group",
+      "lastPropertyId": "2:5617773211005988520",
+      "properties": [
+        {
+          "id": "1:2518412263346885298",
+          "name": "Id"
+        },
+        {
+          "id": "2:5617773211005988520",
           "name": "Name"
         }
       ]
     }
   ],
-  "lastEntityId": "4:8274930044578894929",
-  "lastIndexId": "1:501233450539197794",
+  "lastEntityId": "4:7837839688282259259",
+  "lastIndexId": "3:8325060299420976708",
   "retiredEntityUids": [],
   "retiredIndexUids": [],
   "retiredPropertyUids": []

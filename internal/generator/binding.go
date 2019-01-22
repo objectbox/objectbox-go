@@ -22,6 +22,7 @@ import (
 	"go/ast"
 	"go/types"
 	"log"
+	"path"
 	"strconv"
 	"strings"
 
@@ -307,38 +308,51 @@ func (entity *Entity) addFields(fields fieldList, path string) ([]*Field, error)
 					field.IsPointer = true
 				}
 
-				// in case it's an embedded struct, inline all fields
+				// in case it's an embedded struct
 				if embedded, isStruct := baseType.(*types.Struct); isStruct {
-					if innerFields, err := entity.addFields(structFieldList{embedded}, path+"."+property.Name); err != nil {
-						return nil, err
+					// if it's a relation, add a field containing the ID
+					if property.Annotations["link"] != nil {
+						if len(property.Annotations["link"].Value) == 0 {
+							property.Annotations["link"].Value = typeBaseName(typ.String())
+						}
+
+						// add this field as an ID field
+						if err = property.setType("uint64"); err != nil {
+							return nil, propertyError(err, property)
+						}
 					} else {
-						// apply some struct-related settings
-						field.Property = nil
-						field.Fields = innerFields
-
-						if namedType, isNamed := f.TypeInternal().(*types.Named); isNamed {
-							field.Type = namedType.Obj().Name()
+						// otherwise inline all fields
+						if innerFields, err := entity.addFields(structFieldList{embedded}, path+"."+property.Name); err != nil {
+							return nil, err
 						} else {
-							field.Type = typ.String()
+							// apply some struct-related settings
+							field.Property = nil
+							field.Fields = innerFields
+
+							if namedType, isNamed := f.TypeInternal().(*types.Named); isNamed {
+								field.Type = namedType.Obj().Name()
+							} else {
+								field.Type = typ.String()
+							}
+
+							// strip the '*' if it's a pointer type
+							if len(field.Type) > 1 && field.Type[0] == '*' {
+								field.Type = field.Type[1:]
+							}
+
+							// get just the last component from `packagename.typename` for the field name
+							var parts = strings.Split(field.Name, ".")
+							field.Name = parts[len(parts)-1]
 						}
 
-						// strip the '*' if it's a pointer type
-						if len(field.Type) > 1 && field.Type[0] == '*' {
-							field.Type = field.Type[1:]
-						}
-
-						// get just the last component from `packagename.typename` for the field name
-						var parts = strings.Split(field.Name, ".")
-						field.Name = parts[len(parts)-1]
+						// this struct itself is not added, just the inner properties
+						// TODO error on unknown (unhandled) Annotations
+						continue
 					}
-
-					// this struct itself is not added, just the inner properties
-					// TODO error on unknown (unhandled) Annotations
-					continue
-				}
-
-				if err = property.setType(baseType.String()); err != nil {
-					return nil, propertyError(err, property)
+				} else {
+					if err = property.setType(baseType.String()); err != nil {
+						return nil, propertyError(err, property)
+					}
 				}
 			}
 		}
@@ -686,4 +700,16 @@ func (property *Property) Path() string {
 
 	parts = append(parts, property.Name)
 	return strings.Join(parts, ".")
+}
+
+func typeBaseName(name string) string {
+	// strip the '*' if it's a pointer type
+	name = strings.TrimPrefix(name, "*")
+
+	// get just the last component from `packagename.typename` for the field name
+	if strings.ContainsRune(name, '.') {
+		name = strings.TrimPrefix(path.Ext(name), ".")
+	}
+
+	return name
 }

@@ -1,6 +1,6 @@
 package object
 
 type TaskRelPtr struct {
-	Id uint64
-	//Group *Group `link`
+	Id    uint64
+	Group *Group `link`
 }

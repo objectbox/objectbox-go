@@ -34,10 +34,11 @@ type Builder struct {
 	model *Model
 	Error error
 
-	name            string
-	maxSizeInKb     uint64
-	maxReaders      uint
-	putAsyncTimeout uint
+	name        string
+	maxSizeInKb uint64
+	maxReaders  uint
+
+	options
 }
 
 func NewBuilder() *Builder {
@@ -57,8 +58,11 @@ func NewBuilder() *Builder {
 			"Or check https://github.com/objectbox/objectbox-c for info about the required library.")
 	}
 	return &Builder{
-		// defaults
-		putAsyncTimeout: 10000, // 10s
+		options: options{
+			// defaults
+			putAsyncTimeout:  10000, // 10s
+			alwaysAwaitAsync: false,
+		},
 	}
 }
 
@@ -83,6 +87,14 @@ func (builder *Builder) MaxReaders(maxReaders uint) *Builder {
 // Configures PutAsync enqueue timeout (default is 10 seconds). See Box.PutAsync method doc for more information.
 func (builder *Builder) PutAsyncTimeout(milliseconds uint) *Builder {
 	builder.putAsyncTimeout = milliseconds
+	return builder
+}
+
+// Enables automatic waiting for async operations between executing a synchronous one.
+// This can be replaced if you're using PutAsync in many places and need to make sure the operation has finished
+// before your data you read/query/delete,... is executed. Calls ObjectBox.AwaitAsyncCompletion() internally.
+func (builder *Builder) AlwaysAwaitAsync(value bool) *Builder {
+	builder.alwaysAwaitAsync = value
 	return builder
 }
 
@@ -147,10 +159,7 @@ func (builder *Builder) BuildOrError() (*ObjectBox, error) {
 		boxes:          make(map[TypeId]*Box, len(builder.model.bindingsById)),
 		boxesMutex:     &sync.Mutex{},
 		entities:       make(map[TypeId]*entity),
-		options: options{
-			putAsyncTimeout:  builder.putAsyncTimeout,
-			alwaysAwaitAsync: true,
-		},
+		options:        builder.options,
 	}
 
 	for id := range builder.model.bindingsById {

@@ -50,12 +50,11 @@ func (e *entity) awaitAsyncCompletion() {
 	}
 
 	e.mutex.Lock()
+	defer e.mutex.Unlock()
 
 	// check again after getting the mutex, it might have been cleared in the meantime
 	if aTrue == atomic.LoadUint32(&e.isOutOfSync) {
 		e.objectBox.AwaitAsyncCompletion()
 		atomic.StoreUint32(&e.isOutOfSync, aFalse)
 	}
-
-	e.mutex.Unlock()
 }

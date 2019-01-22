@@ -256,8 +256,8 @@ func (entity_EntityInfo) SetId(object interface{}, id uint64) {
 	object.(*Entity).Id = id
 }
 
-// Flatten is called by the ObjectBox to transform an object to a FlatBuffer
-func (entity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
+// Store is called by the ObjectBox to transform an object to a FlatBuffer
+func (entity_EntityInfo) Store(obx *objectbox.ObjectBox, txn *objectbox.Transaction, object interface{}, fbb *flatbuffers.Builder, id uint64) {
 	obj := object.(*Entity)
 	var offsetString = fbutils.CreateStringOffset(fbb, obj.String)
 	var offsetStringVector = fbutils.CreateStringVectorOffset(fbb, obj.StringVector)
@@ -289,8 +289,8 @@ func (entity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, i
 	fbutils.SetUOffsetTSlot(fbb, 19, offsetComplex128)
 }
 
-// ToObject is called by the ObjectBox to load an object from a FlatBuffer
-func (entity_EntityInfo) ToObject(bytes []byte) interface{} {
+// Load is called by the ObjectBox to load an object from a FlatBuffer
+func (entity_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interface{} {
 	table := &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
@@ -514,16 +514,16 @@ func (testStringIdEntity_EntityInfo) SetId(object interface{}, id uint64) {
 	object.(*TestStringIdEntity).Id = strconv.FormatUint(id, 10)
 }
 
-// Flatten is called by the ObjectBox to transform an object to a FlatBuffer
-func (testStringIdEntity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
+// Store is called by the ObjectBox to transform an object to a FlatBuffer
+func (testStringIdEntity_EntityInfo) Store(obx *objectbox.ObjectBox, txn *objectbox.Transaction, object interface{}, fbb *flatbuffers.Builder, id uint64) {
 
 	// build the FlatBuffers object
 	fbb.StartObject(1)
 	fbutils.SetUint64Slot(fbb, 0, id)
 }
 
-// ToObject is called by the ObjectBox to load an object from a FlatBuffer
-func (testStringIdEntity_EntityInfo) ToObject(bytes []byte) interface{} {
+// Load is called by the ObjectBox to load an object from a FlatBuffer
+func (testStringIdEntity_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interface{} {
 	table := &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
@@ -747,8 +747,8 @@ func (testEntityInline_EntityInfo) SetId(object interface{}, id uint64) {
 	object.(*TestEntityInline).Id = id
 }
 
-// Flatten is called by the ObjectBox to transform an object to a FlatBuffer
-func (testEntityInline_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
+// Store is called by the ObjectBox to transform an object to a FlatBuffer
+func (testEntityInline_EntityInfo) Store(obx *objectbox.ObjectBox, txn *objectbox.Transaction, object interface{}, fbb *flatbuffers.Builder, id uint64) {
 	obj := object.(*TestEntityInline)
 
 	// build the FlatBuffers object
@@ -758,8 +758,8 @@ func (testEntityInline_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.
 	fbutils.SetUint64Slot(fbb, 2, id)
 }
 
-// ToObject is called by the ObjectBox to load an object from a FlatBuffer
-func (testEntityInline_EntityInfo) ToObject(bytes []byte) interface{} {
+// Load is called by the ObjectBox to load an object from a FlatBuffer
+func (testEntityInline_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interface{} {
 	table := &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),

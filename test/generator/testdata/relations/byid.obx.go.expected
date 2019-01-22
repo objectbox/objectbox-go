@@ -66,8 +66,8 @@ func (taskRelId_EntityInfo) SetId(object interface{}, id uint64) {
 	object.(*TaskRelId).Id = id
 }
 
-// Flatten is called by the ObjectBox to transform an object to a FlatBuffer
-func (taskRelId_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
+// Store is called by the ObjectBox to transform an object to a FlatBuffer
+func (taskRelId_EntityInfo) Store(obx *objectbox.ObjectBox, txn *objectbox.Transaction, object interface{}, fbb *flatbuffers.Builder, id uint64) {
 	obj := object.(*TaskRelId)
 
 	// build the FlatBuffers object
@@ -76,8 +76,8 @@ func (taskRelId_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder
 	fbutils.SetUint64Slot(fbb, 1, obj.Group)
 }
 
-// ToObject is called by the ObjectBox to load an object from a FlatBuffer
-func (taskRelId_EntityInfo) ToObject(bytes []byte) interface{} {
+// Load is called by the ObjectBox to load an object from a FlatBuffer
+func (taskRelId_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interface{} {
 	table := &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),

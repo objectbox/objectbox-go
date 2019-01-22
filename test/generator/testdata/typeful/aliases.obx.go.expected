@@ -95,8 +95,8 @@ func (aliases_EntityInfo) SetId(object interface{}, id uint64) {
 	object.(*Aliases).Id = id
 }
 
-// Flatten is called by the ObjectBox to transform an object to a FlatBuffer
-func (aliases_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
+// Store is called by the ObjectBox to transform an object to a FlatBuffer
+func (aliases_EntityInfo) Store(obx *objectbox.ObjectBox, txn *objectbox.Transaction, object interface{}, fbb *flatbuffers.Builder, id uint64) {
 	obj := object.(*Aliases)
 	var offsetSameFile = fbutils.CreateStringOffset(fbb, obj.SameFile)
 	var offsetSameFile2 = fbutils.CreateStringOffset(fbb, obj.SameFile2)
@@ -110,8 +110,8 @@ func (aliases_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, 
 	fbutils.SetInt64Slot(fbb, 4, int64(obj.SamePackage2))
 }
 
-// ToObject is called by the ObjectBox to load an object from a FlatBuffer
-func (aliases_EntityInfo) ToObject(bytes []byte) interface{} {
+// Load is called by the ObjectBox to load an object from a FlatBuffer
+func (aliases_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interface{} {
 	table := &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),

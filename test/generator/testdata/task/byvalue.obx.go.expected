@@ -65,16 +65,16 @@ func (taskByValue_EntityInfo) SetId(object interface{}, id uint64) {
 	}
 }
 
-// Flatten is called by the ObjectBox to transform an object to a FlatBuffer
-func (taskByValue_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
+// Store is called by the ObjectBox to transform an object to a FlatBuffer
+func (taskByValue_EntityInfo) Store(obx *objectbox.ObjectBox, txn *objectbox.Transaction, object interface{}, fbb *flatbuffers.Builder, id uint64) {
 
 	// build the FlatBuffers object
 	fbb.StartObject(1)
 	fbutils.SetUint64Slot(fbb, 0, id)
 }
 
-// ToObject is called by the ObjectBox to load an object from a FlatBuffer
-func (taskByValue_EntityInfo) ToObject(bytes []byte) interface{} {
+// Load is called by the ObjectBox to load an object from a FlatBuffer
+func (taskByValue_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interface{} {
 	table := &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
@@ -288,16 +288,16 @@ func (taskStringByValue_EntityInfo) SetId(object interface{}, id uint64) {
 	}
 }
 
-// Flatten is called by the ObjectBox to transform an object to a FlatBuffer
-func (taskStringByValue_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
+// Store is called by the ObjectBox to transform an object to a FlatBuffer
+func (taskStringByValue_EntityInfo) Store(obx *objectbox.ObjectBox, txn *objectbox.Transaction, object interface{}, fbb *flatbuffers.Builder, id uint64) {
 
 	// build the FlatBuffers object
 	fbb.StartObject(1)
 	fbutils.SetUint64Slot(fbb, 0, id)
 }
 
-// ToObject is called by the ObjectBox to load an object from a FlatBuffer
-func (taskStringByValue_EntityInfo) ToObject(bytes []byte) interface{} {
+// Load is called by the ObjectBox to load an object from a FlatBuffer
+func (taskStringByValue_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interface{} {
 	table := &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),

@@ -85,8 +85,8 @@ func (task_EntityInfo) SetId(object interface{}, id uint64) {
 	object.(*Task).Id = id
 }
 
-// Flatten is called by the ObjectBox to transform an object to a FlatBuffer
-func (task_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
+// Store is called by the ObjectBox to transform an object to a FlatBuffer
+func (task_EntityInfo) Store(obx *objectbox.ObjectBox, txn *objectbox.Transaction, object interface{}, fbb *flatbuffers.Builder, id uint64) {
 	obj := object.(*Task)
 	var offsetText = fbutils.CreateStringOffset(fbb, obj.Text)
 
@@ -98,8 +98,8 @@ func (task_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id 
 	fbutils.SetInt64Slot(fbb, 3, obj.DateFinished)
 }
 
-// ToObject is called by the ObjectBox to load an object from a FlatBuffer
-func (task_EntityInfo) ToObject(bytes []byte) interface{} {
+// Load is called by the ObjectBox to load an object from a FlatBuffer
+func (task_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interface{} {
 	table := &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),

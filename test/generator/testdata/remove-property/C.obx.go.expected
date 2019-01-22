@@ -65,8 +65,8 @@ func (c_EntityInfo) SetId(object interface{}, id uint64) {
 	object.(*C).Id = id
 }
 
-// Flatten is called by the ObjectBox to transform an object to a FlatBuffer
-func (c_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
+// Store is called by the ObjectBox to transform an object to a FlatBuffer
+func (c_EntityInfo) Store(obx *objectbox.ObjectBox, txn *objectbox.Transaction, object interface{}, fbb *flatbuffers.Builder, id uint64) {
 	obj := object.(*C)
 
 	// build the FlatBuffers object
@@ -75,8 +75,8 @@ func (c_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uin
 	fbutils.SetInt64Slot(fbb, 2, int64(obj.New))
 }
 
-// ToObject is called by the ObjectBox to load an object from a FlatBuffer
-func (c_EntityInfo) ToObject(bytes []byte) interface{} {
+// Load is called by the ObjectBox to load an object from a FlatBuffer
+func (c_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interface{} {
 	table := &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),

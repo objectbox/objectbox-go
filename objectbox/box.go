@@ -124,7 +124,7 @@ func (box *Box) PutAsyncWithTimeout(object interface{}, timeoutMs uint) (id uint
 	} else {
 		fbb = flatbuffers.NewBuilder(256)
 	}
-	box.binding.Flatten(object, fbb, id)
+	box.binding.Store(box.objectBox, nil, object, fbb, id)
 
 	checkForPreviousValue := idFromObject != 0
 	if err = box.finishFbbAndPutAsync(fbb, id, checkForPreviousValue, timeoutMs); err != nil {

@@ -65,7 +65,7 @@ func (txn *Transaction) createCursor(typeId TypeId, binding ObjectBinding) (*cur
 	if ccursor == nil {
 		return nil, createError()
 	}
-	return &cursor{ccursor, binding, flatbuffers.NewBuilder(512)}, nil
+	return &cursor{txn, ccursor, binding, flatbuffers.NewBuilder(512)}, nil
 }
 
 // Internal: won't be available in future versions
@@ -78,5 +78,5 @@ func (txn *Transaction) CursorForName(entitySchemaName string) (*cursor, error) 
 	if ccursor == nil {
 		return nil, createError()
 	}
-	return &cursor{ccursor, binding, flatbuffers.NewBuilder(512)}, nil
+	return &cursor{txn, ccursor, binding, flatbuffers.NewBuilder(512)}, nil
 }

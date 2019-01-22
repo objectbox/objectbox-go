@@ -97,8 +97,8 @@ func (event_EntityInfo) SetId(object interface{}, id uint64) {
 	object.(*Event).Id = id
 }
 
-// Flatten is called by the ObjectBox to transform an object to a FlatBuffer
-func (event_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
+// Store is called by the ObjectBox to transform an object to a FlatBuffer
+func (event_EntityInfo) Store(obx *objectbox.ObjectBox, txn *objectbox.Transaction, object interface{}, fbb *flatbuffers.Builder, id uint64) {
 	obj := object.(*Event)
 	var offsetUid = fbutils.CreateStringOffset(fbb, obj.Uid)
 	var offsetDevice = fbutils.CreateStringOffset(fbb, obj.Device)
@@ -113,8 +113,8 @@ func (event_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id
 	fbutils.SetUOffsetTSlot(fbb, 4, offsetPicture)
 }
 
-// ToObject is called by the ObjectBox to load an object from a FlatBuffer
-func (event_EntityInfo) ToObject(bytes []byte) interface{} {
+// Load is called by the ObjectBox to load an object from a FlatBuffer
+func (event_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interface{} {
 	table := &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
@@ -398,8 +398,8 @@ func (reading_EntityInfo) SetId(object interface{}, id uint64) {
 	object.(*Reading).Id = id
 }
 
-// Flatten is called by the ObjectBox to transform an object to a FlatBuffer
-func (reading_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
+// Store is called by the ObjectBox to transform an object to a FlatBuffer
+func (reading_EntityInfo) Store(obx *objectbox.ObjectBox, txn *objectbox.Transaction, object interface{}, fbb *flatbuffers.Builder, id uint64) {
 	obj := object.(*Reading)
 	var offsetValueName = fbutils.CreateStringOffset(fbb, obj.ValueName)
 	var offsetValueString = fbutils.CreateStringOffset(fbb, obj.ValueString)
@@ -417,8 +417,8 @@ func (reading_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, 
 	fbutils.SetFloat32Slot(fbb, 8, obj.ValueFloating32)
 }
 
-// ToObject is called by the ObjectBox to load an object from a FlatBuffer
-func (reading_EntityInfo) ToObject(bytes []byte) interface{} {
+// Load is called by the ObjectBox to load an object from a FlatBuffer
+func (reading_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interface{} {
 	table := &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),

@@ -215,7 +215,7 @@ func (query *Query) findSequential(cursor *cursor) (slice interface{}, err error
 
 	var visitorId uint32
 	visitorId, err = dataVisitorRegister(func(bytes []byte) bool {
-		object := cursor.binding.ToObject(bytes)
+		object := cursor.binding.Load(cursor.txn, bytes)
 		slice = cursor.binding.AppendToSlice(slice, object)
 		return true
 	})

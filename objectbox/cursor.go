@@ -31,6 +31,7 @@ import (
 
 // Internal: won't be publicly exposed in a future version!
 type cursor struct {
+	txn     *Transaction
 	cursor  *C.OBX_cursor
 	binding ObjectBinding
 	fbb     *flatbuffers.Builder
@@ -52,7 +53,7 @@ func (cursor *cursor) Get(id uint64) (object interface{}, err error) {
 	if bytes == nil || err != nil {
 		return
 	}
-	return cursor.binding.ToObject(bytes), nil
+	return cursor.binding.Load(cursor.txn, bytes), nil
 }
 
 func (cursor *cursor) GetAll() (slice interface{}, err error) {
@@ -73,7 +74,7 @@ func (cursor *cursor) getAllSequential() (slice interface{}, err error) {
 
 	var bytes []byte
 	for bytes, err = cursor.first(); bytes != nil && err == nil; bytes, err = cursor.next() {
-		object := binding.ToObject(bytes)
+		object := binding.Load(cursor.txn, bytes)
 		slice = binding.AppendToSlice(slice, object)
 	}
 
@@ -169,7 +170,7 @@ func (cursor *cursor) Put(object interface{}) (id uint64, err error) {
 		return
 	}
 
-	cursor.binding.Flatten(object, cursor.fbb, id)
+	cursor.binding.Store(nil, cursor.txn, object, cursor.fbb, id)
 
 	checkForPreviousValue := idFromObject != 0
 	if err = cursor.finishInternalFbbAndPut(id, checkForPreviousValue); err != nil {
@@ -234,7 +235,7 @@ func (cursor *cursor) cBytesArrayToObjects(cBytesArray *C.OBX_bytes_array) (slic
 func (cursor *cursor) bytesArrayToObjects(bytesArray *bytesArray) (slice interface{}) {
 	slice = cursor.binding.MakeSlice(len(bytesArray.BytesArray))
 	for _, bytesData := range bytesArray.BytesArray {
-		object := cursor.binding.ToObject(bytesData)
+		object := cursor.binding.Load(cursor.txn, bytesData)
 		slice = cursor.binding.AppendToSlice(slice, object)
 	}
 	return

@@ -30,7 +30,7 @@ Code example:
 	var visitorId uint32
 	visitorId, err = dataVisitorRegister(func(bytes []byte) bool {
 		// do your thing with the data
-		object := cursor.binding.ToObject(bytes)
+		object := cursor.binding.Load(bytes)
 		return true // this return value is passed back to the ObjectBox, usually used to break the traversal
 	})
 

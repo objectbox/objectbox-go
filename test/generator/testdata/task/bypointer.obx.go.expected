@@ -104,13 +104,15 @@ func (task_EntityInfo) Store(obx *objectbox.ObjectBox, txn *objectbox.Transactio
 	var offsetUid = fbutils.CreateStringOffset(fbb, obj.Uid)
 	var offsetText = fbutils.CreateStringOffset(fbb, obj.Text)
 
+	var rIdGroupId = obj.GroupId
+
 	// build the FlatBuffers object
 	fbb.StartObject(5)
 	fbutils.SetUint64Slot(fbb, 0, id)
 	fbutils.SetUOffsetTSlot(fbb, 1, offsetUid)
 	fbutils.SetUOffsetTSlot(fbb, 2, offsetText)
 	fbutils.SetUint64Slot(fbb, 3, obj.Date)
-	fbutils.SetUint64Slot(fbb, 4, obj.GroupId)
+	fbutils.SetUint64Slot(fbb, 4, rIdGroupId)
 }
 
 // Load is called by the ObjectBox to load an object from a FlatBuffer

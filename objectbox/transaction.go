@@ -69,6 +69,7 @@ func (txn *Transaction) createCursor(typeId TypeId, binding ObjectBinding) (*cur
 }
 
 // Internal: won't be available in future versions
+// TODO cache cursors in the transaction
 func (txn *Transaction) CursorForName(entitySchemaName string) (*cursor, error) {
 	binding := txn.objectBox.getBindingByName(entitySchemaName)
 	cname := C.CString(entitySchemaName)

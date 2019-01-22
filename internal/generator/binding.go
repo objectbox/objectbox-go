@@ -89,11 +89,12 @@ type Annotation struct {
 }
 
 type Field struct {
-	Name      string
-	Type      string
-	IsPointer bool
-	Property  *Property // nil if it's an embedded struct
-	Fields    []*Field  // inner fields, nil if it's a property
+	Name           string
+	Type           string
+	IsPointer      bool
+	Property       *Property // nil if it's an embedded struct
+	Fields         []*Field  // inner fields, nil if it's a property
+	IsFullRelation bool
 }
 
 func newBinding() (*Binding, error) {
@@ -310,9 +311,13 @@ func (entity *Entity) addFields(fields fieldList, path string) ([]*Field, error)
 
 				// in case it's an embedded struct
 				if embedded, isStruct := baseType.(*types.Struct); isStruct {
+					field.fillIn(f, typ)
+
 					// if it's a relation, add a field containing the ID
 					if property.Annotations["link"] != nil {
 						if len(property.Annotations["link"].Value) == 0 {
+							// set the relation target to the type of the target entity
+							// TODO this doesn't respect nameInDb on the entity (but we don't support that at the moment)
 							property.Annotations["link"].Value = typeBaseName(typ.String())
 						}
 
@@ -320,6 +325,9 @@ func (entity *Entity) addFields(fields fieldList, path string) ([]*Field, error)
 						if err = property.setType("uint64"); err != nil {
 							return nil, propertyError(err, property)
 						}
+
+						field.IsFullRelation = true
+
 					} else {
 						// otherwise inline all fields
 						if innerFields, err := entity.addFields(structFieldList{embedded}, path+"."+property.Name); err != nil {
@@ -328,21 +336,6 @@ func (entity *Entity) addFields(fields fieldList, path string) ([]*Field, error)
 							// apply some struct-related settings
 							field.Property = nil
 							field.Fields = innerFields
-
-							if namedType, isNamed := f.TypeInternal().(*types.Named); isNamed {
-								field.Type = namedType.Obj().Name()
-							} else {
-								field.Type = typ.String()
-							}
-
-							// strip the '*' if it's a pointer type
-							if len(field.Type) > 1 && field.Type[0] == '*' {
-								field.Type = field.Type[1:]
-							}
-
-							// get just the last component from `packagename.typename` for the field name
-							var parts = strings.Split(field.Name, ".")
-							field.Name = parts[len(parts)-1]
 						}
 
 						// this struct itself is not added, just the inner properties
@@ -413,6 +406,21 @@ func (entity *Entity) addFields(fields fieldList, path string) ([]*Field, error)
 	}
 
 	return fieldsTree, nil
+}
+
+func (field *Field) fillIn(f field, typ typeErrorful) {
+	if namedType, isNamed := f.TypeInternal().(*types.Named); isNamed {
+		field.Type = namedType.Obj().Name()
+	} else {
+		field.Type = typ.String()
+	}
+	// strip the '*' if it's a pointer type
+	if len(field.Type) > 1 && field.Type[0] == '*' {
+		field.Type = field.Type[1:]
+	}
+	// get just the last component from `packagename.typename` for the field name
+	var parts = strings.Split(field.Name, ".")
+	field.Name = parts[len(parts)-1]
 }
 
 func (entity *Entity) setAnnotations(comments []*ast.Comment) error {

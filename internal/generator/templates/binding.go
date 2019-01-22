@@ -177,11 +177,35 @@ func ({{$entityNameCamel}}_EntityInfo) Store(obx *objectbox.ObjectBox, txn *obje
     var offset{{$property.Name}} = fbutils.Create{{$property.ObType}}Offset(fbb, {{template "property-converter-encode" $property}})
 	{{- end}}{{end}}
 
+	{{- /* store relations, TODO return error, ideally we should be using BoxForTarget() with a manually assigned txn */}}
+	{{- range $field := .Fields}}
+	{{if $field.IsFullRelation}}
+		var rId{{$field.Property.Name}} uint64
+		if rel := {{if not $field.IsPointer}}&{{end}}obj.{{$field.Name}}; rel != nil {
+			if rId, err := {{$field.Property.Relation.Target}}Binding.GetId(rel); err != nil {
+				panic(err)
+			} else if rId != 0 {
+				// an existing item
+				rId{{$field.Property.Name}} = rId 
+			} else if cursor, err := txn.CursorForName("{{$field.Property.Relation.Target}}"); err != nil {
+				panic(err) 
+			} else if rId, err := cursor.Put(rel); err != nil {
+				panic(err) 
+			} else {
+				// inserted successfully
+				rId{{$field.Property.Name}} = rId
+			}
+		}
+	{{- else if $field.Property}}{{if $field.Property.Relation}}{{/* manual relation links (just ID)*/}}
+		var rId{{$field.Property.Name}} = {{template "property-converter-encode" $field.Property}} 
+	{{- end}}{{end}}{{end}}
+
     // build the FlatBuffers object
     fbb.StartObject({{$entity.LastPropertyId.GetId}})
     {{range $property := $entity.Properties -}}
     fbutils.Set{{$property.FbType}}Slot(fbb, {{$property.FbSlot}},
-        {{- if eq $property.FbType "UOffsetT"}} offset{{$property.Name}})
+		{{- if $property.Relation}}rId{{$property.Name}})
+        {{- else if eq $property.FbType "UOffsetT"}} offset{{$property.Name}})
         {{- else if eq $property.Name $entity.IdProperty.Name}} id)
         {{- else if eq $property.GoType "int"}} int64({{template "property-converter-encode" $property}}))
         {{- else if eq $property.GoType "uint"}} uint64({{template "property-converter-encode" $property}}))
@@ -197,11 +221,34 @@ func ({{$entityNameCamel}}_EntityInfo) Load(txn *objectbox.Transaction, bytes []
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
 
+	{{- /* load relations, TODO return error, ideally we should be using BoxForTarget() with a manually assigned txn */}}
+	{{- range $field := .Fields}}{{if $field.IsFullRelation}}
+
+		var rel{{$field.Property.Name}} *{{$field.Type}}
+		if rId := {{template "property-getter" $field.Property}}; rId > 0 { 
+			if cursor, err := txn.CursorForName("{{$field.Property.Relation.Target}}"); err != nil {
+				panic(err) 
+			} else if relObject, err := cursor.Get(rId); err != nil {
+				panic(err) 
+			} else if relObj, ok := relObject.(*{{$field.Type}}); ok {
+				rel{{$field.Property.Name}} = relObj
+			} else {
+				var relObj = relObject.({{$field.Type}})
+				rel{{$field.Property.Name}} = &relObj
+			}
+		{{if not $field.IsPointer -}} 
+		} else {
+			rel{{$field.Property.Name}} = &{{$field.Type}}{}
+		{{end -}}
+		}
+	{{- end}}{{end}}
+
 	return &{{$entity.Name}}{
 	{{- block "fields-initializer" $entity}}
 		{{- range $field := .Fields}}
 			{{$field.Name}}: 
-				{{- if $field.Property}}{{template "property-getter" $field.Property}}
+				{{- if $field.IsFullRelation}}{{if not $field.IsPointer}}*{{end}}rel{{$field.Property.Name}}
+				{{- else if $field.Property}}{{template "property-getter" $field.Property}}
 				{{- else}}{{if $field.IsPointer}}&{{end}}{{$field.Type}}{ {{template "fields-initializer" $field}} }{{end}},
 		{{- end}}
 	{{end}}

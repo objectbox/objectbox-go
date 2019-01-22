@@ -93,9 +93,8 @@ func (event_EntityInfo) GetId(object interface{}) (uint64, error) {
 }
 
 // SetId is called by the ObjectBox during Put to update an ID on an object that has just been inserted
-func (event_EntityInfo) SetId(object interface{}, id uint64) error {
+func (event_EntityInfo) SetId(object interface{}, id uint64) {
 	object.(*Event).Id = id
-	return nil
 }
 
 // Flatten is called by the ObjectBox to transform an object to a FlatBuffer
@@ -395,9 +394,8 @@ func (reading_EntityInfo) GetId(object interface{}) (uint64, error) {
 }
 
 // SetId is called by the ObjectBox during Put to update an ID on an object that has just been inserted
-func (reading_EntityInfo) SetId(object interface{}, id uint64) error {
+func (reading_EntityInfo) SetId(object interface{}, id uint64) {
 	object.(*Reading).Id = id
-	return nil
 }
 
 // Flatten is called by the ObjectBox to transform an object to a FlatBuffer

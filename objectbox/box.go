@@ -133,10 +133,7 @@ func (box *Box) PutAsyncWithTimeout(object interface{}, timeoutMs uint) (id uint
 
 	// update the id on the object
 	if idFromObject != id {
-		// TODO SetId never errs
-		if err = box.binding.SetId(object, id); err != nil {
-			return 0, err
-		}
+		box.binding.SetId(object, id)
 	}
 
 	return id, nil

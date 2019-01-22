@@ -85,8 +85,7 @@ const (
 type ObjectBinding interface {
 	AddToModel(model *Model)
 	GetId(object interface{}) (id uint64, err error)
-	// TODO SetId never errs
-	SetId(object interface{}, id uint64) error
+	SetId(object interface{}, id uint64)
 	Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64)
 	ToObject(bytes []byte) interface{}
 	MakeSlice(capacity int) interface{}

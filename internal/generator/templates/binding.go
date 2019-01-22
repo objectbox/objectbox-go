@@ -143,7 +143,7 @@ func ({{$entityNameCamel}}_EntityInfo) GetId(object interface{}) (uint64, error)
 }
 
 // SetId is called by the ObjectBox during Put to update an ID on an object that has just been inserted
-func ({{$entityNameCamel}}_EntityInfo) SetId(object interface{}, id uint64) error {
+func ({{$entityNameCamel}}_EntityInfo) SetId(object interface{}, id uint64) {
 	{{- if eq $entity.IdProperty.GoType "string" -}}
 		{{- if $.Options.ByValue}}
 			if obj, ok := object.(*{{$entity.Name}}); ok {
@@ -167,7 +167,6 @@ func ({{$entityNameCamel}}_EntityInfo) SetId(object interface{}, id uint64) erro
 			object.(*{{$entity.Name}}).{{$entity.IdProperty.Path}} = id
 		{{- end}}
 	{{- end}}
-	return nil
 }
 
 // Flatten is called by the ObjectBox to transform an object to a FlatBuffer

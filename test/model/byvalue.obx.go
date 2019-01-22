@@ -55,14 +55,13 @@ func (entityByValue_EntityInfo) GetId(object interface{}) (uint64, error) {
 }
 
 // SetId is called by the ObjectBox during Put to update an ID on an object that has just been inserted
-func (entityByValue_EntityInfo) SetId(object interface{}, id uint64) error {
+func (entityByValue_EntityInfo) SetId(object interface{}, id uint64) {
 	if obj, ok := object.(*EntityByValue); ok {
 		obj.Id = id
 	} else {
 		// NOTE while this can't update, it will at least behave consistently (panic in case of a wrong type)
 		_ = object.(EntityByValue).Id
 	}
-	return nil
 }
 
 // Flatten is called by the ObjectBox to transform an object to a FlatBuffer

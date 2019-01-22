@@ -252,9 +252,8 @@ func (entity_EntityInfo) GetId(object interface{}) (uint64, error) {
 }
 
 // SetId is called by the ObjectBox during Put to update an ID on an object that has just been inserted
-func (entity_EntityInfo) SetId(object interface{}, id uint64) error {
+func (entity_EntityInfo) SetId(object interface{}, id uint64) {
 	object.(*Entity).Id = id
-	return nil
 }
 
 // Flatten is called by the ObjectBox to transform an object to a FlatBuffer
@@ -511,9 +510,8 @@ func (testStringIdEntity_EntityInfo) GetId(object interface{}) (uint64, error) {
 }
 
 // SetId is called by the ObjectBox during Put to update an ID on an object that has just been inserted
-func (testStringIdEntity_EntityInfo) SetId(object interface{}, id uint64) error {
+func (testStringIdEntity_EntityInfo) SetId(object interface{}, id uint64) {
 	object.(*TestStringIdEntity).Id = strconv.FormatUint(id, 10)
-	return nil
 }
 
 // Flatten is called by the ObjectBox to transform an object to a FlatBuffer
@@ -745,9 +743,8 @@ func (testEntityInline_EntityInfo) GetId(object interface{}) (uint64, error) {
 }
 
 // SetId is called by the ObjectBox during Put to update an ID on an object that has just been inserted
-func (testEntityInline_EntityInfo) SetId(object interface{}, id uint64) error {
+func (testEntityInline_EntityInfo) SetId(object interface{}, id uint64) {
 	object.(*TestEntityInline).Id = id
-	return nil
 }
 
 // Flatten is called by the ObjectBox to transform an object to a FlatBuffer

@@ -12,3 +12,6 @@ type Trackable struct {
 type privateType struct {
 	Settings string
 }
+
+type ForeignAlias = string
+type ForeignNamed string

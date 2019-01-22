@@ -21,8 +21,10 @@ var EBinding = e_EntityInfo{
 
 // E_ contains type-based Property helpers to facilitate some common operations such as Queries.
 var E_ = struct {
-	Location *objectbox.PropertyString
-	id       *objectbox.PropertyUint64
+	Location     *objectbox.PropertyString
+	id           *objectbox.PropertyUint64
+	ForeignAlias *objectbox.PropertyString
+	ForeignNamed *objectbox.PropertyString
 }{
 	Location: &objectbox.PropertyString{
 		BaseProperty: &objectbox.BaseProperty{
@@ -35,6 +37,22 @@ var E_ = struct {
 	id: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
 			Id: 2,
+			Entity: &objectbox.Entity{
+				Id: 5,
+			},
+		},
+	},
+	ForeignAlias: &objectbox.PropertyString{
+		BaseProperty: &objectbox.BaseProperty{
+			Id: 3,
+			Entity: &objectbox.Entity{
+				Id: 5,
+			},
+		},
+	},
+	ForeignNamed: &objectbox.PropertyString{
+		BaseProperty: &objectbox.BaseProperty{
+			Id: 4,
 			Entity: &objectbox.Entity{
 				Id: 5,
 			},
@@ -53,7 +71,9 @@ func (e_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Property("Location", objectbox.PropertyType_String, 1, 7144924247938981575)
 	model.Property("id", objectbox.PropertyType_Long, 2, 161231572858529631)
 	model.PropertyFlags(objectbox.PropertyFlags_ID)
-	model.EntityLastPropertyId(2, 161231572858529631)
+	model.Property("ForeignAlias", objectbox.PropertyType_String, 3, 7259475919510918339)
+	model.Property("ForeignNamed", objectbox.PropertyType_String, 4, 7373105480197164748)
+	model.EntityLastPropertyId(4, 7373105480197164748)
 }
 
 // GetId is called by the ObjectBox during Put operations to check for existing ID on an object
@@ -71,11 +91,15 @@ func (e_EntityInfo) SetId(object interface{}, id uint64) error {
 func (e_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
 	obj := object.(*E)
 	var offsetLocation = fbutils.CreateStringOffset(fbb, obj.Location)
+	var offsetForeignAlias = fbutils.CreateStringOffset(fbb, obj.ForeignAlias)
+	var offsetForeignNamed = fbutils.CreateStringOffset(fbb, string(obj.ForeignNamed))
 
 	// build the FlatBuffers object
-	fbb.StartObject(2)
+	fbb.StartObject(4)
 	fbutils.SetUOffsetTSlot(fbb, 0, offsetLocation)
 	fbutils.SetUint64Slot(fbb, 1, id)
+	fbutils.SetUOffsetTSlot(fbb, 2, offsetForeignAlias)
+	fbutils.SetUOffsetTSlot(fbb, 3, offsetForeignNamed)
 }
 
 // ToObject is called by the ObjectBox to load an object from a FlatBuffer
@@ -89,7 +113,9 @@ func (e_EntityInfo) ToObject(bytes []byte) interface{} {
 		Trackable: other.Trackable{
 			Location: fbutils.GetStringSlot(table, 4),
 		},
-		id: table.GetUint64Slot(6, 0),
+		id:           table.GetUint64Slot(6, 0),
+		ForeignAlias: fbutils.GetStringSlot(table, 8),
+		ForeignNamed: other.ForeignNamed(fbutils.GetStringSlot(table, 10)),
 	}
 }
 

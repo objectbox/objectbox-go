@@ -69,6 +69,10 @@ type Property struct {
 	Index       *Index
 	Converter   *string
 
+	// type casts for named types
+	CastOnRead  string
+	CastOnWrite string
+
 	entity     *Entity
 	uidRequest bool
 	path       string // relative addressing path for embedded structs
@@ -343,6 +347,12 @@ func (entity *Entity) addFields(fields fieldList, path string) ([]*Field, error)
 
 				if err = property.setType(baseType.String()); err != nil {
 					return nil, propertyError(err, property)
+				}
+
+				// check if it needs a type cast (it is a named type, not an alias)
+				if typ.IsNamed() {
+					property.CastOnRead = baseType.String()
+					property.CastOnWrite = typ.String()
 				}
 			}
 		}

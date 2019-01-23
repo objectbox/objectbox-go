@@ -8,7 +8,7 @@
     {
       "id": "1:3022148985475790732",
       "name": "Entity",
-      "lastPropertyId": "21:3893192683529392073",
+      "lastPropertyId": "24:7776035803207726954",
       "properties": [
         {
           "id": "1:1213346202559552829",
@@ -93,6 +93,21 @@
         {
           "id": "21:3893192683529392073",
           "name": "StringVector"
+        },
+        {
+          "id": "22:6981354105569415135",
+          "name": "Related",
+          "indexId": "1:7297830522090799401"
+        },
+        {
+          "id": "23:2938782103279095882",
+          "name": "RelatedPtr",
+          "indexId": "2:1636618737379039866"
+        },
+        {
+          "id": "24:7776035803207726954",
+          "name": "RelatedPtr2",
+          "indexId": "3:6077259218141868916"
         }
       ]
     },
@@ -136,10 +151,25 @@
           "name": "Id"
         }
       ]
+    },
+    {
+      "id": "5:145948658381494339",
+      "name": "TestEntityRelated",
+      "lastPropertyId": "2:1781092268467778149",
+      "properties": [
+        {
+          "id": "1:710127486443861244",
+          "name": "Id"
+        },
+        {
+          "id": "2:1781092268467778149",
+          "name": "Name"
+        }
+      ]
     }
   ],
-  "lastEntityId": "4:7566870022778519807",
-  "lastIndexId": "",
+  "lastEntityId": "5:145948658381494339",
+  "lastIndexId": "3:6077259218141868916",
   "retiredEntityUids": [],
   "retiredIndexUids": [],
   "retiredPropertyUids": []

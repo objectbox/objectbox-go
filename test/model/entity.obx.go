@@ -42,6 +42,9 @@ var Entity_ = struct {
 	Float64      *objectbox.PropertyFloat64
 	Date         *objectbox.PropertyInt64
 	Complex128   *objectbox.PropertyByteVector
+	Related      *objectbox.PropertyUint64
+	RelatedPtr   *objectbox.PropertyUint64
+	RelatedPtr2  *objectbox.PropertyUint64
 }{
 	Id: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
@@ -211,6 +214,30 @@ var Entity_ = struct {
 			},
 		},
 	},
+	Related: &objectbox.PropertyUint64{
+		BaseProperty: &objectbox.BaseProperty{
+			Id: 22,
+			Entity: &objectbox.Entity{
+				Id: 1,
+			},
+		},
+	},
+	RelatedPtr: &objectbox.PropertyUint64{
+		BaseProperty: &objectbox.BaseProperty{
+			Id: 23,
+			Entity: &objectbox.Entity{
+				Id: 1,
+			},
+		},
+	},
+	RelatedPtr2: &objectbox.PropertyUint64{
+		BaseProperty: &objectbox.BaseProperty{
+			Id: 24,
+			Entity: &objectbox.Entity{
+				Id: 1,
+			},
+		},
+	},
 }
 
 // GeneratorVersion is called by the ObjectBox to verify the compatibility of the generator used to generate this code
@@ -243,7 +270,13 @@ func (entity_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Property("Float64", objectbox.PropertyType_Double, 18, 681625187526498317)
 	model.Property("Date", objectbox.PropertyType_Date, 19, 2927532418453906842)
 	model.Property("Complex128", objectbox.PropertyType_ByteVector, 20, 2323084480359838337)
-	model.EntityLastPropertyId(21, 3893192683529392073)
+	model.Property("Related", objectbox.PropertyType_Relation, 22, 6981354105569415135)
+	model.PropertyRelation("TestEntityRelated", 1, 7297830522090799401)
+	model.Property("RelatedPtr", objectbox.PropertyType_Relation, 23, 2938782103279095882)
+	model.PropertyRelation("TestEntityRelated", 2, 1636618737379039866)
+	model.Property("RelatedPtr2", objectbox.PropertyType_Relation, 24, 7776035803207726954)
+	model.PropertyRelation("TestEntityRelated", 3, 6077259218141868916)
+	model.EntityLastPropertyId(24, 7776035803207726954)
 }
 
 // GetId is called by the ObjectBox during Put operations to check for existing ID on an object
@@ -264,8 +297,68 @@ func (entity_EntityInfo) Store(obx *objectbox.ObjectBox, txn *objectbox.Transact
 	var offsetByteVector = fbutils.CreateByteVectorOffset(fbb, obj.ByteVector)
 	var offsetComplex128 = fbutils.CreateByteVectorOffset(fbb, complex128BytesToDatabaseValue(obj.Complex128))
 
+	var rIdRelated uint64
+	if rel := &obj.Related; rel != nil {
+		var rId uint64
+		var err error
+		if rId, err = TestEntityRelatedBinding.GetId(rel); err != nil {
+			panic(err)
+		} else if rId == 0 && txn != nil {
+			if cursor, err := txn.CursorForName("TestEntityRelated"); err != nil {
+				panic(err)
+			} else if rId, err = cursor.Put(rel); err != nil {
+				panic(err)
+			}
+		} else if rId == 0 {
+			if rId, err = BoxForTestEntityRelated(obx).PutAsyncWithTimeout(rel, 0); err != nil {
+				panic(err)
+			}
+		}
+		rIdRelated = rId
+	}
+
+	var rIdRelatedPtr uint64
+	if rel := obj.RelatedPtr; rel != nil {
+		var rId uint64
+		var err error
+		if rId, err = TestEntityRelatedBinding.GetId(rel); err != nil {
+			panic(err)
+		} else if rId == 0 && txn != nil {
+			if cursor, err := txn.CursorForName("TestEntityRelated"); err != nil {
+				panic(err)
+			} else if rId, err = cursor.Put(rel); err != nil {
+				panic(err)
+			}
+		} else if rId == 0 {
+			if rId, err = BoxForTestEntityRelated(obx).PutAsyncWithTimeout(rel, 0); err != nil {
+				panic(err)
+			}
+		}
+		rIdRelatedPtr = rId
+	}
+
+	var rIdRelatedPtr2 uint64
+	if rel := obj.RelatedPtr2; rel != nil {
+		var rId uint64
+		var err error
+		if rId, err = TestEntityRelatedBinding.GetId(rel); err != nil {
+			panic(err)
+		} else if rId == 0 && txn != nil {
+			if cursor, err := txn.CursorForName("TestEntityRelated"); err != nil {
+				panic(err)
+			} else if rId, err = cursor.Put(rel); err != nil {
+				panic(err)
+			}
+		} else if rId == 0 {
+			if rId, err = BoxForTestEntityRelated(obx).PutAsyncWithTimeout(rel, 0); err != nil {
+				panic(err)
+			}
+		}
+		rIdRelatedPtr2 = rId
+	}
+
 	// build the FlatBuffers object
-	fbb.StartObject(21)
+	fbb.StartObject(24)
 	fbutils.SetUint64Slot(fbb, 0, id)
 	fbutils.SetInt64Slot(fbb, 1, int64(obj.Int))
 	fbutils.SetInt8Slot(fbb, 2, obj.Int8)
@@ -287,6 +380,9 @@ func (entity_EntityInfo) Store(obx *objectbox.ObjectBox, txn *objectbox.Transact
 	fbutils.SetFloat64Slot(fbb, 17, obj.Float64)
 	fbutils.SetInt64Slot(fbb, 18, timeInt64ToDatabaseValue(obj.Date))
 	fbutils.SetUOffsetTSlot(fbb, 19, offsetComplex128)
+	fbutils.SetUint64Slot(fbb, 21, rIdRelated)
+	fbutils.SetUint64Slot(fbb, 22, rIdRelatedPtr)
+	fbutils.SetUint64Slot(fbb, 23, rIdRelatedPtr2)
 }
 
 // Load is called by the ObjectBox to load an object from a FlatBuffer
@@ -294,6 +390,50 @@ func (entity_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interfac
 	table := &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
+	}
+
+	var relRelated *TestEntityRelated
+	if rId := table.GetUint64Slot(46, 0); rId > 0 {
+		if cursor, err := txn.CursorForName("TestEntityRelated"); err != nil {
+			panic(err)
+		} else if relObject, err := cursor.Get(rId); err != nil {
+			panic(err)
+		} else if relObj, ok := relObject.(*TestEntityRelated); ok {
+			relRelated = relObj
+		} else {
+			var relObj = relObject.(TestEntityRelated)
+			relRelated = &relObj
+		}
+	} else {
+		relRelated = &TestEntityRelated{}
+	}
+
+	var relRelatedPtr *TestEntityRelated
+	if rId := table.GetUint64Slot(48, 0); rId > 0 {
+		if cursor, err := txn.CursorForName("TestEntityRelated"); err != nil {
+			panic(err)
+		} else if relObject, err := cursor.Get(rId); err != nil {
+			panic(err)
+		} else if relObj, ok := relObject.(*TestEntityRelated); ok {
+			relRelatedPtr = relObj
+		} else {
+			var relObj = relObject.(TestEntityRelated)
+			relRelatedPtr = &relObj
+		}
+	}
+
+	var relRelatedPtr2 *TestEntityRelated
+	if rId := table.GetUint64Slot(50, 0); rId > 0 {
+		if cursor, err := txn.CursorForName("TestEntityRelated"); err != nil {
+			panic(err)
+		} else if relObject, err := cursor.Get(rId); err != nil {
+			panic(err)
+		} else if relObj, ok := relObject.(*TestEntityRelated); ok {
+			relRelatedPtr2 = relObj
+		} else {
+			var relObj = relObject.(TestEntityRelated)
+			relRelatedPtr2 = &relObj
+		}
 	}
 
 	return &Entity{
@@ -318,6 +458,9 @@ func (entity_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interfac
 		Float64:      table.GetFloat64Slot(38, 0),
 		Date:         timeInt64ToEntityProperty(table.GetInt64Slot(40, 0)),
 		Complex128:   complex128BytesToEntityProperty(fbutils.GetByteVectorSlot(table, 42)),
+		Related:      *relRelated,
+		RelatedPtr:   relRelatedPtr,
+		RelatedPtr2:  relRelatedPtr2,
 	}
 }
 
@@ -913,6 +1056,228 @@ func (query *TestEntityInlineQuery) Offset(offset uint64) *TestEntityInlineQuery
 
 // Limit sets the number of elements to process by the query
 func (query *TestEntityInlineQuery) Limit(limit uint64) *TestEntityInlineQuery {
+	query.Query.Limit(limit)
+	return query
+}
+
+type testEntityRelated_EntityInfo struct {
+	Id  objectbox.TypeId
+	Uid uint64
+}
+
+var TestEntityRelatedBinding = testEntityRelated_EntityInfo{
+	Id:  5,
+	Uid: 145948658381494339,
+}
+
+// TestEntityRelated_ contains type-based Property helpers to facilitate some common operations such as Queries.
+var TestEntityRelated_ = struct {
+	Id   *objectbox.PropertyUint64
+	Name *objectbox.PropertyString
+}{
+	Id: &objectbox.PropertyUint64{
+		BaseProperty: &objectbox.BaseProperty{
+			Id: 1,
+			Entity: &objectbox.Entity{
+				Id: 5,
+			},
+		},
+	},
+	Name: &objectbox.PropertyString{
+		BaseProperty: &objectbox.BaseProperty{
+			Id: 2,
+			Entity: &objectbox.Entity{
+				Id: 5,
+			},
+		},
+	},
+}
+
+// GeneratorVersion is called by the ObjectBox to verify the compatibility of the generator used to generate this code
+func (testEntityRelated_EntityInfo) GeneratorVersion() int {
+	return 1
+}
+
+// AddToModel is called by the ObjectBox during model build
+func (testEntityRelated_EntityInfo) AddToModel(model *objectbox.Model) {
+	model.Entity("TestEntityRelated", 5, 145948658381494339)
+	model.Property("Id", objectbox.PropertyType_Long, 1, 710127486443861244)
+	model.PropertyFlags(objectbox.PropertyFlags_ID)
+	model.Property("Name", objectbox.PropertyType_String, 2, 1781092268467778149)
+	model.EntityLastPropertyId(2, 1781092268467778149)
+}
+
+// GetId is called by the ObjectBox during Put operations to check for existing ID on an object
+func (testEntityRelated_EntityInfo) GetId(object interface{}) (uint64, error) {
+	return object.(*TestEntityRelated).Id, nil
+}
+
+// SetId is called by the ObjectBox during Put to update an ID on an object that has just been inserted
+func (testEntityRelated_EntityInfo) SetId(object interface{}, id uint64) {
+	object.(*TestEntityRelated).Id = id
+}
+
+// Store is called by the ObjectBox to transform an object to a FlatBuffer
+func (testEntityRelated_EntityInfo) Store(obx *objectbox.ObjectBox, txn *objectbox.Transaction, object interface{}, fbb *flatbuffers.Builder, id uint64) {
+	obj := object.(*TestEntityRelated)
+	var offsetName = fbutils.CreateStringOffset(fbb, obj.Name)
+
+	// build the FlatBuffers object
+	fbb.StartObject(2)
+	fbutils.SetUint64Slot(fbb, 0, id)
+	fbutils.SetUOffsetTSlot(fbb, 1, offsetName)
+}
+
+// Load is called by the ObjectBox to load an object from a FlatBuffer
+func (testEntityRelated_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interface{} {
+	table := &flatbuffers.Table{
+		Bytes: bytes,
+		Pos:   flatbuffers.GetUOffsetT(bytes),
+	}
+
+	return &TestEntityRelated{
+		Id:   table.GetUint64Slot(4, 0),
+		Name: fbutils.GetStringSlot(table, 6),
+	}
+}
+
+// MakeSlice is called by the ObjectBox to construct a new slice to hold the read objects
+func (testEntityRelated_EntityInfo) MakeSlice(capacity int) interface{} {
+	return make([]*TestEntityRelated, 0, capacity)
+}
+
+// AppendToSlice is called by the ObjectBox to fill the slice of the read objects
+func (testEntityRelated_EntityInfo) AppendToSlice(slice interface{}, object interface{}) interface{} {
+	return append(slice.([]*TestEntityRelated), object.(*TestEntityRelated))
+}
+
+// Box provides CRUD access to TestEntityRelated objects
+type TestEntityRelatedBox struct {
+	*objectbox.Box
+}
+
+// BoxForTestEntityRelated opens a box of TestEntityRelated objects
+func BoxForTestEntityRelated(ob *objectbox.ObjectBox) *TestEntityRelatedBox {
+	return &TestEntityRelatedBox{
+		Box: ob.InternalBox(5),
+	}
+}
+
+// Put synchronously inserts/updates a single object.
+// In case the Id is not specified, it would be assigned automatically (auto-increment).
+// When inserting, the TestEntityRelated.Id property on the passed object will be assigned the new ID as well.
+func (box *TestEntityRelatedBox) Put(object *TestEntityRelated) (uint64, error) {
+	return box.Box.Put(object)
+}
+
+// PutAsync asynchronously inserts/updates a single object.
+// When inserting, the TestEntityRelated.Id property on the passed object will be assigned the new ID as well.
+//
+// It's executed on a separate internal thread for better performance.
+//
+// There are two main use cases:
+//
+// 1) "Put & Forget:" you gain faster puts as you don't have to wait for the transaction to finish.
+//
+// 2) Many small transactions: if your write load is typically a lot of individual puts that happen in parallel,
+// this will merge small transactions into bigger ones. This results in a significant gain in overall throughput.
+//
+//
+// In situations with (extremely) high async load, this method may be throttled (~1ms) or delayed (<1s).
+// In the unlikely event that the object could not be enqueued after delaying, an error will be returned.
+//
+// Note that this method does not give you hard durability guarantees like the synchronous Put provides.
+// There is a small time window (typically 3 ms) in which the data may not have been committed durably yet.
+func (box *TestEntityRelatedBox) PutAsync(object *TestEntityRelated) (uint64, error) {
+	return box.Box.PutAsync(object)
+}
+
+// PutAll inserts multiple objects in single transaction.
+// In case Ids are not set on the objects, they would be assigned automatically (auto-increment).
+//
+// Returns: IDs of the put objects (in the same order).
+// When inserting, the TestEntityRelated.Id property on the objects in the slice will be assigned the new IDs as well.
+//
+// Note: In case an error occurs during the transaction, some of the objects may already have the TestEntityRelated.Id assigned
+// even though the transaction has been rolled back and the objects are not stored under those IDs.
+//
+// Note: The slice may be empty or even nil; in both cases, an empty IDs slice and no error is returned.
+func (box *TestEntityRelatedBox) PutAll(objects []*TestEntityRelated) ([]uint64, error) {
+	return box.Box.PutAll(objects)
+}
+
+// Get reads a single object.
+//
+// Returns nil (and no error) in case the object with the given ID doesn't exist.
+func (box *TestEntityRelatedBox) Get(id uint64) (*TestEntityRelated, error) {
+	object, err := box.Box.Get(id)
+	if err != nil {
+		return nil, err
+	} else if object == nil {
+		return nil, nil
+	}
+	return object.(*TestEntityRelated), nil
+}
+
+// Get reads all stored objects
+func (box *TestEntityRelatedBox) GetAll() ([]*TestEntityRelated, error) {
+	objects, err := box.Box.GetAll()
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*TestEntityRelated), nil
+}
+
+// Remove deletes a single object
+func (box *TestEntityRelatedBox) Remove(object *TestEntityRelated) (err error) {
+	return box.Box.Remove(object.Id)
+}
+
+// Creates a query with the given conditions. Use the fields of the TestEntityRelated_ struct to create conditions.
+// Keep the *TestEntityRelatedQuery if you intend to execute the query multiple times.
+// Note: this function panics if you try to create illegal queries; e.g. use properties of an alien type.
+// This is typically a programming error. Use QueryOrError instead if you want the explicit error check.
+func (box *TestEntityRelatedBox) Query(conditions ...objectbox.Condition) *TestEntityRelatedQuery {
+	return &TestEntityRelatedQuery{
+		box.Box.Query(conditions...),
+	}
+}
+
+// Creates a query with the given conditions. Use the fields of the TestEntityRelated_ struct to create conditions.
+// Keep the *TestEntityRelatedQuery if you intend to execute the query multiple times.
+func (box *TestEntityRelatedBox) QueryOrError(conditions ...objectbox.Condition) (*TestEntityRelatedQuery, error) {
+	if query, err := box.Box.QueryOrError(conditions...); err != nil {
+		return nil, err
+	} else {
+		return &TestEntityRelatedQuery{query}, nil
+	}
+}
+
+// Query provides a way to search stored objects
+//
+// For example, you can find all TestEntityRelated which Id is either 42 or 47:
+// 		box.Query(TestEntityRelated_.Id.In(42, 47)).Find()
+type TestEntityRelatedQuery struct {
+	*objectbox.Query
+}
+
+// Find returns all objects matching the query
+func (query *TestEntityRelatedQuery) Find() ([]*TestEntityRelated, error) {
+	objects, err := query.Query.Find()
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*TestEntityRelated), nil
+}
+
+// Offset defines the index of the first object to process (how many objects to skip)
+func (query *TestEntityRelatedQuery) Offset(offset uint64) *TestEntityRelatedQuery {
+	query.Query.Offset(offset)
+	return query
+}
+
+// Limit sets the number of elements to process by the query
+func (query *TestEntityRelatedQuery) Limit(limit uint64) *TestEntityRelatedQuery {
 	query.Query.Limit(limit)
 	return query
 }

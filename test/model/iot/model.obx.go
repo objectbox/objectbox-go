@@ -404,11 +404,13 @@ func (reading_EntityInfo) Store(obx *objectbox.ObjectBox, txn *objectbox.Transac
 	var offsetValueName = fbutils.CreateStringOffset(fbb, obj.ValueName)
 	var offsetValueString = fbutils.CreateStringOffset(fbb, obj.ValueString)
 
+	var rIdEventId = obj.EventId
+
 	// build the FlatBuffers object
 	fbb.StartObject(9)
 	fbutils.SetUint64Slot(fbb, 0, id)
 	fbutils.SetInt64Slot(fbb, 1, obj.Date)
-	fbutils.SetUint64Slot(fbb, 2, obj.EventId)
+	fbutils.SetUint64Slot(fbb, 2, rIdEventId)
 	fbutils.SetUOffsetTSlot(fbb, 3, offsetValueName)
 	fbutils.SetUOffsetTSlot(fbb, 4, offsetValueString)
 	fbutils.SetInt64Slot(fbb, 5, obj.ValueInteger)

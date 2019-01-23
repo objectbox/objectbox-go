@@ -72,19 +72,22 @@ func (taskRelPtr_EntityInfo) Store(obx *objectbox.ObjectBox, txn *objectbox.Tran
 
 	var rIdGroup uint64
 	if rel := obj.Group; rel != nil {
-		if rId, err := GroupBinding.GetId(rel); err != nil {
+		var rId uint64
+		var err error
+		if rId, err = GroupBinding.GetId(rel); err != nil {
 			panic(err)
-		} else if rId != 0 {
-			// an existing item
-			rIdGroup = rId
-		} else if cursor, err := txn.CursorForName("Group"); err != nil {
-			panic(err)
-		} else if rId, err := cursor.Put(rel); err != nil {
-			panic(err)
-		} else {
-			// inserted successfully
-			rIdGroup = rId
+		} else if rId == 0 && txn != nil {
+			if cursor, err := txn.CursorForName("Group"); err != nil {
+				panic(err)
+			} else if rId, err = cursor.Put(rel); err != nil {
+				panic(err)
+			}
+		} else if rId == 0 {
+			if rId, err = BoxForGroup(obx).PutAsyncWithTimeout(rel, 0); err != nil {
+				panic(err)
+			}
 		}
+		rIdGroup = rId
 	}
 
 	// build the FlatBuffers object

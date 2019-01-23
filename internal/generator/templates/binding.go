@@ -182,19 +182,22 @@ func ({{$entityNameCamel}}_EntityInfo) Store(obx *objectbox.ObjectBox, txn *obje
 	{{if $field.IsFullRelation}}
 		var rId{{$field.Property.Name}} uint64
 		if rel := {{if not $field.IsPointer}}&{{end}}obj.{{$field.Name}}; rel != nil {
-			if rId, err := {{$field.Property.Relation.Target}}Binding.GetId(rel); err != nil {
+			var rId uint64
+			var err error
+			if rId, err = {{$field.Property.Relation.Target}}Binding.GetId(rel); err != nil {
 				panic(err)
-			} else if rId != 0 {
-				// an existing item
-				rId{{$field.Property.Name}} = rId 
-			} else if cursor, err := txn.CursorForName("{{$field.Property.Relation.Target}}"); err != nil {
-				panic(err) 
-			} else if rId, err := cursor.Put(rel); err != nil {
-				panic(err) 
-			} else {
-				// inserted successfully
-				rId{{$field.Property.Name}} = rId
+			} else if rId == 0 && txn != nil {
+				if cursor, err := txn.CursorForName("{{$field.Property.Relation.Target}}"); err != nil {
+					panic(err) 
+				} else if rId, err = cursor.Put(rel); err != nil {
+					panic(err) 
+				} 
+			} else if rId == 0 {
+				if rId, err = BoxFor{{$field.Property.Relation.Target}}(obx).PutAsyncWithTimeout(rel, 0); err != nil {
+					panic(err) 
+				} 
 			}
+			rId{{$field.Property.Name}} = rId
 		}
 	{{- else if $field.Property}}{{if $field.Property.Relation}}{{/* manual relation links (just ID)*/}}
 		var rId{{$field.Property.Name}} = {{template "property-converter-encode" $field.Property}} 

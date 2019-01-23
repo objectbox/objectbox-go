@@ -39,6 +39,9 @@ func EqInt(t *testing.T, expected int, actual int) {
 
 // Uses reflect.DeepEqual to test for equality
 func Eq(t *testing.T, expected interface{}, actual interface{}) {
+	if expected == nil && actual == nil {
+		return
+	}
 	if !reflect.DeepEqual(expected, actual) {
 		Failf(t, "Expected %v, but got %v", expected, actual)
 	}

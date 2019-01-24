@@ -182,6 +182,21 @@ func (model *Model) Entity(name string, id TypeId, uid uint64) {
 	return
 }
 
+// Relation adds a "standalone" many-to-many relation between the current entity and a target entity
+func (model *Model) Relation(relationId TypeId, relationUid uint64, targetEntityId TypeId, targetEntityUid uint64) {
+	if model.Error != nil {
+		return
+	}
+
+	rc := C.obx_model_relation(model.model, C.obx_schema_id(relationId), C.obx_uid(relationUid),
+		C.obx_schema_id(targetEntityId), C.obx_uid(targetEntityUid))
+	if rc != 0 {
+		model.Error = createError()
+		return
+	}
+	return
+}
+
 func (model *Model) EntityLastPropertyId(id TypeId, uid uint64) {
 	if model.Error != nil {
 		return

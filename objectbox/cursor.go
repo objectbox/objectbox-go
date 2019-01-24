@@ -159,6 +159,7 @@ func (cursor *cursor) IsEmpty() (result bool, err error) {
 	}
 	return bool(cResult), nil
 }
+
 func (cursor *cursor) Put(object interface{}) (id uint64, err error) {
 	idFromObject, err := cursor.binding.GetId(object)
 	if err != nil {
@@ -242,4 +243,32 @@ func (cursor *cursor) bytesArrayToObjects(bytesArray *bytesArray) (slice interfa
 		slice = cursor.binding.AppendToSlice(slice, object)
 	}
 	return
+}
+
+func (cursor *cursor) RelationPut(relationId TypeId, sourceId, targetId uint64) error {
+	rc := C.obx_cursor_rel_put(cursor.cursor, C.obx_schema_id(relationId), C.obx_id(sourceId), C.obx_id(targetId))
+	if rc != 0 {
+		return createError()
+	}
+	return nil
+}
+
+func (cursor *cursor) RelationRemove(relationId TypeId, sourceId, targetId uint64) error {
+	rc := C.obx_cursor_rel_remove(cursor.cursor, C.obx_schema_id(relationId), C.obx_id(sourceId), C.obx_id(targetId))
+	if rc != 0 {
+		return createError()
+	}
+	return nil
+}
+
+func (cursor *cursor) RelationIds(relationId TypeId, sourceId uint64) ([]uint64, error) {
+	cIdsArray := C.obx_cursor_rel_ids(cursor.cursor, C.obx_schema_id(relationId), C.obx_id(sourceId))
+	if cIdsArray == nil {
+		return nil, createError()
+	}
+
+	idsArray := cIdsArrayToGo(cIdsArray)
+	defer idsArray.free()
+
+	return idsArray.ids, nil
 }

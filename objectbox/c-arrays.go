@@ -62,6 +62,7 @@ func cBytesArrayToGo(cBytesArray *C.OBX_bytes_array) *bytesArray {
 
 	if size > 0 {
 		var sliceOfCBytes []C.OBX_bytes
+		// see cVoidPtrToByteSlice for documentation of the following approach in general
 		header := (*reflect.SliceHeader)(unsafe.Pointer(&sliceOfCBytes))
 		*header = reflect.SliceHeader{Data: uintptr(unsafe.Pointer(cBytesArray.bytes)), Len: size, Cap: size}
 
@@ -131,7 +132,16 @@ func cBytesPtr(value []byte) unsafe.Pointer {
 	}
 }
 
-// NOTE watch https://github.com/golang/go/issues/19367
+// Maps a C void* to the given byte-slice. The void* is not garbage collected and must be managed outside.
+//
+// Previous alternative without reflect https://github.com/golang/go/wiki/cgo#turning-c-arrays-into-go-slices
+// was broken on 32-bit platforms, see https://github.com/golang/go/issues/13656#issuecomment-303246650
+// thus we have chosen a solution mapping the C pointers to a Go slice.
+// Performance-wise, there's no noticeable difference and the current solution is more "obvious"
+//
+// NOTE watch https://github.com/golang/go/issues/19367 for possible changes & new solutions.
+// As both unsafe package as well as reflect.SliceHeader might change in the future,
+// the above-mentioned issue might describe an alternative solution
 func cVoidPtrToByteSlice(data unsafe.Pointer, size int, bytes *[]byte) {
 	header := (*reflect.SliceHeader)(unsafe.Pointer(bytes))
 	*header = reflect.SliceHeader{Data: uintptr(data), Len: size, Cap: size}

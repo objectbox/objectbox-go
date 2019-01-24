@@ -290,64 +290,24 @@ func (entity *Entity) addFields(fields fieldList, path string) ([]*Field, error)
 		fieldsTree = append(fieldsTree, field)
 
 		if property.Annotations["type"] != nil {
-			if err := property.setType(property.Annotations["type"].Value); err != nil {
+			if err := property.setBasicType(property.Annotations["type"].Value); err != nil {
 				return nil, propertyError(err, property)
 			}
-		} else {
-			// try to setType if it's one of the basic supported types
-			typ := f.Type()
-			if err := property.setType(typ.String()); err != nil {
-				// if not, get the underlying type and try again
-				baseType, err := typ.UnderlyingOrError()
-				if err != nil {
-					return nil, propertyError(err, property)
-				}
-
-				// in case it's a pointer, get it's underlying type
-				if pointer, isPointer := baseType.(*types.Pointer); isPointer {
-					baseType = pointer.Elem().Underlying()
-					field.IsPointer = true
-				}
-
-				// in case it's an embedded struct
-				if embedded, isStruct := baseType.(*types.Struct); isStruct {
-					field.fillIn(f, typ)
-
-					// if it's a relation, add a field containing the ID
-					if property.Annotations["link"] != nil {
-						if len(property.Annotations["link"].Value) == 0 {
-							// set the relation target to the type of the target entity
-							// TODO this doesn't respect nameInDb on the entity (but we don't support that at the moment)
-							property.Annotations["link"].Value = typeBaseName(typ.String())
-						}
-
-						// add this field as an ID field
-						if err = property.setType("uint64"); err != nil {
-							return nil, propertyError(err, property)
-						}
-
-						field.IsFullRelation = true
-
-					} else {
-						// otherwise inline all fields
-						if innerFields, err := entity.addFields(structFieldList{embedded}, path+"."+property.Name); err != nil {
-							return nil, err
-						} else {
-							// apply some struct-related settings
-							field.Property = nil
-							field.Fields = innerFields
-						}
-
-						// this struct itself is not added, just the inner properties
-						// TODO error on unknown (unhandled) Annotations
-						continue
-					}
-				} else {
-					if err = property.setType(baseType.String()); err != nil {
-						return nil, propertyError(err, property)
-					}
-				}
+		} else if innerStructFields, err := field.processType(f); err != nil {
+			return nil, propertyError(err, property)
+		} else if innerStructFields != nil {
+			// if it was recognized as a struct that should be embedded, add all the fields
+			if innerFields, err := entity.addFields(innerStructFields, path+"."+property.Name); err != nil {
+				return nil, err
+			} else {
+				// apply some struct-related settings to the field
+				field.Property = nil
+				field.Fields = innerFields
 			}
+
+			// this struct itself is not added, just the inner properties
+			// so skip the the following steps of adding the property
+			continue
 		}
 
 		if err := property.setObFlags(); err != nil {
@@ -408,7 +368,63 @@ func (entity *Entity) addFields(fields fieldList, path string) ([]*Field, error)
 	return fieldsTree, nil
 }
 
-func (field *Field) fillIn(f field, typ typeErrorful) {
+func (field *Field) processType(f field) (fields fieldList, err error) {
+	var typ = f.Type()
+	var property = field.Property
+
+	if err := property.setBasicType(typ.String()); err == nil {
+		// if it's one of the basic supported types
+		return nil, nil
+	}
+
+	// if not, get the underlying type and try again
+	baseType, err := typ.UnderlyingOrError()
+	if err != nil {
+		return nil, err
+	}
+
+	// in case it's a pointer, get it's underlying type
+	if pointer, isPointer := baseType.(*types.Pointer); isPointer {
+		baseType = pointer.Elem().Underlying()
+		field.IsPointer = true
+	}
+
+	if err := property.setBasicType(baseType.String()); err == nil {
+		// if the baseType is one of the basic supported types
+		return nil, nil
+	}
+
+	// try if it's a struct - it can be either embedded or a relation
+	if strct, isStruct := baseType.(*types.Struct); isStruct {
+		// fill in the field information
+		field.fillInfo(f, typ)
+
+		// if it's a relation, add a field containing the ID
+		if property.Annotations["link"] != nil {
+			if len(property.Annotations["link"].Value) == 0 {
+				// set the relation target to the type of the target entity
+				// TODO this doesn't respect nameInDb on the entity (but we don't support that at the moment)
+				property.Annotations["link"].Value = typeBaseName(typ.String())
+			}
+
+			// add this field as an ID field
+			if err = property.setBasicType("uint64"); err != nil {
+				return nil, err
+			}
+
+			field.IsFullRelation = true
+			return nil, nil
+
+		} else {
+			// otherwise inline all fields
+			return structFieldList{strct}, nil
+		}
+	}
+
+	return nil, fmt.Errorf("could not determine type")
+}
+
+func (field *Field) fillInfo(f field, typ typeErrorful) {
 	if namedType, isNamed := f.TypeInternal().(*types.Named); isNamed {
 		field.Type = namedType.Obj().Name()
 	} else {
@@ -532,7 +548,7 @@ func parseAnnotations(tags string, annotations *map[string]*Annotation) error {
 	return nil
 }
 
-func (property *Property) setType(baseType string) error {
+func (property *Property) setBasicType(baseType string) error {
 	property.GoType = baseType
 
 	ts := property.GoType

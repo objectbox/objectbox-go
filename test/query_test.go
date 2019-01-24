@@ -27,7 +27,8 @@ import (
 	"github.com/objectbox/objectbox-go/test/model"
 )
 
-// tests all queries using the DescribeParams method which serializes the query to string
+// Following methods use many test-cases defined as a list of queryTestCase and run all Query.* methods on each test case
+// see queryTestCase, queryTestOptions and especially testQueries for more details
 func TestQueries(t *testing.T) {
 	env := model.NewTestEnv(t)
 	defer env.Close()

@@ -36,7 +36,7 @@ var BindingTemplate = template.Must(template.New("binding").Funcs(funcMap).Parse
 	{{- if .Converter}}){{end}}
 {{- end -}}
 
-{{define "property-converter-encode"}}{{/* used in Store*/ -}}
+{{define "property-converter-encode"}}{{/* used in Flatten*/ -}}
 	{{- if .Converter}}{{.Converter}}ToDatabaseValue(obj.{{.Name}})
 	{{- else}}obj.{{.Name}}{{end}}
 {{- end -}}
@@ -169,8 +169,33 @@ func ({{$entityNameCamel}}_EntityInfo) SetId(object interface{}, id uint64) {
 	{{- end}}
 }
 
-// Store is called by the ObjectBox to transform an object to a FlatBuffer
-func ({{$entityNameCamel}}_EntityInfo) Store(obx *objectbox.ObjectBox, txn *objectbox.Transaction, object interface{}, fbb *flatbuffers.Builder, id uint64) {
+// PutRelated is called by the ObjectBox to put related entities before the object itself is flattened and put
+func ({{$entityNameCamel}}_EntityInfo) PutRelated(obx *objectbox.ObjectBox, txn *objectbox.Transaction, object interface{}) error {
+	{{- /* TODO ideally we should be using BoxForTarget() with a manually assigned txn */}}
+	{{- range $field := .Fields}}
+	{{- if $field.IsFullRelation}}
+		if rel := {{if not $field.IsPointer}}&{{end}}object.(*{{$entity.Name}}).{{$field.Name}}; rel != nil {
+			if rId, err := {{$field.Property.Relation.Target}}Binding.GetId(rel); err != nil {
+				return err
+			} else if rId == 0 && txn != nil {
+				if cursor, err := txn.CursorForName("{{$field.Property.Relation.Target}}"); err != nil {
+					return err 
+				} else if rId, err = cursor.Put(rel); err != nil { 
+					return err 
+				} 
+			} else if rId == 0 {
+				if rId, err = BoxFor{{$field.Property.Relation.Target}}(obx).PutAsyncWithTimeout(rel, 0); err != nil {
+					return err 
+				} 
+			}
+			// NOTE Put/PutAsync() has a side-effect of setting the rel.ID, so at this point, it is already set
+		}
+	{{- end}}{{end}}
+	return nil
+}
+
+// Flatten is called by the ObjectBox to transform an object to a FlatBuffer
+func ({{$entityNameCamel}}_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
     {{if $entity.HasNonIdProperty}}obj := object.(*{{$entity.Name}}){{end -}}
 
     {{- range $property := $entity.Properties}}{{if eq $property.FbType "UOffsetT"}}
@@ -182,22 +207,11 @@ func ({{$entityNameCamel}}_EntityInfo) Store(obx *objectbox.ObjectBox, txn *obje
 	{{if $field.IsFullRelation}}
 		var rId{{$field.Property.Name}} uint64
 		if rel := {{if not $field.IsPointer}}&{{end}}obj.{{$field.Name}}; rel != nil {
-			var rId uint64
-			var err error
-			if rId, err = {{$field.Property.Relation.Target}}Binding.GetId(rel); err != nil {
-				panic(err)
-			} else if rId == 0 && txn != nil {
-				if cursor, err := txn.CursorForName("{{$field.Property.Relation.Target}}"); err != nil {
-					panic(err) 
-				} else if rId, err = cursor.Put(rel); err != nil {
-					panic(err) 
-				} 
-			} else if rId == 0 {
-				if rId, err = BoxFor{{$field.Property.Relation.Target}}(obx).PutAsyncWithTimeout(rel, 0); err != nil {
-					panic(err) 
-				} 
+			if rId, err := {{$field.Property.Relation.Target}}Binding.GetId(rel); err != nil {
+				panic(err) // this must never happen but let's keep the check just to be sure
+			} else {
+				rId{{$field.Property.Name}} = rId
 			}
-			rId{{$field.Property.Name}} = rId
 		}
 	{{- else if $field.Property}}{{if $field.Property.Relation}}{{/* manual relation links (just ID)*/}}
 		var rId{{$field.Property.Name}} = {{template "property-converter-encode" $field.Property}} 

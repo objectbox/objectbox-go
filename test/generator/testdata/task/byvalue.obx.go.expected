@@ -65,8 +65,13 @@ func (taskByValue_EntityInfo) SetId(object interface{}, id uint64) {
 	}
 }
 
-// Store is called by the ObjectBox to transform an object to a FlatBuffer
-func (taskByValue_EntityInfo) Store(obx *objectbox.ObjectBox, txn *objectbox.Transaction, object interface{}, fbb *flatbuffers.Builder, id uint64) {
+// PutRelated is called by the ObjectBox to put related entities before the object itself is flattened and put
+func (taskByValue_EntityInfo) PutRelated(obx *objectbox.ObjectBox, txn *objectbox.Transaction, object interface{}) error {
+	return nil
+}
+
+// Flatten is called by the ObjectBox to transform an object to a FlatBuffer
+func (taskByValue_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
 
 	// build the FlatBuffers object
 	fbb.StartObject(1)
@@ -288,8 +293,13 @@ func (taskStringByValue_EntityInfo) SetId(object interface{}, id uint64) {
 	}
 }
 
-// Store is called by the ObjectBox to transform an object to a FlatBuffer
-func (taskStringByValue_EntityInfo) Store(obx *objectbox.ObjectBox, txn *objectbox.Transaction, object interface{}, fbb *flatbuffers.Builder, id uint64) {
+// PutRelated is called by the ObjectBox to put related entities before the object itself is flattened and put
+func (taskStringByValue_EntityInfo) PutRelated(obx *objectbox.ObjectBox, txn *objectbox.Transaction, object interface{}) error {
+	return nil
+}
+
+// Flatten is called by the ObjectBox to transform an object to a FlatBuffer
+func (taskStringByValue_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
 
 	// build the FlatBuffers object
 	fbb.StartObject(1)

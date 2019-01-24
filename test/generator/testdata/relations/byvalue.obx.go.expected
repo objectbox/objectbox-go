@@ -66,28 +66,38 @@ func (taskRelValue_EntityInfo) SetId(object interface{}, id uint64) {
 	object.(*TaskRelValue).Id = id
 }
 
-// Store is called by the ObjectBox to transform an object to a FlatBuffer
-func (taskRelValue_EntityInfo) Store(obx *objectbox.ObjectBox, txn *objectbox.Transaction, object interface{}, fbb *flatbuffers.Builder, id uint64) {
+// PutRelated is called by the ObjectBox to put related entities before the object itself is flattened and put
+func (taskRelValue_EntityInfo) PutRelated(obx *objectbox.ObjectBox, txn *objectbox.Transaction, object interface{}) error {
+	if rel := &object.(*TaskRelValue).Group; rel != nil {
+		if rId, err := GroupBinding.GetId(rel); err != nil {
+			return err
+		} else if rId == 0 && txn != nil {
+			if cursor, err := txn.CursorForName("Group"); err != nil {
+				return err
+			} else if rId, err = cursor.Put(rel); err != nil {
+				return err
+			}
+		} else if rId == 0 {
+			if rId, err = BoxForGroup(obx).PutAsyncWithTimeout(rel, 0); err != nil {
+				return err
+			}
+		}
+		// NOTE Put/PutAsync() has a side-effect of setting the rel.ID, so at this point, it is already set
+	}
+	return nil
+}
+
+// Flatten is called by the ObjectBox to transform an object to a FlatBuffer
+func (taskRelValue_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
 	obj := object.(*TaskRelValue)
 
 	var rIdGroup uint64
 	if rel := &obj.Group; rel != nil {
-		var rId uint64
-		var err error
-		if rId, err = GroupBinding.GetId(rel); err != nil {
-			panic(err)
-		} else if rId == 0 && txn != nil {
-			if cursor, err := txn.CursorForName("Group"); err != nil {
-				panic(err)
-			} else if rId, err = cursor.Put(rel); err != nil {
-				panic(err)
-			}
-		} else if rId == 0 {
-			if rId, err = BoxForGroup(obx).PutAsyncWithTimeout(rel, 0); err != nil {
-				panic(err)
-			}
+		if rId, err := GroupBinding.GetId(rel); err != nil {
+			panic(err) // this must never happen but let's keep the check just to be sure
+		} else {
+			rIdGroup = rId
 		}
-		rIdGroup = rId
 	}
 
 	// build the FlatBuffers object

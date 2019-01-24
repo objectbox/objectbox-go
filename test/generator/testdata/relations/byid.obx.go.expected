@@ -66,8 +66,13 @@ func (taskRelId_EntityInfo) SetId(object interface{}, id uint64) {
 	object.(*TaskRelId).Id = id
 }
 
-// Store is called by the ObjectBox to transform an object to a FlatBuffer
-func (taskRelId_EntityInfo) Store(obx *objectbox.ObjectBox, txn *objectbox.Transaction, object interface{}, fbb *flatbuffers.Builder, id uint64) {
+// PutRelated is called by the ObjectBox to put related entities before the object itself is flattened and put
+func (taskRelId_EntityInfo) PutRelated(obx *objectbox.ObjectBox, txn *objectbox.Transaction, object interface{}) error {
+	return nil
+}
+
+// Flatten is called by the ObjectBox to transform an object to a FlatBuffer
+func (taskRelId_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
 	obj := object.(*TaskRelId)
 
 	var rIdGroup = obj.Group

@@ -97,8 +97,13 @@ func (event_EntityInfo) SetId(object interface{}, id uint64) {
 	object.(*Event).Id = id
 }
 
-// Store is called by the ObjectBox to transform an object to a FlatBuffer
-func (event_EntityInfo) Store(obx *objectbox.ObjectBox, txn *objectbox.Transaction, object interface{}, fbb *flatbuffers.Builder, id uint64) {
+// PutRelated is called by the ObjectBox to put related entities before the object itself is flattened and put
+func (event_EntityInfo) PutRelated(obx *objectbox.ObjectBox, txn *objectbox.Transaction, object interface{}) error {
+	return nil
+}
+
+// Flatten is called by the ObjectBox to transform an object to a FlatBuffer
+func (event_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
 	obj := object.(*Event)
 	var offsetUid = fbutils.CreateStringOffset(fbb, obj.Uid)
 	var offsetDevice = fbutils.CreateStringOffset(fbb, obj.Device)
@@ -398,8 +403,13 @@ func (reading_EntityInfo) SetId(object interface{}, id uint64) {
 	object.(*Reading).Id = id
 }
 
-// Store is called by the ObjectBox to transform an object to a FlatBuffer
-func (reading_EntityInfo) Store(obx *objectbox.ObjectBox, txn *objectbox.Transaction, object interface{}, fbb *flatbuffers.Builder, id uint64) {
+// PutRelated is called by the ObjectBox to put related entities before the object itself is flattened and put
+func (reading_EntityInfo) PutRelated(obx *objectbox.ObjectBox, txn *objectbox.Transaction, object interface{}) error {
+	return nil
+}
+
+// Flatten is called by the ObjectBox to transform an object to a FlatBuffer
+func (reading_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
 	obj := object.(*Reading)
 	var offsetValueName = fbutils.CreateStringOffset(fbb, obj.ValueName)
 	var offsetValueString = fbutils.CreateStringOffset(fbb, obj.ValueString)

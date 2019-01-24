@@ -162,15 +162,18 @@ func (cursor *cursor) IsEmpty() (result bool, err error) {
 func (cursor *cursor) Put(object interface{}) (id uint64, err error) {
 	idFromObject, err := cursor.binding.GetId(object)
 	if err != nil {
-		return
+		return 0, err
 	}
 
-	id, err = cursor.IdForPut(idFromObject)
-	if err != nil {
-		return
+	if err = cursor.binding.PutRelated(nil, cursor.txn, object); err != nil {
+		return 0, err
 	}
 
-	cursor.binding.Store(nil, cursor.txn, object, cursor.fbb, id)
+	if id, err = cursor.IdForPut(idFromObject); err != nil {
+		return 0, err
+	}
+
+	cursor.binding.Flatten(object, cursor.fbb, id)
 
 	checkForPreviousValue := idFromObject != 0
 	if err = cursor.finishInternalFbbAndPut(id, checkForPreviousValue); err != nil {

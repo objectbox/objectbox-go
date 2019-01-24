@@ -95,8 +95,13 @@ func (aliases_EntityInfo) SetId(object interface{}, id uint64) {
 	object.(*Aliases).Id = id
 }
 
-// Store is called by the ObjectBox to transform an object to a FlatBuffer
-func (aliases_EntityInfo) Store(obx *objectbox.ObjectBox, txn *objectbox.Transaction, object interface{}, fbb *flatbuffers.Builder, id uint64) {
+// PutRelated is called by the ObjectBox to put related entities before the object itself is flattened and put
+func (aliases_EntityInfo) PutRelated(obx *objectbox.ObjectBox, txn *objectbox.Transaction, object interface{}) error {
+	return nil
+}
+
+// Flatten is called by the ObjectBox to transform an object to a FlatBuffer
+func (aliases_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
 	obj := object.(*Aliases)
 	var offsetSameFile = fbutils.CreateStringOffset(fbb, obj.SameFile)
 	var offsetSameFile2 = fbutils.CreateStringOffset(fbb, obj.SameFile2)

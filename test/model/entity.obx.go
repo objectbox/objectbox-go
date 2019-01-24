@@ -289,8 +289,61 @@ func (entity_EntityInfo) SetId(object interface{}, id uint64) {
 	object.(*Entity).Id = id
 }
 
-// Store is called by the ObjectBox to transform an object to a FlatBuffer
-func (entity_EntityInfo) Store(obx *objectbox.ObjectBox, txn *objectbox.Transaction, object interface{}, fbb *flatbuffers.Builder, id uint64) {
+// PutRelated is called by the ObjectBox to put related entities before the object itself is flattened and put
+func (entity_EntityInfo) PutRelated(obx *objectbox.ObjectBox, txn *objectbox.Transaction, object interface{}) error {
+	if rel := &object.(*Entity).Related; rel != nil {
+		if rId, err := TestEntityRelatedBinding.GetId(rel); err != nil {
+			return err
+		} else if rId == 0 && txn != nil {
+			if cursor, err := txn.CursorForName("TestEntityRelated"); err != nil {
+				return err
+			} else if rId, err = cursor.Put(rel); err != nil {
+				return err
+			}
+		} else if rId == 0 {
+			if rId, err = BoxForTestEntityRelated(obx).PutAsyncWithTimeout(rel, 0); err != nil {
+				return err
+			}
+		}
+		// NOTE Put/PutAsync() has a side-effect of setting the rel.ID, so at this point, it is already set
+	}
+	if rel := object.(*Entity).RelatedPtr; rel != nil {
+		if rId, err := TestEntityRelatedBinding.GetId(rel); err != nil {
+			return err
+		} else if rId == 0 && txn != nil {
+			if cursor, err := txn.CursorForName("TestEntityRelated"); err != nil {
+				return err
+			} else if rId, err = cursor.Put(rel); err != nil {
+				return err
+			}
+		} else if rId == 0 {
+			if rId, err = BoxForTestEntityRelated(obx).PutAsyncWithTimeout(rel, 0); err != nil {
+				return err
+			}
+		}
+		// NOTE Put/PutAsync() has a side-effect of setting the rel.ID, so at this point, it is already set
+	}
+	if rel := object.(*Entity).RelatedPtr2; rel != nil {
+		if rId, err := TestEntityRelatedBinding.GetId(rel); err != nil {
+			return err
+		} else if rId == 0 && txn != nil {
+			if cursor, err := txn.CursorForName("TestEntityRelated"); err != nil {
+				return err
+			} else if rId, err = cursor.Put(rel); err != nil {
+				return err
+			}
+		} else if rId == 0 {
+			if rId, err = BoxForTestEntityRelated(obx).PutAsyncWithTimeout(rel, 0); err != nil {
+				return err
+			}
+		}
+		// NOTE Put/PutAsync() has a side-effect of setting the rel.ID, so at this point, it is already set
+	}
+	return nil
+}
+
+// Flatten is called by the ObjectBox to transform an object to a FlatBuffer
+func (entity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
 	obj := object.(*Entity)
 	var offsetString = fbutils.CreateStringOffset(fbb, obj.String)
 	var offsetStringVector = fbutils.CreateStringVectorOffset(fbb, obj.StringVector)
@@ -299,62 +352,29 @@ func (entity_EntityInfo) Store(obx *objectbox.ObjectBox, txn *objectbox.Transact
 
 	var rIdRelated uint64
 	if rel := &obj.Related; rel != nil {
-		var rId uint64
-		var err error
-		if rId, err = TestEntityRelatedBinding.GetId(rel); err != nil {
-			panic(err)
-		} else if rId == 0 && txn != nil {
-			if cursor, err := txn.CursorForName("TestEntityRelated"); err != nil {
-				panic(err)
-			} else if rId, err = cursor.Put(rel); err != nil {
-				panic(err)
-			}
-		} else if rId == 0 {
-			if rId, err = BoxForTestEntityRelated(obx).PutAsyncWithTimeout(rel, 0); err != nil {
-				panic(err)
-			}
+		if rId, err := TestEntityRelatedBinding.GetId(rel); err != nil {
+			panic(err) // this must never happen but let's keep the check just to be sure
+		} else {
+			rIdRelated = rId
 		}
-		rIdRelated = rId
 	}
 
 	var rIdRelatedPtr uint64
 	if rel := obj.RelatedPtr; rel != nil {
-		var rId uint64
-		var err error
-		if rId, err = TestEntityRelatedBinding.GetId(rel); err != nil {
-			panic(err)
-		} else if rId == 0 && txn != nil {
-			if cursor, err := txn.CursorForName("TestEntityRelated"); err != nil {
-				panic(err)
-			} else if rId, err = cursor.Put(rel); err != nil {
-				panic(err)
-			}
-		} else if rId == 0 {
-			if rId, err = BoxForTestEntityRelated(obx).PutAsyncWithTimeout(rel, 0); err != nil {
-				panic(err)
-			}
+		if rId, err := TestEntityRelatedBinding.GetId(rel); err != nil {
+			panic(err) // this must never happen but let's keep the check just to be sure
+		} else {
+			rIdRelatedPtr = rId
 		}
-		rIdRelatedPtr = rId
 	}
 
 	var rIdRelatedPtr2 uint64
 	if rel := obj.RelatedPtr2; rel != nil {
-		var rId uint64
-		var err error
-		if rId, err = TestEntityRelatedBinding.GetId(rel); err != nil {
-			panic(err)
-		} else if rId == 0 && txn != nil {
-			if cursor, err := txn.CursorForName("TestEntityRelated"); err != nil {
-				panic(err)
-			} else if rId, err = cursor.Put(rel); err != nil {
-				panic(err)
-			}
-		} else if rId == 0 {
-			if rId, err = BoxForTestEntityRelated(obx).PutAsyncWithTimeout(rel, 0); err != nil {
-				panic(err)
-			}
+		if rId, err := TestEntityRelatedBinding.GetId(rel); err != nil {
+			panic(err) // this must never happen but let's keep the check just to be sure
+		} else {
+			rIdRelatedPtr2 = rId
 		}
-		rIdRelatedPtr2 = rId
 	}
 
 	// build the FlatBuffers object
@@ -657,8 +677,13 @@ func (testStringIdEntity_EntityInfo) SetId(object interface{}, id uint64) {
 	object.(*TestStringIdEntity).Id = strconv.FormatUint(id, 10)
 }
 
-// Store is called by the ObjectBox to transform an object to a FlatBuffer
-func (testStringIdEntity_EntityInfo) Store(obx *objectbox.ObjectBox, txn *objectbox.Transaction, object interface{}, fbb *flatbuffers.Builder, id uint64) {
+// PutRelated is called by the ObjectBox to put related entities before the object itself is flattened and put
+func (testStringIdEntity_EntityInfo) PutRelated(obx *objectbox.ObjectBox, txn *objectbox.Transaction, object interface{}) error {
+	return nil
+}
+
+// Flatten is called by the ObjectBox to transform an object to a FlatBuffer
+func (testStringIdEntity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
 
 	// build the FlatBuffers object
 	fbb.StartObject(1)
@@ -890,8 +915,13 @@ func (testEntityInline_EntityInfo) SetId(object interface{}, id uint64) {
 	object.(*TestEntityInline).Id = id
 }
 
-// Store is called by the ObjectBox to transform an object to a FlatBuffer
-func (testEntityInline_EntityInfo) Store(obx *objectbox.ObjectBox, txn *objectbox.Transaction, object interface{}, fbb *flatbuffers.Builder, id uint64) {
+// PutRelated is called by the ObjectBox to put related entities before the object itself is flattened and put
+func (testEntityInline_EntityInfo) PutRelated(obx *objectbox.ObjectBox, txn *objectbox.Transaction, object interface{}) error {
+	return nil
+}
+
+// Flatten is called by the ObjectBox to transform an object to a FlatBuffer
+func (testEntityInline_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
 	obj := object.(*TestEntityInline)
 
 	// build the FlatBuffers object
@@ -1117,8 +1147,13 @@ func (testEntityRelated_EntityInfo) SetId(object interface{}, id uint64) {
 	object.(*TestEntityRelated).Id = id
 }
 
-// Store is called by the ObjectBox to transform an object to a FlatBuffer
-func (testEntityRelated_EntityInfo) Store(obx *objectbox.ObjectBox, txn *objectbox.Transaction, object interface{}, fbb *flatbuffers.Builder, id uint64) {
+// PutRelated is called by the ObjectBox to put related entities before the object itself is flattened and put
+func (testEntityRelated_EntityInfo) PutRelated(obx *objectbox.ObjectBox, txn *objectbox.Transaction, object interface{}) error {
+	return nil
+}
+
+// Flatten is called by the ObjectBox to transform an object to a FlatBuffer
+func (testEntityRelated_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
 	obj := object.(*TestEntityRelated)
 	var offsetName = fbutils.CreateStringOffset(fbb, obj.Name)
 

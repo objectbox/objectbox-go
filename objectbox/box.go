@@ -109,12 +109,15 @@ func (box *Box) PutAsync(object interface{}) (id uint64, err error) {
 func (box *Box) PutAsyncWithTimeout(object interface{}, timeoutMs uint) (id uint64, err error) {
 	idFromObject, err := box.binding.GetId(object)
 	if err != nil {
-		return
+		return 0, err
 	}
 
-	id, err = box.idForPut(idFromObject)
-	if err != nil {
-		return
+	if err = box.binding.PutRelated(box.objectBox, nil, object); err != nil {
+		return 0, err
+	}
+
+	if id, err = box.idForPut(idFromObject); err != nil {
+		return 0, err
 	}
 
 	var fbb *flatbuffers.Builder
@@ -124,7 +127,7 @@ func (box *Box) PutAsyncWithTimeout(object interface{}, timeoutMs uint) (id uint
 	} else {
 		fbb = flatbuffers.NewBuilder(256)
 	}
-	box.binding.Store(box.objectBox, nil, object, fbb, id)
+	box.binding.Flatten(object, fbb, id)
 
 	checkForPreviousValue := idFromObject != 0
 	if err = box.finishFbbAndPutAsync(fbb, id, checkForPreviousValue, timeoutMs); err != nil {

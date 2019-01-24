@@ -53,21 +53,15 @@ func (cursor *cursor) Get(id uint64) (object interface{}, err error) {
 	var dataPtr = unsafe.Pointer(data)
 
 	var rc = C.obx_cursor_get(cursor.cursor, C.obx_id(id), &dataPtr, &dataSize)
-
-	// if there was no error, convert
 	if rc == 0 {
 		var bytes []byte
 		cVoidPtrToByteSlice(dataPtr, int(dataSize), &bytes)
 		return cursor.binding.ToObject(bytes), nil
-	}
-
-	// if the item was not found, neither error nor data
-	if rc == C.OBX_NOT_FOUND {
+	} else if rc == C.OBX_NOT_FOUND {
 		return nil, nil
+	} else {
+		return nil, createError()
 	}
-
-	// otherwise return the error that has occurred
-	return nil, createError()
 }
 
 func (cursor *cursor) GetAll() (slice interface{}, err error) {

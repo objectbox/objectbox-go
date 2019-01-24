@@ -113,6 +113,10 @@ type structFieldList struct {
 }
 
 func (fields structFieldList) Length() int {
+	if fields.Struct == nil {
+		return 0
+	}
+
 	return fields.Struct.NumFields()
 }
 

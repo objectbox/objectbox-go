@@ -67,9 +67,31 @@
           "name": "Name"
         }
       ]
+    },
+    {
+      "id": "5:2339563716805116249",
+      "name": "TaskRelManyPtr",
+      "lastPropertyId": "1:7144924247938981575",
+      "properties": [
+        {
+          "id": "1:7144924247938981575",
+          "name": "Id"
+        }
+      ]
+    },
+    {
+      "id": "6:161231572858529631",
+      "name": "TaskRelManyValue",
+      "lastPropertyId": "1:7259475919510918339",
+      "properties": [
+        {
+          "id": "1:7259475919510918339",
+          "name": "Id"
+        }
+      ]
     }
   ],
-  "lastEntityId": "4:7837839688282259259",
+  "lastEntityId": "6:161231572858529631",
   "lastIndexId": "3:8325060299420976708",
   "retiredEntityUids": [],
   "retiredIndexUids": [],

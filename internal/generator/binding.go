@@ -399,16 +399,9 @@ func (field *Field) processType(f field) (fields fieldList, err error) {
 		// fill in the field information
 		field.fillInfo(f, typ)
 
-		// if it's a relation, add a field containing the ID
 		if property.Annotations["link"] != nil {
-			if len(property.Annotations["link"].Value) == 0 {
-				// set the relation target to the type of the target entity
-				// TODO this doesn't respect nameInDb on the entity (but we don't support that at the moment)
-				property.Annotations["link"].Value = typeBaseName(typ.String())
-			}
-
-			// add this field as an ID field
-			if err = property.setBasicType("uint64"); err != nil {
+			// if it's a one-to-many relation
+			if err := property.forceRelation(typeBaseName(typ.String()), false); err != nil {
 				return nil, err
 			}
 
@@ -421,7 +414,18 @@ func (field *Field) processType(f field) (fields fieldList, err error) {
 		}
 	}
 
-	return nil, fmt.Errorf("could not determine type")
+	// check if it's a slice of a non-base type
+	if slice, isSlice := baseType.(*types.Slice); isSlice {
+		// it's a many-to-many relation
+		if err := property.forceRelation(typeBaseName(slice.Elem().String()), true); err != nil {
+			return nil, err
+		}
+
+		// we need to skip adding this field (it's not persisted in DB) so we add an empty list of fields
+		return structFieldList{}, nil
+	}
+
+	return nil, fmt.Errorf("unknown type %s", typ.String())
 }
 
 func (field *Field) fillInfo(f field, typ typeErrorful) {
@@ -497,6 +501,35 @@ func (property *Property) setAnnotations(tags string) error {
 
 	if len(property.Annotations) == 0 {
 		property.Annotations = nil
+	}
+
+	return nil
+}
+
+func (property *Property) forceRelation(target string, manyToMany bool) error {
+	if property.Annotations == nil {
+		property.Annotations = make(map[string]*Annotation)
+	}
+
+	if property.Annotations["link"] == nil {
+		property.Annotations["link"] = &Annotation{}
+	}
+
+	if len(property.Annotations["link"].Value) == 0 {
+		// set the relation target to the type of the target entity
+		// TODO this doesn't respect nameInDb on the entity (but we don't support that at the moment)
+		property.Annotations["link"].Value = target
+	} else if property.Annotations["link"].Value != target {
+		return fmt.Errorf("relation target mismatch, expected %s, got %s", target, property.Annotations["link"].Value)
+	}
+
+	if manyToMany {
+
+	} else {
+		// add this field as an ID field
+		if err := property.setBasicType("uint64"); err != nil {
+			return err
+		}
 	}
 
 	return nil

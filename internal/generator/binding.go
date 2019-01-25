@@ -80,8 +80,11 @@ type Relation struct {
 
 type StandaloneRelation struct {
 	Identifier
-	Target Identifier
-	Name   string
+	Target struct {
+		Identifier
+		Name string
+	}
+	Name string
 }
 
 type Index struct {
@@ -433,12 +436,16 @@ func (field *Field) processType(f field) (fields fieldList, err error) {
 			return nil, err
 		}
 
+		rel := &StandaloneRelation{Name: field.Name}
+		rel.Target.Name = property.Annotations["link"].Value
+
 		// add this as a standalone relation to the entity
 		// TODO handle rename of the property (relation) using the uidRequest
 		if field.entity.Relations[field.Name] != nil {
 			return nil, fmt.Errorf("relation with the name %s already exists", field.Name)
+		} else {
+			field.entity.Relations[field.Name] = rel
 		}
-		field.entity.Relations[field.Name] = &StandaloneRelation{Name: field.Name}
 
 		// we need to skip adding this field (it's not persisted in DB) so we add an empty list of fields
 		return structFieldList{}, nil

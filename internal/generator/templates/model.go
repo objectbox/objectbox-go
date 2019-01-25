@@ -40,6 +40,7 @@ func ObjectBoxModel() *objectbox.Model {
 	{{end -}}
 	model.LastEntityId({{.Model.LastEntityId.GetId}}, {{.Model.LastEntityId.GetUid}})
 	{{if .Model.LastIndexId}}model.LastIndexId({{.Model.LastIndexId.GetId}}, {{.Model.LastIndexId.GetUid}}){{end}}
+	{{if .Model.LastRelationId}}model.LastRelationId({{.Model.LastRelationId.GetId}}, {{.Model.LastRelationId.GetUid}}){{end}}
 
 	return model
 }`))

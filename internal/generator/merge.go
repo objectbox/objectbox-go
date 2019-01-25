@@ -26,7 +26,7 @@ func mergeBindingWithModelInfo(binding *Binding, modelInfo *modelinfo.ModelInfo)
 	for _, bindingEntity := range binding.Entities {
 		if modelEntity, err := getModelEntity(bindingEntity, modelInfo); err != nil {
 			return err
-		} else if err := mergeModelEntity(bindingEntity, modelEntity); err != nil {
+		} else if err := mergeModelEntity(bindingEntity, modelEntity, modelInfo); err != nil {
 			return err
 		}
 	}
@@ -67,7 +67,7 @@ func getModelEntity(bindingEntity *Entity, modelInfo *modelinfo.ModelInfo) (*mod
 	}
 }
 
-func mergeModelEntity(bindingEntity *Entity, modelEntity *modelinfo.Entity) (err error) {
+func mergeModelEntity(bindingEntity *Entity, modelEntity *modelinfo.Entity, modelInfo *modelinfo.ModelInfo) (err error) {
 	modelEntity.Name = bindingEntity.Name
 
 	if bindingEntity.Id, bindingEntity.Uid, err = modelEntity.Id.Get(); err != nil {
@@ -108,7 +108,7 @@ func mergeModelEntity(bindingEntity *Entity, modelEntity *modelinfo.Entity) (err
 		for _, bindingRelation := range bindingEntity.Relations {
 			if modelRelation, err := getModelRelation(bindingRelation, modelEntity); err != nil {
 				return err
-			} else if err := mergeModelRelation(bindingRelation, modelRelation); err != nil {
+			} else if err := mergeModelRelation(bindingRelation, modelRelation, modelInfo); err != nil {
 				return err
 			}
 		}
@@ -234,10 +234,19 @@ func getModelRelation(bindingRelation *StandaloneRelation, modelEntity *modelinf
 	}
 }
 
-func mergeModelRelation(bindingRelation *StandaloneRelation, modelRelation *modelinfo.StandaloneRelation) (err error) {
+func mergeModelRelation(bindingRelation *StandaloneRelation, modelRelation *modelinfo.StandaloneRelation,
+	modelInfo *modelinfo.ModelInfo) (err error) {
+
 	modelRelation.Name = bindingRelation.Name
 
 	if bindingRelation.Id, bindingRelation.Uid, err = modelRelation.Id.Get(); err != nil {
+		return err
+	}
+
+	// find the target entity & read it's ID/UID for the binding code
+	if targetEntity, err := modelInfo.FindEntityByName(bindingRelation.Target.Name); err != nil {
+		return err
+	} else if bindingRelation.Target.Id, bindingRelation.Target.Uid, err = targetEntity.Id.Get(); err != nil {
 		return err
 	}
 

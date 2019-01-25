@@ -20,6 +20,7 @@ func ObjectBoxModel() *objectbox.Model {
 	model.RegisterBinding(TaskRelManyValueBinding)
 	model.LastEntityId(6, 7259475919510918339)
 	model.LastIndexId(3, 8325060299420976708)
+	model.LastRelationId(2, 3287288577352441706)
 
 	return model
 }

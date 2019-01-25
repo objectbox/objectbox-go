@@ -36,9 +36,10 @@ func (relation *Relation) Validate() error {
 	return nil
 }
 
+// this is kept as a separate type for clear differentiation in other parts of the code
+// and in case we wanted to persist other fields collected in the binding (such as target entity id)
 type StandaloneRelation struct {
 	Relation
-	TargetEntityId IdUid `json:"-"` // currently not in the json file
 }
 
 func CreateStandaloneRelation(id IdUid) *StandaloneRelation {
@@ -49,13 +50,5 @@ func CreateStandaloneRelation(id IdUid) *StandaloneRelation {
 
 // performs initial validation of loaded data so that it doesn't have to be checked in each function
 func (relation *StandaloneRelation) Validate() error {
-	if err := relation.Relation.Validate(); err != nil {
-		return err
-	}
-
-	if err := relation.TargetEntityId.Validate(); err != nil {
-		return err
-	}
-
-	return nil
+	return relation.Relation.Validate()
 }

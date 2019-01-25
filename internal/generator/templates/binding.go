@@ -109,6 +109,9 @@ func ({{$entityNameCamel}}_EntityInfo) AddToModel(model *objectbox.Model) {
     {{end -}}
     {{end -}}
     model.EntityLastPropertyId({{$entity.LastPropertyId.GetId}}, {{$entity.LastPropertyId.GetUid}})
+	{{range $relation := $entity.Relations -}}
+    model.Relation({{$relation.Id}}, {{$relation.Uid}}, {{$relation.Target.Id}}, {{$relation.Target.Uid}})
+    {{end -}}
 }
 
 // GetId is called by the ObjectBox during Put operations to check for existing ID on an object

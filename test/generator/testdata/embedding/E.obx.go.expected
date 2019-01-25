@@ -84,16 +84,17 @@ func (e_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uin
 
 // Load is called by the ObjectBox to load an object from a FlatBuffer
 func (e_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interface{} {
-	table := &flatbuffers.Table{
+	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
+	var id = table.GetUint64Slot(6, 0)
 
 	return &E{
 		Trackable: other.Trackable{
 			Location: fbutils.GetStringSlot(table, 4),
 		},
-		id: table.GetUint64Slot(6, 0),
+		id: id,
 	}
 }
 

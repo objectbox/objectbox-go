@@ -71,14 +71,24 @@ func (taskRelManyPtr_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Bu
 
 // Load is called by the ObjectBox to load an object from a FlatBuffer
 func (taskRelManyPtr_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interface{} {
-	table := &flatbuffers.Table{
+	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
+	var id = table.GetUint64Slot(4, 0)
+
+	var relGroups []*Group
+	if cursor, err := txn.CursorForName("TaskRelManyPtr"); err != nil {
+		panic(err)
+	} else if rSlice, err := cursor.RelationGetAll(1, 4, id); err != nil {
+		panic(err)
+	} else {
+		relGroups = rSlice.([]*Group)
+	}
 
 	return &TaskRelManyPtr{
-		Id:     table.GetUint64Slot(4, 0),
-		Groups: {},
+		Id:     id,
+		Groups: relGroups,
 	}
 }
 

@@ -96,13 +96,14 @@ type Annotation struct {
 }
 
 type Field struct {
-	entity         *Entity // parent entity
-	Name           string
-	Type           string
-	IsPointer      bool
-	Property       *Property // nil if it's an embedded struct
-	Fields         []*Field  // inner fields, nil if it's a property
-	IsFullRelation bool
+	entity             *Entity // parent entity
+	Name               string
+	Type               string
+	IsPointer          bool
+	Property           *Property // nil if it's an embedded struct
+	Fields             []*Field  // inner fields, nil if it's a property
+	SimpleRelation     *Relation
+	StandaloneRelation *StandaloneRelation
 }
 
 type Identifier struct {
@@ -420,7 +421,7 @@ func (field *Field) processType(f field) (fields fieldList, err error) {
 				return nil, err
 			}
 
-			field.IsFullRelation = true
+			field.SimpleRelation = property.Relation
 			return nil, nil
 
 		} else {
@@ -436,16 +437,19 @@ func (field *Field) processType(f field) (fields fieldList, err error) {
 			return nil, err
 		}
 
-		rel := &StandaloneRelation{Name: field.Name}
-		rel.Target.Name = property.Annotations["link"].Value
-
 		// add this as a standalone relation to the entity
 		// TODO handle rename of the property (relation) using the uidRequest
 		if field.entity.Relations[field.Name] != nil {
 			return nil, fmt.Errorf("relation with the name %s already exists", field.Name)
-		} else {
-			field.entity.Relations[field.Name] = rel
 		}
+
+		rel := &StandaloneRelation{Name: field.Name}
+		rel.Target.Name = property.Annotations["link"].Value
+		field.entity.Relations[field.Name] = rel
+
+		// fill in the field information
+		field.fillInfo(f, typ)
+		field.StandaloneRelation = rel
 
 		// we need to skip adding this field (it's not persisted in DB) so we add an empty list of fields
 		return structFieldList{}, nil
@@ -751,6 +755,11 @@ func (entity *Entity) HasNonIdProperty() bool {
 	}
 
 	return false
+}
+
+// called from the template
+func (field *Field) IsId() bool {
+	return field.Property == field.entity.IdProperty
 }
 
 // calculates flatbuffers vTableOffset

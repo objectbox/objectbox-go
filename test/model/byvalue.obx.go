@@ -79,13 +79,14 @@ func (entityByValue_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Bui
 
 // Load is called by the ObjectBox to load an object from a FlatBuffer
 func (entityByValue_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interface{} {
-	table := &flatbuffers.Table{
+	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
+	var id = table.GetUint64Slot(4, 0)
 
 	return &EntityByValue{
-		Id: table.GetUint64Slot(4, 0),
+		Id: id,
 	}
 }
 

@@ -176,18 +176,18 @@ func ({{$entityNameCamel}}_EntityInfo) SetId(object interface{}, id uint64) {
 func ({{$entityNameCamel}}_EntityInfo) PutRelated(obx *objectbox.ObjectBox, txn *objectbox.Transaction, object interface{}) error {
 	{{- /* TODO ideally we should be using BoxForTarget() with a manually assigned txn */}}
 	{{- range $field := .Fields}}
-	{{- if $field.IsFullRelation}}
+	{{- if $field.SimpleRelation}}
 		if rel := {{if not $field.IsPointer}}&{{end}}object.(*{{$entity.Name}}).{{$field.Name}}; rel != nil {
-			if rId, err := {{$field.Property.Relation.Target}}Binding.GetId(rel); err != nil {
+			if rId, err := {{$field.SimpleRelation.Target}}Binding.GetId(rel); err != nil {
 				return err
 			} else if rId == 0 && txn != nil {
-				if cursor, err := txn.CursorForName("{{$field.Property.Relation.Target}}"); err != nil {
+				if cursor, err := txn.CursorForName("{{$field.SimpleRelation.Target}}"); err != nil {
 					return err 
 				} else if rId, err = cursor.Put(rel); err != nil { 
 					return err 
 				} 
 			} else if rId == 0 {
-				if rId, err = BoxFor{{$field.Property.Relation.Target}}(obx).PutAsyncWithTimeout(rel, 0); err != nil {
+				if rId, err = BoxFor{{$field.SimpleRelation.Target}}(obx).PutAsyncWithTimeout(rel, 0); err != nil {
 					return err 
 				} 
 			}
@@ -207,10 +207,10 @@ func ({{$entityNameCamel}}_EntityInfo) Flatten(object interface{}, fbb *flatbuff
 
 	{{- /* store relations, TODO return error, ideally we should be using BoxForTarget() with a manually assigned txn */}}
 	{{- range $field := .Fields}}
-	{{if $field.IsFullRelation}}
+	{{if $field.SimpleRelation}}
 		var rId{{$field.Property.Name}} uint64
 		if rel := {{if not $field.IsPointer}}&{{end}}obj.{{$field.Name}}; rel != nil {
-			if rId, err := {{$field.Property.Relation.Target}}Binding.GetId(rel); err != nil {
+			if rId, err := {{$field.SimpleRelation.Target}}Binding.GetId(rel); err != nil {
 				panic(err) // this must never happen but let's keep the check just to be sure
 			} else {
 				rId{{$field.Property.Name}} = rId
@@ -236,30 +236,41 @@ func ({{$entityNameCamel}}_EntityInfo) Flatten(object interface{}, fbb *flatbuff
 
 // Load is called by the ObjectBox to load an object from a FlatBuffer 
 func ({{$entityNameCamel}}_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interface{} {
-	table := &flatbuffers.Table{
+	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
+	var id = {{template "property-getter" $entity.IdProperty}}
 
 	{{- /* load relations, TODO return error, ideally we should be using BoxForTarget() with a manually assigned txn */}}
-	{{- range $field := .Fields}}{{if $field.IsFullRelation}}
+	{{- range $field := .Fields}}{{if $field.SimpleRelation}}
 
-		var rel{{$field.Property.Name}} *{{$field.Type}}
+		var rel{{$field.Name}} *{{$field.Type}}
 		if rId := {{template "property-getter" $field.Property}}; rId > 0 { 
-			if cursor, err := txn.CursorForName("{{$field.Property.Relation.Target}}"); err != nil {
+			if cursor, err := txn.CursorForName("{{$field.SimpleRelation.Target}}"); err != nil {
 				panic(err) 
 			} else if relObject, err := cursor.Get(rId); err != nil {
 				panic(err) 
 			} else if relObj, ok := relObject.(*{{$field.Type}}); ok {
-				rel{{$field.Property.Name}} = relObj
+				rel{{$field.Name}} = relObj
 			} else {
 				var relObj = relObject.({{$field.Type}})
-				rel{{$field.Property.Name}} = &relObj
+				rel{{$field.Name}} = &relObj
 			}
 		{{if not $field.IsPointer -}} 
 		} else {
-			rel{{$field.Property.Name}} = &{{$field.Type}}{}
+			rel{{$field.Name}} = &{{$field.Type}}{}
 		{{end -}}
+		}
+	{{- else if $field.StandaloneRelation}}
+	
+		var rel{{$field.Name}} {{$field.Type}} 
+		if cursor, err := txn.CursorForName("{{$entity.Name}}"); err != nil {
+			panic(err) 
+		} else if rSlice, err := cursor.RelationGetAll({{$field.StandaloneRelation.Id}}, {{$field.StandaloneRelation.Target.Id}}, id); err != nil {
+			panic(err)
+		} else {
+			rel{{$field.Name}} = {{if $field.IsPointer}}&{{end}}rSlice.({{$field.Type}})
 		}
 	{{- end}}{{end}}
 
@@ -267,7 +278,9 @@ func ({{$entityNameCamel}}_EntityInfo) Load(txn *objectbox.Transaction, bytes []
 	{{- block "fields-initializer" $entity}}
 		{{- range $field := .Fields}}
 			{{$field.Name}}: 
-				{{- if $field.IsFullRelation}}{{if not $field.IsPointer}}*{{end}}rel{{$field.Property.Name}}
+				{{- if or $field.SimpleRelation}}{{if not $field.IsPointer}}*{{end}}rel{{$field.Name}}
+				{{- else if $field.StandaloneRelation}}rel{{$field.Name}}
+        		{{- else if $field.IsId}} id
 				{{- else if $field.Property}}{{template "property-getter" $field.Property}}
 				{{- else}}{{if $field.IsPointer}}&{{end}}{{$field.Type}}{ {{template "fields-initializer" $field}} }{{end}},
 		{{- end}}

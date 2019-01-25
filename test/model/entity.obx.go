@@ -407,10 +407,11 @@ func (entity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, i
 
 // Load is called by the ObjectBox to load an object from a FlatBuffer
 func (entity_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interface{} {
-	table := &flatbuffers.Table{
+	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
+	var id = table.GetUint64Slot(4, 0)
 
 	var relRelated *TestEntityRelated
 	if rId := table.GetUint64Slot(46, 0); rId > 0 {
@@ -457,7 +458,7 @@ func (entity_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interfac
 	}
 
 	return &Entity{
-		Id:           table.GetUint64Slot(4, 0),
+		Id:           id,
 		Int:          int(table.GetUint64Slot(6, 0)),
 		Int8:         table.GetInt8Slot(8, 0),
 		Int16:        table.GetInt16Slot(10, 0),
@@ -692,13 +693,14 @@ func (testStringIdEntity_EntityInfo) Flatten(object interface{}, fbb *flatbuffer
 
 // Load is called by the ObjectBox to load an object from a FlatBuffer
 func (testStringIdEntity_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interface{} {
-	table := &flatbuffers.Table{
+	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
+	var id = strconv.FormatUint(table.GetUint64Slot(4, 0), 10)
 
 	return &TestStringIdEntity{
-		Id: strconv.FormatUint(table.GetUint64Slot(4, 0), 10),
+		Id: id,
 	}
 }
 
@@ -933,10 +935,11 @@ func (testEntityInline_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.
 
 // Load is called by the ObjectBox to load an object from a FlatBuffer
 func (testEntityInline_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interface{} {
-	table := &flatbuffers.Table{
+	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
+	var id = table.GetUint64Slot(8, 0)
 
 	return &TestEntityInline{
 		BaseWithDate: BaseWithDate{
@@ -945,7 +948,7 @@ func (testEntityInline_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte
 		BaseWithValue: &BaseWithValue{
 			Value: table.GetFloat64Slot(6, 0),
 		},
-		Id: table.GetUint64Slot(8, 0),
+		Id: id,
 	}
 }
 
@@ -1165,13 +1168,14 @@ func (testEntityRelated_EntityInfo) Flatten(object interface{}, fbb *flatbuffers
 
 // Load is called by the ObjectBox to load an object from a FlatBuffer
 func (testEntityRelated_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interface{} {
-	table := &flatbuffers.Table{
+	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
+	var id = table.GetUint64Slot(4, 0)
 
 	return &TestEntityRelated{
-		Id:   table.GetUint64Slot(4, 0),
+		Id:   id,
 		Name: fbutils.GetStringSlot(table, 6),
 	}
 }

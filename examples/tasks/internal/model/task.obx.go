@@ -105,13 +105,14 @@ func (task_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id 
 
 // Load is called by the ObjectBox to load an object from a FlatBuffer
 func (task_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interface{} {
-	table := &flatbuffers.Table{
+	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
+	var id = table.GetUint64Slot(4, 0)
 
 	return &Task{
-		Id:           table.GetUint64Slot(4, 0),
+		Id:           id,
 		Text:         fbutils.GetStringSlot(table, 6),
 		DateCreated:  table.GetInt64Slot(8, 0),
 		DateFinished: table.GetInt64Slot(10, 0),

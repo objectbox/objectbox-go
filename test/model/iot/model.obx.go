@@ -120,13 +120,14 @@ func (event_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id
 
 // Load is called by the ObjectBox to load an object from a FlatBuffer
 func (event_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interface{} {
-	table := &flatbuffers.Table{
+	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
+	var id = table.GetUint64Slot(4, 0)
 
 	return &Event{
-		Id:      table.GetUint64Slot(4, 0),
+		Id:      id,
 		Uid:     fbutils.GetStringSlot(table, 10),
 		Device:  fbutils.GetStringSlot(table, 6),
 		Date:    table.GetInt64Slot(8, 0),
@@ -431,13 +432,14 @@ func (reading_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, 
 
 // Load is called by the ObjectBox to load an object from a FlatBuffer
 func (reading_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interface{} {
-	table := &flatbuffers.Table{
+	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
+	var id = table.GetUint64Slot(4, 0)
 
 	return &Reading{
-		Id:              table.GetUint64Slot(4, 0),
+		Id:              id,
 		Date:            table.GetInt64Slot(6, 0),
 		EventId:         table.GetUint64Slot(8, 0),
 		ValueName:       fbutils.GetStringSlot(table, 10),

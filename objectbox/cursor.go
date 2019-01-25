@@ -245,6 +245,40 @@ func (cursor *cursor) bytesArrayToObjects(bytesArray *bytesArray) (slice interfa
 	return
 }
 
+// TODO don't require a targetEntityId, it can retrieved using a relationId
+func (cursor *cursor) RelationGetAll(relationId TypeId, targetEntityId TypeId, sourceId uint64) (slice interface{}, err error) {
+	targetIds, err := cursor.RelationIds(relationId, sourceId)
+	if err != nil {
+		return nil, err
+	}
+
+	targetBinding := cursor.txn.objectBox.getBindingById(targetEntityId)
+	targetCursor, err := cursor.txn.createCursor(targetEntityId, targetBinding)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() {
+		err2 := targetCursor.Close()
+		if err == nil {
+			err = err2
+			slice = nil
+		}
+	}()
+
+	slice = targetBinding.MakeSlice(len(targetIds))
+	for _, id := range targetIds {
+		if object, err := targetCursor.Get(id); err != nil {
+			return nil, err
+		} else {
+			slice = targetBinding.AppendToSlice(slice, object)
+		}
+	}
+
+	// NOTE slice & err here might be overwritten by the deferred function if the target cursor failed to close
+	return slice, err
+}
+
 func (cursor *cursor) RelationPut(relationId TypeId, sourceId, targetId uint64) error {
 	rc := C.obx_cursor_rel_put(cursor.cursor, C.obx_schema_id(relationId), C.obx_id(sourceId), C.obx_id(targetId))
 	if rc != 0 {

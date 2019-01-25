@@ -19,8 +19,8 @@ package modelinfo
 import "fmt"
 
 type Relation struct {
-	Id   IdUid
-	Name string
+	Id   IdUid  `json:"id"`
+	Name string `json:"name"`
 }
 
 // performs initial validation of loaded data so that it doesn't have to be checked in each function
@@ -31,6 +31,30 @@ func (relation *Relation) Validate() error {
 
 	if len(relation.Name) == 0 {
 		return fmt.Errorf("name is undefined")
+	}
+
+	return nil
+}
+
+type StandaloneRelation struct {
+	Relation
+	TargetEntityId IdUid `json:"-"` // currently not in the json file
+}
+
+func CreateStandaloneRelation(id IdUid) *StandaloneRelation {
+	return &StandaloneRelation{
+		Relation: Relation{Id: id},
+	}
+}
+
+// performs initial validation of loaded data so that it doesn't have to be checked in each function
+func (relation *StandaloneRelation) Validate() error {
+	if err := relation.Relation.Validate(); err != nil {
+		return err
+	}
+
+	if err := relation.TargetEntityId.Validate(); err != nil {
+		return err
 	}
 
 	return nil

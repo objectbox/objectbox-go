@@ -77,23 +77,37 @@
           "id": "1:7144924247938981575",
           "name": "Id"
         }
+      ],
+      "relations": [
+        {
+          "id": "1:161231572858529631",
+          "name": "Groups"
+        }
       ]
     },
     {
-      "id": "6:161231572858529631",
+      "id": "6:7259475919510918339",
       "name": "TaskRelManyValue",
-      "lastPropertyId": "1:7259475919510918339",
+      "lastPropertyId": "1:7373105480197164748",
       "properties": [
         {
-          "id": "1:7259475919510918339",
+          "id": "1:7373105480197164748",
           "name": "Id"
+        }
+      ],
+      "relations": [
+        {
+          "id": "2:3287288577352441706",
+          "name": "Groups"
         }
       ]
     }
   ],
-  "lastEntityId": "6:161231572858529631",
+  "lastEntityId": "6:7259475919510918339",
   "lastIndexId": "3:8325060299420976708",
+  "lastRelationId": "2:3287288577352441706",
   "retiredEntityUids": [],
   "retiredIndexUids": [],
-  "retiredPropertyUids": []
+  "retiredPropertyUids": [],
+  "retiredRelationUids": []
 }

@@ -22,10 +22,11 @@ import (
 )
 
 type Entity struct {
-	Id             IdUid       `json:"id"`
-	Name           string      `json:"name"`
-	LastPropertyId IdUid       `json:"lastPropertyId"`
-	Properties     []*Property `json:"properties"`
+	Id             IdUid                 `json:"id"`
+	Name           string                `json:"name"`
+	LastPropertyId IdUid                 `json:"lastPropertyId"`
+	Properties     []*Property           `json:"properties"`
+	Relations      []*StandaloneRelation `json:"relations,omitempty"`
 
 	model *ModelInfo
 }
@@ -169,6 +170,58 @@ func (entity *Entity) RemoveProperty(property *Property) error {
 	return nil
 }
 
+func (entity *Entity) FindRelationByUid(uid Uid) (*StandaloneRelation, error) {
+	for _, relation := range entity.Relations {
+		relationUid, _ := relation.Id.GetUid()
+		if relationUid == uid {
+			return relation, nil
+		}
+	}
+
+	return nil, fmt.Errorf("relation with Uid %d not found", uid)
+}
+
+func (entity *Entity) FindRelationByName(name string) (*StandaloneRelation, error) {
+	for _, relation := range entity.Relations {
+		if strings.ToLower(relation.Name) == strings.ToLower(name) {
+			return relation, nil
+		}
+	}
+
+	return nil, fmt.Errorf("relation with Name %s not found", name)
+}
+
+func (entity *Entity) CreateRelation() (*StandaloneRelation, error) {
+	if id, err := entity.model.createRelationId(); err != nil {
+		return nil, err
+	} else {
+		var relation = CreateStandaloneRelation(id)
+		entity.Relations = append(entity.Relations, relation)
+		return relation, nil
+	}
+}
+
+func (entity *Entity) RemoveRelation(relation *StandaloneRelation) error {
+	var indexToRemove = -1
+	for index, rel := range entity.Relations {
+		if rel == relation {
+			indexToRemove = index
+		}
+	}
+
+	if indexToRemove < 0 {
+		return fmt.Errorf("can't remove relation %s %s - not found", relation.Name, relation.Id)
+	}
+
+	// remove from list
+	entity.Relations = append(entity.Relations[:indexToRemove], entity.Relations[indexToRemove+1:]...)
+
+	// store the UID in the "retired" list so that it's not reused in the future
+	entity.model.RetiredRelationUids = append(entity.model.RetiredRelationUids, relation.Id.getUidSafe())
+
+	return nil
+}
+
 // recursively checks whether given UID is present in the model
 func (entity *Entity) containsUid(searched Uid) bool {
 	if entity.Id.getUidSafe() == searched {
@@ -181,6 +234,12 @@ func (entity *Entity) containsUid(searched Uid) bool {
 
 	for _, property := range entity.Properties {
 		if property.containsUid(searched) {
+			return true
+		}
+	}
+
+	for _, relation := range entity.Relations {
+		if relation.Id.getUidSafe() == searched {
 			return true
 		}
 	}

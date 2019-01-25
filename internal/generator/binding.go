@@ -42,13 +42,13 @@ type Binding struct {
 }
 
 type Entity struct {
+	Identifier
 	Name           string
-	Id             id
-	Uid            uid
 	Fields         []*Field // the tree of struct fields (necessary for embedded structs)
 	Properties     []*Property
 	IdProperty     *Property
 	LastPropertyId modelinfo.IdUid
+	Relations      map[string]*StandaloneRelation
 	Annotations    map[string]*Annotation
 
 	binding          *Binding // parent
@@ -57,10 +57,9 @@ type Entity struct {
 }
 
 type Property struct {
+	Identifier
 	Name        string
 	ObName      string
-	Id          id
-	Uid         uid
 	Annotations map[string]*Annotation
 	ObType      string
 	ObFlags     []string
@@ -79,9 +78,14 @@ type Relation struct {
 	Target string
 }
 
+type StandaloneRelation struct {
+	Identifier
+	Target Identifier
+	Name   string
+}
+
 type Index struct {
-	Id  id
-	Uid uid
+	Identifier
 }
 
 type Annotation struct {
@@ -89,12 +93,18 @@ type Annotation struct {
 }
 
 type Field struct {
+	entity         *Entity // parent entity
 	Name           string
 	Type           string
 	IsPointer      bool
 	Property       *Property // nil if it's an embedded struct
 	Fields         []*Field  // inner fields, nil if it's a property
 	IsFullRelation bool
+}
+
+type Identifier struct {
+	Id  id
+	Uid uid
 }
 
 func newBinding() (*Binding, error) {
@@ -173,6 +183,7 @@ func (binding *Binding) createEntityFromAst(strct *ast.StructType, name string, 
 		binding:          binding,
 		Name:             name,
 		propertiesByName: make(map[string]bool),
+		Relations:        make(map[string]*StandaloneRelation),
 	}
 
 	if comments != nil {
@@ -261,6 +272,7 @@ func (entity *Entity) addFields(fields fieldList, path string) ([]*Field, error)
 
 		// this is used to correctly render embedded-structs initialization template
 		var field = &Field{
+			entity:   entity,
 			Name:     property.Name,
 			Property: property,
 		}
@@ -420,6 +432,13 @@ func (field *Field) processType(f field) (fields fieldList, err error) {
 		if err := property.forceRelation(typeBaseName(slice.Elem().String()), true); err != nil {
 			return nil, err
 		}
+
+		// add this as a standalone relation to the entity
+		// TODO handle rename of the property (relation) using the uidRequest
+		if field.entity.Relations[field.Name] != nil {
+			return nil, fmt.Errorf("relation with the name %s already exists", field.Name)
+		}
+		field.entity.Relations[field.Name] = &StandaloneRelation{Name: field.Name}
 
 		// we need to skip adding this field (it's not persisted in DB) so we add an empty list of fields
 		return structFieldList{}, nil

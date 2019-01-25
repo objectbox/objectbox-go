@@ -61,7 +61,7 @@ func (property *Property) CreateIndex() error {
 		return fmt.Errorf("can't create an index - it already exists")
 	}
 
-	if indexId, err := property.entity.model.createIndex(); err != nil {
+	if indexId, err := property.entity.model.createIndexId(); err != nil {
 		return err
 	} else {
 		property.IndexId = &indexId

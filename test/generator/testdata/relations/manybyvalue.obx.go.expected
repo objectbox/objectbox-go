@@ -15,7 +15,7 @@ type taskRelManyValue_EntityInfo struct {
 
 var TaskRelManyValueBinding = taskRelManyValue_EntityInfo{
 	Id:  6,
-	Uid: 161231572858529631,
+	Uid: 7259475919510918339,
 }
 
 // TaskRelManyValue_ contains type-based Property helpers to facilitate some common operations such as Queries.
@@ -39,10 +39,10 @@ func (taskRelManyValue_EntityInfo) GeneratorVersion() int {
 
 // AddToModel is called by the ObjectBox during model build
 func (taskRelManyValue_EntityInfo) AddToModel(model *objectbox.Model) {
-	model.Entity("TaskRelManyValue", 6, 161231572858529631)
-	model.Property("Id", objectbox.PropertyType_Long, 1, 7259475919510918339)
+	model.Entity("TaskRelManyValue", 6, 7259475919510918339)
+	model.Property("Id", objectbox.PropertyType_Long, 1, 7373105480197164748)
 	model.PropertyFlags(objectbox.PropertyFlags_ID)
-	model.EntityLastPropertyId(1, 7259475919510918339)
+	model.EntityLastPropertyId(1, 7373105480197164748)
 }
 
 // GetId is called by the ObjectBox during Put operations to check for existing ID on an object

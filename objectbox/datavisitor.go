@@ -55,7 +55,6 @@ extern bool dataVisitorDispatch(uint32_t id, void* data, size_t size);
 import "C"
 import (
 	"fmt"
-	"reflect"
 	"sync"
 	"unsafe"
 )
@@ -105,8 +104,7 @@ func dataVisitorUnregister(id uint32) {
 func dataVisitorDispatch(id C.uint, ptr unsafe.Pointer, size C.size_t) C.bool {
 	// create an empty byte slice and map the C data to it, no copy required
 	var bytes []byte
-	header := (*reflect.SliceHeader)(unsafe.Pointer(&bytes))
-	*header = reflect.SliceHeader{Data: uintptr(ptr), Len: int(size), Cap: int(size)}
+	cVoidPtrToByteSlice(ptr, int(size), &bytes)
 
 	var fn = dataVisitorLookup(uint32(id))
 	return C.bool(fn(bytes))

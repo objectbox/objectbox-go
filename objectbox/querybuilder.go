@@ -69,7 +69,7 @@ func (qb *QueryBuilder) Build() (*Query, error) {
 	query := &Query{
 		objectBox: qb.objectBox,
 		cQuery:    cQuery,
-		typeId:    qb.typeId,
+		entity:    qb.objectBox.entities[qb.typeId],
 	}
 	query.installFinalizer()
 	return query, nil

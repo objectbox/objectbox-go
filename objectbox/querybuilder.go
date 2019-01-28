@@ -69,7 +69,7 @@ func (qb *QueryBuilder) Build() (*Query, error) {
 	query := &Query{
 		objectBox: qb.objectBox,
 		cQuery:    cQuery,
-		typeId:    qb.typeId,
+		entity:    qb.objectBox.entities[qb.typeId],
 	}
 	query.installFinalizer()
 	return query, nil
@@ -238,6 +238,18 @@ func (qb *QueryBuilder) StringLess(property *BaseProperty, value string, caseSen
 		cvalue := C.CString(value)
 		defer C.free(unsafe.Pointer(cvalue))
 		cid = qb.getConditionId(C.obx_qb_string_less(qb.cqb, C.obx_schema_id(property.Id), cvalue, C.bool(caseSensitive), C.bool(withEqual)))
+	}
+
+	return cid, qb.Err
+}
+
+func (qb *QueryBuilder) StringVectorContains(property *BaseProperty, value string, caseSensitive bool) (ConditionId, error) {
+	var cid ConditionId
+
+	if qb.Err == nil && qb.checkEntityId(property.Entity.Id) {
+		cvalue := C.CString(value)
+		defer C.free(unsafe.Pointer(cvalue))
+		cid = qb.getConditionId(C.obx_qb_strings_contain(qb.cqb, C.obx_schema_id(property.Id), cvalue, C.bool(caseSensitive)))
 	}
 
 	return cid, qb.Err

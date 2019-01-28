@@ -49,11 +49,20 @@ func (cursor *cursor) Close() error {
 }
 
 func (cursor *cursor) Get(id uint64) (object interface{}, err error) {
-	bytes, err := cursor.getBytes(id)
-	if bytes == nil || err != nil {
-		return
+	var data *C.void
+	var dataSize C.size_t
+	var dataPtr = unsafe.Pointer(data)
+
+	var rc = C.obx_cursor_get(cursor.cursor, C.obx_id(id), &dataPtr, &dataSize)
+	if rc == 0 {
+		var bytes []byte
+		cVoidPtrToByteSlice(dataPtr, int(dataSize), &bytes)
+		return cursor.binding.Load(cursor.txn, bytes), nil
+	} else if rc == C.OBX_NOT_FOUND {
+		return nil, nil
+	} else {
+		return nil, createError()
 	}
-	return cursor.binding.Load(cursor.txn, bytes), nil
 }
 
 func (cursor *cursor) GetAll() (slice interface{}, err error) {
@@ -72,62 +81,24 @@ func (cursor *cursor) getAllSequential() (slice interface{}, err error) {
 	binding := cursor.binding
 	slice = cursor.binding.MakeSlice(defaultSliceCapacity)
 
+	var data *C.void
+	var dataSize C.size_t
+	var dataPtr = unsafe.Pointer(data)
+
 	var bytes []byte
-	for bytes, err = cursor.first(); bytes != nil && err == nil; bytes, err = cursor.next() {
+	var rc C.obx_err
+	for rc = C.obx_cursor_first(cursor.cursor, &dataPtr, &dataSize); rc == 0; rc = C.obx_cursor_next(cursor.cursor, &dataPtr, &dataSize) {
+		cVoidPtrToByteSlice(dataPtr, int(dataSize), &bytes)
 		object := binding.Load(cursor.txn, bytes)
 		slice = binding.AppendToSlice(slice, object)
 	}
 
-	if err != nil {
-		slice = nil
+	// if there was an error
+	if rc != 0 && rc != C.OBX_NOT_FOUND {
+		return nil, createError()
 	}
 
-	return slice, err
-}
-
-func (cursor *cursor) getBytes(id uint64) (bytes []byte, err error) {
-	var data *C.void
-	var dataSize C.size_t
-	dataPtr := unsafe.Pointer(data) // Need ptr to an unsafe ptr here
-	rc := C.obx_cursor_get(cursor.cursor, C.obx_id(id), &dataPtr, &dataSize)
-	if rc != 0 {
-		if rc != C.OBX_NOT_FOUND {
-			err = createError()
-		}
-		return
-	}
-	bytes = C.GoBytes(dataPtr, C.int(dataSize))
-	return
-}
-
-func (cursor *cursor) first() (bytes []byte, err error) {
-	var data *C.void
-	var dataSize C.size_t
-	dataPtr := unsafe.Pointer(data) // Need ptr to an unsafe ptr here
-	rc := C.obx_cursor_first(cursor.cursor, &dataPtr, &dataSize)
-	if rc != 0 {
-		if rc != C.OBX_NOT_FOUND {
-			err = createError()
-		}
-		return
-	}
-	bytes = C.GoBytes(dataPtr, C.int(dataSize))
-	return
-}
-
-func (cursor *cursor) next() (bytes []byte, err error) {
-	var data *C.void
-	var dataSize C.size_t
-	dataPtr := unsafe.Pointer(data) // Need ptr to an unsafe ptr here
-	rc := C.obx_cursor_next(cursor.cursor, &dataPtr, &dataSize)
-	if rc != 0 {
-		if rc != C.OBX_NOT_FOUND {
-			err = createError()
-		}
-		return
-	}
-	bytes = C.GoBytes(dataPtr, C.int(dataSize))
-	return
+	return slice, nil
 }
 
 func (cursor *cursor) Count() (count uint64, err error) {

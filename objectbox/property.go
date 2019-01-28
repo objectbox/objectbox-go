@@ -120,6 +120,14 @@ type PropertyStringVector struct {
 	*BaseProperty
 }
 
+func (property PropertyStringVector) Contains(text string, caseSensitive bool) Condition {
+	return &conditionClosure{
+		func(qb *QueryBuilder) (ConditionId, error) {
+			return qb.StringVectorContains(property.BaseProperty, text, caseSensitive)
+		},
+	}
+}
+
 type PropertyInt64 struct {
 	*BaseProperty
 }

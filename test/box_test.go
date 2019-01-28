@@ -160,9 +160,10 @@ func TestPut(t *testing.T) {
 	assert.Eq(t, objectId, event.Id)
 	t.Logf("Added object ID %v", objectId)
 
-	objectId2, err := box.Put(&iot.Event{
+	event2 := iot.Event{
 		Device: "2nd device",
-	})
+	}
+	objectId2, err := box.Put(&event2)
 	assert.NoErr(t, err)
 	t.Logf("Added 2nd object ID %v", objectId2)
 
@@ -174,6 +175,8 @@ func TestPut(t *testing.T) {
 	all, err := box.GetAll()
 	assert.NoErr(t, err)
 	assert.EqInt(t, 2, len(all))
+	assert.Eq(t, &event, all[0])
+	assert.Eq(t, &event2, all[1])
 }
 
 func TestBoxCount(t *testing.T) {

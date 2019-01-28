@@ -42,20 +42,25 @@ const (
 	DebugFlags_LOG_ASYNC_QUEUE        = 16
 )
 
+// atomic boolean true & false
+const aTrue = 1
+const aFalse = 0
+
 type TypeId uint32
 
 type ObjectBox struct {
-	store                 *C.OBX_store
-	bindingsById          map[TypeId]ObjectBinding
-	bindingsByName        map[string]ObjectBinding
-	entitiesWithRelations map[TypeId]bool
-	boxes                 map[TypeId]*Box
-	boxesMutex            *sync.Mutex
-	options               options
+	store          *C.OBX_store
+	bindingsById   map[TypeId]ObjectBinding
+	bindingsByName map[string]ObjectBinding
+	boxes          map[TypeId]*Box
+	boxesMutex     *sync.Mutex
+	options        options
+	entities       map[TypeId]*entity
 }
 
 type options struct {
-	putAsyncTimeout uint
+	putAsyncTimeout  uint
+	alwaysAwaitAsync bool
 }
 
 type txnFun func(transaction *Transaction) error
@@ -156,10 +161,14 @@ func (ob ObjectBox) getBindingByName(typeName string) ObjectBinding {
 	return binding
 }
 
-func (ob *ObjectBox) runWithCursor(typeId TypeId, readOnly bool, cursorFun cursorFun) error {
-	binding := ob.getBindingById(typeId)
+func (ob *ObjectBox) runWithCursor(e *entity, readOnly bool, cursorFun cursorFun) error {
+	if ob.options.alwaysAwaitAsync {
+		e.awaitAsyncCompletion()
+	}
+
+	binding := ob.getBindingById(e.id)
 	return ob.runInTxn(readOnly, func(txn *Transaction) error {
-		cursor, err := txn.createCursor(typeId, binding)
+		cursor, err := txn.createCursor(e.id, binding)
 		if err != nil {
 			return err
 		}
@@ -214,9 +223,9 @@ func (ob *ObjectBox) box(typeId TypeId) (*Box, error) {
 	box = &Box{
 		objectBox: ob,
 		box:       cbox,
-		typeId:    typeId,
 		binding:   binding,
 		fbb:       flatbuffers.NewBuilder(512),
+		entity:    ob.entities[typeId],
 	}
 	ob.boxes[typeId] = box
 	return box, nil

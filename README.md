@@ -29,7 +29,7 @@ To get started with ObjectBox you can get the repository code as usual with go g
 and install the two prerequisites - pre-compiled library and a bindings generator.
 
 ```bash
-go get github.com/objectbox/objectbox-go
+go get github.com/objectbox/objectbox-go/...
 go get github.com/google/flatbuffers/go
 go install github.com/objectbox/objectbox-go/cmd/objectbox-gogen/
 

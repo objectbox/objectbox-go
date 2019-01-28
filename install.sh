@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-go get github.com/objectbox/objectbox-go
+go get github.com/objectbox/objectbox-go/...
 go get github.com/google/flatbuffers/go
 go install github.com/objectbox/objectbox-go/cmd/objectbox-gogen/
 

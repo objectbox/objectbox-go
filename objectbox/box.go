@@ -112,11 +112,13 @@ func (box *Box) PutAsyncWithTimeout(object interface{}, timeoutMs uint) (id uint
 		return 0, err
 	}
 
-	err = box.objectBox.runInTxn(false, func(txn *Transaction) error {
-		return box.binding.PutRelated(txn, object)
-	})
-	if err != nil {
-		return 0, err
+	if box.entity.hasRelations {
+		err = box.objectBox.runInTxn(false, func(txn *Transaction) error {
+			return box.binding.PutRelated(txn, object)
+		})
+		if err != nil {
+			return 0, err
+		}
 	}
 
 	if id, err = box.idForPut(idFromObject); err != nil {

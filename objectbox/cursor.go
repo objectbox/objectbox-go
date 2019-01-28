@@ -33,7 +33,8 @@ import (
 type cursor struct {
 	txn     *Transaction
 	cursor  *C.OBX_cursor
-	binding ObjectBinding
+	binding ObjectBinding // TODO use entity.binding
+	entity  *entity
 	fbb     *flatbuffers.Builder
 }
 
@@ -137,8 +138,10 @@ func (cursor *cursor) Put(object interface{}) (id uint64, err error) {
 		return 0, err
 	}
 
-	if err = cursor.binding.PutRelated(cursor.txn, object); err != nil {
-		return 0, err
+	if cursor.entity.hasRelations {
+		if err = cursor.binding.PutRelated(cursor.txn, object); err != nil {
+			return 0, err
+		}
 	}
 
 	if id, err = cursor.IdForPut(idFromObject); err != nil {
@@ -223,8 +226,8 @@ func (cursor *cursor) RelationGetAll(relationId TypeId, targetEntityId TypeId, s
 		return nil, err
 	}
 
-	targetBinding := cursor.txn.objectBox.getBindingById(targetEntityId)
-	targetCursor, err := cursor.txn.createCursor(targetEntityId, targetBinding)
+	targetEntity := cursor.txn.objectBox.getEntityById(targetEntityId)
+	targetCursor, err := cursor.txn.createCursor(targetEntityId, targetEntity)
 	if err != nil {
 		return nil, err
 	}
@@ -237,12 +240,12 @@ func (cursor *cursor) RelationGetAll(relationId TypeId, targetEntityId TypeId, s
 		}
 	}()
 
-	slice = targetBinding.MakeSlice(len(targetIds))
+	slice = targetEntity.binding.MakeSlice(len(targetIds))
 	for _, id := range targetIds {
 		if object, err := targetCursor.Get(id); err != nil {
 			return nil, err
 		} else {
-			slice = targetBinding.AppendToSlice(slice, object)
+			slice = targetEntity.binding.AppendToSlice(slice, object)
 		}
 	}
 

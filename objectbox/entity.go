@@ -29,8 +29,11 @@ type Entity struct {
 // this is used internally to automatically synchronize
 // note that it must be a singleton
 type entity struct {
-	id        TypeId
-	objectBox *ObjectBox
+	objectBox    *ObjectBox
+	id           TypeId
+	name         string
+	hasRelations bool
+	binding      ObjectBinding
 
 	// whether there was an asynchronous operation recently
 	isOutOfSync uint32

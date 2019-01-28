@@ -60,18 +60,18 @@ func (txn *Transaction) Commit() error {
 	return nil
 }
 
-func (txn *Transaction) createCursor(typeId TypeId, binding ObjectBinding) (*cursor, error) {
+func (txn *Transaction) createCursor(typeId TypeId, entity *entity) (*cursor, error) {
 	ccursor := C.obx_cursor_create(txn.txn, C.obx_schema_id(typeId))
 	if ccursor == nil {
 		return nil, createError()
 	}
-	return &cursor{txn, ccursor, binding, flatbuffers.NewBuilder(512)}, nil
+	return &cursor{txn, ccursor, entity.binding, entity, flatbuffers.NewBuilder(512)}, nil
 }
 
 // Internal: won't be available in future versions
 // TODO cache cursors in the transaction
 func (txn *Transaction) CursorForName(entitySchemaName string) (*cursor, error) {
-	binding := txn.objectBox.getBindingByName(entitySchemaName)
+	entity := txn.objectBox.getEntityByName(entitySchemaName)
 	cname := C.CString(entitySchemaName)
 	defer C.free(unsafe.Pointer(cname))
 
@@ -79,5 +79,5 @@ func (txn *Transaction) CursorForName(entitySchemaName string) (*cursor, error) 
 	if ccursor == nil {
 		return nil, createError()
 	}
-	return &cursor{txn, ccursor, binding, flatbuffers.NewBuilder(512)}, nil
+	return &cursor{txn, ccursor, entity.binding, entity, flatbuffers.NewBuilder(512)}, nil
 }

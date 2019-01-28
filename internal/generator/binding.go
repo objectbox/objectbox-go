@@ -75,7 +75,9 @@ type Property struct {
 }
 
 type Relation struct {
-	Target string
+	Target struct {
+		Name string
+	}
 }
 
 type StandaloneRelation struct {
@@ -678,9 +680,8 @@ func (property *Property) setBasicType(baseType string) error {
 		} else {
 			property.ObType = "Relation"
 		}
-		property.Relation = &Relation{
-			Target: property.Annotations["link"].Value,
-		}
+		property.Relation = &Relation{}
+		property.Relation.Target.Name = property.Annotations["link"].Value
 	}
 
 	return nil
@@ -750,6 +751,19 @@ func (property *Property) setObFlags() error {
 func (entity *Entity) HasNonIdProperty() bool {
 	for _, prop := range entity.Properties {
 		if prop != entity.IdProperty {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (entity *Entity) HasRelations() bool {
+	for _, field := range entity.Fields {
+		if field.StandaloneRelation != nil {
+			return true
+		}
+		if field.SimpleRelation != nil {
 			return true
 		}
 	}

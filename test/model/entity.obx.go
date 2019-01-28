@@ -292,12 +292,13 @@ func (entity_EntityInfo) SetId(object interface{}, id uint64) {
 // PutRelated is called by the ObjectBox to put related entities before the object itself is flattened and put
 func (entity_EntityInfo) PutRelated(obx *objectbox.ObjectBox, txn *objectbox.Transaction, object interface{}) error {
 	if rel := &object.(*Entity).Related; rel != nil {
-		if rId, err := TestEntityRelatedBinding.GetId(rel); err != nil {
+		rId, err := TestEntityRelatedBinding.GetId(rel)
+		if err != nil {
 			return err
 		} else if rId == 0 && txn != nil {
-			if cursor, err := txn.CursorForName("TestEntityRelated"); err != nil {
+			if rCursor, err := txn.CursorForName("TestEntityRelated"); err != nil {
 				return err
-			} else if rId, err = cursor.Put(rel); err != nil {
+			} else if rId, err = rCursor.Put(rel); err != nil {
 				return err
 			}
 		} else if rId == 0 {
@@ -308,12 +309,13 @@ func (entity_EntityInfo) PutRelated(obx *objectbox.ObjectBox, txn *objectbox.Tra
 		// NOTE Put/PutAsync() has a side-effect of setting the rel.ID, so at this point, it is already set
 	}
 	if rel := object.(*Entity).RelatedPtr; rel != nil {
-		if rId, err := TestEntityRelatedBinding.GetId(rel); err != nil {
+		rId, err := TestEntityRelatedBinding.GetId(rel)
+		if err != nil {
 			return err
 		} else if rId == 0 && txn != nil {
-			if cursor, err := txn.CursorForName("TestEntityRelated"); err != nil {
+			if rCursor, err := txn.CursorForName("TestEntityRelated"); err != nil {
 				return err
-			} else if rId, err = cursor.Put(rel); err != nil {
+			} else if rId, err = rCursor.Put(rel); err != nil {
 				return err
 			}
 		} else if rId == 0 {
@@ -324,12 +326,13 @@ func (entity_EntityInfo) PutRelated(obx *objectbox.ObjectBox, txn *objectbox.Tra
 		// NOTE Put/PutAsync() has a side-effect of setting the rel.ID, so at this point, it is already set
 	}
 	if rel := object.(*Entity).RelatedPtr2; rel != nil {
-		if rId, err := TestEntityRelatedBinding.GetId(rel); err != nil {
+		rId, err := TestEntityRelatedBinding.GetId(rel)
+		if err != nil {
 			return err
 		} else if rId == 0 && txn != nil {
-			if cursor, err := txn.CursorForName("TestEntityRelated"); err != nil {
+			if rCursor, err := txn.CursorForName("TestEntityRelated"); err != nil {
 				return err
-			} else if rId, err = cursor.Put(rel); err != nil {
+			} else if rId, err = rCursor.Put(rel); err != nil {
 				return err
 			}
 		} else if rId == 0 {

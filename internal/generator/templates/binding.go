@@ -41,6 +41,25 @@ var BindingTemplate = template.Must(template.New("binding").Funcs(funcMap).Parse
 	{{- else}}obj.{{.Name}}{{end}}
 {{- end -}}
 
+{{define "put-related-entity"}}{{/* used in PutRelated*/ -}}
+	rId, err := {{.Target.Name}}Binding.GetId(rel)
+	if err != nil {
+		return err
+	} else if rId == 0 && txn != nil {
+		if rCursor, err := txn.CursorForName("{{.Target.Name}}"); err != nil {
+			return err 
+		} else if rId, err = rCursor.Put(rel); err != nil { 
+			return err 
+		} 
+	} else if rId == 0 {
+		if rId, err = BoxFor{{.Target.Name}}(obx).PutAsyncWithTimeout(rel, 0); err != nil {
+			return err 
+		} 
+	}
+{{- end -}}
+
+				
+
 package {{.Binding.Package.Name}}
 
 import (
@@ -104,7 +123,7 @@ func ({{$entityNameCamel}}_EntityInfo) AddToModel(model *objectbox.Model) {
             {{if gt $key 0}} | {{end}}objectbox.PropertyFlags_{{$flag}}
         {{- end}})
     {{end -}}
-	{{if $property.Relation}}model.PropertyRelation("{{$property.Relation.Target}}", {{$property.Index.Id}}, {{$property.Index.Uid}})
+	{{if $property.Relation}}model.PropertyRelation("{{$property.Relation.Target.Name}}", {{$property.Index.Id}}, {{$property.Index.Uid}})
 	{{else if $property.Index}}model.PropertyIndex({{$property.Index.Id}}, {{$property.Index.Uid}})
     {{end -}}
     {{end -}}
@@ -178,20 +197,55 @@ func ({{$entityNameCamel}}_EntityInfo) PutRelated(obx *objectbox.ObjectBox, txn 
 	{{- range $field := .Fields}}
 	{{- if $field.SimpleRelation}}
 		if rel := {{if not $field.IsPointer}}&{{end}}object.(*{{$entity.Name}}).{{$field.Name}}; rel != nil {
-			if rId, err := {{$field.SimpleRelation.Target}}Binding.GetId(rel); err != nil {
-				return err
-			} else if rId == 0 && txn != nil {
-				if cursor, err := txn.CursorForName("{{$field.SimpleRelation.Target}}"); err != nil {
-					return err 
-				} else if rId, err = cursor.Put(rel); err != nil { 
-					return err 
-				} 
-			} else if rId == 0 {
-				if rId, err = BoxFor{{$field.SimpleRelation.Target}}(obx).PutAsyncWithTimeout(rel, 0); err != nil {
-					return err 
-				} 
-			}
+			{{template "put-related-entity" $field.SimpleRelation}}
 			// NOTE Put/PutAsync() has a side-effect of setting the rel.ID, so at this point, it is already set
+		}
+	{{- else if $field.StandaloneRelation}}
+		if txn == nil {
+			// TODO
+			panic("putAsync is not supported with many-to-many relations at the moment")
+		} else if cursor, err := txn.CursorForName("{{$entity.Name}}"); err != nil {
+			panic(err)
+		} else if rSlice := object.(*{{$entity.Name}}).{{$field.Name}}; rSlice != nil {
+			id, err := {{$entity.Name}}Binding.GetId(object)
+			if err != nil {
+				return err
+			}
+
+			// make a map of related target entity IDs, marking those that were originally related but should be removed
+			var idsToRemove = make(map[uint64]bool)
+
+			if id != 0 {
+				if oldRelIds, err := cursor.RelationIds({{$field.StandaloneRelation.Id}}, id); err != nil {
+					return err
+				} else {
+					for _, rId := range oldRelIds {
+						idsToRemove[rId] = true
+					}
+				}
+			}
+
+			// walk over the current related objects, mark those that still exist, add the new ones
+			for _, rel := range rSlice {
+				{{template "put-related-entity" $field.StandaloneRelation}}
+
+				if idsToRemove[rId] {
+					// old relation that still exists, keep it
+					delete(idsToRemove, rId) 
+				} else {
+					// new relation, add it
+					if err := cursor.RelationPut({{$field.StandaloneRelation.Id}}, id, rId); err != nil {
+						return err
+					}
+				}
+			}
+
+			// remove those that were not found in the rSlice but were originally related to this entity
+			for rId := range idsToRemove {
+				if err := cursor.RelationRemove({{$field.StandaloneRelation.Id}}, id, rId); err != nil {
+					return err
+				}
+			}
 		}
 	{{- end}}{{end}}
 	return nil
@@ -210,7 +264,7 @@ func ({{$entityNameCamel}}_EntityInfo) Flatten(object interface{}, fbb *flatbuff
 	{{if $field.SimpleRelation}}
 		var rId{{$field.Property.Name}} uint64
 		if rel := {{if not $field.IsPointer}}&{{end}}obj.{{$field.Name}}; rel != nil {
-			if rId, err := {{$field.SimpleRelation.Target}}Binding.GetId(rel); err != nil {
+			if rId, err := {{$field.SimpleRelation.Target.Name}}Binding.GetId(rel); err != nil {
 				panic(err) // this must never happen but let's keep the check just to be sure
 			} else {
 				rId{{$field.Property.Name}} = rId
@@ -247,7 +301,7 @@ func ({{$entityNameCamel}}_EntityInfo) Load(txn *objectbox.Transaction, bytes []
 
 		var rel{{$field.Name}} *{{$field.Type}}
 		if rId := {{template "property-getter" $field.Property}}; rId > 0 { 
-			if cursor, err := txn.CursorForName("{{$field.SimpleRelation.Target}}"); err != nil {
+			if cursor, err := txn.CursorForName("{{$field.SimpleRelation.Target.Name}}"); err != nil {
 				panic(err) 
 			} else if relObject, err := cursor.Get(rId); err != nil {
 				panic(err) 

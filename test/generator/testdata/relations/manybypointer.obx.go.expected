@@ -58,6 +58,65 @@ func (taskRelManyPtr_EntityInfo) SetId(object interface{}, id uint64) {
 
 // PutRelated is called by the ObjectBox to put related entities before the object itself is flattened and put
 func (taskRelManyPtr_EntityInfo) PutRelated(obx *objectbox.ObjectBox, txn *objectbox.Transaction, object interface{}) error {
+	if txn == nil {
+		// TODO
+		panic("putAsync is not supported with many-to-many relations at the moment")
+	} else if cursor, err := txn.CursorForName("TaskRelManyPtr"); err != nil {
+		panic(err)
+	} else if rSlice := object.(*TaskRelManyPtr).Groups; rSlice != nil {
+		id, err := TaskRelManyPtrBinding.GetId(object)
+		if err != nil {
+			return err
+		}
+
+		// make a map of related target entity IDs, marking those that were originally related but should be removed
+		var idsToRemove = make(map[uint64]bool)
+
+		if id != 0 {
+			if oldRelIds, err := cursor.RelationIds(1, id); err != nil {
+				return err
+			} else {
+				for _, rId := range oldRelIds {
+					idsToRemove[rId] = true
+				}
+			}
+		}
+
+		// walk over the current related objects, mark those that still exist, add the new ones
+		for _, rel := range rSlice {
+			rId, err := GroupBinding.GetId(rel)
+			if err != nil {
+				return err
+			} else if rId == 0 && txn != nil {
+				if rCursor, err := txn.CursorForName("Group"); err != nil {
+					return err
+				} else if rId, err = rCursor.Put(rel); err != nil {
+					return err
+				}
+			} else if rId == 0 {
+				if rId, err = BoxForGroup(obx).PutAsyncWithTimeout(rel, 0); err != nil {
+					return err
+				}
+			}
+
+			if idsToRemove[rId] {
+				// old relation that still exists, keep it
+				delete(idsToRemove, rId)
+			} else {
+				// new relation, add it
+				if err := cursor.RelationPut(1, id, rId); err != nil {
+					return err
+				}
+			}
+		}
+
+		// remove those that were not found in the rSlice but were originally related to this entity
+		for rId := range idsToRemove {
+			if err := cursor.RelationRemove(1, id, rId); err != nil {
+				return err
+			}
+		}
+	}
 	return nil
 }
 

@@ -96,7 +96,7 @@ func (entity_EntityInfo) SetId(object interface{}, id uint64) {
 }
 
 // PutRelated is called by the ObjectBox to put related entities before the object itself is flattened and put
-func (entity_EntityInfo) PutRelated(obx *objectbox.ObjectBox, txn *objectbox.Transaction, object interface{}) error {
+func (entity_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}) error {
 	return nil
 }
 

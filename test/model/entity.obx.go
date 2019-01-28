@@ -277,6 +277,7 @@ func (entity_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Property("RelatedPtr2", objectbox.PropertyType_Relation, 24, 7776035803207726954)
 	model.PropertyRelation("TestEntityRelated", 3, 6077259218141868916)
 	model.EntityLastPropertyId(24, 7776035803207726954)
+	model.Relation(2, 3069800080112765817, 5, 145948658381494339)
 }
 
 // GetId is called by the ObjectBox during Put operations to check for existing ID on an object
@@ -290,19 +291,15 @@ func (entity_EntityInfo) SetId(object interface{}, id uint64) {
 }
 
 // PutRelated is called by the ObjectBox to put related entities before the object itself is flattened and put
-func (entity_EntityInfo) PutRelated(obx *objectbox.ObjectBox, txn *objectbox.Transaction, object interface{}) error {
+func (entity_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}) error {
 	if rel := &object.(*Entity).Related; rel != nil {
 		rId, err := TestEntityRelatedBinding.GetId(rel)
 		if err != nil {
 			return err
-		} else if rId == 0 && txn != nil {
+		} else if rId == 0 {
 			if rCursor, err := txn.CursorForName("TestEntityRelated"); err != nil {
 				return err
 			} else if rId, err = rCursor.Put(rel); err != nil {
-				return err
-			}
-		} else if rId == 0 {
-			if rId, err = BoxForTestEntityRelated(obx).PutAsyncWithTimeout(rel, 0); err != nil {
 				return err
 			}
 		}
@@ -312,14 +309,10 @@ func (entity_EntityInfo) PutRelated(obx *objectbox.ObjectBox, txn *objectbox.Tra
 		rId, err := TestEntityRelatedBinding.GetId(rel)
 		if err != nil {
 			return err
-		} else if rId == 0 && txn != nil {
+		} else if rId == 0 {
 			if rCursor, err := txn.CursorForName("TestEntityRelated"); err != nil {
 				return err
 			} else if rId, err = rCursor.Put(rel); err != nil {
-				return err
-			}
-		} else if rId == 0 {
-			if rId, err = BoxForTestEntityRelated(obx).PutAsyncWithTimeout(rel, 0); err != nil {
 				return err
 			}
 		}
@@ -329,18 +322,66 @@ func (entity_EntityInfo) PutRelated(obx *objectbox.ObjectBox, txn *objectbox.Tra
 		rId, err := TestEntityRelatedBinding.GetId(rel)
 		if err != nil {
 			return err
-		} else if rId == 0 && txn != nil {
+		} else if rId == 0 {
 			if rCursor, err := txn.CursorForName("TestEntityRelated"); err != nil {
 				return err
 			} else if rId, err = rCursor.Put(rel); err != nil {
 				return err
 			}
-		} else if rId == 0 {
-			if rId, err = BoxForTestEntityRelated(obx).PutAsyncWithTimeout(rel, 0); err != nil {
+		}
+		// NOTE Put/PutAsync() has a side-effect of setting the rel.ID, so at this point, it is already set
+	}
+	if cursor, err := txn.CursorForName("Entity"); err != nil {
+		panic(err)
+	} else if rSlice := object.(*Entity).RelatedSlicePtr; rSlice != nil {
+		id, err := EntityBinding.GetId(object)
+		if err != nil {
+			return err
+		}
+
+		// make a map of related target entity IDs, marking those that were originally related but should be removed
+		var idsToRemove = make(map[uint64]bool)
+
+		if id != 0 {
+			if oldRelIds, err := cursor.RelationIds(2, id); err != nil {
+				return err
+			} else {
+				for _, rId := range oldRelIds {
+					idsToRemove[rId] = true
+				}
+			}
+		}
+
+		// walk over the current related objects, mark those that still exist, add the new ones
+		for _, rel := range rSlice {
+			rId, err := TestEntityRelatedBinding.GetId(rel)
+			if err != nil {
+				return err
+			} else if rId == 0 {
+				if rCursor, err := txn.CursorForName("TestEntityRelated"); err != nil {
+					return err
+				} else if rId, err = rCursor.Put(rel); err != nil {
+					return err
+				}
+			}
+
+			if idsToRemove[rId] {
+				// old relation that still exists, keep it
+				delete(idsToRemove, rId)
+			} else {
+				// new relation, add it
+				if err := cursor.RelationPut(2, id, rId); err != nil {
+					return err
+				}
+			}
+		}
+
+		// remove those that were not found in the rSlice but were originally related to this entity
+		for rId := range idsToRemove {
+			if err := cursor.RelationRemove(2, id, rId); err != nil {
 				return err
 			}
 		}
-		// NOTE Put/PutAsync() has a side-effect of setting the rel.ID, so at this point, it is already set
 	}
 	return nil
 }
@@ -460,31 +501,41 @@ func (entity_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interfac
 		}
 	}
 
+	var relRelatedSlicePtr []*TestEntityRelated
+	if cursor, err := txn.CursorForName("Entity"); err != nil {
+		panic(err)
+	} else if rSlice, err := cursor.RelationGetAll(2, 5, id); err != nil {
+		panic(err)
+	} else {
+		relRelatedSlicePtr = rSlice.([]*TestEntityRelated)
+	}
+
 	return &Entity{
-		Id:           id,
-		Int:          int(table.GetUint64Slot(6, 0)),
-		Int8:         table.GetInt8Slot(8, 0),
-		Int16:        table.GetInt16Slot(10, 0),
-		Int32:        table.GetInt32Slot(12, 0),
-		Int64:        table.GetInt64Slot(14, 0),
-		Uint:         uint(table.GetUint64Slot(16, 0)),
-		Uint8:        table.GetUint8Slot(18, 0),
-		Uint16:       table.GetUint16Slot(20, 0),
-		Uint32:       table.GetUint32Slot(22, 0),
-		Uint64:       table.GetUint64Slot(24, 0),
-		Bool:         table.GetBoolSlot(26, false),
-		String:       fbutils.GetStringSlot(table, 28),
-		StringVector: fbutils.GetStringVectorSlot(table, 44),
-		Byte:         table.GetByteSlot(30, 0),
-		ByteVector:   fbutils.GetByteVectorSlot(table, 32),
-		Rune:         rune(table.GetInt32Slot(34, 0)),
-		Float32:      table.GetFloat32Slot(36, 0),
-		Float64:      table.GetFloat64Slot(38, 0),
-		Date:         timeInt64ToEntityProperty(table.GetInt64Slot(40, 0)),
-		Complex128:   complex128BytesToEntityProperty(fbutils.GetByteVectorSlot(table, 42)),
-		Related:      *relRelated,
-		RelatedPtr:   relRelatedPtr,
-		RelatedPtr2:  relRelatedPtr2,
+		Id:              id,
+		Int:             int(table.GetUint64Slot(6, 0)),
+		Int8:            table.GetInt8Slot(8, 0),
+		Int16:           table.GetInt16Slot(10, 0),
+		Int32:           table.GetInt32Slot(12, 0),
+		Int64:           table.GetInt64Slot(14, 0),
+		Uint:            uint(table.GetUint64Slot(16, 0)),
+		Uint8:           table.GetUint8Slot(18, 0),
+		Uint16:          table.GetUint16Slot(20, 0),
+		Uint32:          table.GetUint32Slot(22, 0),
+		Uint64:          table.GetUint64Slot(24, 0),
+		Bool:            table.GetBoolSlot(26, false),
+		String:          fbutils.GetStringSlot(table, 28),
+		StringVector:    fbutils.GetStringVectorSlot(table, 44),
+		Byte:            table.GetByteSlot(30, 0),
+		ByteVector:      fbutils.GetByteVectorSlot(table, 32),
+		Rune:            rune(table.GetInt32Slot(34, 0)),
+		Float32:         table.GetFloat32Slot(36, 0),
+		Float64:         table.GetFloat64Slot(38, 0),
+		Date:            timeInt64ToEntityProperty(table.GetInt64Slot(40, 0)),
+		Complex128:      complex128BytesToEntityProperty(fbutils.GetByteVectorSlot(table, 42)),
+		Related:         *relRelated,
+		RelatedPtr:      relRelatedPtr,
+		RelatedPtr2:     relRelatedPtr2,
+		RelatedSlicePtr: relRelatedSlicePtr,
 	}
 }
 
@@ -682,7 +733,7 @@ func (testStringIdEntity_EntityInfo) SetId(object interface{}, id uint64) {
 }
 
 // PutRelated is called by the ObjectBox to put related entities before the object itself is flattened and put
-func (testStringIdEntity_EntityInfo) PutRelated(obx *objectbox.ObjectBox, txn *objectbox.Transaction, object interface{}) error {
+func (testStringIdEntity_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}) error {
 	return nil
 }
 
@@ -921,7 +972,7 @@ func (testEntityInline_EntityInfo) SetId(object interface{}, id uint64) {
 }
 
 // PutRelated is called by the ObjectBox to put related entities before the object itself is flattened and put
-func (testEntityInline_EntityInfo) PutRelated(obx *objectbox.ObjectBox, txn *objectbox.Transaction, object interface{}) error {
+func (testEntityInline_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}) error {
 	return nil
 }
 
@@ -1154,7 +1205,7 @@ func (testEntityRelated_EntityInfo) SetId(object interface{}, id uint64) {
 }
 
 // PutRelated is called by the ObjectBox to put related entities before the object itself is flattened and put
-func (testEntityRelated_EntityInfo) PutRelated(obx *objectbox.ObjectBox, txn *objectbox.Transaction, object interface{}) error {
+func (testEntityRelated_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}) error {
 	return nil
 }
 

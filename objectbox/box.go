@@ -112,7 +112,10 @@ func (box *Box) PutAsyncWithTimeout(object interface{}, timeoutMs uint) (id uint
 		return 0, err
 	}
 
-	if err = box.binding.PutRelated(box.objectBox, nil, object); err != nil {
+	err = box.objectBox.runInTxn(false, func(txn *Transaction) error {
+		return box.binding.PutRelated(txn, object)
+	})
+	if err != nil {
 		return 0, err
 	}
 

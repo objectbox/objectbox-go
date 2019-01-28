@@ -166,7 +166,7 @@ func (cursor *cursor) Put(object interface{}) (id uint64, err error) {
 		return 0, err
 	}
 
-	if err = cursor.binding.PutRelated(nil, cursor.txn, object); err != nil {
+	if err = cursor.binding.PutRelated(cursor.txn, object); err != nil {
 		return 0, err
 	}
 
@@ -260,7 +260,7 @@ func (cursor *cursor) RelationGetAll(relationId TypeId, targetEntityId TypeId, s
 
 	defer func() {
 		err2 := targetCursor.Close()
-		if err == nil {
+		if err == nil && err2 != nil {
 			err = err2
 			slice = nil
 		}

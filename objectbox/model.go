@@ -86,7 +86,7 @@ type ObjectBinding interface {
 	AddToModel(model *Model)
 	GetId(object interface{}) (id uint64, err error)
 	SetId(object interface{}, id uint64)
-	PutRelated(obx *ObjectBox, txn *Transaction, object interface{}) error
+	PutRelated(txn *Transaction, object interface{}) error
 	Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64)
 	Load(txn *Transaction, bytes []byte) interface{}
 	MakeSlice(capacity int) interface{}
@@ -114,6 +114,8 @@ type Model struct {
 	lastRelationUid uint64
 
 	generatorVersion int
+
+	entitiesWithRelations map[TypeId]bool
 }
 
 func NewModel() *Model {
@@ -194,6 +196,8 @@ func (model *Model) Relation(relationId TypeId, relationUid uint64, targetEntity
 		model.Error = createError()
 		return
 	}
+
+	model.entitiesWithRelations[model.previousEntityId] = true
 	return
 }
 
@@ -254,6 +258,8 @@ func (model *Model) PropertyRelation(targetEntityName string, indexId TypeId, in
 	if rc != 0 {
 		model.Error = createError()
 	}
+
+	model.entitiesWithRelations[model.previousEntityId] = true
 	return
 }
 
@@ -296,6 +302,9 @@ func (model *Model) RegisterBinding(binding ObjectBinding) {
 
 	model.bindingsById[id] = binding
 	model.bindingsByName[name] = binding
+
+	model.previousEntityId = 0
+	model.previousEntityName = ""
 }
 
 func (model *Model) validate() error {

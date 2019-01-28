@@ -45,12 +45,13 @@ const (
 type TypeId uint32
 
 type ObjectBox struct {
-	store          *C.OBX_store
-	bindingsById   map[TypeId]ObjectBinding
-	bindingsByName map[string]ObjectBinding
-	boxes          map[TypeId]*Box
-	boxesMutex     *sync.Mutex
-	options        options
+	store                 *C.OBX_store
+	bindingsById          map[TypeId]ObjectBinding
+	bindingsByName        map[string]ObjectBinding
+	entitiesWithRelations map[TypeId]bool
+	boxes                 map[TypeId]*Box
+	boxesMutex            *sync.Mutex
+	options               options
 }
 
 type options struct {

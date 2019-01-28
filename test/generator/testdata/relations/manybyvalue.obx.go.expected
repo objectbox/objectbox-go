@@ -57,11 +57,8 @@ func (taskRelManyValue_EntityInfo) SetId(object interface{}, id uint64) {
 }
 
 // PutRelated is called by the ObjectBox to put related entities before the object itself is flattened and put
-func (taskRelManyValue_EntityInfo) PutRelated(obx *objectbox.ObjectBox, txn *objectbox.Transaction, object interface{}) error {
-	if txn == nil {
-		// TODO
-		panic("putAsync is not supported with many-to-many relations at the moment")
-	} else if cursor, err := txn.CursorForName("TaskRelManyValue"); err != nil {
+func (taskRelManyValue_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}) error {
+	if cursor, err := txn.CursorForName("TaskRelManyValue"); err != nil {
 		panic(err)
 	} else if rSlice := object.(*TaskRelManyValue).Groups; rSlice != nil {
 		id, err := TaskRelManyValueBinding.GetId(object)
@@ -87,14 +84,10 @@ func (taskRelManyValue_EntityInfo) PutRelated(obx *objectbox.ObjectBox, txn *obj
 			rId, err := GroupBinding.GetId(rel)
 			if err != nil {
 				return err
-			} else if rId == 0 && txn != nil {
+			} else if rId == 0 {
 				if rCursor, err := txn.CursorForName("Group"); err != nil {
 					return err
 				} else if rId, err = rCursor.Put(rel); err != nil {
-					return err
-				}
-			} else if rId == 0 {
-				if rId, err = BoxForGroup(obx).PutAsyncWithTimeout(rel, 0); err != nil {
 					return err
 				}
 			}

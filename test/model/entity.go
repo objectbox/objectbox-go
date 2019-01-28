@@ -23,6 +23,7 @@ import "time"
 // Tests all available GO & ObjectBox types
 // TODO rename; e.g. TestEntity
 type Entity struct {
+	// base types
 	Id           uint64
 	Int          int
 	Int8         int8
@@ -42,11 +43,19 @@ type Entity struct {
 	Rune         rune
 	Float32      float32
 	Float64      float64
-	Date         time.Time          `date type:"int64" converter:"timeInt64"`
-	Complex128   complex128         `type:"[]byte" converter:"complex128Bytes"`
-	Related      TestEntityRelated  `link`
-	RelatedPtr   *TestEntityRelated `link`
-	RelatedPtr2  *TestEntityRelated `link`
+
+	// converters
+	Date       time.Time  `date type:"int64" converter:"timeInt64"`
+	Complex128 complex128 `type:"[]byte" converter:"complex128Bytes"`
+
+	// one-to-many relations
+	Related     TestEntityRelated  `link`
+	RelatedPtr  *TestEntityRelated `link`
+	RelatedPtr2 *TestEntityRelated `link`
+
+	// many-to-many relations
+	// RelatedSlice    []TestEntityRelated // TODO this is currently supported only if the target is generated -byValue
+	RelatedSlicePtr []*TestEntityRelated
 }
 
 type TestStringIdEntity struct {

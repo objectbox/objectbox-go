@@ -45,14 +45,10 @@ var BindingTemplate = template.Must(template.New("binding").Funcs(funcMap).Parse
 	rId, err := {{.Target.Name}}Binding.GetId(rel)
 	if err != nil {
 		return err
-	} else if rId == 0 && txn != nil {
+	} else if rId == 0 {
 		if rCursor, err := txn.CursorForName("{{.Target.Name}}"); err != nil {
 			return err 
 		} else if rId, err = rCursor.Put(rel); err != nil { 
-			return err 
-		} 
-	} else if rId == 0 {
-		if rId, err = BoxFor{{.Target.Name}}(obx).PutAsyncWithTimeout(rel, 0); err != nil {
 			return err 
 		} 
 	}
@@ -192,7 +188,7 @@ func ({{$entityNameCamel}}_EntityInfo) SetId(object interface{}, id uint64) {
 }
 
 // PutRelated is called by the ObjectBox to put related entities before the object itself is flattened and put
-func ({{$entityNameCamel}}_EntityInfo) PutRelated(obx *objectbox.ObjectBox, txn *objectbox.Transaction, object interface{}) error {
+func ({{$entityNameCamel}}_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}) error {
 	{{- /* TODO ideally we should be using BoxForTarget() with a manually assigned txn */}}
 	{{- range $field := .Fields}}
 	{{- if $field.SimpleRelation}}
@@ -201,10 +197,7 @@ func ({{$entityNameCamel}}_EntityInfo) PutRelated(obx *objectbox.ObjectBox, txn 
 			// NOTE Put/PutAsync() has a side-effect of setting the rel.ID, so at this point, it is already set
 		}
 	{{- else if $field.StandaloneRelation}}
-		if txn == nil {
-			// TODO
-			panic("putAsync is not supported with many-to-many relations at the moment")
-		} else if cursor, err := txn.CursorForName("{{$entity.Name}}"); err != nil {
+		if cursor, err := txn.CursorForName("{{$entity.Name}}"); err != nil {
 			panic(err)
 		} else if rSlice := object.(*{{$entity.Name}}).{{$field.Name}}; rSlice != nil {
 			id, err := {{$entity.Name}}Binding.GetId(object)

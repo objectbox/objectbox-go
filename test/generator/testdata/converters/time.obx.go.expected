@@ -14,8 +14,8 @@ type timeEntity_EntityInfo struct {
 }
 
 var TimeEntityBinding = timeEntity_EntityInfo{
-	Id:  1,
-	Uid: 8717895732742165505,
+	Id:  3,
+	Uid: 3390393562759376202,
 }
 
 // TimeEntity_ contains type-based Property helpers to facilitate some common operations such as Queries.
@@ -27,7 +27,7 @@ var TimeEntity_ = struct {
 		BaseProperty: &objectbox.BaseProperty{
 			Id: 1,
 			Entity: &objectbox.Entity{
-				Id: 1,
+				Id: 3,
 			},
 		},
 	},
@@ -35,7 +35,7 @@ var TimeEntity_ = struct {
 		BaseProperty: &objectbox.BaseProperty{
 			Id: 2,
 			Entity: &objectbox.Entity{
-				Id: 1,
+				Id: 3,
 			},
 		},
 	},
@@ -48,11 +48,11 @@ func (timeEntity_EntityInfo) GeneratorVersion() int {
 
 // AddToModel is called by the ObjectBox during model build
 func (timeEntity_EntityInfo) AddToModel(model *objectbox.Model) {
-	model.Entity("TimeEntity", 1, 8717895732742165505)
-	model.Property("Id", objectbox.PropertyType_Long, 1, 2259404117704393152)
+	model.Entity("TimeEntity", 3, 3390393562759376202)
+	model.Property("Id", objectbox.PropertyType_Long, 1, 2669985732393126063)
 	model.PropertyFlags(objectbox.PropertyFlags_ID)
-	model.Property("Time", objectbox.PropertyType_Date, 2, 6050128673802995827)
-	model.EntityLastPropertyId(2, 6050128673802995827)
+	model.Property("Time", objectbox.PropertyType_Date, 2, 1774932891286980153)
+	model.EntityLastPropertyId(2, 1774932891286980153)
 }
 
 // GetId is called by the ObjectBox during Put operations to check for existing ID on an object
@@ -112,7 +112,7 @@ type TimeEntityBox struct {
 // BoxForTimeEntity opens a box of TimeEntity objects
 func BoxForTimeEntity(ob *objectbox.ObjectBox) *TimeEntityBox {
 	return &TimeEntityBox{
-		Box: ob.InternalBox(1),
+		Box: ob.InternalBox(3),
 	}
 }
 

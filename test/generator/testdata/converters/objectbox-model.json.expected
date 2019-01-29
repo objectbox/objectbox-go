@@ -7,21 +7,43 @@
   "entities": [
     {
       "id": "1:8717895732742165505",
-      "name": "TimeEntity",
-      "lastPropertyId": "2:6050128673802995827",
+      "name": "RuneIdEntity",
+      "lastPropertyId": "1:2259404117704393152",
       "properties": [
         {
           "id": "1:2259404117704393152",
           "name": "Id"
+        }
+      ]
+    },
+    {
+      "id": "2:6050128673802995827",
+      "name": "StringIdEntity",
+      "lastPropertyId": "1:501233450539197794",
+      "properties": [
+        {
+          "id": "1:501233450539197794",
+          "name": "Id"
+        }
+      ]
+    },
+    {
+      "id": "3:3390393562759376202",
+      "name": "TimeEntity",
+      "lastPropertyId": "2:1774932891286980153",
+      "properties": [
+        {
+          "id": "1:2669985732393126063",
+          "name": "Id"
         },
         {
-          "id": "2:6050128673802995827",
+          "id": "2:1774932891286980153",
           "name": "Time"
         }
       ]
     }
   ],
-  "lastEntityId": "1:8717895732742165505",
+  "lastEntityId": "3:3390393562759376202",
   "lastIndexId": "",
   "lastRelationId": "",
   "retiredEntityUids": [],

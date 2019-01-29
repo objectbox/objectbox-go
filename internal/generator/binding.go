@@ -69,6 +69,10 @@ type Property struct {
 	Index       *Index
 	Converter   *string
 
+	// type casts for named types
+	CastOnRead  string
+	CastOnWrite string
+
 	entity     *Entity
 	uidRequest bool
 	path       string // relative addressing path for embedded structs
@@ -244,10 +248,14 @@ func (binding *Binding) createEntityFromAst(strct *ast.StructType, name string, 
 
 	// special handling for string IDs = they are transformed to uint64 in the binding
 	if entity.IdProperty.GoType == "string" {
-		entity.IdProperty.ObType = "Long"
-		entity.IdProperty.FbType = "Uint64"
+		if err := entity.IdProperty.setType("uint64"); err != nil {
+			return fmt.Errorf("%s on property %s, entity %s", err, entity.IdProperty.Name, entity.Name)
+		}
 
-		entity.binding.Imports["strconv"] = "strconv"
+		if entity.IdProperty.Annotations["converter"] == nil {
+			var converter = "objectbox.StringIdConvert"
+			entity.IdProperty.Converter = &converter
+		}
 	}
 
 	binding.Entities = append(binding.Entities, entity)
@@ -409,6 +417,13 @@ func (field *Field) processType(f field) (fields fieldList, err error) {
 
 	if err := property.setBasicType(baseType.String()); err == nil {
 		// if the baseType is one of the basic supported types
+
+		// check if it needs a type cast (it is a named type, not an alias)
+		if typ.IsNamed() {
+			property.CastOnRead = baseType.String()
+			property.CastOnWrite = typ.String()
+		}
+
 		return nil, nil
 	}
 

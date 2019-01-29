@@ -14,8 +14,8 @@ type stringIdEntity_EntityInfo struct {
 }
 
 var StringIdEntityBinding = stringIdEntity_EntityInfo{
-	Id:  4,
-	Uid: 6044372234677422456,
+	Id:  2,
+	Uid: 6050128673802995827,
 }
 
 // StringIdEntity_ contains type-based Property helpers to facilitate some common operations such as Queries.
@@ -26,7 +26,7 @@ var StringIdEntity_ = struct {
 		BaseProperty: &objectbox.BaseProperty{
 			Id: 1,
 			Entity: &objectbox.Entity{
-				Id: 4,
+				Id: 2,
 			},
 		},
 	},
@@ -39,10 +39,10 @@ func (stringIdEntity_EntityInfo) GeneratorVersion() int {
 
 // AddToModel is called by the ObjectBox during model build
 func (stringIdEntity_EntityInfo) AddToModel(model *objectbox.Model) {
-	model.Entity("StringIdEntity", 4, 6044372234677422456)
-	model.Property("Id", objectbox.PropertyType_Long, 1, 8274930044578894929)
+	model.Entity("StringIdEntity", 2, 6050128673802995827)
+	model.Property("Id", objectbox.PropertyType_Long, 1, 501233450539197794)
 	model.PropertyFlags(objectbox.PropertyFlags_ID)
-	model.EntityLastPropertyId(1, 8274930044578894929)
+	model.EntityLastPropertyId(1, 501233450539197794)
 }
 
 // GetId is called by the ObjectBox during Put operations to check for existing ID on an object
@@ -51,12 +51,8 @@ func (stringIdEntity_EntityInfo) GetId(object interface{}) (uint64, error) {
 }
 
 // SetId is called by the ObjectBox during Put to update an ID on an object that has just been inserted
-func (stringIdEntity_EntityInfo) SetId(object interface{}, id uint64) {
+func (stringIdEntity_EntityInfo) SetId(object interface{}, id uint64) error {
 	object.(*StringIdEntity).Id = objectbox.StringIdConvertToEntityProperty(id)
-}
-
-// PutRelated is called by the ObjectBox to put related entities before the object itself is flattened and put
-func (stringIdEntity_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}) error {
 	return nil
 }
 
@@ -68,16 +64,15 @@ func (stringIdEntity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Bu
 	fbutils.SetUint64Slot(fbb, 0, id)
 }
 
-// Load is called by the ObjectBox to load an object from a FlatBuffer
-func (stringIdEntity_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interface{} {
-	var table = &flatbuffers.Table{
+// ToObject is called by the ObjectBox to load an object from a FlatBuffer
+func (stringIdEntity_EntityInfo) ToObject(bytes []byte) interface{} {
+	table := &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
-	var id = objectbox.StringIdConvertToEntityProperty(table.GetUint64Slot(4, 0))
 
 	return &StringIdEntity{
-		Id: id,
+		Id: objectbox.StringIdConvertToEntityProperty(table.GetUint64Slot(4, 0)),
 	}
 }
 
@@ -99,7 +94,7 @@ type StringIdEntityBox struct {
 // BoxForStringIdEntity opens a box of StringIdEntity objects
 func BoxForStringIdEntity(ob *objectbox.ObjectBox) *StringIdEntityBox {
 	return &StringIdEntityBox{
-		Box: ob.InternalBox(4),
+		Box: ob.InternalBox(2),
 	}
 }
 

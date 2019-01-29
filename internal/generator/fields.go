@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"go/ast"
 	"go/types"
+	"path"
+	"strings"
 )
 
 // these interfaces are used in the binding to iterate over fields coming from multiple sources (AST & type checker)
@@ -23,6 +25,9 @@ type field interface {
 type typeErrorful interface {
 	String() string
 	UnderlyingOrError() (types.Type, error)
+
+	// whether it's an alias of a basic type or rather a named type
+	IsNamed() bool
 }
 
 //region ast.StructType wrappers
@@ -49,9 +54,15 @@ func (field astStructField) Name() (string, error) {
 	if len(field.Names) == 0 {
 		// in case of an unnamed field, use the type name
 		var typ = types.ExprString(field.Field.Type)
-		if len(typ) >= 1 && typ[0] == '*' {
-			typ = typ[1:] // strip the '*' if it's a pointer type
+
+		// strip the '*' if it's a pointer type
+		typ = strings.TrimPrefix(typ, "*")
+
+		// remove the package from the name
+		if strings.ContainsRune(typ, '.') {
+			typ = strings.TrimPrefix(path.Ext(typ), ".")
 		}
+
 		return typ, nil
 	} else if len(field.Names) == 1 {
 		return field.Names[0].Name, nil
@@ -88,8 +99,17 @@ func (expr astTypeExpr) String() string {
 	return types.ExprString(expr.Expr)
 }
 
+func (expr astTypeExpr) IsNamed() bool {
+	if t, err := expr.source.getType(expr.Expr); err != nil {
+		panic(err)
+	} else {
+		_, isBasic := t.(*types.Basic)
+		return !isBasic
+	}
+}
+
 func (expr astTypeExpr) Underlying() types.Type {
-	if t, err := expr.source.getUnderlyingType(expr.Expr); err != nil {
+	if t, err := expr.UnderlyingOrError(); err != nil {
 		panic(err)
 	} else {
 		return t
@@ -97,10 +117,10 @@ func (expr astTypeExpr) Underlying() types.Type {
 }
 
 func (expr astTypeExpr) UnderlyingOrError() (types.Type, error) {
-	if t, err := expr.source.getUnderlyingType(expr.Expr); err != nil {
+	if t, err := expr.source.getType(expr.Expr); err != nil {
 		return nil, err
 	} else {
-		return t, nil
+		return t.Underlying(), nil
 	}
 }
 
@@ -155,6 +175,11 @@ type typesTypeErrorful struct {
 
 func (typ typesTypeErrorful) String() string {
 	return typ.Type.String()
+}
+
+func (typ typesTypeErrorful) IsNamed() bool {
+	_, isBasic := typ.Type.(*types.Basic)
+	return !isBasic
 }
 
 func (typ typesTypeErrorful) UnderlyingOrError() (types.Type, error) {

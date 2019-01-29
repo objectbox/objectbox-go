@@ -64,7 +64,9 @@ func cBytesArrayToGo(cBytesArray *C.OBX_bytes_array) *bytesArray {
 		var sliceOfCBytes []C.OBX_bytes
 		// see cVoidPtrToByteSlice for documentation of the following approach in general
 		header := (*reflect.SliceHeader)(unsafe.Pointer(&sliceOfCBytes))
-		*header = reflect.SliceHeader{Data: uintptr(unsafe.Pointer(cBytesArray.bytes)), Len: size, Cap: size}
+		header.Data = uintptr(unsafe.Pointer(cBytesArray.bytes))
+		header.Len = size
+		header.Cap = size
 
 		for i := 0; i < size; i++ {
 			cBytes := sliceOfCBytes[i]
@@ -144,5 +146,7 @@ func cBytesPtr(value []byte) unsafe.Pointer {
 // the above-mentioned issue might describe an alternative solution
 func cVoidPtrToByteSlice(data unsafe.Pointer, size int, bytes *[]byte) {
 	header := (*reflect.SliceHeader)(unsafe.Pointer(bytes))
-	*header = reflect.SliceHeader{Data: uintptr(data), Len: size, Cap: size}
+	header.Data = uintptr(data)
+	header.Len = size
+	header.Cap = size
 }

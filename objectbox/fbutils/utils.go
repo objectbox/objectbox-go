@@ -70,7 +70,11 @@ func GetStringSlot(table *flatbuffers.Table, slot flatbuffers.VOffsetT) string {
 
 func GetByteVectorSlot(table *flatbuffers.Table, slot flatbuffers.VOffsetT) []byte {
 	if o := flatbuffers.UOffsetT(table.Offset(slot)); o != 0 {
-		return table.ByteVector(o + table.Pos)
+		// we need to make a copy because the source bytes are directly mapped to a C void* (same as for GetStringSlot)
+		var src = table.ByteVector(o + table.Pos)
+		var result = make([]byte, len(src))
+		copy(result, src)
+		return result
 	}
 	return nil
 }

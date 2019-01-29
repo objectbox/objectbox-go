@@ -31,11 +31,10 @@ import (
 
 // Internal: won't be publicly exposed in a future version!
 type cursor struct {
-	txn     *Transaction
-	cursor  *C.OBX_cursor
-	binding ObjectBinding // TODO use entity.binding
-	entity  *entity
-	fbb     *flatbuffers.Builder
+	txn    *Transaction
+	cursor *C.OBX_cursor
+	entity *entity
+	fbb    *flatbuffers.Builder
 }
 
 const defaultSliceCapacity = 16
@@ -58,7 +57,7 @@ func (cursor *cursor) Get(id uint64) (object interface{}, err error) {
 	if rc == 0 {
 		var bytes []byte
 		cVoidPtrToByteSlice(dataPtr, int(dataSize), &bytes)
-		return cursor.binding.Load(cursor.txn, bytes), nil
+		return cursor.entity.binding.Load(cursor.txn, bytes), nil
 	} else if rc == C.OBX_NOT_FOUND {
 		return nil, nil
 	} else {
@@ -79,8 +78,8 @@ func (cursor *cursor) GetAll() (slice interface{}, err error) {
 }
 
 func (cursor *cursor) getAllSequential() (slice interface{}, err error) {
-	binding := cursor.binding
-	slice = cursor.binding.MakeSlice(defaultSliceCapacity)
+	var binding = cursor.entity.binding
+	slice = binding.MakeSlice(defaultSliceCapacity)
 
 	var data *C.void
 	var dataSize C.size_t
@@ -133,13 +132,14 @@ func (cursor *cursor) IsEmpty() (result bool, err error) {
 }
 
 func (cursor *cursor) Put(object interface{}) (id uint64, err error) {
-	idFromObject, err := cursor.binding.GetId(object)
+	var binding = cursor.entity.binding
+	idFromObject, err := binding.GetId(object)
 	if err != nil {
 		return 0, err
 	}
 
 	if cursor.entity.hasRelations {
-		if err = cursor.binding.PutRelated(cursor.txn, object); err != nil {
+		if err = binding.PutRelated(cursor.txn, object); err != nil {
 			return 0, err
 		}
 	}
@@ -148,7 +148,7 @@ func (cursor *cursor) Put(object interface{}) (id uint64, err error) {
 		return 0, err
 	}
 
-	cursor.binding.Flatten(object, cursor.fbb, id)
+	binding.Flatten(object, cursor.fbb, id)
 
 	checkForPreviousValue := idFromObject != 0
 	if err = cursor.finishInternalFbbAndPut(id, checkForPreviousValue); err != nil {
@@ -157,7 +157,7 @@ func (cursor *cursor) Put(object interface{}) (id uint64, err error) {
 
 	// update the id on the object
 	if idFromObject != id {
-		cursor.binding.SetId(object, id)
+		binding.SetId(object, id)
 	}
 
 	return id, nil
@@ -211,10 +211,11 @@ func (cursor *cursor) cBytesArrayToObjects(cBytesArray *C.OBX_bytes_array) (slic
 }
 
 func (cursor *cursor) bytesArrayToObjects(bytesArray *bytesArray) (slice interface{}) {
-	slice = cursor.binding.MakeSlice(len(bytesArray.BytesArray))
+	var binding = cursor.entity.binding
+	slice = binding.MakeSlice(len(bytesArray.BytesArray))
 	for _, bytesData := range bytesArray.BytesArray {
-		object := cursor.binding.Load(cursor.txn, bytesData)
-		slice = cursor.binding.AppendToSlice(slice, object)
+		object := binding.Load(cursor.txn, bytesData)
+		slice = binding.AppendToSlice(slice, object)
 	}
 	return
 }

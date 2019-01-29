@@ -212,11 +212,12 @@ func (query *Query) findSequential(cursor *cursor) (slice interface{}, err error
 	if query.cQuery == nil {
 		return 0, query.errorClosed()
 	}
+	var binding = cursor.entity.binding
 
 	var visitorId uint32
 	visitorId, err = dataVisitorRegister(func(bytes []byte) bool {
-		object := cursor.binding.Load(cursor.txn, bytes)
-		slice = cursor.binding.AppendToSlice(slice, object)
+		object := binding.Load(cursor.txn, bytes)
+		slice = binding.AppendToSlice(slice, object)
 		return true
 	})
 	if err != nil {
@@ -224,7 +225,7 @@ func (query *Query) findSequential(cursor *cursor) (slice interface{}, err error
 	}
 	defer dataVisitorUnregister(visitorId)
 
-	slice = cursor.binding.MakeSlice(defaultSliceCapacity)
+	slice = binding.MakeSlice(defaultSliceCapacity)
 	rc := C.obx_query_visit(query.cQuery, cursor.cursor, C.data_visitor, unsafe.Pointer(&visitorId), C.uint64_t(query.offset), C.uint64_t(query.limit))
 	if rc != 0 {
 		return nil, createError()

@@ -222,7 +222,6 @@ func (ob *ObjectBox) box(typeId TypeId) (*Box, error) {
 	box = &Box{
 		objectBox: ob,
 		box:       cbox,
-		binding:   entity.binding, // TODO remove
 		fbb:       flatbuffers.NewBuilder(512),
 		entity:    entity,
 	}

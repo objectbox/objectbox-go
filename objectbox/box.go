@@ -37,7 +37,6 @@ type Box struct {
 	objectBox *ObjectBox
 	box       *C.OBX_box
 	entity    *entity
-	binding   ObjectBinding
 
 	// Must be used in combination with fbbInUseAtomic
 	fbb *flatbuffers.Builder
@@ -107,14 +106,14 @@ func (box *Box) PutAsync(object interface{}) (id uint64, err error) {
 
 // Same as PutAsync but with a custom enqueue timeout
 func (box *Box) PutAsyncWithTimeout(object interface{}, timeoutMs uint) (id uint64, err error) {
-	idFromObject, err := box.binding.GetId(object)
+	idFromObject, err := box.entity.binding.GetId(object)
 	if err != nil {
 		return 0, err
 	}
 
 	if box.entity.hasRelations {
 		err = box.objectBox.runInTxn(false, func(txn *Transaction) error {
-			return box.binding.PutRelated(txn, object)
+			return box.entity.binding.PutRelated(txn, object)
 		})
 		if err != nil {
 			return 0, err
@@ -132,7 +131,7 @@ func (box *Box) PutAsyncWithTimeout(object interface{}, timeoutMs uint) (id uint
 	} else {
 		fbb = flatbuffers.NewBuilder(256)
 	}
-	box.binding.Flatten(object, fbb, id)
+	box.entity.binding.Flatten(object, fbb, id)
 
 	checkForPreviousValue := idFromObject != 0
 	if err = box.finishFbbAndPutAsync(fbb, id, checkForPreviousValue, timeoutMs); err != nil {
@@ -141,7 +140,7 @@ func (box *Box) PutAsyncWithTimeout(object interface{}, timeoutMs uint) (id uint
 
 	// update the id on the object
 	if idFromObject != id {
-		box.binding.SetId(object, id)
+		box.entity.binding.SetId(object, id)
 	}
 
 	return id, nil

@@ -88,7 +88,8 @@ type StandaloneRelation struct {
 	Identifier
 	Target struct {
 		Identifier
-		Name string
+		Name      string
+		IsPointer bool
 	}
 	Name string
 }
@@ -449,8 +450,10 @@ func (field *Field) processType(f field) (fields fieldList, err error) {
 
 	// check if it's a slice of a non-base type
 	if slice, isSlice := baseType.(*types.Slice); isSlice {
+		var elementType = slice.Elem()
+
 		// it's a many-to-many relation
-		if err := property.forceRelation(typeBaseName(slice.Elem().String()), true); err != nil {
+		if err := property.forceRelation(typeBaseName(elementType.String()), true); err != nil {
 			return nil, err
 		}
 
@@ -460,8 +463,14 @@ func (field *Field) processType(f field) (fields fieldList, err error) {
 			return nil, fmt.Errorf("relation with the name %s already exists", field.Name)
 		}
 
-		rel := &StandaloneRelation{Name: field.Name}
+		rel := &StandaloneRelation{}
+		rel.Name = field.Name
 		rel.Target.Name = property.Annotations["link"].Value
+
+		if _, isPointer := elementType.(*types.Pointer); isPointer {
+			rel.Target.IsPointer = true
+		}
+
 		field.entity.Relations[field.Name] = rel
 
 		// fill in the field information

@@ -189,7 +189,12 @@ func ({{$entityNameCamel}}_EntityInfo) PutRelated(txn *objectbox.Transaction, ob
 			}
 
 			// walk over the current related objects, mark those that still exist, add the new ones
+			{{if $field.StandaloneRelation.Target.IsPointer -}}
 			for _, rel := range rSlice {
+			{{- else -}}
+			for k := range rSlice {
+				var rel = &rSlice[k] // take a pointer to the slice element so that it is updated during Put()
+			{{- end}}
 				{{template "put-related-entity" $field.StandaloneRelation}}
 
 				if idsToRemove[rId] {

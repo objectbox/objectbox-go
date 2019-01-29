@@ -355,7 +355,8 @@ func (entity_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface
 		}
 
 		// walk over the current related objects, mark those that still exist, add the new ones
-		for _, rel := range rSlice {
+		for k := range rSlice {
+			var rel = &rSlice[k] // take a pointer to the slice element so that it is updated during Put()
 			rId, err := EntityByValueBinding.GetId(rel)
 			if err != nil {
 				return err

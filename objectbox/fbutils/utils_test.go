@@ -10,6 +10,12 @@ import (
 	"github.com/objectbox/objectbox-go/test/assert"
 )
 
+// This test is here to make sure our flatbuffers integration is correct and mainly focuses on memory management
+// because of how the c-api integration is implemented (not copying C void* but mapping it to []byte).
+// The test covers all supported types (see entity.go in the test directory).
+// It creates an FB object, creates an unsafe copy (similar to the c-arrays.go) and than clears the memory behind that
+// unsafe copy. Afterwards, it tests that the "parsed" flatbuffers object is still the same as the written one.
+
 // this is just a test of the auxiliary functions in this file, so that we can concentrate on actual tests elsewhere
 func TestAuxUnsafeBytes(t *testing.T) {
 	var objBytesManaged = createObjectBytes(object)

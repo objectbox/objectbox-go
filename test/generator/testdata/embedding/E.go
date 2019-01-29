@@ -5,4 +5,6 @@ import "github.com/objectbox/objectbox-go/test/generator/testdata/embedding/othe
 type E struct {
 	other.Trackable
 	id uint64
+	other.ForeignAlias
+	other.ForeignNamed
 }

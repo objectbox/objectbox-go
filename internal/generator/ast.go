@@ -95,7 +95,7 @@ func parserFilter(file os.FileInfo) bool {
 	return true
 }
 
-func (f *file) getUnderlyingType(expr ast.Expr) (types.Type, error) {
+func (f *file) getType(expr ast.Expr) (types.Type, error) {
 	// load file info (resolved types) JiT if necessary
 	if f.info == nil {
 		// call types.Config.Check() to fill types.Info
@@ -118,7 +118,7 @@ func (f *file) getUnderlyingType(expr ast.Expr) (types.Type, error) {
 	if t := f.info.TypeOf(expr); t == nil {
 		return nil, fmt.Errorf("type %s could not be resolved", expr)
 	} else {
-		return t.Underlying(), nil
+		return t, nil
 	}
 }
 

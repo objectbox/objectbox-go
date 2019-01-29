@@ -50,12 +50,11 @@ type TypeId uint32
 
 type ObjectBox struct {
 	store          *C.OBX_store
-	bindingsById   map[TypeId]ObjectBinding
-	bindingsByName map[string]ObjectBinding
+	entitiesById   map[TypeId]*entity
+	entitiesByName map[string]*entity
 	boxes          map[TypeId]*Box
 	boxesMutex     *sync.Mutex
 	options        options
-	entities       map[TypeId]*entity
 }
 
 type options struct {
@@ -143,22 +142,22 @@ func (ob *ObjectBox) runInTxn(readOnly bool, txnFun txnFun) (err error) {
 	return
 }
 
-func (ob ObjectBox) getBindingById(typeId TypeId) ObjectBinding {
-	binding := ob.bindingsById[typeId]
-	if binding == nil {
+func (ob ObjectBox) getEntityById(typeId TypeId) *entity {
+	entity := ob.entitiesById[typeId]
+	if entity == nil {
 		// Configuration error by the dev, OK to panic
-		panic("Configuration error; no binding registered for type ID " + strconv.Itoa(int(typeId)))
+		panic("Configuration error; no entity registered for type ID " + strconv.Itoa(int(typeId)))
 	}
-	return binding
+	return entity
 }
 
-func (ob ObjectBox) getBindingByName(typeName string) ObjectBinding {
-	binding := ob.bindingsByName[typeName]
-	if binding == nil {
+func (ob ObjectBox) getEntityByName(typeName string) *entity {
+	entity := ob.entitiesByName[typeName]
+	if entity == nil {
 		// Configuration error by the dev, OK to panic
-		panic("Configuration error; no binding registered for type name " + typeName)
+		panic("Configuration error; no entity registered for type name " + typeName)
 	}
-	return binding
+	return entity
 }
 
 func (ob *ObjectBox) runWithCursor(e *entity, readOnly bool, cursorFun cursorFun) error {
@@ -166,9 +165,9 @@ func (ob *ObjectBox) runWithCursor(e *entity, readOnly bool, cursorFun cursorFun
 		e.awaitAsyncCompletion()
 	}
 
-	binding := ob.getBindingById(e.id)
+	entity := ob.getEntityById(e.id)
 	return ob.runInTxn(readOnly, func(txn *Transaction) error {
-		cursor, err := txn.createCursor(e.id, binding)
+		cursor, err := txn.createCursor(e.id, entity)
 		if err != nil {
 			return err
 		}
@@ -214,7 +213,7 @@ func (ob *ObjectBox) box(typeId TypeId) (*Box, error) {
 		return box, nil
 	}
 
-	binding := ob.getBindingById(typeId)
+	entity := ob.getEntityById(typeId)
 	cbox := C.obx_box_create(ob.store, C.obx_schema_id(typeId))
 	if cbox == nil {
 		return nil, createError()
@@ -223,9 +222,9 @@ func (ob *ObjectBox) box(typeId TypeId) (*Box, error) {
 	box = &Box{
 		objectBox: ob,
 		box:       cbox,
-		binding:   binding,
+		binding:   entity.binding, // TODO remove
 		fbb:       flatbuffers.NewBuilder(512),
-		entity:    ob.entities[typeId],
+		entity:    entity,
 	}
 	ob.boxes[typeId] = box
 	return box, nil

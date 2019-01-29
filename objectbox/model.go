@@ -96,13 +96,12 @@ type ObjectBinding interface {
 
 // Model is used by the generated code to represent information about the ObjectBox database schema
 type Model struct {
-	model              *C.OBX_model
-	previousEntityName string
-	previousEntityId   TypeId
-	Error              error
+	model *C.OBX_model
+	Error error
 
-	bindingsById   map[TypeId]ObjectBinding
-	bindingsByName map[string]ObjectBinding
+	currentEntity  *entity
+	entitiesById   map[TypeId]*entity
+	entitiesByName map[string]*entity
 
 	lastEntityId  TypeId
 	lastEntityUid uint64
@@ -114,8 +113,6 @@ type Model struct {
 	lastRelationUid uint64
 
 	generatorVersion int
-
-	entitiesWithRelations map[TypeId]bool
 }
 
 func NewModel() *Model {
@@ -127,8 +124,8 @@ func NewModel() *Model {
 	return &Model{
 		model:          cModel,
 		Error:          err,
-		bindingsById:   make(map[TypeId]ObjectBinding),
-		bindingsByName: make(map[string]ObjectBinding),
+		entitiesById:   make(map[TypeId]*entity),
+		entitiesByName: make(map[string]*entity),
 	}
 }
 
@@ -179,10 +176,16 @@ func (model *Model) Entity(name string, id TypeId, uid uint64) {
 		model.Error = createError()
 		return
 	}
-	model.previousEntityName = name
-	model.previousEntityId = id
+
+	model.currentEntity = &entity{
+		name: name,
+		id:   id,
+	}
+
 	return
 }
+
+// TODO each Entity-related method (e.g. Property, Relation,...) should check whether currentEntity is not nil
 
 // Relation adds a "standalone" many-to-many relation between the current entity and a target entity
 func (model *Model) Relation(relationId TypeId, relationUid uint64, targetEntityId TypeId, targetEntityUid uint64) {
@@ -197,7 +200,7 @@ func (model *Model) Relation(relationId TypeId, relationUid uint64, targetEntity
 		return
 	}
 
-	model.entitiesWithRelations[model.previousEntityId] = true
+	model.currentEntity.hasRelations = true
 	return
 }
 
@@ -259,7 +262,7 @@ func (model *Model) PropertyRelation(targetEntityName string, indexId TypeId, in
 		model.Error = createError()
 	}
 
-	model.entitiesWithRelations[model.previousEntityId] = true
+	model.currentEntity.hasRelations = true
 	return
 }
 
@@ -268,10 +271,17 @@ func (model *Model) RegisterBinding(binding ObjectBinding) {
 		return
 	}
 
+	model.currentEntity = nil
+
 	binding.AddToModel(model)
 
-	id := model.previousEntityId
-	name := model.previousEntityName
+	if model.currentEntity == nil {
+		model.Error = fmt.Errorf("invalid binding - model.Entity() not called")
+		return
+	}
+
+	id := model.currentEntity.id
+	name := model.currentEntity.name
 
 	if id == 0 {
 		model.Error = fmt.Errorf("invalid binding - entity id is not set")
@@ -283,12 +293,12 @@ func (model *Model) RegisterBinding(binding ObjectBinding) {
 		return
 	}
 
-	if model.bindingsById[id] != nil {
+	if model.entitiesById[id] != nil {
 		model.Error = fmt.Errorf("duplicate binding - entity id %d is already registered", id)
 		return
 	}
 
-	if model.bindingsByName[name] != nil {
+	if model.entitiesByName[name] != nil {
 		model.Error = fmt.Errorf("duplicate binding - entity name %s is already registered", name)
 		return
 	}
@@ -300,11 +310,11 @@ func (model *Model) RegisterBinding(binding ObjectBinding) {
 		return
 	}
 
-	model.bindingsById[id] = binding
-	model.bindingsByName[name] = binding
+	model.currentEntity.binding = binding
+	model.entitiesById[id] = model.currentEntity
+	model.entitiesByName[name] = model.currentEntity
 
-	model.previousEntityId = 0
-	model.previousEntityName = ""
+	model.currentEntity = nil
 }
 
 func (model *Model) validate() error {

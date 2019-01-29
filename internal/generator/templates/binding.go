@@ -209,6 +209,7 @@ func ({{$entityNameCamel}}_EntityInfo) PutRelated(txn *objectbox.Transaction, ob
 			}
 		}
 	{{- end}}{{end}}
+	return nil
 }
 
 // Flatten is called by the ObjectBox to transform an object to a FlatBuffer

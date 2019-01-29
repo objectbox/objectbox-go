@@ -306,7 +306,7 @@ func (taskStringByValue_EntityInfo) Load(txn *objectbox.Transaction, bytes []byt
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
-	var id = bjectbox.StringIdConvertToEntityProperty(table.GetUint64Slot(4, 0))
+	var id = objectbox.StringIdConvertToEntityProperty(table.GetUint64Slot(4, 0))
 
 	return &TaskStringByValue{
 		Id: id,

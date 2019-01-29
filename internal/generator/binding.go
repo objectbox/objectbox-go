@@ -248,7 +248,7 @@ func (binding *Binding) createEntityFromAst(strct *ast.StructType, name string, 
 
 	// special handling for string IDs = they are transformed to uint64 in the binding
 	if entity.IdProperty.GoType == "string" {
-		if err := entity.IdProperty.setType("uint64"); err != nil {
+		if err := entity.IdProperty.setBasicType("uint64"); err != nil {
 			return fmt.Errorf("%s on property %s, entity %s", err, entity.IdProperty.Name, entity.Name)
 		}
 

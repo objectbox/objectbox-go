@@ -57,10 +57,13 @@ func createOffsetVector(fbb *flatbuffers.Builder, offsets []flatbuffers.UOffsetT
 }
 
 // Define some Get*Slot methods that are missing in the FlatBuffers table
+// NOTE - don't use table.String because byteSliceToString is "unsafe" and doesn't play well
+// with our []byte to C void* mapping. This leads to weird runtime errors because that string
+// just points to a memory that has already been freed/reused by C.
 
 func GetStringSlot(table *flatbuffers.Table, slot flatbuffers.VOffsetT) string {
 	if o := flatbuffers.UOffsetT(table.Offset(slot)); o != 0 {
-		return table.String(o + table.Pos)
+		return string(table.ByteVector(o + table.Pos))
 	}
 	return ""
 }
@@ -84,7 +87,7 @@ func GetStringVectorSlot(table *flatbuffers.Table, slot flatbuffers.VOffsetT) []
 		var end = start + flatbuffers.UOffsetT(ln)*flatbuffers.SizeUOffsetT
 
 		for pos := start; pos < end; pos += flatbuffers.SizeUOffsetT {
-			values = append(values, table.String(pos))
+			values = append(values, string(table.ByteVector(pos)))
 		}
 
 		return values

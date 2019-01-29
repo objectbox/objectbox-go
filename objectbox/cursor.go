@@ -138,14 +138,14 @@ func (cursor *cursor) Put(object interface{}) (id uint64, err error) {
 		return 0, err
 	}
 
-	if cursor.entity.hasRelations {
-		if err = binding.PutRelated(cursor.txn, object); err != nil {
-			return 0, err
-		}
-	}
-
 	if id, err = cursor.IdForPut(idFromObject); err != nil {
 		return 0, err
+	}
+
+	if cursor.entity.hasRelations {
+		if err = binding.PutRelated(cursor.txn, object, id); err != nil {
+			return 0, err
+		}
 	}
 
 	binding.Flatten(object, cursor.fbb, id)

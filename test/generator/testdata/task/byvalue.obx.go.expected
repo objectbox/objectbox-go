@@ -65,7 +65,7 @@ func (taskByValue_EntityInfo) SetId(object interface{}, id uint64) {
 }
 
 // PutRelated is called by the ObjectBox to put related entities before the object itself is flattened and put
-func (taskByValue_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}) error {
+func (taskByValue_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}, id uint64) error {
 	return nil
 }
 
@@ -288,7 +288,7 @@ func (taskStringByValue_EntityInfo) SetId(object interface{}, id uint64) {
 }
 
 // PutRelated is called by the ObjectBox to put related entities before the object itself is flattened and put
-func (taskStringByValue_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}) error {
+func (taskStringByValue_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}, id uint64) error {
 	return nil
 }
 

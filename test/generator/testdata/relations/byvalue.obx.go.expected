@@ -67,7 +67,7 @@ func (taskRelValue_EntityInfo) SetId(object interface{}, id uint64) {
 }
 
 // PutRelated is called by the ObjectBox to put related entities before the object itself is flattened and put
-func (taskRelValue_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}) error {
+func (taskRelValue_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}, id uint64) error {
 	if rel := &object.(*TaskRelValue).Group; rel != nil {
 		rId, err := GroupBinding.GetId(rel)
 		if err != nil {

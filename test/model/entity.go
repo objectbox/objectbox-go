@@ -54,8 +54,8 @@ type Entity struct {
 	RelatedPtr2 *TestEntityRelated `link`
 
 	// many-to-many relations
-	// RelatedSlice    []TestEntityRelated // TODO this is currently supported only if the target is generated -byValue
-	RelatedSlicePtr []*TestEntityRelated
+	RelatedSlice    []EntityByValue
+	RelatedPtrSlice []*TestEntityRelated
 }
 
 type TestStringIdEntity struct {

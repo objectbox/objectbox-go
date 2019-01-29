@@ -156,7 +156,7 @@ func ({{$entityNameCamel}}_EntityInfo) SetId(object interface{}, id uint64) {
 }
 
 // PutRelated is called by the ObjectBox to put related entities before the object itself is flattened and put
-func ({{$entityNameCamel}}_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}) error {
+func ({{$entityNameCamel}}_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}, id uint64) error {
 	{{- /* TODO ideally we should be using BoxForTarget() with a manually assigned txn */}}
 	{{- range $field := .Fields}}
 	{{- if $field.SimpleRelation}}
@@ -168,7 +168,9 @@ func ({{$entityNameCamel}}_EntityInfo) PutRelated(txn *objectbox.Transaction, ob
 		if cursor, err := txn.CursorForName("{{$entity.Name}}"); err != nil {
 			panic(err)
 		} else if rSlice := object.(*{{$entity.Name}}).{{$field.Name}}; rSlice != nil {
-			id, err := {{$entity.Name}}Binding.GetId(object)
+			// get id from the object, if inserting, it would be 0 even if the argument id is already non-zero
+			// this saves us an unnecessary request to RelationIds for new objects (there can't be any relations yet)
+			objId, err := {{$entity.Name}}Binding.GetId(object)
 			if err != nil {
 				return err
 			}
@@ -176,7 +178,7 @@ func ({{$entityNameCamel}}_EntityInfo) PutRelated(txn *objectbox.Transaction, ob
 			// make a map of related target entity IDs, marking those that were originally related but should be removed
 			var idsToRemove = make(map[uint64]bool)
 
-			if id != 0 {
+			if objId != 0 {
 				if oldRelIds, err := cursor.RelationIds({{$field.StandaloneRelation.Id}}, id); err != nil {
 					return err
 				} else {

@@ -112,8 +112,12 @@
       ],
       "relations": [
         {
-          "id": "2:3069800080112765817",
-          "name": "RelatedSlicePtr"
+          "id": "4:5379891792880176678",
+          "name": "RelatedSlice"
+        },
+        {
+          "id": "5:1694321226239708534",
+          "name": "RelatedPtrSlice"
         }
       ]
     },
@@ -176,11 +180,13 @@
   ],
   "lastEntityId": "5:145948658381494339",
   "lastIndexId": "3:6077259218141868916",
-  "lastRelationId": "2:3069800080112765817",
+  "lastRelationId": "5:1694321226239708534",
   "retiredEntityUids": [],
   "retiredIndexUids": [],
   "retiredPropertyUids": [],
   "retiredRelationUids": [
-    1741387849434222945
+    1741387849434222945,
+    3069800080112765817,
+    99179225746609767
   ]
 }

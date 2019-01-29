@@ -276,7 +276,8 @@ func (entity_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Property("RelatedPtr2", objectbox.PropertyType_Relation, 24, 7776035803207726954)
 	model.PropertyRelation("TestEntityRelated", 3, 6077259218141868916)
 	model.EntityLastPropertyId(24, 7776035803207726954)
-	model.Relation(2, 3069800080112765817, 5, 145948658381494339)
+	model.Relation(5, 1694321226239708534, 5, 145948658381494339)
+	model.Relation(4, 5379891792880176678, 3, 2793387980842421409)
 }
 
 // GetId is called by the ObjectBox during Put operations to check for existing ID on an object
@@ -290,7 +291,7 @@ func (entity_EntityInfo) SetId(object interface{}, id uint64) {
 }
 
 // PutRelated is called by the ObjectBox to put related entities before the object itself is flattened and put
-func (entity_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}) error {
+func (entity_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}, id uint64) error {
 	if rel := &object.(*Entity).Related; rel != nil {
 		rId, err := TestEntityRelatedBinding.GetId(rel)
 		if err != nil {
@@ -332,8 +333,10 @@ func (entity_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface
 	}
 	if cursor, err := txn.CursorForName("Entity"); err != nil {
 		panic(err)
-	} else if rSlice := object.(*Entity).RelatedSlicePtr; rSlice != nil {
-		id, err := EntityBinding.GetId(object)
+	} else if rSlice := object.(*Entity).RelatedSlice; rSlice != nil {
+		// get id from the object, if inserting, it would be 0 even if the argument id is already non-zero
+		// this saves us an unnecessary request to RelationIds for new objects (there can't be any relations yet)
+		objId, err := EntityBinding.GetId(object)
 		if err != nil {
 			return err
 		}
@@ -341,8 +344,62 @@ func (entity_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface
 		// make a map of related target entity IDs, marking those that were originally related but should be removed
 		var idsToRemove = make(map[uint64]bool)
 
-		if id != 0 {
-			if oldRelIds, err := cursor.RelationIds(2, id); err != nil {
+		if objId != 0 {
+			if oldRelIds, err := cursor.RelationIds(4, id); err != nil {
+				return err
+			} else {
+				for _, rId := range oldRelIds {
+					idsToRemove[rId] = true
+				}
+			}
+		}
+
+		// walk over the current related objects, mark those that still exist, add the new ones
+		for _, rel := range rSlice {
+			rId, err := EntityByValueBinding.GetId(rel)
+			if err != nil {
+				return err
+			} else if rId == 0 {
+				if rCursor, err := txn.CursorForName("EntityByValue"); err != nil {
+					return err
+				} else if rId, err = rCursor.Put(rel); err != nil {
+					return err
+				}
+			}
+
+			if idsToRemove[rId] {
+				// old relation that still exists, keep it
+				delete(idsToRemove, rId)
+			} else {
+				// new relation, add it
+				if err := cursor.RelationPut(4, id, rId); err != nil {
+					return err
+				}
+			}
+		}
+
+		// remove those that were not found in the rSlice but were originally related to this entity
+		for rId := range idsToRemove {
+			if err := cursor.RelationRemove(4, id, rId); err != nil {
+				return err
+			}
+		}
+	}
+	if cursor, err := txn.CursorForName("Entity"); err != nil {
+		panic(err)
+	} else if rSlice := object.(*Entity).RelatedPtrSlice; rSlice != nil {
+		// get id from the object, if inserting, it would be 0 even if the argument id is already non-zero
+		// this saves us an unnecessary request to RelationIds for new objects (there can't be any relations yet)
+		objId, err := EntityBinding.GetId(object)
+		if err != nil {
+			return err
+		}
+
+		// make a map of related target entity IDs, marking those that were originally related but should be removed
+		var idsToRemove = make(map[uint64]bool)
+
+		if objId != 0 {
+			if oldRelIds, err := cursor.RelationIds(5, id); err != nil {
 				return err
 			} else {
 				for _, rId := range oldRelIds {
@@ -369,7 +426,7 @@ func (entity_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface
 				delete(idsToRemove, rId)
 			} else {
 				// new relation, add it
-				if err := cursor.RelationPut(2, id, rId); err != nil {
+				if err := cursor.RelationPut(5, id, rId); err != nil {
 					return err
 				}
 			}
@@ -377,7 +434,7 @@ func (entity_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface
 
 		// remove those that were not found in the rSlice but were originally related to this entity
 		for rId := range idsToRemove {
-			if err := cursor.RelationRemove(2, id, rId); err != nil {
+			if err := cursor.RelationRemove(5, id, rId); err != nil {
 				return err
 			}
 		}
@@ -500,13 +557,22 @@ func (entity_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interfac
 		}
 	}
 
-	var relRelatedSlicePtr []*TestEntityRelated
+	var relRelatedSlice []EntityByValue
 	if cursor, err := txn.CursorForName("Entity"); err != nil {
 		panic(err)
-	} else if rSlice, err := cursor.RelationGetAll(2, 5, id); err != nil {
+	} else if rSlice, err := cursor.RelationGetAll(4, 3, id); err != nil {
 		panic(err)
 	} else {
-		relRelatedSlicePtr = rSlice.([]*TestEntityRelated)
+		relRelatedSlice = rSlice.([]EntityByValue)
+	}
+
+	var relRelatedPtrSlice []*TestEntityRelated
+	if cursor, err := txn.CursorForName("Entity"); err != nil {
+		panic(err)
+	} else if rSlice, err := cursor.RelationGetAll(5, 5, id); err != nil {
+		panic(err)
+	} else {
+		relRelatedPtrSlice = rSlice.([]*TestEntityRelated)
 	}
 
 	return &Entity{
@@ -534,7 +600,8 @@ func (entity_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interfac
 		Related:         *relRelated,
 		RelatedPtr:      relRelatedPtr,
 		RelatedPtr2:     relRelatedPtr2,
-		RelatedSlicePtr: relRelatedSlicePtr,
+		RelatedSlice:    relRelatedSlice,
+		RelatedPtrSlice: relRelatedPtrSlice,
 	}
 }
 
@@ -727,7 +794,7 @@ func (testStringIdEntity_EntityInfo) SetId(object interface{}, id uint64) {
 }
 
 // PutRelated is called by the ObjectBox to put related entities before the object itself is flattened and put
-func (testStringIdEntity_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}) error {
+func (testStringIdEntity_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}, id uint64) error {
 	return nil
 }
 
@@ -961,7 +1028,7 @@ func (testEntityInline_EntityInfo) SetId(object interface{}, id uint64) {
 }
 
 // PutRelated is called by the ObjectBox to put related entities before the object itself is flattened and put
-func (testEntityInline_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}) error {
+func (testEntityInline_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}, id uint64) error {
 	return nil
 }
 
@@ -1194,7 +1261,7 @@ func (testEntityRelated_EntityInfo) SetId(object interface{}, id uint64) {
 }
 
 // PutRelated is called by the ObjectBox to put related entities before the object itself is flattened and put
-func (testEntityRelated_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}) error {
+func (testEntityRelated_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}, id uint64) error {
 	return nil
 }
 

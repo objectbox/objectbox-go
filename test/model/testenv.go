@@ -32,8 +32,13 @@ type TestEnv struct {
 	ObjectBox *objectbox.ObjectBox
 	Box       *EntityBox
 
-	t      *testing.T
-	dbName string
+	t       *testing.T
+	dbName  string
+	options TestEnvOptions
+}
+
+type TestEnvOptions struct {
+	PopulateRelations bool
 }
 
 func removeDb(name string) {
@@ -63,12 +68,17 @@ func (env *TestEnv) Close() {
 	removeDb(env.dbName)
 }
 
+func (env *TestEnv) SetOptions(options TestEnvOptions) *TestEnv {
+	env.options = options
+	return env
+}
+
 func (env *TestEnv) Populate(count uint) {
 	// the first one is always the special Entity47
-	env.PutEntity(Entity47())
+	env.PutEntity(entity47(1, &env.options))
 
 	// additionally an entity with upper case String
-	var e = Entity47()
+	var e = entity47(1, &env.options)
 	e.String = strings.ToUpper(e.String)
 	env.PutEntity(e)
 
@@ -80,7 +90,7 @@ func (env *TestEnv) Populate(count uint) {
 	var entities = make([]*Entity, toInsert)
 	var i = uint(0)
 	for coef := -limit; i < toInsert; coef += step {
-		entities[i] = entity47(int(coef))
+		entities[i] = entity47(int(coef), &env.options)
 		i++
 	}
 
@@ -101,11 +111,11 @@ func (env *TestEnv) PutEntity(entity *Entity) uint64 {
 
 // create a test entity ("47" because int fields are multiples of 47)
 func Entity47() *Entity {
-	return entity47(1)
+	return entity47(1, nil)
 }
 
 // create a test entity ("47" because int fields are multiples of 47)
-func entity47(coef int) *Entity {
+func entity47(coef int, options *TestEnvOptions) *Entity {
 	// NOTE, it doesn't really matter that we overflow the smaller types
 	var Bool = coef%2 == 1
 
@@ -116,27 +126,37 @@ func entity47(coef int) *Entity {
 		String = fmt.Sprintf("val-%d", coef)
 	}
 
-	return &Entity{
-		Int:             47 * coef,
-		Int8:            47 * int8(coef),
-		Int16:           47 * int16(coef),
-		Int32:           47 * int32(coef),
-		Int64:           47 * int64(coef),
-		Uint:            47 * uint(coef),
-		Uint8:           47 * uint8(coef),
-		Uint16:          47 * uint16(coef),
-		Uint32:          47 * uint32(coef),
-		Uint64:          47 * uint64(coef),
-		Bool:            Bool,
-		String:          String,
-		StringVector:    []string{fmt.Sprintf("first-%d", coef), fmt.Sprintf("second-%d", coef), ""},
-		Byte:            47 * byte(coef),
-		ByteVector:      []byte{1 * byte(coef), 2 * byte(coef), 3 * byte(coef), 5 * byte(coef), 8 * byte(coef)},
-		Rune:            47 * rune(coef),
-		Float32:         47.74 * float32(coef),
-		Float64:         47.74 * float64(coef),
-		Date:            timeInt64ToEntityProperty(47 * int64(coef)),
-		RelatedSlice:    []EntityByValue{},
-		RelatedPtrSlice: []*TestEntityRelated{},
+	var object = &Entity{
+		Int:          47 * coef,
+		Int8:         47 * int8(coef),
+		Int16:        47 * int16(coef),
+		Int32:        47 * int32(coef),
+		Int64:        47 * int64(coef),
+		Uint:         47 * uint(coef),
+		Uint8:        47 * uint8(coef),
+		Uint16:       47 * uint16(coef),
+		Uint32:       47 * uint32(coef),
+		Uint64:       47 * uint64(coef),
+		Bool:         Bool,
+		String:       String,
+		StringVector: []string{fmt.Sprintf("first-%d", coef), fmt.Sprintf("second-%d", coef), ""},
+		Byte:         47 * byte(coef),
+		ByteVector:   []byte{1 * byte(coef), 2 * byte(coef), 3 * byte(coef), 5 * byte(coef), 8 * byte(coef)},
+		Rune:         47 * rune(coef),
+		Float32:      47.74 * float32(coef),
+		Float64:      47.74 * float64(coef),
+		Date:         timeInt64ToEntityProperty(47 * int64(coef)),
 	}
+
+	if options != nil && options.PopulateRelations {
+		object.Related = TestEntityRelated{Name: "rel-" + String}
+		object.RelatedPtr = &TestEntityRelated{Name: "relPtr-" + String}
+		object.RelatedSlice = []EntityByValue{{}}
+		object.RelatedPtrSlice = []*TestEntityRelated{{}}
+	} else {
+		object.RelatedSlice = []EntityByValue{}
+		object.RelatedPtrSlice = []*TestEntityRelated{}
+	}
+
+	return object
 }

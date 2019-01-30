@@ -47,6 +47,59 @@ func Eq(t *testing.T, expected interface{}, actual interface{}) {
 	}
 }
 
+// EqItems chechks whether two slices have the same elements
+func EqItems(t *testing.T, expected interface{}, actual interface{}) {
+	var exp = reflect.ValueOf(expected)
+	var act = reflect.ValueOf(actual)
+
+	if exp.Type() != act.Type() {
+		Failf(t, "Expected %v, but got %v", exp.Type(), act.Type())
+	}
+
+	if exp.Len() != act.Len() {
+		Failf(t, "Expected %v (%d elements), but got %v (%d elements)", exp, exp.Len(), act, act.Len())
+	}
+
+	if exp.Len() == 0 {
+		return
+	}
+
+	// make a map[elem-type]int = number of occurrences of each element
+	// we use reflection to create a dynamically typed map
+	var keyType = exp.Index(0).Type()
+	var valueType = reflect.TypeOf(int(0))
+	var mapType = reflect.MapOf(keyType, valueType)
+	merged := reflect.MakeMapWithSize(mapType, exp.Len())
+
+	// count the number of expected occurrences
+	for i := 0; i < exp.Len(); i++ {
+		var existing = merged.MapIndex(exp.Index(i))
+		if existing.IsValid() {
+			merged.SetMapIndex(exp.Index(i), reflect.ValueOf(int(existing.Int())+1)) // increase by one
+		} else {
+			merged.SetMapIndex(exp.Index(i), reflect.ValueOf(int(1)))
+		}
+	}
+
+	// count the number of actual occurrences
+	for i := 0; i < act.Len(); i++ {
+		var existing = merged.MapIndex(act.Index(i))
+		if !existing.IsValid() {
+			Failf(t, "Unexpected item %v found in %v, expecting %v", act.Index(i), act, exp)
+		}
+
+		merged.SetMapIndex(act.Index(i), reflect.ValueOf(int(existing.Int())-1)) // decrease by one
+	}
+
+	// check if all of the expected where actually found
+	for _, k := range merged.MapKeys() {
+		var existing = merged.MapIndex(k)
+		if existing.Int() != 0 {
+			Failf(t, "Expected %v more of item %v", existing.Int(), k)
+		}
+	}
+}
+
 // Uses reflect.DeepEqual to test for equality
 func NotEq(t *testing.T, notThisValue interface{}, actual interface{}) {
 	if reflect.DeepEqual(notThisValue, actual) {

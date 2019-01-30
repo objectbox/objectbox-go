@@ -68,12 +68,12 @@ var Entity_ = struct {
 	},
 }
 
-// GeneratorVersion is called by the ObjectBox to verify the compatibility of the generator used to generate this code
+// GeneratorVersion is called by ObjectBox to verify the compatibility of the generator used to generate this code
 func (entity_EntityInfo) GeneratorVersion() int {
 	return 1
 }
 
-// AddToModel is called by the ObjectBox during model build
+// AddToModel is called by ObjectBox during model build
 func (entity_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("Entity", 1, 1737161401460991620)
 	model.Property("Id", objectbox.PropertyType_Long, 1, 7373286741377356014)
@@ -85,18 +85,18 @@ func (entity_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.EntityLastPropertyId(5, 8933082277725371577)
 }
 
-// GetId is called by the ObjectBox during Put operations to check for existing ID on an object
+// GetId is called by ObjectBox during Put operations to check for existing ID on an object
 func (entity_EntityInfo) GetId(object interface{}) (uint64, error) {
 	return object.(*Entity).Id, nil
 }
 
-// SetId is called by the ObjectBox during Put to update an ID on an object that has just been inserted
+// SetId is called by ObjectBox during Put to update an ID on an object that has just been inserted
 func (entity_EntityInfo) SetId(object interface{}, id uint64) error {
 	object.(*Entity).Id = id
 	return nil
 }
 
-// Flatten is called by the ObjectBox to transform an object to a FlatBuffer
+// Flatten is called by ObjectBox to transform an object to a FlatBuffer
 func (entity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
 	obj := object.(*Entity)
 	var offsetString = fbutils.CreateStringOffset(fbb, obj.String)
@@ -110,7 +110,7 @@ func (entity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, i
 	fbutils.SetFloat64Slot(fbb, 4, obj.Float64)
 }
 
-// ToObject is called by the ObjectBox to load an object from a FlatBuffer
+// ToObject is called by ObjectBox to load an object from a FlatBuffer
 func (entity_EntityInfo) ToObject(bytes []byte) interface{} {
 	table := &flatbuffers.Table{
 		Bytes: bytes,
@@ -126,12 +126,12 @@ func (entity_EntityInfo) ToObject(bytes []byte) interface{} {
 	}
 }
 
-// MakeSlice is called by the ObjectBox to construct a new slice to hold the read objects
+// MakeSlice is called by ObjectBox to construct a new slice to hold the read objects
 func (entity_EntityInfo) MakeSlice(capacity int) interface{} {
 	return make([]*Entity, 0, capacity)
 }
 
-// AppendToSlice is called by the ObjectBox to fill the slice of the read objects
+// AppendToSlice is called by ObjectBox to fill the slice of the read objects
 func (entity_EntityInfo) AppendToSlice(slice interface{}, object interface{}) interface{} {
 	return append(slice.([]*Entity), object.(*Entity))
 }

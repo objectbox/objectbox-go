@@ -212,12 +212,12 @@ var Entity_ = struct {
 	},
 }
 
-// GeneratorVersion is called by the ObjectBox to verify the compatibility of the generator used to generate this code
+// GeneratorVersion is called by ObjectBox to verify the compatibility of the generator used to generate this code
 func (entity_EntityInfo) GeneratorVersion() int {
 	return 1
 }
 
-// AddToModel is called by the ObjectBox during model build
+// AddToModel is called by ObjectBox during model build
 func (entity_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("Entity", 1, 3022148985475790732)
 	model.Property("Id", objectbox.PropertyType_Long, 1, 1213346202559552829)
@@ -245,18 +245,18 @@ func (entity_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.EntityLastPropertyId(21, 3893192683529392073)
 }
 
-// GetId is called by the ObjectBox during Put operations to check for existing ID on an object
+// GetId is called by ObjectBox during Put operations to check for existing ID on an object
 func (entity_EntityInfo) GetId(object interface{}) (uint64, error) {
 	return object.(*Entity).Id, nil
 }
 
-// SetId is called by the ObjectBox during Put to update an ID on an object that has just been inserted
+// SetId is called by ObjectBox during Put to update an ID on an object that has just been inserted
 func (entity_EntityInfo) SetId(object interface{}, id uint64) error {
 	object.(*Entity).Id = id
 	return nil
 }
 
-// Flatten is called by the ObjectBox to transform an object to a FlatBuffer
+// Flatten is called by ObjectBox to transform an object to a FlatBuffer
 func (entity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
 	obj := object.(*Entity)
 	var offsetString = fbutils.CreateStringOffset(fbb, obj.String)
@@ -289,7 +289,7 @@ func (entity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, i
 	fbutils.SetUOffsetTSlot(fbb, 19, offsetComplex128)
 }
 
-// ToObject is called by the ObjectBox to load an object from a FlatBuffer
+// ToObject is called by ObjectBox to load an object from a FlatBuffer
 func (entity_EntityInfo) ToObject(bytes []byte) interface{} {
 	table := &flatbuffers.Table{
 		Bytes: bytes,
@@ -321,12 +321,12 @@ func (entity_EntityInfo) ToObject(bytes []byte) interface{} {
 	}
 }
 
-// MakeSlice is called by the ObjectBox to construct a new slice to hold the read objects
+// MakeSlice is called by ObjectBox to construct a new slice to hold the read objects
 func (entity_EntityInfo) MakeSlice(capacity int) interface{} {
 	return make([]*Entity, 0, capacity)
 }
 
-// AppendToSlice is called by the ObjectBox to fill the slice of the read objects
+// AppendToSlice is called by ObjectBox to fill the slice of the read objects
 func (entity_EntityInfo) AppendToSlice(slice interface{}, object interface{}) interface{} {
 	return append(slice.([]*Entity), object.(*Entity))
 }
@@ -486,12 +486,12 @@ var TestStringIdEntity_ = struct {
 	},
 }
 
-// GeneratorVersion is called by the ObjectBox to verify the compatibility of the generator used to generate this code
+// GeneratorVersion is called by ObjectBox to verify the compatibility of the generator used to generate this code
 func (testStringIdEntity_EntityInfo) GeneratorVersion() int {
 	return 1
 }
 
-// AddToModel is called by the ObjectBox during model build
+// AddToModel is called by ObjectBox during model build
 func (testStringIdEntity_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("TestStringIdEntity", 2, 5412225159475839048)
 	model.Property("Id", objectbox.PropertyType_Long, 1, 4639124040173808562)
@@ -499,18 +499,18 @@ func (testStringIdEntity_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.EntityLastPropertyId(1, 4639124040173808562)
 }
 
-// GetId is called by the ObjectBox during Put operations to check for existing ID on an object
+// GetId is called by ObjectBox during Put operations to check for existing ID on an object
 func (testStringIdEntity_EntityInfo) GetId(object interface{}) (uint64, error) {
 	return objectbox.StringIdConvertToDatabaseValue(object.(*TestStringIdEntity).Id), nil
 }
 
-// SetId is called by the ObjectBox during Put to update an ID on an object that has just been inserted
+// SetId is called by ObjectBox during Put to update an ID on an object that has just been inserted
 func (testStringIdEntity_EntityInfo) SetId(object interface{}, id uint64) error {
 	object.(*TestStringIdEntity).Id = objectbox.StringIdConvertToEntityProperty(id)
 	return nil
 }
 
-// Flatten is called by the ObjectBox to transform an object to a FlatBuffer
+// Flatten is called by ObjectBox to transform an object to a FlatBuffer
 func (testStringIdEntity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
 
 	// build the FlatBuffers object
@@ -518,7 +518,7 @@ func (testStringIdEntity_EntityInfo) Flatten(object interface{}, fbb *flatbuffer
 	fbutils.SetUint64Slot(fbb, 0, id)
 }
 
-// ToObject is called by the ObjectBox to load an object from a FlatBuffer
+// ToObject is called by ObjectBox to load an object from a FlatBuffer
 func (testStringIdEntity_EntityInfo) ToObject(bytes []byte) interface{} {
 	table := &flatbuffers.Table{
 		Bytes: bytes,
@@ -530,12 +530,12 @@ func (testStringIdEntity_EntityInfo) ToObject(bytes []byte) interface{} {
 	}
 }
 
-// MakeSlice is called by the ObjectBox to construct a new slice to hold the read objects
+// MakeSlice is called by ObjectBox to construct a new slice to hold the read objects
 func (testStringIdEntity_EntityInfo) MakeSlice(capacity int) interface{} {
 	return make([]*TestStringIdEntity, 0, capacity)
 }
 
-// AppendToSlice is called by the ObjectBox to fill the slice of the read objects
+// AppendToSlice is called by ObjectBox to fill the slice of the read objects
 func (testStringIdEntity_EntityInfo) AppendToSlice(slice interface{}, object interface{}) interface{} {
 	return append(slice.([]*TestStringIdEntity), object.(*TestStringIdEntity))
 }
@@ -713,12 +713,12 @@ var TestEntityInline_ = struct {
 	},
 }
 
-// GeneratorVersion is called by the ObjectBox to verify the compatibility of the generator used to generate this code
+// GeneratorVersion is called by ObjectBox to verify the compatibility of the generator used to generate this code
 func (testEntityInline_EntityInfo) GeneratorVersion() int {
 	return 1
 }
 
-// AddToModel is called by the ObjectBox during model build
+// AddToModel is called by ObjectBox during model build
 func (testEntityInline_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("TestEntityInline", 4, 7566870022778519807)
 	model.Property("Date", objectbox.PropertyType_Long, 1, 6052475349651303914)
@@ -728,18 +728,18 @@ func (testEntityInline_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.EntityLastPropertyId(3, 5298431058949014957)
 }
 
-// GetId is called by the ObjectBox during Put operations to check for existing ID on an object
+// GetId is called by ObjectBox during Put operations to check for existing ID on an object
 func (testEntityInline_EntityInfo) GetId(object interface{}) (uint64, error) {
 	return object.(*TestEntityInline).Id, nil
 }
 
-// SetId is called by the ObjectBox during Put to update an ID on an object that has just been inserted
+// SetId is called by ObjectBox during Put to update an ID on an object that has just been inserted
 func (testEntityInline_EntityInfo) SetId(object interface{}, id uint64) error {
 	object.(*TestEntityInline).Id = id
 	return nil
 }
 
-// Flatten is called by the ObjectBox to transform an object to a FlatBuffer
+// Flatten is called by ObjectBox to transform an object to a FlatBuffer
 func (testEntityInline_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
 	obj := object.(*TestEntityInline)
 
@@ -750,7 +750,7 @@ func (testEntityInline_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.
 	fbutils.SetUint64Slot(fbb, 2, id)
 }
 
-// ToObject is called by the ObjectBox to load an object from a FlatBuffer
+// ToObject is called by ObjectBox to load an object from a FlatBuffer
 func (testEntityInline_EntityInfo) ToObject(bytes []byte) interface{} {
 	table := &flatbuffers.Table{
 		Bytes: bytes,
@@ -768,12 +768,12 @@ func (testEntityInline_EntityInfo) ToObject(bytes []byte) interface{} {
 	}
 }
 
-// MakeSlice is called by the ObjectBox to construct a new slice to hold the read objects
+// MakeSlice is called by ObjectBox to construct a new slice to hold the read objects
 func (testEntityInline_EntityInfo) MakeSlice(capacity int) interface{} {
 	return make([]*TestEntityInline, 0, capacity)
 }
 
-// AppendToSlice is called by the ObjectBox to fill the slice of the read objects
+// AppendToSlice is called by ObjectBox to fill the slice of the read objects
 func (testEntityInline_EntityInfo) AppendToSlice(slice interface{}, object interface{}) interface{} {
 	return append(slice.([]*TestEntityInline), object.(*TestEntityInline))
 }

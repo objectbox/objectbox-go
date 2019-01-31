@@ -31,7 +31,11 @@ function postBuild {
 function test {
     echo "******** Testing ********"
     # ./build/test.sh
-    go test -race ./...
+    testFlags=""
+    if [[ $(uname -m) = "x86_64" ]]; then
+        testFlags="$testFlags -race"
+    fi
+    go test $testFlags ./...
 }
 
 function generate {

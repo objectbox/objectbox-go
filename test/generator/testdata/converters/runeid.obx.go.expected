@@ -74,10 +74,10 @@ func (runeIdEntity_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) in
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
-	var id = runeIdToEntityProperty(table.GetUint64Slot(4, 0))
+	var id = table.GetUint64Slot(4, 0)
 
 	return &RuneIdEntity{
-		Id: id,
+		Id: runeIdToEntityProperty(id),
 	}
 }
 

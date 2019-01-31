@@ -813,10 +813,10 @@ func (testStringIdEntity_EntityInfo) Load(txn *objectbox.Transaction, bytes []by
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
-	var id = objectbox.StringIdConvertToEntityProperty(table.GetUint64Slot(4, 0))
+	var id = table.GetUint64Slot(4, 0)
 
 	return &TestStringIdEntity{
-		Id: id,
+		Id: objectbox.StringIdConvertToEntityProperty(id),
 	}
 }
 

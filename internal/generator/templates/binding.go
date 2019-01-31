@@ -262,7 +262,7 @@ func ({{$entityNameCamel}}_EntityInfo) Load(txn *objectbox.Transaction, bytes []
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
-	var id = {{template "property-getter" $entity.IdProperty}}
+	var id = table.Get{{$entity.IdProperty.GoType | StringTitle}}Slot({{$entity.IdProperty.FbvTableOffset}}, 0)
 
 	{{- /* load relations, TODO return error, ideally we should be using BoxForTarget() with a manually assigned txn */}}
 	{{- range $field := .Fields}}{{if $field.SimpleRelation}}
@@ -302,7 +302,11 @@ func ({{$entityNameCamel}}_EntityInfo) Load(txn *objectbox.Transaction, bytes []
 			{{$field.Name}}: 
 				{{- if or $field.SimpleRelation}}{{if not $field.IsPointer}}*{{end}}rel{{$field.Name}}
 				{{- else if $field.StandaloneRelation}}rel{{$field.Name}}
-        		{{- else if $field.IsId}} id
+        		{{- else if $field.IsId}}{{with $field.Property}}
+					{{- if .Converter}}{{.Converter}}ToEntityProperty(
+					{{- else if .CastOnWrite}}{{.CastOnWrite}}({{end -}}
+					id
+					{{- if or .Converter .CastOnWrite}}){{end}}{{end}}
 				{{- else if $field.Property}}{{template "property-getter" $field.Property}}
 				{{- else}}{{if $field.IsPointer}}&{{end}}{{$field.Type}}{ {{template "fields-initializer" $field}} }{{end}},
 		{{- end}}

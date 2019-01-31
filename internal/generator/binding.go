@@ -103,7 +103,7 @@ type Annotation struct {
 }
 
 type Field struct {
-	entity             *Entity // parent entity
+	Entity             *Entity // parent entity
 	Name               string
 	Type               string
 	IsPointer          bool
@@ -287,7 +287,7 @@ func (entity *Entity) addFields(fields fieldList, fieldPath string) ([]*Field, e
 
 		// this is used to correctly render embedded-structs initialization template
 		var field = &Field{
-			entity:   entity,
+			Entity:   entity,
 			Name:     property.Name,
 			Property: property,
 		}
@@ -459,7 +459,7 @@ func (field *Field) processType(f field) (fields fieldList, err error) {
 
 		// add this as a standalone relation to the entity
 		// TODO handle rename of the property (relation) using the uidRequest
-		if field.entity.Relations[field.Name] != nil {
+		if field.Entity.Relations[field.Name] != nil {
 			return nil, fmt.Errorf("relation with the name %s already exists", field.Name)
 		}
 
@@ -471,7 +471,7 @@ func (field *Field) processType(f field) (fields fieldList, err error) {
 			rel.Target.IsPointer = true
 		}
 
-		field.entity.Relations[field.Name] = rel
+		field.Entity.Relations[field.Name] = rel
 
 		// fill in the field information
 		field.fillInfo(f, typ)
@@ -490,9 +490,22 @@ func (field *Field) fillInfo(f field, typ typeErrorful) {
 	} else {
 		field.Type = typ.String()
 	}
+
 	// strip the '*' if it's a pointer type
 	if len(field.Type) > 1 && field.Type[0] == '*' {
 		field.Type = field.Type[1:]
+	}
+
+	// if the package path is specified (happens for embedded fields), check whether it's current package
+	if strings.ContainsRune(field.Type, '/') {
+
+		// if the package is the current package, strip the path & name
+		var parts = strings.Split(field.Type, ".")
+
+		if len(parts) == 2 && parts[0] == field.Entity.binding.Package.Path() {
+			field.Type = parts[len(parts)-1]
+		}
+
 	}
 	// get just the last component from `packagename.typename` for the field name
 	var parts = strings.Split(field.Name, ".")
@@ -584,6 +597,7 @@ func (property *Property) forceRelation(target string, manyToMany bool) error {
 	}
 
 	if manyToMany {
+		// nothing to do here, it's handled as a standalone relation so this "property" is skipped completely
 
 	} else {
 		// add this field as an ID field
@@ -799,7 +813,7 @@ func (entity *Entity) HasRelations() bool {
 
 // called from the template
 func (field *Field) IsId() bool {
-	return field.Property == field.entity.IdProperty
+	return field.Property == field.Entity.IdProperty
 }
 
 // calculates flatbuffers vTableOffset

@@ -157,64 +157,67 @@ func ({{$entityNameCamel}}_EntityInfo) SetId(object interface{}, id uint64) {
 
 // PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
 func ({{$entityNameCamel}}_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}, id uint64) error {
+	{{- block "put-relations" $entity}}
 	{{- /* TODO ideally we should be using BoxForTarget() with a manually assigned txn */}}
 	{{- range $field := .Fields}}
-	{{- if $field.SimpleRelation}}
-		if rel := {{if not $field.IsPointer}}&{{end}}object.(*{{$entity.Name}}).{{$field.Name}}; rel != nil {
-			{{template "put-related-entity" $field.SimpleRelation}}
-			// NOTE Put/PutAsync() has a side-effect of setting the rel.ID, so at this point, it is already set
-		}
-	{{- else if $field.StandaloneRelation}}
-		if cursor, err := txn.CursorForName("{{$entity.Name}}"); err != nil {
-			panic(err)
-		} else if rSlice := object.(*{{$entity.Name}}).{{$field.Name}}; rSlice != nil {
-			// get id from the object, if inserting, it would be 0 even if the argument id is already non-zero
-			// this saves us an unnecessary request to RelationIds for new objects (there can't be any relations yet)
-			objId, err := {{$entity.Name}}Binding.GetId(object)
-			if err != nil {
-				return err
+		{{- if $field.SimpleRelation}}
+			if rel := {{if not $field.IsPointer}}&{{end}}object.(*{{$field.Entity.Name}}).{{$field.Name}}; rel != nil {
+				{{template "put-related-entity" $field.SimpleRelation}}
+				// NOTE Put/PutAsync() has a side-effect of setting the rel.ID, so at this point, it is already set
 			}
-
-			// make a map of related target entity IDs, marking those that were originally related but should be removed
-			var idsToRemove = make(map[uint64]bool)
-
-			if objId != 0 {
-				if oldRelIds, err := cursor.RelationIds({{$field.StandaloneRelation.Id}}, id); err != nil {
+		{{- else if $field.StandaloneRelation}}
+			if cursor, err := txn.CursorForName("{{$field.Entity.Name}}"); err != nil {
+				panic(err)
+			} else if rSlice := object.(*{{$field.Entity.Name}}).{{$field.Name}}; rSlice != nil {
+				// get id from the object, if inserting, it would be 0 even if the argument id is already non-zero
+				// this saves us an unnecessary request to RelationIds for new objects (there can't be any relations yet)
+				objId, err := {{$field.Entity.Name}}Binding.GetId(object)
+				if err != nil {
 					return err
-				} else {
-					for _, rId := range oldRelIds {
-						idsToRemove[rId] = true
+				}
+	
+				// make a map of related target entity IDs, marking those that were originally related but should be removed
+				var idsToRemove = make(map[uint64]bool)
+	
+				if objId != 0 {
+					if oldRelIds, err := cursor.RelationIds({{$field.StandaloneRelation.Id}}, id); err != nil {
+						return err
+					} else {
+						for _, rId := range oldRelIds {
+							idsToRemove[rId] = true
+						}
 					}
 				}
-			}
-
-			// walk over the current related objects, mark those that still exist, add the new ones
-			{{if $field.StandaloneRelation.Target.IsPointer -}}
-			for _, rel := range rSlice {
-			{{- else -}}
-			for k := range rSlice {
-				var rel = &rSlice[k] // take a pointer to the slice element so that it is updated during Put()
-			{{- end}}
-				{{template "put-related-entity" $field.StandaloneRelation}}
-
-				if idsToRemove[rId] {
-					// old relation that still exists, keep it
-					delete(idsToRemove, rId) 
-				} else {
-					// new relation, add it
-					if err := cursor.RelationPut({{$field.StandaloneRelation.Id}}, id, rId); err != nil {
+	
+				// walk over the current related objects, mark those that still exist, add the new ones
+				{{if $field.StandaloneRelation.Target.IsPointer -}}
+				for _, rel := range rSlice {
+				{{- else -}}
+				for k := range rSlice {
+					var rel = &rSlice[k] // take a pointer to the slice element so that it is updated during Put()
+				{{- end}}
+					{{template "put-related-entity" $field.StandaloneRelation}}
+	
+					if idsToRemove[rId] {
+						// old relation that still exists, keep it
+						delete(idsToRemove, rId) 
+					} else {
+						// new relation, add it
+						if err := cursor.RelationPut({{$field.StandaloneRelation.Id}}, id, rId); err != nil {
+							return err
+						}
+					}
+				}
+	
+				// remove those that were not found in the rSlice but were originally related to this entity
+				for rId := range idsToRemove {
+					if err := cursor.RelationRemove({{$field.StandaloneRelation.Id}}, id, rId); err != nil {
 						return err
 					}
 				}
 			}
-
-			// remove those that were not found in the rSlice but were originally related to this entity
-			for rId := range idsToRemove {
-				if err := cursor.RelationRemove({{$field.StandaloneRelation.Id}}, id, rId); err != nil {
-					return err
-				}
-			}
-		}
+		{{- else}}{{/* recursively visit fields in embedded structs */}}{{template "put-relations" $field}}
+		{{- end}}
 	{{- end}}{{end}}
 	return nil
 }
@@ -227,20 +230,23 @@ func ({{$entityNameCamel}}_EntityInfo) Flatten(object interface{}, fbb *flatbuff
     var offset{{$property.Name}} = fbutils.Create{{$property.ObType}}Offset(fbb, {{template "property-converter-encode" $property}})
 	{{- end}}{{end}}
 
+	{{- block "store-relations" $entity}}
 	{{- /* store relations, TODO return error, ideally we should be using BoxForTarget() with a manually assigned txn */}}
 	{{- range $field := .Fields}}
-	{{if $field.SimpleRelation}}
-		var rId{{$field.Property.Name}} uint64
-		if rel := {{if not $field.IsPointer}}&{{end}}obj.{{$field.Name}}; rel != nil {
-			if rId, err := {{$field.SimpleRelation.Target.Name}}Binding.GetId(rel); err != nil {
-				panic(err) // this must never happen but let's keep the check just to be sure
-			} else {
-				rId{{$field.Property.Name}} = rId
+		{{if $field.SimpleRelation}}
+			var rId{{$field.Property.Name}} uint64
+			if rel := {{if not $field.IsPointer}}&{{end}}obj.{{$field.Name}}; rel != nil {
+				if rId, err := {{$field.SimpleRelation.Target.Name}}Binding.GetId(rel); err != nil {
+					panic(err) // this must never happen but let's keep the check just to be sure
+				} else {
+					rId{{$field.Property.Name}} = rId
+				}
 			}
-		}
-	{{- else if $field.Property}}{{if $field.Property.Relation}}{{/* manual relation links (just ID)*/}}
-		var rId{{$field.Property.Name}} = {{template "property-converter-encode" $field.Property}} 
-	{{- end}}{{end}}{{end}}
+		{{- else if $field.Property}}{{if $field.Property.Relation}}{{/* manual relation links (just ID)*/}}
+			var rId{{$field.Property.Name}} = {{template "property-converter-encode" $field.Property}}{{- end}}
+		{{- else}}{{/* recursively visit fields in embedded structs */}}{{template "store-relations" $field}}
+		{{end}}
+	{{end}}{{end}}
 
     // build the FlatBuffers object
     fbb.StartObject({{$entity.LastPropertyId.GetId}})
@@ -264,37 +270,39 @@ func ({{$entityNameCamel}}_EntityInfo) Load(txn *objectbox.Transaction, bytes []
 	}
 	var id = table.Get{{$entity.IdProperty.GoType | StringTitle}}Slot({{$entity.IdProperty.FbvTableOffset}}, 0)
 
-	{{- /* load relations, TODO return error, ideally we should be using BoxForTarget() with a manually assigned txn */}}
-	{{- range $field := .Fields}}{{if $field.SimpleRelation}}
-
-		var rel{{$field.Name}} *{{$field.Type}}
-		if rId := {{template "property-getter" $field.Property}}; rId > 0 { 
-			if cursor, err := txn.CursorForName("{{$field.SimpleRelation.Target.Name}}"); err != nil {
-				panic(err) 
-			} else if relObject, err := cursor.Get(rId); err != nil {
-				panic(err) 
-			} else if relObj, ok := relObject.(*{{$field.Type}}); ok {
-				rel{{$field.Name}} = relObj
+	{{- block "load-relations" $entity}}
+	{{- /* TODO return error, ideally we should be using BoxForTarget() with a manually assigned txn */}}
+	{{- range $field := .Fields}}
+		{{if $field.SimpleRelation -}}
+			var rel{{$field.Name}} *{{$field.Type}}
+			if rId := {{template "property-getter" $field.Property}}; rId > 0 { 
+				if cursor, err := txn.CursorForName("{{$field.SimpleRelation.Target.Name}}"); err != nil {
+					panic(err) 
+				} else if relObject, err := cursor.Get(rId); err != nil {
+					panic(err) 
+				} else if relObj, ok := relObject.(*{{$field.Type}}); ok {
+					rel{{$field.Name}} = relObj
+				} else {
+					var relObj = relObject.({{$field.Type}})
+					rel{{$field.Name}} = &relObj
+				}
+			{{if not $field.IsPointer -}} 
 			} else {
-				var relObj = relObject.({{$field.Type}})
-				rel{{$field.Name}} = &relObj
+				rel{{$field.Name}} = &{{$field.Type}}{}
+			{{end -}}
 			}
-		{{if not $field.IsPointer -}} 
-		} else {
-			rel{{$field.Name}} = &{{$field.Type}}{}
-		{{end -}}
-		}
-	{{- else if $field.StandaloneRelation}}
-	
-		var rel{{$field.Name}} {{$field.Type}} 
-		if cursor, err := txn.CursorForName("{{$entity.Name}}"); err != nil {
-			panic(err) 
-		} else if rSlice, err := cursor.RelationGetAll({{$field.StandaloneRelation.Id}}, {{$field.StandaloneRelation.Target.Id}}, id); err != nil {
-			panic(err)
-		} else {
-			rel{{$field.Name}} = {{if $field.IsPointer}}&{{end}}rSlice.({{$field.Type}})
-		}
-	{{- end}}{{end}}
+		{{else if $field.StandaloneRelation -}}
+			var rel{{$field.Name}} {{$field.Type}} 
+			if cursor, err := txn.CursorForName("{{$field.Entity.Name}}"); err != nil {
+				panic(err) 
+			} else if rSlice, err := cursor.RelationGetAll({{$field.StandaloneRelation.Id}}, {{$field.StandaloneRelation.Target.Id}}, id); err != nil {
+				panic(err)
+			} else {
+				rel{{$field.Name}} = {{if $field.IsPointer}}&{{end}}rSlice.({{$field.Type}})
+			}
+		{{else}}{{/* recursively visit fields in embedded structs */}}{{template "load-relations" $field}}
+		{{- end}}
+	{{end}}{{end}}
 
 	return &{{$entity.Name}}{
 	{{- block "fields-initializer" $entity}}

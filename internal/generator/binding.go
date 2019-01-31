@@ -324,7 +324,7 @@ func (entity *Entity) addFields(fields fieldList, fieldPath string) ([]*Field, e
 			return nil, propertyError(err, property)
 		} else if innerStructFields != nil {
 			// if it was recognized as a struct that should be embedded, add all the fields
-			if innerFields, err := entity.addFields(innerStructFields, path+"."+property.Name); err != nil {
+			if innerFields, err := entity.addFields(innerStructFields, fieldPath+"."+property.Name); err != nil {
 				return nil, err
 			} else {
 				// apply some struct-related settings to the field
@@ -422,7 +422,7 @@ func (field *Field) processType(f field) (fields fieldList, err error) {
 		// check if it needs a type cast (it is a named type, not an alias)
 		if typ.IsNamed() {
 			property.CastOnRead = baseType.String()
-			property.CastOnWrite = typ.String()
+			property.CastOnWrite = path.Base(typ.String()) // sometimes, it may contain a full import path
 		}
 
 		return nil, nil

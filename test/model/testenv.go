@@ -90,7 +90,7 @@ func (env *TestEnv) Populate(count uint) {
 	var entities = make([]*Entity, toInsert)
 	var i = uint(0)
 	for coef := -limit; i < toInsert; coef += step {
-		entities[i] = entity47(int(coef), &env.options)
+		entities[i] = entity47(int64(coef), &env.options)
 		i++
 	}
 
@@ -115,7 +115,7 @@ func Entity47() *Entity {
 }
 
 // create a test entity ("47" because int fields are multiples of 47)
-func entity47(coef int, options *TestEnvOptions) *Entity {
+func entity47(coef int64, options *TestEnvOptions) *Entity {
 	// NOTE, it doesn't really matter that we overflow the smaller types
 	var Bool = coef%2 == 1
 
@@ -127,12 +127,12 @@ func entity47(coef int, options *TestEnvOptions) *Entity {
 	}
 
 	var object = &Entity{
-		Int:          47 * coef,
+		Int:          int(int32(47 * coef)),
 		Int8:         47 * int8(coef),
 		Int16:        47 * int16(coef),
 		Int32:        47 * int32(coef),
 		Int64:        47 * int64(coef),
-		Uint:         47 * uint(coef),
+		Uint:         uint(uint32(47 * coef)),
 		Uint8:        47 * uint8(coef),
 		Uint16:       47 * uint16(coef),
 		Uint32:       47 * uint32(coef),

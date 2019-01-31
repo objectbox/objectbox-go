@@ -68,12 +68,12 @@ var Event_ = struct {
 	},
 }
 
-// GeneratorVersion is called by the ObjectBox to verify the compatibility of the generator used to generate this code
+// GeneratorVersion is called by ObjectBox to verify the compatibility of the generator used to generate this code
 func (event_EntityInfo) GeneratorVersion() int {
 	return 1
 }
 
-// AddToModel is called by the ObjectBox during model build
+// AddToModel is called by ObjectBox during model build
 func (event_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("Event", 1, 1468539308767086854)
 	model.Property("Id", objectbox.PropertyType_Long, 1, 3098166604415018001)
@@ -87,22 +87,18 @@ func (event_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.EntityLastPropertyId(5, 6024563395733984005)
 }
 
-// GetId is called by the ObjectBox during Put operations to check for existing ID on an object
+// GetId is called by ObjectBox during Put operations to check for existing ID on an object
 func (event_EntityInfo) GetId(object interface{}) (uint64, error) {
 	return object.(*Event).Id, nil
 }
 
-// SetId is called by the ObjectBox during Put to update an ID on an object that has just been inserted
-func (event_EntityInfo) SetId(object interface{}, id uint64) {
+// SetId is called by ObjectBox during Put to update an ID on an object that has just been inserted
+func (event_EntityInfo) SetId(object interface{}, id uint64) error {
 	object.(*Event).Id = id
-}
-
-// PutRelated is called by the ObjectBox to put related entities before the object itself is flattened and put
-func (event_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}, id uint64) error {
 	return nil
 }
 
-// Flatten is called by the ObjectBox to transform an object to a FlatBuffer
+// Flatten is called by ObjectBox to transform an object to a FlatBuffer
 func (event_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
 	obj := object.(*Event)
 	var offsetUid = fbutils.CreateStringOffset(fbb, obj.Uid)
@@ -118,16 +114,15 @@ func (event_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id
 	fbutils.SetUOffsetTSlot(fbb, 4, offsetPicture)
 }
 
-// Load is called by the ObjectBox to load an object from a FlatBuffer
-func (event_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interface{} {
-	var table = &flatbuffers.Table{
+// ToObject is called by ObjectBox to load an object from a FlatBuffer
+func (event_EntityInfo) ToObject(bytes []byte) interface{} {
+	table := &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
-	var id = table.GetUint64Slot(4, 0)
 
 	return &Event{
-		Id:      id,
+		Id:      table.GetUint64Slot(4, 0),
 		Uid:     fbutils.GetStringSlot(table, 10),
 		Device:  fbutils.GetStringSlot(table, 6),
 		Date:    table.GetInt64Slot(8, 0),
@@ -135,12 +130,12 @@ func (event_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interface
 	}
 }
 
-// MakeSlice is called by the ObjectBox to construct a new slice to hold the read objects
+// MakeSlice is called by ObjectBox to construct a new slice to hold the read objects
 func (event_EntityInfo) MakeSlice(capacity int) interface{} {
 	return make([]*Event, 0, capacity)
 }
 
-// AppendToSlice is called by the ObjectBox to fill the slice of the read objects
+// AppendToSlice is called by ObjectBox to fill the slice of the read objects
 func (event_EntityInfo) AppendToSlice(slice interface{}, object interface{}) interface{} {
 	return append(slice.([]*Event), object.(*Event))
 }
@@ -372,12 +367,12 @@ var Reading_ = struct {
 	},
 }
 
-// GeneratorVersion is called by the ObjectBox to verify the compatibility of the generator used to generate this code
+// GeneratorVersion is called by ObjectBox to verify the compatibility of the generator used to generate this code
 func (reading_EntityInfo) GeneratorVersion() int {
 	return 1
 }
 
-// AddToModel is called by the ObjectBox during model build
+// AddToModel is called by ObjectBox during model build
 func (reading_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("Reading", 2, 5284076134434938613)
 	model.Property("Id", objectbox.PropertyType_Long, 1, 3968063745680890327)
@@ -394,34 +389,28 @@ func (reading_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.EntityLastPropertyId(9, 6040892611651481730)
 }
 
-// GetId is called by the ObjectBox during Put operations to check for existing ID on an object
+// GetId is called by ObjectBox during Put operations to check for existing ID on an object
 func (reading_EntityInfo) GetId(object interface{}) (uint64, error) {
 	return object.(*Reading).Id, nil
 }
 
-// SetId is called by the ObjectBox during Put to update an ID on an object that has just been inserted
-func (reading_EntityInfo) SetId(object interface{}, id uint64) {
+// SetId is called by ObjectBox during Put to update an ID on an object that has just been inserted
+func (reading_EntityInfo) SetId(object interface{}, id uint64) error {
 	object.(*Reading).Id = id
-}
-
-// PutRelated is called by the ObjectBox to put related entities before the object itself is flattened and put
-func (reading_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}, id uint64) error {
 	return nil
 }
 
-// Flatten is called by the ObjectBox to transform an object to a FlatBuffer
+// Flatten is called by ObjectBox to transform an object to a FlatBuffer
 func (reading_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
 	obj := object.(*Reading)
 	var offsetValueName = fbutils.CreateStringOffset(fbb, obj.ValueName)
 	var offsetValueString = fbutils.CreateStringOffset(fbb, obj.ValueString)
 
-	var rIdEventId = obj.EventId
-
 	// build the FlatBuffers object
 	fbb.StartObject(9)
 	fbutils.SetUint64Slot(fbb, 0, id)
 	fbutils.SetInt64Slot(fbb, 1, obj.Date)
-	fbutils.SetUint64Slot(fbb, 2, rIdEventId)
+	fbutils.SetUint64Slot(fbb, 2, obj.EventId)
 	fbutils.SetUOffsetTSlot(fbb, 3, offsetValueName)
 	fbutils.SetUOffsetTSlot(fbb, 4, offsetValueString)
 	fbutils.SetInt64Slot(fbb, 5, obj.ValueInteger)
@@ -430,16 +419,15 @@ func (reading_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, 
 	fbutils.SetFloat32Slot(fbb, 8, obj.ValueFloating32)
 }
 
-// Load is called by the ObjectBox to load an object from a FlatBuffer
-func (reading_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interface{} {
-	var table = &flatbuffers.Table{
+// ToObject is called by ObjectBox to load an object from a FlatBuffer
+func (reading_EntityInfo) ToObject(bytes []byte) interface{} {
+	table := &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
-	var id = table.GetUint64Slot(4, 0)
 
 	return &Reading{
-		Id:              id,
+		Id:              table.GetUint64Slot(4, 0),
 		Date:            table.GetInt64Slot(6, 0),
 		EventId:         table.GetUint64Slot(8, 0),
 		ValueName:       fbutils.GetStringSlot(table, 10),
@@ -451,12 +439,12 @@ func (reading_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interfa
 	}
 }
 
-// MakeSlice is called by the ObjectBox to construct a new slice to hold the read objects
+// MakeSlice is called by ObjectBox to construct a new slice to hold the read objects
 func (reading_EntityInfo) MakeSlice(capacity int) interface{} {
 	return make([]*Reading, 0, capacity)
 }
 
-// AppendToSlice is called by the ObjectBox to fill the slice of the read objects
+// AppendToSlice is called by ObjectBox to fill the slice of the read objects
 func (reading_EntityInfo) AppendToSlice(slice interface{}, object interface{}) interface{} {
 	return append(slice.([]*Reading), object.(*Reading))
 }

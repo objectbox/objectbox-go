@@ -98,12 +98,12 @@ var {{$entity.Name}}_ = struct {
     {{end -}}
 }
 
-// GeneratorVersion is called by the ObjectBox to verify the compatibility of the generator used to generate this code	
+// GeneratorVersion is called by ObjectBox to verify the compatibility of the generator used to generate this code	
 func ({{$entityNameCamel}}_EntityInfo) GeneratorVersion() int {
 	return {{$.GeneratorVersion}}
 }
 
-// AddToModel is called by the ObjectBox during model build
+// AddToModel is called by ObjectBox during model build
 func ({{$entityNameCamel}}_EntityInfo) AddToModel(model *objectbox.Model) {
     model.Entity("{{$entity.Name}}", {{$entity.Id}}, {{$entity.Uid}})
     {{range $property := $entity.Properties -}}
@@ -124,7 +124,7 @@ func ({{$entityNameCamel}}_EntityInfo) AddToModel(model *objectbox.Model) {
     {{end -}}
 }
 
-// GetId is called by the ObjectBox during Put operations to check for existing ID on an object
+// GetId is called by ObjectBox during Put operations to check for existing ID on an object
 func ({{$entityNameCamel}}_EntityInfo) GetId(object interface{}) (uint64, error) {
 	{{- if $.Options.ByValue}}
 		if obj, ok := object.(*{{$entity.Name}}); ok {
@@ -139,7 +139,7 @@ func ({{$entityNameCamel}}_EntityInfo) GetId(object interface{}) (uint64, error)
 	{{- end}}
 }
 
-// SetId is called by the ObjectBox during Put to update an ID on an object that has just been inserted
+// SetId is called by ObjectBox during Put to update an ID on an object that has just been inserted
 func ({{$entityNameCamel}}_EntityInfo) SetId(object interface{}, id uint64) {
 	{{- if $.Options.ByValue}}
 		if obj, ok := object.(*{{$entity.Name}}); ok {
@@ -155,7 +155,7 @@ func ({{$entityNameCamel}}_EntityInfo) SetId(object interface{}, id uint64) {
 	{{- end}}
 }
 
-// PutRelated is called by the ObjectBox to put related entities before the object itself is flattened and put
+// PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
 func ({{$entityNameCamel}}_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}, id uint64) error {
 	{{- /* TODO ideally we should be using BoxForTarget() with a manually assigned txn */}}
 	{{- range $field := .Fields}}
@@ -219,7 +219,7 @@ func ({{$entityNameCamel}}_EntityInfo) PutRelated(txn *objectbox.Transaction, ob
 	return nil
 }
 
-// Flatten is called by the ObjectBox to transform an object to a FlatBuffer
+// Flatten is called by ObjectBox to transform an object to a FlatBuffer
 func ({{$entityNameCamel}}_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
     {{if $entity.HasNonIdProperty}}obj := object.(*{{$entity.Name}}){{end -}}
 
@@ -256,7 +256,7 @@ func ({{$entityNameCamel}}_EntityInfo) Flatten(object interface{}, fbb *flatbuff
     {{end -}}
 }
 
-// Load is called by the ObjectBox to load an object from a FlatBuffer 
+// Load is called by ObjectBox to load an object from a FlatBuffer 
 func ({{$entityNameCamel}}_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interface{} {
 	var table = &flatbuffers.Table{
 		Bytes: bytes,
@@ -310,12 +310,12 @@ func ({{$entityNameCamel}}_EntityInfo) Load(txn *objectbox.Transaction, bytes []
 	}
 }
 
-// MakeSlice is called by the ObjectBox to construct a new slice to hold the read objects  
+// MakeSlice is called by ObjectBox to construct a new slice to hold the read objects  
 func ({{$entityNameCamel}}_EntityInfo) MakeSlice(capacity int) interface{} {
 	return make([]{{if not $.Options.ByValue}}*{{end}}{{$entity.Name}}, 0, capacity)
 }
 
-// AppendToSlice is called by the ObjectBox to fill the slice of the read objects
+// AppendToSlice is called by ObjectBox to fill the slice of the read objects
 func ({{$entityNameCamel}}_EntityInfo) AppendToSlice(slice interface{}, object interface{}) interface{} {
 	return append(slice.([]{{if not $.Options.ByValue}}*{{end}}{{$entity.Name}}), {{if $.Options.ByValue}}*{{end}}object.(*{{$entity.Name}}))
 }

@@ -22,6 +22,7 @@ import (
 	"go/ast"
 	"go/types"
 	"log"
+	"path"
 	"strconv"
 	"strings"
 
@@ -243,9 +244,9 @@ func (binding *Binding) createEntityFromAst(strct *ast.StructType, name string, 
 	return nil
 }
 
-func (entity *Entity) addFields(fields fieldList, path string) ([]*Field, error) {
+func (entity *Entity) addFields(fields fieldList, fieldPath string) ([]*Field, error) {
 	var propertyError = func(err error, property *Property) error {
-		return fmt.Errorf("%s on property %s, entity %s", err, property.Name, path)
+		return fmt.Errorf("%s on property %s, entity %s", err, property.Name, fieldPath)
 	}
 
 	var fieldsTree []*Field
@@ -255,7 +256,7 @@ func (entity *Entity) addFields(fields fieldList, path string) ([]*Field, error)
 
 		var property = &Property{
 			entity: entity,
-			path:   path,
+			path:   fieldPath,
 		}
 
 		if name, err := f.Name(); err != nil {
@@ -285,7 +286,7 @@ func (entity *Entity) addFields(fields fieldList, path string) ([]*Field, error)
 		// if the embedded field is from a different package, check if it's available (starts with an upercase letter)
 		if f.Package().Path() != entity.binding.Package.Path() {
 			if len(field.Name) == 0 || field.Name[0] < 65 || field.Name[0] > 90 {
-				log.Printf("Note - skipping unavailable field '%s' on entity %s", property.Name, path)
+				log.Printf("Note - skipping unavailable field '%s' on entity %s", property.Name, fieldPath)
 				continue
 			}
 
@@ -317,7 +318,7 @@ func (entity *Entity) addFields(fields fieldList, path string) ([]*Field, error)
 
 				// in case it's an embedded struct, inline all fields
 				if embedded, isStruct := baseType.(*types.Struct); isStruct {
-					if innerFields, err := entity.addFields(structFieldList{embedded}, path+"."+property.Name); err != nil {
+					if innerFields, err := entity.addFields(structFieldList{embedded}, fieldPath+"."+property.Name); err != nil {
 						return nil, err
 					} else {
 						// apply some struct-related settings
@@ -352,7 +353,7 @@ func (entity *Entity) addFields(fields fieldList, path string) ([]*Field, error)
 				// check if it needs a type cast (it is a named type, not an alias)
 				if typ.IsNamed() {
 					property.CastOnRead = baseType.String()
-					property.CastOnWrite = typ.String()
+					property.CastOnWrite = path.Base(typ.String()) // sometimes, it may contain a full import path
 				}
 			}
 		}

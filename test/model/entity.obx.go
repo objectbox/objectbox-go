@@ -721,7 +721,7 @@ func (testEntityInline_EntityInfo) GeneratorVersion() int {
 // AddToModel is called by ObjectBox during model build
 func (testEntityInline_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("TestEntityInline", 4, 7566870022778519807)
-	model.Property("Date", objectbox.PropertyType_Long, 1, 6052475349651303914)
+	model.Property("Date", objectbox.PropertyType_Date, 1, 6052475349651303914)
 	model.Property("Value", objectbox.PropertyType_Double, 2, 7019205901062172310)
 	model.Property("Id", objectbox.PropertyType_Long, 3, 5298431058949014957)
 	model.PropertyFlags(objectbox.PropertyFlags_ID)

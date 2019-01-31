@@ -15,7 +15,7 @@ type d_EntityInfo struct {
 
 var DBinding = d_EntityInfo{
 	Id:  4,
-	Uid: 7837839688282259259,
+	Uid: 2518412263346885298,
 }
 
 // D_ contains type-based Property helpers to facilitate some common operations such as Queries.
@@ -48,11 +48,11 @@ func (d_EntityInfo) GeneratorVersion() int {
 
 // AddToModel is called by ObjectBox during model build
 func (d_EntityInfo) AddToModel(model *objectbox.Model) {
-	model.Entity("D", 4, 7837839688282259259)
-	model.Property("Id", objectbox.PropertyType_Long, 1, 2518412263346885298)
+	model.Entity("D", 4, 2518412263346885298)
+	model.Property("Id", objectbox.PropertyType_Long, 1, 5617773211005988520)
 	model.PropertyFlags(objectbox.PropertyFlags_ID)
-	model.Property("Value", objectbox.PropertyType_Double, 2, 5617773211005988520)
-	model.EntityLastPropertyId(2, 5617773211005988520)
+	model.Property("Value", objectbox.PropertyType_Double, 2, 2339563716805116249)
+	model.EntityLastPropertyId(2, 2339563716805116249)
 }
 
 // GetId is called by ObjectBox during Put operations to check for existing ID on an object

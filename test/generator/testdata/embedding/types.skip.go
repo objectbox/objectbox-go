@@ -8,7 +8,7 @@ type Id struct {
 }
 
 type Float64Value struct {
-	Value float64
+	Value float64 `unique`
 }
 
 type BytesValue struct {

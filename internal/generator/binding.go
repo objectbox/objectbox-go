@@ -505,10 +505,14 @@ func (entity *Entity) setAnnotations(comments []*ast.Comment) error {
 	entity.Annotations = make(map[string]*Annotation)
 
 	for _, tags := range lines {
-		if err := parseAnnotations(tags, &entity.Annotations); err != nil {
-			entity.Annotations = nil
-			return err
+		// only handle comments in the form of:   // `tags`
+		if len(tags) > 1 && tags[0] == tags[len(tags)-1] && tags[0] == '`' {
+			if err := parseAnnotations(tags, &entity.Annotations); err != nil {
+				entity.Annotations = nil
+				return err
+			}
 		}
+
 	}
 
 	if len(entity.Annotations) == 0 {
@@ -594,8 +598,6 @@ func (property *Property) forceRelation(target string, manyToMany bool) error {
 func parseAnnotations(tags string, annotations *map[string]*Annotation) error {
 	if len(tags) > 1 && tags[0] == tags[len(tags)-1] && (tags[0] == '`' || tags[0] == '"') {
 		tags = tags[1 : len(tags)-1]
-	} else {
-		return nil
 	}
 
 	if tags == "" {

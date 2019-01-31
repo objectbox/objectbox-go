@@ -71,8 +71,10 @@ func (b_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Property("Id", objectbox.PropertyType_Long, 2, 2669985732393126063)
 	model.PropertyFlags(objectbox.PropertyFlags_ID)
 	model.Property("Value", objectbox.PropertyType_Double, 3, 1774932891286980153)
-	model.Property("Name", objectbox.PropertyType_String, 4, 6044372234677422456)
-	model.EntityLastPropertyId(4, 6044372234677422456)
+	model.PropertyFlags(objectbox.PropertyFlags_UNIQUE)
+	model.PropertyIndex(1, 6044372234677422456)
+	model.Property("Name", objectbox.PropertyType_String, 4, 8274930044578894929)
+	model.EntityLastPropertyId(4, 8274930044578894929)
 }
 
 // GetId is called by ObjectBox during Put operations to check for existing ID on an object

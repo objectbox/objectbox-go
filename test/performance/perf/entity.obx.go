@@ -91,8 +91,12 @@ func (entity_EntityInfo) GetId(object interface{}) (uint64, error) {
 }
 
 // SetId is called by ObjectBox during Put to update an ID on an object that has just been inserted
-func (entity_EntityInfo) SetId(object interface{}, id uint64) error {
+func (entity_EntityInfo) SetId(object interface{}, id uint64) {
 	object.(*Entity).Id = id
+}
+
+// PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
+func (entity_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}, id uint64) error {
 	return nil
 }
 
@@ -110,15 +114,16 @@ func (entity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, i
 	fbutils.SetFloat64Slot(fbb, 4, obj.Float64)
 }
 
-// ToObject is called by ObjectBox to load an object from a FlatBuffer
-func (entity_EntityInfo) ToObject(bytes []byte) interface{} {
-	table := &flatbuffers.Table{
+// Load is called by ObjectBox to load an object from a FlatBuffer
+func (entity_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interface{} {
+	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
+	var id = table.GetUint64Slot(4, 0)
 
 	return &Entity{
-		Id:      table.GetUint64Slot(4, 0),
+		Id:      id,
 		Int32:   table.GetInt32Slot(6, 0),
 		Int64:   table.GetInt64Slot(8, 0),
 		String:  fbutils.GetStringSlot(table, 10),

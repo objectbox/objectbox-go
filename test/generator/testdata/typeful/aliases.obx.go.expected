@@ -111,8 +111,12 @@ func (aliases_EntityInfo) GetId(object interface{}) (uint64, error) {
 }
 
 // SetId is called by ObjectBox during Put to update an ID on an object that has just been inserted
-func (aliases_EntityInfo) SetId(object interface{}, id uint64) error {
+func (aliases_EntityInfo) SetId(object interface{}, id uint64) {
 	object.(*Aliases).Id = id
+}
+
+// PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
+func (aliases_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}, id uint64) error {
 	return nil
 }
 
@@ -135,15 +139,16 @@ func (aliases_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, 
 	fbutils.SetUOffsetTSlot(fbb, 6, offsetOtherPackage2)
 }
 
-// ToObject is called by ObjectBox to load an object from a FlatBuffer
-func (aliases_EntityInfo) ToObject(bytes []byte) interface{} {
-	table := &flatbuffers.Table{
+// Load is called by ObjectBox to load an object from a FlatBuffer
+func (aliases_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interface{} {
+	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
+	var id = table.GetUint64Slot(4, 0)
 
 	return &Aliases{
-		Id:            table.GetUint64Slot(4, 0),
+		Id:            id,
 		SameFile:      fbutils.GetStringSlot(table, 6),
 		SamePackage:   int(table.GetUint64Slot(8, 0)),
 		SameFile2:     sameFileNamed(fbutils.GetStringSlot(table, 10)),

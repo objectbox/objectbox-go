@@ -93,8 +93,12 @@ func (event_EntityInfo) GetId(object interface{}) (uint64, error) {
 }
 
 // SetId is called by ObjectBox during Put to update an ID on an object that has just been inserted
-func (event_EntityInfo) SetId(object interface{}, id uint64) error {
+func (event_EntityInfo) SetId(object interface{}, id uint64) {
 	object.(*Event).Id = id
+}
+
+// PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
+func (event_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}, id uint64) error {
 	return nil
 }
 
@@ -114,15 +118,16 @@ func (event_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id
 	fbutils.SetUOffsetTSlot(fbb, 4, offsetPicture)
 }
 
-// ToObject is called by ObjectBox to load an object from a FlatBuffer
-func (event_EntityInfo) ToObject(bytes []byte) interface{} {
-	table := &flatbuffers.Table{
+// Load is called by ObjectBox to load an object from a FlatBuffer
+func (event_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interface{} {
+	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
+	var id = table.GetUint64Slot(4, 0)
 
 	return &Event{
-		Id:      table.GetUint64Slot(4, 0),
+		Id:      id,
 		Uid:     fbutils.GetStringSlot(table, 10),
 		Device:  fbutils.GetStringSlot(table, 6),
 		Date:    table.GetInt64Slot(8, 0),
@@ -395,8 +400,12 @@ func (reading_EntityInfo) GetId(object interface{}) (uint64, error) {
 }
 
 // SetId is called by ObjectBox during Put to update an ID on an object that has just been inserted
-func (reading_EntityInfo) SetId(object interface{}, id uint64) error {
+func (reading_EntityInfo) SetId(object interface{}, id uint64) {
 	object.(*Reading).Id = id
+}
+
+// PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
+func (reading_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}, id uint64) error {
 	return nil
 }
 
@@ -406,11 +415,13 @@ func (reading_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, 
 	var offsetValueName = fbutils.CreateStringOffset(fbb, obj.ValueName)
 	var offsetValueString = fbutils.CreateStringOffset(fbb, obj.ValueString)
 
+	var rIdEventId = obj.EventId
+
 	// build the FlatBuffers object
 	fbb.StartObject(9)
 	fbutils.SetUint64Slot(fbb, 0, id)
 	fbutils.SetInt64Slot(fbb, 1, obj.Date)
-	fbutils.SetUint64Slot(fbb, 2, obj.EventId)
+	fbutils.SetUint64Slot(fbb, 2, rIdEventId)
 	fbutils.SetUOffsetTSlot(fbb, 3, offsetValueName)
 	fbutils.SetUOffsetTSlot(fbb, 4, offsetValueString)
 	fbutils.SetInt64Slot(fbb, 5, obj.ValueInteger)
@@ -419,15 +430,16 @@ func (reading_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, 
 	fbutils.SetFloat32Slot(fbb, 8, obj.ValueFloating32)
 }
 
-// ToObject is called by ObjectBox to load an object from a FlatBuffer
-func (reading_EntityInfo) ToObject(bytes []byte) interface{} {
-	table := &flatbuffers.Table{
+// Load is called by ObjectBox to load an object from a FlatBuffer
+func (reading_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interface{} {
+	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
+	var id = table.GetUint64Slot(4, 0)
 
 	return &Reading{
-		Id:              table.GetUint64Slot(4, 0),
+		Id:              id,
 		Date:            table.GetInt64Slot(6, 0),
 		EventId:         table.GetUint64Slot(8, 0),
 		ValueName:       fbutils.GetStringSlot(table, 10),

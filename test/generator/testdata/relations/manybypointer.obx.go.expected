@@ -32,12 +32,12 @@ var TaskRelManyPtr_ = struct {
 	},
 }
 
-// GeneratorVersion is called by the ObjectBox to verify the compatibility of the generator used to generate this code
+// GeneratorVersion is called by ObjectBox to verify the compatibility of the generator used to generate this code
 func (taskRelManyPtr_EntityInfo) GeneratorVersion() int {
 	return 1
 }
 
-// AddToModel is called by the ObjectBox during model build
+// AddToModel is called by ObjectBox during model build
 func (taskRelManyPtr_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("TaskRelManyPtr", 5, 2339563716805116249)
 	model.Property("Id", objectbox.PropertyType_Long, 1, 7144924247938981575)
@@ -46,17 +46,17 @@ func (taskRelManyPtr_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Relation(1, 161231572858529631, 4, 7837839688282259259)
 }
 
-// GetId is called by the ObjectBox during Put operations to check for existing ID on an object
+// GetId is called by ObjectBox during Put operations to check for existing ID on an object
 func (taskRelManyPtr_EntityInfo) GetId(object interface{}) (uint64, error) {
 	return object.(*TaskRelManyPtr).Id, nil
 }
 
-// SetId is called by the ObjectBox during Put to update an ID on an object that has just been inserted
+// SetId is called by ObjectBox during Put to update an ID on an object that has just been inserted
 func (taskRelManyPtr_EntityInfo) SetId(object interface{}, id uint64) {
 	object.(*TaskRelManyPtr).Id = id
 }
 
-// PutRelated is called by the ObjectBox to put related entities before the object itself is flattened and put
+// PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
 func (taskRelManyPtr_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}, id uint64) error {
 	if cursor, err := txn.CursorForName("TaskRelManyPtr"); err != nil {
 		panic(err)
@@ -115,7 +115,7 @@ func (taskRelManyPtr_EntityInfo) PutRelated(txn *objectbox.Transaction, object i
 	return nil
 }
 
-// Flatten is called by the ObjectBox to transform an object to a FlatBuffer
+// Flatten is called by ObjectBox to transform an object to a FlatBuffer
 func (taskRelManyPtr_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
 
 	// build the FlatBuffers object
@@ -123,7 +123,7 @@ func (taskRelManyPtr_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Bu
 	fbutils.SetUint64Slot(fbb, 0, id)
 }
 
-// Load is called by the ObjectBox to load an object from a FlatBuffer
+// Load is called by ObjectBox to load an object from a FlatBuffer
 func (taskRelManyPtr_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interface{} {
 	var table = &flatbuffers.Table{
 		Bytes: bytes,
@@ -146,12 +146,12 @@ func (taskRelManyPtr_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) 
 	}
 }
 
-// MakeSlice is called by the ObjectBox to construct a new slice to hold the read objects
+// MakeSlice is called by ObjectBox to construct a new slice to hold the read objects
 func (taskRelManyPtr_EntityInfo) MakeSlice(capacity int) interface{} {
 	return make([]*TaskRelManyPtr, 0, capacity)
 }
 
-// AppendToSlice is called by the ObjectBox to fill the slice of the read objects
+// AppendToSlice is called by ObjectBox to fill the slice of the read objects
 func (taskRelManyPtr_EntityInfo) AppendToSlice(slice interface{}, object interface{}) interface{} {
 	return append(slice.([]*TaskRelManyPtr), object.(*TaskRelManyPtr))
 }

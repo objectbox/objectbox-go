@@ -41,6 +41,9 @@ var Entity_ = struct {
 	Float64      *objectbox.PropertyFloat64
 	Date         *objectbox.PropertyInt64
 	Complex128   *objectbox.PropertyByteVector
+	Related      *objectbox.PropertyUint64
+	RelatedPtr   *objectbox.PropertyUint64
+	RelatedPtr2  *objectbox.PropertyUint64
 }{
 	Id: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
@@ -210,6 +213,30 @@ var Entity_ = struct {
 			},
 		},
 	},
+	Related: &objectbox.PropertyUint64{
+		BaseProperty: &objectbox.BaseProperty{
+			Id: 22,
+			Entity: &objectbox.Entity{
+				Id: 1,
+			},
+		},
+	},
+	RelatedPtr: &objectbox.PropertyUint64{
+		BaseProperty: &objectbox.BaseProperty{
+			Id: 23,
+			Entity: &objectbox.Entity{
+				Id: 1,
+			},
+		},
+	},
+	RelatedPtr2: &objectbox.PropertyUint64{
+		BaseProperty: &objectbox.BaseProperty{
+			Id: 24,
+			Entity: &objectbox.Entity{
+				Id: 1,
+			},
+		},
+	},
 }
 
 // GeneratorVersion is called by ObjectBox to verify the compatibility of the generator used to generate this code
@@ -242,7 +269,15 @@ func (entity_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Property("Float64", objectbox.PropertyType_Double, 18, 681625187526498317)
 	model.Property("Date", objectbox.PropertyType_Date, 19, 2927532418453906842)
 	model.Property("Complex128", objectbox.PropertyType_ByteVector, 20, 2323084480359838337)
-	model.EntityLastPropertyId(21, 3893192683529392073)
+	model.Property("Related", objectbox.PropertyType_Relation, 22, 6981354105569415135)
+	model.PropertyRelation("TestEntityRelated", 1, 7297830522090799401)
+	model.Property("RelatedPtr", objectbox.PropertyType_Relation, 23, 2938782103279095882)
+	model.PropertyRelation("TestEntityRelated", 2, 1636618737379039866)
+	model.Property("RelatedPtr2", objectbox.PropertyType_Relation, 24, 7776035803207726954)
+	model.PropertyRelation("TestEntityRelated", 3, 6077259218141868916)
+	model.EntityLastPropertyId(24, 7776035803207726954)
+	model.Relation(5, 1694321226239708534, 5, 145948658381494339)
+	model.Relation(4, 5379891792880176678, 3, 2793387980842421409)
 }
 
 // GetId is called by ObjectBox during Put operations to check for existing ID on an object
@@ -251,8 +286,160 @@ func (entity_EntityInfo) GetId(object interface{}) (uint64, error) {
 }
 
 // SetId is called by ObjectBox during Put to update an ID on an object that has just been inserted
-func (entity_EntityInfo) SetId(object interface{}, id uint64) error {
+func (entity_EntityInfo) SetId(object interface{}, id uint64) {
 	object.(*Entity).Id = id
+}
+
+// PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
+func (entity_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}, id uint64) error {
+	if rel := &object.(*Entity).Related; rel != nil {
+		rId, err := TestEntityRelatedBinding.GetId(rel)
+		if err != nil {
+			return err
+		} else if rId == 0 {
+			if rCursor, err := txn.CursorForName("TestEntityRelated"); err != nil {
+				return err
+			} else if rId, err = rCursor.Put(rel); err != nil {
+				return err
+			}
+		}
+		// NOTE Put/PutAsync() has a side-effect of setting the rel.ID, so at this point, it is already set
+	}
+	if rel := object.(*Entity).RelatedPtr; rel != nil {
+		rId, err := TestEntityRelatedBinding.GetId(rel)
+		if err != nil {
+			return err
+		} else if rId == 0 {
+			if rCursor, err := txn.CursorForName("TestEntityRelated"); err != nil {
+				return err
+			} else if rId, err = rCursor.Put(rel); err != nil {
+				return err
+			}
+		}
+		// NOTE Put/PutAsync() has a side-effect of setting the rel.ID, so at this point, it is already set
+	}
+	if rel := object.(*Entity).RelatedPtr2; rel != nil {
+		rId, err := TestEntityRelatedBinding.GetId(rel)
+		if err != nil {
+			return err
+		} else if rId == 0 {
+			if rCursor, err := txn.CursorForName("TestEntityRelated"); err != nil {
+				return err
+			} else if rId, err = rCursor.Put(rel); err != nil {
+				return err
+			}
+		}
+		// NOTE Put/PutAsync() has a side-effect of setting the rel.ID, so at this point, it is already set
+	}
+	if cursor, err := txn.CursorForName("Entity"); err != nil {
+		panic(err)
+	} else if rSlice := object.(*Entity).RelatedSlice; rSlice != nil {
+		// get id from the object, if inserting, it would be 0 even if the argument id is already non-zero
+		// this saves us an unnecessary request to RelationIds for new objects (there can't be any relations yet)
+		objId, err := EntityBinding.GetId(object)
+		if err != nil {
+			return err
+		}
+
+		// make a map of related target entity IDs, marking those that were originally related but should be removed
+		var idsToRemove = make(map[uint64]bool)
+
+		if objId != 0 {
+			if oldRelIds, err := cursor.RelationIds(4, id); err != nil {
+				return err
+			} else {
+				for _, rId := range oldRelIds {
+					idsToRemove[rId] = true
+				}
+			}
+		}
+
+		// walk over the current related objects, mark those that still exist, add the new ones
+		for k := range rSlice {
+			var rel = &rSlice[k] // take a pointer to the slice element so that it is updated during Put()
+			rId, err := EntityByValueBinding.GetId(rel)
+			if err != nil {
+				return err
+			} else if rId == 0 {
+				if rCursor, err := txn.CursorForName("EntityByValue"); err != nil {
+					return err
+				} else if rId, err = rCursor.Put(rel); err != nil {
+					return err
+				}
+			}
+
+			if idsToRemove[rId] {
+				// old relation that still exists, keep it
+				delete(idsToRemove, rId)
+			} else {
+				// new relation, add it
+				if err := cursor.RelationPut(4, id, rId); err != nil {
+					return err
+				}
+			}
+		}
+
+		// remove those that were not found in the rSlice but were originally related to this entity
+		for rId := range idsToRemove {
+			if err := cursor.RelationRemove(4, id, rId); err != nil {
+				return err
+			}
+		}
+	}
+	if cursor, err := txn.CursorForName("Entity"); err != nil {
+		panic(err)
+	} else if rSlice := object.(*Entity).RelatedPtrSlice; rSlice != nil {
+		// get id from the object, if inserting, it would be 0 even if the argument id is already non-zero
+		// this saves us an unnecessary request to RelationIds for new objects (there can't be any relations yet)
+		objId, err := EntityBinding.GetId(object)
+		if err != nil {
+			return err
+		}
+
+		// make a map of related target entity IDs, marking those that were originally related but should be removed
+		var idsToRemove = make(map[uint64]bool)
+
+		if objId != 0 {
+			if oldRelIds, err := cursor.RelationIds(5, id); err != nil {
+				return err
+			} else {
+				for _, rId := range oldRelIds {
+					idsToRemove[rId] = true
+				}
+			}
+		}
+
+		// walk over the current related objects, mark those that still exist, add the new ones
+		for _, rel := range rSlice {
+			rId, err := TestEntityRelatedBinding.GetId(rel)
+			if err != nil {
+				return err
+			} else if rId == 0 {
+				if rCursor, err := txn.CursorForName("TestEntityRelated"); err != nil {
+					return err
+				} else if rId, err = rCursor.Put(rel); err != nil {
+					return err
+				}
+			}
+
+			if idsToRemove[rId] {
+				// old relation that still exists, keep it
+				delete(idsToRemove, rId)
+			} else {
+				// new relation, add it
+				if err := cursor.RelationPut(5, id, rId); err != nil {
+					return err
+				}
+			}
+		}
+
+		// remove those that were not found in the rSlice but were originally related to this entity
+		for rId := range idsToRemove {
+			if err := cursor.RelationRemove(5, id, rId); err != nil {
+				return err
+			}
+		}
+	}
 	return nil
 }
 
@@ -264,8 +451,35 @@ func (entity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, i
 	var offsetByteVector = fbutils.CreateByteVectorOffset(fbb, obj.ByteVector)
 	var offsetComplex128 = fbutils.CreateByteVectorOffset(fbb, complex128BytesToDatabaseValue(obj.Complex128))
 
+	var rIdRelated uint64
+	if rel := &obj.Related; rel != nil {
+		if rId, err := TestEntityRelatedBinding.GetId(rel); err != nil {
+			panic(err) // this must never happen but let's keep the check just to be sure
+		} else {
+			rIdRelated = rId
+		}
+	}
+
+	var rIdRelatedPtr uint64
+	if rel := obj.RelatedPtr; rel != nil {
+		if rId, err := TestEntityRelatedBinding.GetId(rel); err != nil {
+			panic(err) // this must never happen but let's keep the check just to be sure
+		} else {
+			rIdRelatedPtr = rId
+		}
+	}
+
+	var rIdRelatedPtr2 uint64
+	if rel := obj.RelatedPtr2; rel != nil {
+		if rId, err := TestEntityRelatedBinding.GetId(rel); err != nil {
+			panic(err) // this must never happen but let's keep the check just to be sure
+		} else {
+			rIdRelatedPtr2 = rId
+		}
+	}
+
 	// build the FlatBuffers object
-	fbb.StartObject(21)
+	fbb.StartObject(24)
 	fbutils.SetUint64Slot(fbb, 0, id)
 	fbutils.SetInt64Slot(fbb, 1, int64(obj.Int))
 	fbutils.SetInt8Slot(fbb, 2, obj.Int8)
@@ -287,37 +501,108 @@ func (entity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, i
 	fbutils.SetFloat64Slot(fbb, 17, obj.Float64)
 	fbutils.SetInt64Slot(fbb, 18, timeInt64ToDatabaseValue(obj.Date))
 	fbutils.SetUOffsetTSlot(fbb, 19, offsetComplex128)
+	fbutils.SetUint64Slot(fbb, 21, rIdRelated)
+	fbutils.SetUint64Slot(fbb, 22, rIdRelatedPtr)
+	fbutils.SetUint64Slot(fbb, 23, rIdRelatedPtr2)
 }
 
-// ToObject is called by ObjectBox to load an object from a FlatBuffer
-func (entity_EntityInfo) ToObject(bytes []byte) interface{} {
-	table := &flatbuffers.Table{
+// Load is called by ObjectBox to load an object from a FlatBuffer
+func (entity_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interface{} {
+	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
+	var id = table.GetUint64Slot(4, 0)
+
+	var relRelated *TestEntityRelated
+	if rId := table.GetUint64Slot(46, 0); rId > 0 {
+		if cursor, err := txn.CursorForName("TestEntityRelated"); err != nil {
+			panic(err)
+		} else if relObject, err := cursor.Get(rId); err != nil {
+			panic(err)
+		} else if relObj, ok := relObject.(*TestEntityRelated); ok {
+			relRelated = relObj
+		} else {
+			var relObj = relObject.(TestEntityRelated)
+			relRelated = &relObj
+		}
+	} else {
+		relRelated = &TestEntityRelated{}
+	}
+
+	var relRelatedPtr *TestEntityRelated
+	if rId := table.GetUint64Slot(48, 0); rId > 0 {
+		if cursor, err := txn.CursorForName("TestEntityRelated"); err != nil {
+			panic(err)
+		} else if relObject, err := cursor.Get(rId); err != nil {
+			panic(err)
+		} else if relObj, ok := relObject.(*TestEntityRelated); ok {
+			relRelatedPtr = relObj
+		} else {
+			var relObj = relObject.(TestEntityRelated)
+			relRelatedPtr = &relObj
+		}
+	}
+
+	var relRelatedPtr2 *TestEntityRelated
+	if rId := table.GetUint64Slot(50, 0); rId > 0 {
+		if cursor, err := txn.CursorForName("TestEntityRelated"); err != nil {
+			panic(err)
+		} else if relObject, err := cursor.Get(rId); err != nil {
+			panic(err)
+		} else if relObj, ok := relObject.(*TestEntityRelated); ok {
+			relRelatedPtr2 = relObj
+		} else {
+			var relObj = relObject.(TestEntityRelated)
+			relRelatedPtr2 = &relObj
+		}
+	}
+
+	var relRelatedSlice []EntityByValue
+	if cursor, err := txn.CursorForName("Entity"); err != nil {
+		panic(err)
+	} else if rSlice, err := cursor.RelationGetAll(4, 3, id); err != nil {
+		panic(err)
+	} else {
+		relRelatedSlice = rSlice.([]EntityByValue)
+	}
+
+	var relRelatedPtrSlice []*TestEntityRelated
+	if cursor, err := txn.CursorForName("Entity"); err != nil {
+		panic(err)
+	} else if rSlice, err := cursor.RelationGetAll(5, 5, id); err != nil {
+		panic(err)
+	} else {
+		relRelatedPtrSlice = rSlice.([]*TestEntityRelated)
+	}
 
 	return &Entity{
-		Id:           table.GetUint64Slot(4, 0),
-		Int:          int(table.GetUint64Slot(6, 0)),
-		Int8:         table.GetInt8Slot(8, 0),
-		Int16:        table.GetInt16Slot(10, 0),
-		Int32:        table.GetInt32Slot(12, 0),
-		Int64:        table.GetInt64Slot(14, 0),
-		Uint:         uint(table.GetUint64Slot(16, 0)),
-		Uint8:        table.GetUint8Slot(18, 0),
-		Uint16:       table.GetUint16Slot(20, 0),
-		Uint32:       table.GetUint32Slot(22, 0),
-		Uint64:       table.GetUint64Slot(24, 0),
-		Bool:         table.GetBoolSlot(26, false),
-		String:       fbutils.GetStringSlot(table, 28),
-		StringVector: fbutils.GetStringVectorSlot(table, 44),
-		Byte:         table.GetByteSlot(30, 0),
-		ByteVector:   fbutils.GetByteVectorSlot(table, 32),
-		Rune:         rune(table.GetInt32Slot(34, 0)),
-		Float32:      table.GetFloat32Slot(36, 0),
-		Float64:      table.GetFloat64Slot(38, 0),
-		Date:         timeInt64ToEntityProperty(table.GetInt64Slot(40, 0)),
-		Complex128:   complex128BytesToEntityProperty(fbutils.GetByteVectorSlot(table, 42)),
+		Id:              id,
+		Int:             int(table.GetUint64Slot(6, 0)),
+		Int8:            table.GetInt8Slot(8, 0),
+		Int16:           table.GetInt16Slot(10, 0),
+		Int32:           table.GetInt32Slot(12, 0),
+		Int64:           table.GetInt64Slot(14, 0),
+		Uint:            uint(table.GetUint64Slot(16, 0)),
+		Uint8:           table.GetUint8Slot(18, 0),
+		Uint16:          table.GetUint16Slot(20, 0),
+		Uint32:          table.GetUint32Slot(22, 0),
+		Uint64:          table.GetUint64Slot(24, 0),
+		Bool:            table.GetBoolSlot(26, false),
+		String:          fbutils.GetStringSlot(table, 28),
+		StringVector:    fbutils.GetStringVectorSlot(table, 44),
+		Byte:            table.GetByteSlot(30, 0),
+		ByteVector:      fbutils.GetByteVectorSlot(table, 32),
+		Rune:            rune(table.GetInt32Slot(34, 0)),
+		Float32:         table.GetFloat32Slot(36, 0),
+		Float64:         table.GetFloat64Slot(38, 0),
+		Date:            timeInt64ToEntityProperty(table.GetInt64Slot(40, 0)),
+		Complex128:      complex128BytesToEntityProperty(fbutils.GetByteVectorSlot(table, 42)),
+		Related:         *relRelated,
+		RelatedPtr:      relRelatedPtr,
+		RelatedPtr2:     relRelatedPtr2,
+		RelatedSlice:    relRelatedSlice,
+		RelatedPtrSlice: relRelatedPtrSlice,
 	}
 }
 
@@ -505,8 +790,12 @@ func (testStringIdEntity_EntityInfo) GetId(object interface{}) (uint64, error) {
 }
 
 // SetId is called by ObjectBox during Put to update an ID on an object that has just been inserted
-func (testStringIdEntity_EntityInfo) SetId(object interface{}, id uint64) error {
+func (testStringIdEntity_EntityInfo) SetId(object interface{}, id uint64) {
 	object.(*TestStringIdEntity).Id = objectbox.StringIdConvertToEntityProperty(id)
+}
+
+// PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
+func (testStringIdEntity_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}, id uint64) error {
 	return nil
 }
 
@@ -518,15 +807,16 @@ func (testStringIdEntity_EntityInfo) Flatten(object interface{}, fbb *flatbuffer
 	fbutils.SetUint64Slot(fbb, 0, id)
 }
 
-// ToObject is called by ObjectBox to load an object from a FlatBuffer
-func (testStringIdEntity_EntityInfo) ToObject(bytes []byte) interface{} {
-	table := &flatbuffers.Table{
+// Load is called by ObjectBox to load an object from a FlatBuffer
+func (testStringIdEntity_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interface{} {
+	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
+	var id = objectbox.StringIdConvertToEntityProperty(table.GetUint64Slot(4, 0))
 
 	return &TestStringIdEntity{
-		Id: objectbox.StringIdConvertToEntityProperty(table.GetUint64Slot(4, 0)),
+		Id: id,
 	}
 }
 
@@ -734,8 +1024,12 @@ func (testEntityInline_EntityInfo) GetId(object interface{}) (uint64, error) {
 }
 
 // SetId is called by ObjectBox during Put to update an ID on an object that has just been inserted
-func (testEntityInline_EntityInfo) SetId(object interface{}, id uint64) error {
+func (testEntityInline_EntityInfo) SetId(object interface{}, id uint64) {
 	object.(*TestEntityInline).Id = id
+}
+
+// PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
+func (testEntityInline_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}, id uint64) error {
 	return nil
 }
 
@@ -750,12 +1044,13 @@ func (testEntityInline_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.
 	fbutils.SetUint64Slot(fbb, 2, id)
 }
 
-// ToObject is called by ObjectBox to load an object from a FlatBuffer
-func (testEntityInline_EntityInfo) ToObject(bytes []byte) interface{} {
-	table := &flatbuffers.Table{
+// Load is called by ObjectBox to load an object from a FlatBuffer
+func (testEntityInline_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interface{} {
+	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
+	var id = table.GetUint64Slot(8, 0)
 
 	return &TestEntityInline{
 		BaseWithDate: BaseWithDate{
@@ -764,7 +1059,7 @@ func (testEntityInline_EntityInfo) ToObject(bytes []byte) interface{} {
 		BaseWithValue: &BaseWithValue{
 			Value: table.GetFloat64Slot(6, 0),
 		},
-		Id: table.GetUint64Slot(8, 0),
+		Id: id,
 	}
 }
 
@@ -905,6 +1200,234 @@ func (query *TestEntityInlineQuery) Offset(offset uint64) *TestEntityInlineQuery
 
 // Limit sets the number of elements to process by the query
 func (query *TestEntityInlineQuery) Limit(limit uint64) *TestEntityInlineQuery {
+	query.Query.Limit(limit)
+	return query
+}
+
+type testEntityRelated_EntityInfo struct {
+	Id  objectbox.TypeId
+	Uid uint64
+}
+
+var TestEntityRelatedBinding = testEntityRelated_EntityInfo{
+	Id:  5,
+	Uid: 145948658381494339,
+}
+
+// TestEntityRelated_ contains type-based Property helpers to facilitate some common operations such as Queries.
+var TestEntityRelated_ = struct {
+	Id   *objectbox.PropertyUint64
+	Name *objectbox.PropertyString
+}{
+	Id: &objectbox.PropertyUint64{
+		BaseProperty: &objectbox.BaseProperty{
+			Id: 1,
+			Entity: &objectbox.Entity{
+				Id: 5,
+			},
+		},
+	},
+	Name: &objectbox.PropertyString{
+		BaseProperty: &objectbox.BaseProperty{
+			Id: 2,
+			Entity: &objectbox.Entity{
+				Id: 5,
+			},
+		},
+	},
+}
+
+// GeneratorVersion is called by ObjectBox to verify the compatibility of the generator used to generate this code
+func (testEntityRelated_EntityInfo) GeneratorVersion() int {
+	return 1
+}
+
+// AddToModel is called by ObjectBox during model build
+func (testEntityRelated_EntityInfo) AddToModel(model *objectbox.Model) {
+	model.Entity("TestEntityRelated", 5, 145948658381494339)
+	model.Property("Id", objectbox.PropertyType_Long, 1, 710127486443861244)
+	model.PropertyFlags(objectbox.PropertyFlags_ID)
+	model.Property("Name", objectbox.PropertyType_String, 2, 1781092268467778149)
+	model.EntityLastPropertyId(2, 1781092268467778149)
+}
+
+// GetId is called by ObjectBox during Put operations to check for existing ID on an object
+func (testEntityRelated_EntityInfo) GetId(object interface{}) (uint64, error) {
+	return object.(*TestEntityRelated).Id, nil
+}
+
+// SetId is called by ObjectBox during Put to update an ID on an object that has just been inserted
+func (testEntityRelated_EntityInfo) SetId(object interface{}, id uint64) {
+	object.(*TestEntityRelated).Id = id
+}
+
+// PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
+func (testEntityRelated_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}, id uint64) error {
+	return nil
+}
+
+// Flatten is called by ObjectBox to transform an object to a FlatBuffer
+func (testEntityRelated_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
+	obj := object.(*TestEntityRelated)
+	var offsetName = fbutils.CreateStringOffset(fbb, obj.Name)
+
+	// build the FlatBuffers object
+	fbb.StartObject(2)
+	fbutils.SetUint64Slot(fbb, 0, id)
+	fbutils.SetUOffsetTSlot(fbb, 1, offsetName)
+}
+
+// Load is called by ObjectBox to load an object from a FlatBuffer
+func (testEntityRelated_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interface{} {
+	var table = &flatbuffers.Table{
+		Bytes: bytes,
+		Pos:   flatbuffers.GetUOffsetT(bytes),
+	}
+	var id = table.GetUint64Slot(4, 0)
+
+	return &TestEntityRelated{
+		Id:   id,
+		Name: fbutils.GetStringSlot(table, 6),
+	}
+}
+
+// MakeSlice is called by ObjectBox to construct a new slice to hold the read objects
+func (testEntityRelated_EntityInfo) MakeSlice(capacity int) interface{} {
+	return make([]*TestEntityRelated, 0, capacity)
+}
+
+// AppendToSlice is called by ObjectBox to fill the slice of the read objects
+func (testEntityRelated_EntityInfo) AppendToSlice(slice interface{}, object interface{}) interface{} {
+	return append(slice.([]*TestEntityRelated), object.(*TestEntityRelated))
+}
+
+// Box provides CRUD access to TestEntityRelated objects
+type TestEntityRelatedBox struct {
+	*objectbox.Box
+}
+
+// BoxForTestEntityRelated opens a box of TestEntityRelated objects
+func BoxForTestEntityRelated(ob *objectbox.ObjectBox) *TestEntityRelatedBox {
+	return &TestEntityRelatedBox{
+		Box: ob.InternalBox(5),
+	}
+}
+
+// Put synchronously inserts/updates a single object.
+// In case the Id is not specified, it would be assigned automatically (auto-increment).
+// When inserting, the TestEntityRelated.Id property on the passed object will be assigned the new ID as well.
+func (box *TestEntityRelatedBox) Put(object *TestEntityRelated) (uint64, error) {
+	return box.Box.Put(object)
+}
+
+// PutAsync asynchronously inserts/updates a single object.
+// When inserting, the TestEntityRelated.Id property on the passed object will be assigned the new ID as well.
+//
+// It's executed on a separate internal thread for better performance.
+//
+// There are two main use cases:
+//
+// 1) "Put & Forget:" you gain faster puts as you don't have to wait for the transaction to finish.
+//
+// 2) Many small transactions: if your write load is typically a lot of individual puts that happen in parallel,
+// this will merge small transactions into bigger ones. This results in a significant gain in overall throughput.
+//
+//
+// In situations with (extremely) high async load, this method may be throttled (~1ms) or delayed (<1s).
+// In the unlikely event that the object could not be enqueued after delaying, an error will be returned.
+//
+// Note that this method does not give you hard durability guarantees like the synchronous Put provides.
+// There is a small time window (typically 3 ms) in which the data may not have been committed durably yet.
+func (box *TestEntityRelatedBox) PutAsync(object *TestEntityRelated) (uint64, error) {
+	return box.Box.PutAsync(object)
+}
+
+// PutAll inserts multiple objects in single transaction.
+// In case Ids are not set on the objects, they would be assigned automatically (auto-increment).
+//
+// Returns: IDs of the put objects (in the same order).
+// When inserting, the TestEntityRelated.Id property on the objects in the slice will be assigned the new IDs as well.
+//
+// Note: In case an error occurs during the transaction, some of the objects may already have the TestEntityRelated.Id assigned
+// even though the transaction has been rolled back and the objects are not stored under those IDs.
+//
+// Note: The slice may be empty or even nil; in both cases, an empty IDs slice and no error is returned.
+func (box *TestEntityRelatedBox) PutAll(objects []*TestEntityRelated) ([]uint64, error) {
+	return box.Box.PutAll(objects)
+}
+
+// Get reads a single object.
+//
+// Returns nil (and no error) in case the object with the given ID doesn't exist.
+func (box *TestEntityRelatedBox) Get(id uint64) (*TestEntityRelated, error) {
+	object, err := box.Box.Get(id)
+	if err != nil {
+		return nil, err
+	} else if object == nil {
+		return nil, nil
+	}
+	return object.(*TestEntityRelated), nil
+}
+
+// Get reads all stored objects
+func (box *TestEntityRelatedBox) GetAll() ([]*TestEntityRelated, error) {
+	objects, err := box.Box.GetAll()
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*TestEntityRelated), nil
+}
+
+// Remove deletes a single object
+func (box *TestEntityRelatedBox) Remove(object *TestEntityRelated) (err error) {
+	return box.Box.Remove(object.Id)
+}
+
+// Creates a query with the given conditions. Use the fields of the TestEntityRelated_ struct to create conditions.
+// Keep the *TestEntityRelatedQuery if you intend to execute the query multiple times.
+// Note: this function panics if you try to create illegal queries; e.g. use properties of an alien type.
+// This is typically a programming error. Use QueryOrError instead if you want the explicit error check.
+func (box *TestEntityRelatedBox) Query(conditions ...objectbox.Condition) *TestEntityRelatedQuery {
+	return &TestEntityRelatedQuery{
+		box.Box.Query(conditions...),
+	}
+}
+
+// Creates a query with the given conditions. Use the fields of the TestEntityRelated_ struct to create conditions.
+// Keep the *TestEntityRelatedQuery if you intend to execute the query multiple times.
+func (box *TestEntityRelatedBox) QueryOrError(conditions ...objectbox.Condition) (*TestEntityRelatedQuery, error) {
+	if query, err := box.Box.QueryOrError(conditions...); err != nil {
+		return nil, err
+	} else {
+		return &TestEntityRelatedQuery{query}, nil
+	}
+}
+
+// Query provides a way to search stored objects
+//
+// For example, you can find all TestEntityRelated which Id is either 42 or 47:
+// 		box.Query(TestEntityRelated_.Id.In(42, 47)).Find()
+type TestEntityRelatedQuery struct {
+	*objectbox.Query
+}
+
+// Find returns all objects matching the query
+func (query *TestEntityRelatedQuery) Find() ([]*TestEntityRelated, error) {
+	objects, err := query.Query.Find()
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*TestEntityRelated), nil
+}
+
+// Offset defines the index of the first object to process (how many objects to skip)
+func (query *TestEntityRelatedQuery) Offset(offset uint64) *TestEntityRelatedQuery {
+	query.Query.Offset(offset)
+	return query
+}
+
+// Limit sets the number of elements to process by the query
+func (query *TestEntityRelatedQuery) Limit(limit uint64) *TestEntityRelatedQuery {
 	query.Query.Limit(limit)
 	return query
 }

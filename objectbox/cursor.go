@@ -128,6 +128,19 @@ func (cursor *cursor) IsEmpty() (result bool, err error) {
 	}
 	return bool(cResult), nil
 }
+
+// seek moves cursor to the object with the given ID (if it exists)
+func (cursor *cursor) seek(id uint64) (bool, error) {
+	rc := C.obx_cursor_seek(cursor.cursor, C.obx_id(id))
+	if rc == 0 {
+		return true, nil
+	} else if rc == C.OBX_NOT_FOUND {
+		return false, nil
+	} else {
+		return false, createError()
+	}
+}
+
 func (cursor *cursor) Put(object interface{}) (id uint64, err error) {
 	idFromObject, err := cursor.binding.GetId(object)
 	if err != nil {

@@ -41,7 +41,7 @@ extern "C" {
 // Note that you should use methods with prefix obx_version_ to check when linking against the dynamic library
 #define OBX_VERSION_MAJOR 0
 #define OBX_VERSION_MINOR 4
-#define OBX_VERSION_PATCH 104  // values >= 100 are reserved for dev releases leading to the next minor/major increase
+#define OBX_VERSION_PATCH 105  // values >= 100 are reserved for dev releases leading to the next minor/major increase
 
 /// Returns the version of the library as ints. Pointers may be null
 void obx_version(int* major, int* minor, int* patch);
@@ -223,8 +223,8 @@ obx_err obx_model_property_relation(OBX_model* model, const char* target_entity,
 obx_err obx_model_property_index_id(OBX_model* model, obx_schema_id index_id, obx_uid index_uid);
 
 /// Add a standalone relation between the active entity and the target entity to the model
-obx_err obx_model_relation(OBX_model* model, obx_schema_id relation_id, obx_schema_id relation_uid,
-                           obx_schema_id target_id, obx_schema_id target_uid);
+obx_err obx_model_relation(OBX_model* model, obx_schema_id relation_id, obx_uid relation_uid, obx_schema_id target_id,
+                           obx_uid target_uid);
 
 void obx_model_last_entity_id(OBX_model*, obx_schema_id entity_id, obx_uid entity_uid);
 
@@ -341,6 +341,10 @@ OBX_bytes_array* obx_cursor_get_all(OBX_cursor* cursor);
 obx_err obx_cursor_first(OBX_cursor* cursor, void** data, size_t* size);
 
 obx_err obx_cursor_next(OBX_cursor* cursor, void** data, size_t* size);
+
+obx_err obx_cursor_seek(OBX_cursor* cursor, obx_id id);
+
+obx_err obx_cursor_current(OBX_cursor* cursor, void** data, size_t* size);
 
 obx_err obx_cursor_remove(OBX_cursor* cursor, obx_id id);
 

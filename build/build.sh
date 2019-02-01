@@ -32,7 +32,7 @@ function test {
     echo "******** Testing ********"
     # ./build/test.sh
     testFlags=""
-    if [[ $(uname -m) = "x86_64" ]]; then
+    if [[ $(go env GOARCH) == "amd64" ]]; then
         testFlags="$testFlags -race"
     fi
     go test $testFlags ./...

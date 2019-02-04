@@ -58,60 +58,10 @@ func (taskRelManyValue_EntityInfo) SetId(object interface{}, id uint64) {
 
 // PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
 func (taskRelManyValue_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}, id uint64) error {
-	if cursor, err := txn.CursorForName("TaskRelManyValue"); err != nil {
-		panic(err)
-	} else if rSlice := object.(*TaskRelManyValue).Groups; rSlice != nil {
-		// get id from the object, if inserting, it would be 0 even if the argument id is already non-zero
-		// this saves us an unnecessary request to RelationIds for new objects (there can't be any relations yet)
-		objId, err := TaskRelManyValueBinding.GetId(object)
-		if err != nil {
-			return err
-		}
-
-		// make a map of related target entity IDs, marking those that were originally related but should be removed
-		var idsToRemove = make(map[uint64]bool)
-
-		if objId != 0 {
-			if oldRelIds, err := cursor.RelationIds(3, id); err != nil {
-				return err
-			} else {
-				for _, rId := range oldRelIds {
-					idsToRemove[rId] = true
-				}
-			}
-		}
-
-		// walk over the current related objects, mark those that still exist, add the new ones
-		for k := range rSlice {
-			var rel = &rSlice[k] // take a pointer to the slice element so that it is updated during Put()
-			rId, err := GroupBinding.GetId(rel)
-			if err != nil {
-				return err
-			} else if rId == 0 {
-				if rCursor, err := txn.CursorForName("Group"); err != nil {
-					return err
-				} else if rId, err = rCursor.Put(rel); err != nil {
-					return err
-				}
-			}
-
-			if idsToRemove[rId] {
-				// old relation that still exists, keep it
-				delete(idsToRemove, rId)
-			} else {
-				// new relation, add it
-				if err := cursor.RelationPut(3, id, rId); err != nil {
-					return err
-				}
-			}
-		}
-
-		// remove those that were not found in the rSlice but were originally related to this entity
-		for rId := range idsToRemove {
-			if err := cursor.RelationRemove(3, id, rId); err != nil {
-				return err
-			}
-		}
+	if err := txn.RunWithCursor(TaskRelManyValueBinding.Id, func(cursor *objectbox.Cursor) error {
+		return cursor.RelationUpdate(3, GroupBinding.Id, id, object, object.(*TaskRelManyValue).Groups)
+	}); err != nil {
+		return err
 	}
 	return nil
 }
@@ -133,12 +83,15 @@ func (taskRelManyValue_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte
 	var id = table.GetUint64Slot(4, 0)
 
 	var relGroups []Group
-	if cursor, err := txn.CursorForName("TaskRelManyValue"); err != nil {
+	if err := txn.RunWithCursor(TaskRelManyValueBinding.Id, func(cursor *objectbox.Cursor) error {
+		if rSlice, err := cursor.RelationGetAll(3, GroupBinding.Id, id); err != nil {
+			return err
+		} else {
+			relGroups = rSlice.([]Group)
+			return nil
+		}
+	}); err != nil {
 		panic(err)
-	} else if rSlice, err := cursor.RelationGetAll(3, 1, id); err != nil {
-		panic(err)
-	} else {
-		relGroups = rSlice.([]Group)
 	}
 
 	return &TaskRelManyValue{

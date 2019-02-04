@@ -499,6 +499,9 @@ func (field *Field) fillInfo(f field, typ typeErrorful) {
 		field.Type = field.Type[1:]
 	}
 
+	// strip leading dots (happens sometimes, I think it's for local types from type-checked package)
+	field.Type = strings.TrimLeft(field.Type, ".")
+
 	// if the package path is specified (happens for embedded fields), check whether it's current package
 	if strings.ContainsRune(field.Type, '/') {
 		// if the package is the current package, strip the path & name
@@ -816,10 +819,21 @@ func (entity *Entity) HasNonIdProperty() bool {
 
 func (entity *Entity) HasRelations() bool {
 	for _, field := range entity.Fields {
-		if field.StandaloneRelation != nil {
+		if field.HasRelations() {
 			return true
 		}
-		if field.SimpleRelation != nil {
+	}
+
+	return false
+}
+
+func (field *Field) HasRelations() bool {
+	if field.StandaloneRelation != nil || field.SimpleRelation != nil {
+		return true
+	}
+
+	for _, inner := range field.Fields {
+		if inner.HasRelations() {
 			return true
 		}
 	}

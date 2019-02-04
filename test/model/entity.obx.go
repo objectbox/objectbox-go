@@ -297,148 +297,49 @@ func (entity_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface
 		if err != nil {
 			return err
 		} else if rId == 0 {
-			if rCursor, err := txn.CursorForName("TestEntityRelated"); err != nil {
+			if err := txn.RunWithCursor(TestEntityRelatedBinding.Id, func(targetCursor *objectbox.Cursor) error {
+				_, err := targetCursor.Put(rel) // NOTE Put/PutAsync() has a side-effect of setting the rel.ID
 				return err
-			} else if rId, err = rCursor.Put(rel); err != nil {
+			}); err != nil {
 				return err
 			}
 		}
-		// NOTE Put/PutAsync() has a side-effect of setting the rel.ID, so at this point, it is already set
 	}
 	if rel := object.(*Entity).RelatedPtr; rel != nil {
 		rId, err := TestEntityRelatedBinding.GetId(rel)
 		if err != nil {
 			return err
 		} else if rId == 0 {
-			if rCursor, err := txn.CursorForName("TestEntityRelated"); err != nil {
+			if err := txn.RunWithCursor(TestEntityRelatedBinding.Id, func(targetCursor *objectbox.Cursor) error {
+				_, err := targetCursor.Put(rel) // NOTE Put/PutAsync() has a side-effect of setting the rel.ID
 				return err
-			} else if rId, err = rCursor.Put(rel); err != nil {
+			}); err != nil {
 				return err
 			}
 		}
-		// NOTE Put/PutAsync() has a side-effect of setting the rel.ID, so at this point, it is already set
 	}
 	if rel := object.(*Entity).RelatedPtr2; rel != nil {
 		rId, err := TestEntityRelatedBinding.GetId(rel)
 		if err != nil {
 			return err
 		} else if rId == 0 {
-			if rCursor, err := txn.CursorForName("TestEntityRelated"); err != nil {
+			if err := txn.RunWithCursor(TestEntityRelatedBinding.Id, func(targetCursor *objectbox.Cursor) error {
+				_, err := targetCursor.Put(rel) // NOTE Put/PutAsync() has a side-effect of setting the rel.ID
 				return err
-			} else if rId, err = rCursor.Put(rel); err != nil {
-				return err
-			}
-		}
-		// NOTE Put/PutAsync() has a side-effect of setting the rel.ID, so at this point, it is already set
-	}
-	if cursor, err := txn.CursorForName("Entity"); err != nil {
-		panic(err)
-	} else if rSlice := object.(*Entity).RelatedSlice; rSlice != nil {
-		// get id from the object, if inserting, it would be 0 even if the argument id is already non-zero
-		// this saves us an unnecessary request to RelationIds for new objects (there can't be any relations yet)
-		objId, err := EntityBinding.GetId(object)
-		if err != nil {
-			return err
-		}
-
-		// make a map of related target entity IDs, marking those that were originally related but should be removed
-		var idsToRemove = make(map[uint64]bool)
-
-		if objId != 0 {
-			if oldRelIds, err := cursor.RelationIds(4, id); err != nil {
-				return err
-			} else {
-				for _, rId := range oldRelIds {
-					idsToRemove[rId] = true
-				}
-			}
-		}
-
-		// walk over the current related objects, mark those that still exist, add the new ones
-		for k := range rSlice {
-			var rel = &rSlice[k] // take a pointer to the slice element so that it is updated during Put()
-			rId, err := EntityByValueBinding.GetId(rel)
-			if err != nil {
-				return err
-			} else if rId == 0 {
-				if rCursor, err := txn.CursorForName("EntityByValue"); err != nil {
-					return err
-				} else if rId, err = rCursor.Put(rel); err != nil {
-					return err
-				}
-			}
-
-			if idsToRemove[rId] {
-				// old relation that still exists, keep it
-				delete(idsToRemove, rId)
-			} else {
-				// new relation, add it
-				if err := cursor.RelationPut(4, id, rId); err != nil {
-					return err
-				}
-			}
-		}
-
-		// remove those that were not found in the rSlice but were originally related to this entity
-		for rId := range idsToRemove {
-			if err := cursor.RelationRemove(4, id, rId); err != nil {
+			}); err != nil {
 				return err
 			}
 		}
 	}
-	if cursor, err := txn.CursorForName("Entity"); err != nil {
-		panic(err)
-	} else if rSlice := object.(*Entity).RelatedPtrSlice; rSlice != nil {
-		// get id from the object, if inserting, it would be 0 even if the argument id is already non-zero
-		// this saves us an unnecessary request to RelationIds for new objects (there can't be any relations yet)
-		objId, err := EntityBinding.GetId(object)
-		if err != nil {
-			return err
-		}
-
-		// make a map of related target entity IDs, marking those that were originally related but should be removed
-		var idsToRemove = make(map[uint64]bool)
-
-		if objId != 0 {
-			if oldRelIds, err := cursor.RelationIds(5, id); err != nil {
-				return err
-			} else {
-				for _, rId := range oldRelIds {
-					idsToRemove[rId] = true
-				}
-			}
-		}
-
-		// walk over the current related objects, mark those that still exist, add the new ones
-		for _, rel := range rSlice {
-			rId, err := TestEntityRelatedBinding.GetId(rel)
-			if err != nil {
-				return err
-			} else if rId == 0 {
-				if rCursor, err := txn.CursorForName("TestEntityRelated"); err != nil {
-					return err
-				} else if rId, err = rCursor.Put(rel); err != nil {
-					return err
-				}
-			}
-
-			if idsToRemove[rId] {
-				// old relation that still exists, keep it
-				delete(idsToRemove, rId)
-			} else {
-				// new relation, add it
-				if err := cursor.RelationPut(5, id, rId); err != nil {
-					return err
-				}
-			}
-		}
-
-		// remove those that were not found in the rSlice but were originally related to this entity
-		for rId := range idsToRemove {
-			if err := cursor.RelationRemove(5, id, rId); err != nil {
-				return err
-			}
-		}
+	if err := txn.RunWithCursor(EntityBinding.Id, func(cursor *objectbox.Cursor) error {
+		return cursor.RelationUpdate(4, EntityByValueBinding.Id, id, object, object.(*Entity).RelatedSlice)
+	}); err != nil {
+		return err
+	}
+	if err := txn.RunWithCursor(EntityBinding.Id, func(cursor *objectbox.Cursor) error {
+		return cursor.RelationUpdate(5, TestEntityRelatedBinding.Id, id, object, object.(*Entity).RelatedPtrSlice)
+	}); err != nil {
+		return err
 	}
 	return nil
 }
@@ -516,15 +417,18 @@ func (entity_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interfac
 
 	var relRelated *TestEntityRelated
 	if rId := table.GetUint64Slot(46, 0); rId > 0 {
-		if cursor, err := txn.CursorForName("TestEntityRelated"); err != nil {
+		if err := txn.RunWithCursor(TestEntityRelatedBinding.Id, func(targetCursor *objectbox.Cursor) error {
+			if relObject, err := targetCursor.Get(rId); err != nil {
+				return err
+			} else if relObj, ok := relObject.(*TestEntityRelated); ok {
+				relRelated = relObj
+			} else {
+				var relObj = relObject.(TestEntityRelated)
+				relRelated = &relObj
+			}
+			return nil
+		}); err != nil {
 			panic(err)
-		} else if relObject, err := cursor.Get(rId); err != nil {
-			panic(err)
-		} else if relObj, ok := relObject.(*TestEntityRelated); ok {
-			relRelated = relObj
-		} else {
-			var relObj = relObject.(TestEntityRelated)
-			relRelated = &relObj
 		}
 	} else {
 		relRelated = &TestEntityRelated{}
@@ -532,48 +436,60 @@ func (entity_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interfac
 
 	var relRelatedPtr *TestEntityRelated
 	if rId := table.GetUint64Slot(48, 0); rId > 0 {
-		if cursor, err := txn.CursorForName("TestEntityRelated"); err != nil {
+		if err := txn.RunWithCursor(TestEntityRelatedBinding.Id, func(targetCursor *objectbox.Cursor) error {
+			if relObject, err := targetCursor.Get(rId); err != nil {
+				return err
+			} else if relObj, ok := relObject.(*TestEntityRelated); ok {
+				relRelatedPtr = relObj
+			} else {
+				var relObj = relObject.(TestEntityRelated)
+				relRelatedPtr = &relObj
+			}
+			return nil
+		}); err != nil {
 			panic(err)
-		} else if relObject, err := cursor.Get(rId); err != nil {
-			panic(err)
-		} else if relObj, ok := relObject.(*TestEntityRelated); ok {
-			relRelatedPtr = relObj
-		} else {
-			var relObj = relObject.(TestEntityRelated)
-			relRelatedPtr = &relObj
 		}
 	}
 
 	var relRelatedPtr2 *TestEntityRelated
 	if rId := table.GetUint64Slot(50, 0); rId > 0 {
-		if cursor, err := txn.CursorForName("TestEntityRelated"); err != nil {
+		if err := txn.RunWithCursor(TestEntityRelatedBinding.Id, func(targetCursor *objectbox.Cursor) error {
+			if relObject, err := targetCursor.Get(rId); err != nil {
+				return err
+			} else if relObj, ok := relObject.(*TestEntityRelated); ok {
+				relRelatedPtr2 = relObj
+			} else {
+				var relObj = relObject.(TestEntityRelated)
+				relRelatedPtr2 = &relObj
+			}
+			return nil
+		}); err != nil {
 			panic(err)
-		} else if relObject, err := cursor.Get(rId); err != nil {
-			panic(err)
-		} else if relObj, ok := relObject.(*TestEntityRelated); ok {
-			relRelatedPtr2 = relObj
-		} else {
-			var relObj = relObject.(TestEntityRelated)
-			relRelatedPtr2 = &relObj
 		}
 	}
 
 	var relRelatedSlice []EntityByValue
-	if cursor, err := txn.CursorForName("Entity"); err != nil {
+	if err := txn.RunWithCursor(EntityBinding.Id, func(cursor *objectbox.Cursor) error {
+		if rSlice, err := cursor.RelationGetAll(4, EntityByValueBinding.Id, id); err != nil {
+			return err
+		} else {
+			relRelatedSlice = rSlice.([]EntityByValue)
+			return nil
+		}
+	}); err != nil {
 		panic(err)
-	} else if rSlice, err := cursor.RelationGetAll(4, 3, id); err != nil {
-		panic(err)
-	} else {
-		relRelatedSlice = rSlice.([]EntityByValue)
 	}
 
 	var relRelatedPtrSlice []*TestEntityRelated
-	if cursor, err := txn.CursorForName("Entity"); err != nil {
+	if err := txn.RunWithCursor(EntityBinding.Id, func(cursor *objectbox.Cursor) error {
+		if rSlice, err := cursor.RelationGetAll(5, TestEntityRelatedBinding.Id, id); err != nil {
+			return err
+		} else {
+			relRelatedPtrSlice = rSlice.([]*TestEntityRelated)
+			return nil
+		}
+	}); err != nil {
 		panic(err)
-	} else if rSlice, err := cursor.RelationGetAll(5, 5, id); err != nil {
-		panic(err)
-	} else {
-		relRelatedPtrSlice = rSlice.([]*TestEntityRelated)
 	}
 
 	return &Entity{

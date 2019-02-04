@@ -24,13 +24,14 @@ package objectbox
 import "C"
 
 import (
+	"reflect"
 	"unsafe"
 
 	"github.com/google/flatbuffers/go"
 )
 
 // Internal: won't be publicly exposed in a future version!
-type cursor struct {
+type Cursor struct {
 	txn    *Transaction
 	cursor *C.OBX_cursor
 	entity *entity
@@ -39,7 +40,7 @@ type cursor struct {
 
 const defaultSliceCapacity = 16
 
-func (cursor *cursor) Close() error {
+func (cursor *Cursor) Close() error {
 	rc := C.obx_cursor_close(cursor.cursor)
 	cursor.cursor = nil
 	if rc != 0 {
@@ -48,7 +49,7 @@ func (cursor *cursor) Close() error {
 	return nil
 }
 
-func (cursor *cursor) Get(id uint64) (object interface{}, err error) {
+func (cursor *Cursor) Get(id uint64) (object interface{}, err error) {
 	var data *C.void
 	var dataSize C.size_t
 	var dataPtr = unsafe.Pointer(data)
@@ -65,7 +66,7 @@ func (cursor *cursor) Get(id uint64) (object interface{}, err error) {
 	}
 }
 
-func (cursor *cursor) GetAll() (slice interface{}, err error) {
+func (cursor *Cursor) GetAll() (slice interface{}, err error) {
 	if supportsBytesArray {
 		cBytesArray := C.obx_cursor_get_all(cursor.cursor)
 		if cBytesArray == nil {
@@ -77,7 +78,7 @@ func (cursor *cursor) GetAll() (slice interface{}, err error) {
 	}
 }
 
-func (cursor *cursor) getAllSequential() (slice interface{}, err error) {
+func (cursor *Cursor) getAllSequential() (slice interface{}, err error) {
 	var binding = cursor.entity.binding
 	slice = binding.MakeSlice(defaultSliceCapacity)
 
@@ -101,7 +102,7 @@ func (cursor *cursor) getAllSequential() (slice interface{}, err error) {
 	return slice, nil
 }
 
-func (cursor *cursor) Count() (count uint64, err error) {
+func (cursor *Cursor) Count() (count uint64, err error) {
 	var cCount C.uint64_t
 	rc := C.obx_cursor_count(cursor.cursor, &cCount)
 	if rc != 0 {
@@ -111,7 +112,7 @@ func (cursor *cursor) Count() (count uint64, err error) {
 	return uint64(cCount), nil
 }
 
-func (cursor *cursor) CountMax(max uint64) (count uint64, err error) {
+func (cursor *Cursor) CountMax(max uint64) (count uint64, err error) {
 	var cCount C.uint64_t
 	rc := C.obx_cursor_count_max(cursor.cursor, C.uint64_t(max), &cCount)
 	if rc != 0 {
@@ -121,7 +122,7 @@ func (cursor *cursor) CountMax(max uint64) (count uint64, err error) {
 	return uint64(cCount), nil
 }
 
-func (cursor *cursor) IsEmpty() (result bool, err error) {
+func (cursor *Cursor) IsEmpty() (result bool, err error) {
 	var cResult C.bool
 	rc := C.obx_cursor_is_empty(cursor.cursor, &cResult)
 	if rc != 0 {
@@ -131,8 +132,8 @@ func (cursor *cursor) IsEmpty() (result bool, err error) {
 	return bool(cResult), nil
 }
 
-// seek moves cursor to the object with the given ID (if it exists)
-func (cursor *cursor) seek(id uint64) (bool, error) {
+// seek moves Cursor to the object with the given ID (if it exists)
+func (cursor *Cursor) seek(id uint64) (bool, error) {
 	rc := C.obx_cursor_seek(cursor.cursor, C.obx_id(id))
 	if rc == 0 {
 		return true, nil
@@ -143,7 +144,7 @@ func (cursor *cursor) seek(id uint64) (bool, error) {
 	}
 }
 
-func (cursor *cursor) Put(object interface{}) (id uint64, err error) {
+func (cursor *Cursor) Put(object interface{}) (id uint64, err error) {
 	var binding = cursor.entity.binding
 	idFromObject, err := binding.GetId(object)
 	if err != nil {
@@ -175,7 +176,7 @@ func (cursor *cursor) Put(object interface{}) (id uint64, err error) {
 	return id, nil
 }
 
-func (cursor *cursor) finishInternalFbbAndPut(id uint64, checkForPreviousObject bool) (err error) {
+func (cursor *Cursor) finishInternalFbbAndPut(id uint64, checkForPreviousObject bool) (err error) {
 	fbb := cursor.fbb
 	fbb.Finish(fbb.EndObject())
 	bytes := fbb.FinishedBytes()
@@ -192,7 +193,7 @@ func (cursor *cursor) finishInternalFbbAndPut(id uint64, checkForPreviousObject 
 	return
 }
 
-func (cursor *cursor) IdForPut(idCandidate uint64) (id uint64, err error) {
+func (cursor *Cursor) IdForPut(idCandidate uint64) (id uint64, err error) {
 	id = uint64(C.obx_cursor_id_for_put(cursor.cursor, C.obx_id(idCandidate)))
 	if id == 0 {
 		err = createError()
@@ -200,7 +201,7 @@ func (cursor *cursor) IdForPut(idCandidate uint64) (id uint64, err error) {
 	return
 }
 
-func (cursor *cursor) Remove(id uint64) (err error) {
+func (cursor *Cursor) Remove(id uint64) (err error) {
 	rc := C.obx_cursor_remove(cursor.cursor, C.obx_id(id))
 	if rc != 0 {
 		err = createError()
@@ -208,7 +209,7 @@ func (cursor *cursor) Remove(id uint64) (err error) {
 	return
 }
 
-func (cursor *cursor) RemoveAll() (err error) {
+func (cursor *Cursor) RemoveAll() (err error) {
 	rc := C.obx_cursor_remove_all(cursor.cursor)
 	if rc != 0 {
 		err = createError()
@@ -216,13 +217,13 @@ func (cursor *cursor) RemoveAll() (err error) {
 	return
 }
 
-func (cursor *cursor) cBytesArrayToObjects(cBytesArray *C.OBX_bytes_array) (slice interface{}) {
+func (cursor *Cursor) cBytesArrayToObjects(cBytesArray *C.OBX_bytes_array) (slice interface{}) {
 	bytesArray := cBytesArrayToGo(cBytesArray)
 	defer bytesArray.free()
 	return cursor.bytesArrayToObjects(bytesArray)
 }
 
-func (cursor *cursor) bytesArrayToObjects(bytesArray *bytesArray) (slice interface{}) {
+func (cursor *Cursor) bytesArrayToObjects(bytesArray *bytesArray) (slice interface{}) {
 	var binding = cursor.entity.binding
 	slice = binding.MakeSlice(len(bytesArray.BytesArray))
 	for _, bytesData := range bytesArray.BytesArray {
@@ -232,41 +233,112 @@ func (cursor *cursor) bytesArrayToObjects(bytesArray *bytesArray) (slice interfa
 	return
 }
 
+// RelationUpdate replaces all targets for a given source in a standalone many-to-many relation
+// It also inserts new related objects (with a 0 ID).
 // TODO don't require a targetEntityId, it can retrieved using a relationId
-func (cursor *cursor) RelationGetAll(relationId TypeId, targetEntityId TypeId, sourceId uint64) (slice interface{}, err error) {
+func (cursor *Cursor) RelationUpdate(relationId TypeId, targetEntityId TypeId, sourceId uint64, sourceObject interface{}, targetObjects interface{}) (err error) {
+	// get id from the object, if inserting, it would be 0 even if the argument id is already non-zero
+	// this saves us an unnecessary request to RelationIds for new objects (there can't be any relations yet)
+	objId, err := cursor.entity.binding.GetId(sourceObject)
+	if err != nil {
+		return err
+	}
+
+	// make a map of related target entity IDs, marking those that were originally related but should be removed
+	var idsToRemove = make(map[uint64]bool)
+
+	if objId != 0 {
+		if oldRelIds, err := cursor.RelationIds(relationId, sourceId); err != nil {
+			return err
+		} else {
+			for _, rId := range oldRelIds {
+				idsToRemove[rId] = true
+			}
+		}
+	}
+
+	sliceValue := reflect.ValueOf(targetObjects)
+	count := sliceValue.Len()
+
+	if count > 0 {
+		targetEntity := cursor.txn.objectBox.getEntityById(targetEntityId)
+
+		if err := cursor.txn.runWithCursor(targetEntity, func(targetCursor *Cursor) error {
+			// walk over the current related objects, mark those that still exist, add the new ones
+			for i := 0; i < count; i++ {
+				var reflObj = sliceValue.Index(i)
+				var rel interface{}
+				if reflObj.Kind() == reflect.Ptr {
+					rel = reflObj.Interface()
+				} else {
+					rel = reflObj.Addr().Interface()
+				}
+
+				rId, err := targetEntity.binding.GetId(rel)
+				if err != nil {
+					return err
+				} else if rId == 0 {
+					if rId, err = targetCursor.Put(rel); err != nil {
+						return err
+					}
+				}
+
+				if idsToRemove[rId] {
+					// old relation that still exists, keep it
+					delete(idsToRemove, rId)
+				} else {
+					// new relation, add it
+					if err := cursor.RelationPut(relationId, sourceId, rId); err != nil {
+						return err
+					}
+				}
+			}
+			return nil
+		}); err != nil {
+			return err
+		}
+	}
+
+	// remove those that were not found in the rSlice but were originally related to this entity
+	for rId := range idsToRemove {
+		if err := cursor.RelationRemove(relationId, sourceId, rId); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// Get all target objects from a standalone relation
+// TODO don't require a targetEntityId, it can retrieved using a relationId
+func (cursor *Cursor) RelationGetAll(relationId TypeId, targetEntityId TypeId, sourceId uint64) (slice interface{}, err error) {
 	targetIds, err := cursor.RelationIds(relationId, sourceId)
 	if err != nil {
 		return nil, err
 	}
 
 	targetEntity := cursor.txn.objectBox.getEntityById(targetEntityId)
-	targetCursor, err := cursor.txn.createCursor(targetEntityId, targetEntity)
+	slice = targetEntity.binding.MakeSlice(len(targetIds))
+
+	err = cursor.txn.runWithCursor(targetEntity, func(targetCursor *Cursor) error {
+		for _, id := range targetIds {
+			if object, err := targetCursor.Get(id); err != nil {
+				return err
+			} else {
+				slice = targetEntity.binding.AppendToSlice(slice, object)
+			}
+		}
+		return nil
+	})
+
 	if err != nil {
 		return nil, err
+	} else {
+		return slice, nil
 	}
-
-	defer func() {
-		err2 := targetCursor.Close()
-		if err == nil && err2 != nil {
-			err = err2
-			slice = nil
-		}
-	}()
-
-	slice = targetEntity.binding.MakeSlice(len(targetIds))
-	for _, id := range targetIds {
-		if object, err := targetCursor.Get(id); err != nil {
-			return nil, err
-		} else {
-			slice = targetEntity.binding.AppendToSlice(slice, object)
-		}
-	}
-
-	// NOTE slice & err here might be overwritten by the deferred function if the target cursor failed to close
-	return slice, err
 }
 
-func (cursor *cursor) RelationPut(relationId TypeId, sourceId, targetId uint64) error {
+func (cursor *Cursor) RelationPut(relationId TypeId, sourceId, targetId uint64) error {
 	rc := C.obx_cursor_rel_put(cursor.cursor, C.obx_schema_id(relationId), C.obx_id(sourceId), C.obx_id(targetId))
 	if rc != 0 {
 		return createError()
@@ -274,7 +346,7 @@ func (cursor *cursor) RelationPut(relationId TypeId, sourceId, targetId uint64) 
 	return nil
 }
 
-func (cursor *cursor) RelationRemove(relationId TypeId, sourceId, targetId uint64) error {
+func (cursor *Cursor) RelationRemove(relationId TypeId, sourceId, targetId uint64) error {
 	rc := C.obx_cursor_rel_remove(cursor.cursor, C.obx_schema_id(relationId), C.obx_id(sourceId), C.obx_id(targetId))
 	if rc != 0 {
 		return createError()
@@ -282,7 +354,7 @@ func (cursor *cursor) RelationRemove(relationId TypeId, sourceId, targetId uint6
 	return nil
 }
 
-func (cursor *cursor) RelationIds(relationId TypeId, sourceId uint64) ([]uint64, error) {
+func (cursor *Cursor) RelationIds(relationId TypeId, sourceId uint64) ([]uint64, error) {
 	cIdsArray := C.obx_cursor_rel_ids(cursor.cursor, C.obx_schema_id(relationId), C.obx_id(sourceId))
 	if cIdsArray == nil {
 		return nil, createError()

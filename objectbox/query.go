@@ -79,7 +79,7 @@ func (query *Query) errorClosed() error {
 
 // Find returns all objects matching the query
 func (query *Query) Find() (objects interface{}, err error) {
-	err = query.objectBox.runWithCursor(query.entity, true, func(cursor *cursor) error {
+	err = query.objectBox.runWithCursor(query.entity, true, func(cursor *Cursor) error {
 		var errInner error
 		objects, errInner = query.find(cursor)
 		return errInner
@@ -101,7 +101,7 @@ func (query *Query) Limit(limit uint64) *Query {
 
 // FindIds returns IDs of all objects matching the query
 func (query *Query) FindIds() (ids []uint64, err error) {
-	err = query.objectBox.runWithCursor(query.entity, true, func(cursor *cursor) error {
+	err = query.objectBox.runWithCursor(query.entity, true, func(cursor *Cursor) error {
 		var errInner error
 		ids, errInner = query.findIds(cursor)
 		return errInner
@@ -117,7 +117,7 @@ func (query *Query) Count() (count uint64, err error) {
 		return 0, fmt.Errorf("limit/offset are not supported by Count at this moment")
 	}
 
-	err = query.objectBox.runWithCursor(query.entity, true, func(cursor *cursor) error {
+	err = query.objectBox.runWithCursor(query.entity, true, func(cursor *Cursor) error {
 		var errInner error
 		count, errInner = query.count(cursor)
 		return errInner
@@ -133,7 +133,7 @@ func (query *Query) Remove() (count uint64, err error) {
 		return 0, fmt.Errorf("limit/offset are not supported by Remove at this moment")
 	}
 
-	err = query.objectBox.runWithCursor(query.entity, false, func(cursor *cursor) error {
+	err = query.objectBox.runWithCursor(query.entity, false, func(cursor *Cursor) error {
 		var errInner error
 		count, errInner = query.remove(cursor)
 		return errInner
@@ -153,7 +153,7 @@ func (query *Query) DescribeParams() (string, error) {
 	return C.GoString(cResult), nil
 }
 
-func (query *Query) count(cursor *cursor) (uint64, error) {
+func (query *Query) count(cursor *Cursor) (uint64, error) {
 	if query.cQuery == nil {
 		return 0, query.errorClosed()
 	}
@@ -165,7 +165,7 @@ func (query *Query) count(cursor *cursor) (uint64, error) {
 	return uint64(cCount), nil
 }
 
-func (query *Query) remove(cursor *cursor) (uint64, error) {
+func (query *Query) remove(cursor *Cursor) (uint64, error) {
 	if query.cQuery == nil {
 		return 0, query.errorClosed()
 	}
@@ -177,7 +177,7 @@ func (query *Query) remove(cursor *cursor) (uint64, error) {
 	return uint64(cCount), nil
 }
 
-func (query *Query) findIds(cursor *cursor) (ids []uint64, err error) {
+func (query *Query) findIds(cursor *Cursor) (ids []uint64, err error) {
 	if query.cQuery == nil {
 		return nil, query.errorClosed()
 	}
@@ -192,7 +192,7 @@ func (query *Query) findIds(cursor *cursor) (ids []uint64, err error) {
 	return idsArray.ids, nil
 }
 
-func (query *Query) find(cursor *cursor) (slice interface{}, err error) {
+func (query *Query) find(cursor *Cursor) (slice interface{}, err error) {
 	if query.cQuery == nil {
 		return 0, query.errorClosed()
 	}
@@ -208,7 +208,7 @@ func (query *Query) find(cursor *cursor) (slice interface{}, err error) {
 	}
 }
 
-func (query *Query) findSequential(cursor *cursor) (slice interface{}, err error) {
+func (query *Query) findSequential(cursor *Cursor) (slice interface{}, err error) {
 	if query.cQuery == nil {
 		return 0, query.errorClosed()
 	}

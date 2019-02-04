@@ -63,7 +63,7 @@ type options struct {
 }
 
 type txnFun func(transaction *Transaction) error
-type cursorFun func(cursor *cursor) error
+type cursorFun func(cursor *Cursor) error
 
 // constant during runtime so no need to call this each time it's necessary
 var supportsBytesArray = bool(C.obx_supports_bytes_array())
@@ -165,22 +165,8 @@ func (ob *ObjectBox) runWithCursor(e *entity, readOnly bool, cursorFun cursorFun
 		e.awaitAsyncCompletion()
 	}
 
-	entity := ob.getEntityById(e.id)
 	return ob.runInTxn(readOnly, func(txn *Transaction) error {
-		cursor, err := txn.createCursor(e.id, entity)
-		if err != nil {
-			return err
-		}
-
-		defer func() {
-			err2 := cursor.Close()
-			if err == nil {
-				err = err2
-			}
-		}()
-		err = cursorFun(cursor)
-
-		return err
+		return txn.runWithCursor(e, cursorFun)
 	})
 }
 

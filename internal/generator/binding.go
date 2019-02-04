@@ -474,7 +474,7 @@ func (field *Field) processType(f field) (fields fieldList, err error) {
 		field.Entity.Relations[field.Name] = rel
 
 		// fill in the field information
-		field.fillInfo(f, typ)
+		field.fillInfo(f, typesTypeErrorful{elementType})
 		field.StandaloneRelation = rel
 
 		// we need to skip adding this field (it's not persisted in DB) so we add an empty list of fields
@@ -525,7 +525,6 @@ func (entity *Entity) setAnnotations(comments []*ast.Comment) error {
 				return err
 			}
 		}
-
 	}
 
 	if len(entity.Annotations) == 0 {

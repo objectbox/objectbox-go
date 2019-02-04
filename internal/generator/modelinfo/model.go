@@ -135,7 +135,7 @@ func (model *ModelInfo) FindEntityByUid(uid Uid) (*Entity, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("entity with Uid %d not found", uid)
+	return nil, fmt.Errorf("entity with uid %d was not found", uid)
 }
 
 func (model *ModelInfo) FindEntityByName(name string) (*Entity, error) {
@@ -145,7 +145,7 @@ func (model *ModelInfo) FindEntityByName(name string) (*Entity, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("entity with Name %s not found", name)
+	return nil, fmt.Errorf("entity named %s was not found", name)
 }
 
 func (model *ModelInfo) CreateEntity() (*Entity, error) {

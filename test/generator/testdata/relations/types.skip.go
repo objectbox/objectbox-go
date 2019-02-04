@@ -1,5 +1,6 @@
 package object
 
 type WithGroup struct {
-	Group *Group `link`
+	Group  *Group `link`
+	Groups []*Group
 }

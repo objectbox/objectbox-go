@@ -14,8 +14,8 @@ type taskRelPtr_EntityInfo struct {
 }
 
 var TaskRelPtrBinding = taskRelPtr_EntityInfo{
-	Id:  2,
-	Uid: 3390393562759376202,
+	Id:  3,
+	Uid: 6044372234677422456,
 }
 
 // TaskRelPtr_ contains type-based Property helpers to facilitate some common operations such as Queries.
@@ -27,7 +27,7 @@ var TaskRelPtr_ = struct {
 		BaseProperty: &objectbox.BaseProperty{
 			Id: 1,
 			Entity: &objectbox.Entity{
-				Id: 2,
+				Id: 3,
 			},
 		},
 	},
@@ -35,7 +35,7 @@ var TaskRelPtr_ = struct {
 		BaseProperty: &objectbox.BaseProperty{
 			Id: 2,
 			Entity: &objectbox.Entity{
-				Id: 2,
+				Id: 3,
 			},
 		},
 	},
@@ -48,12 +48,12 @@ func (taskRelPtr_EntityInfo) GeneratorVersion() int {
 
 // AddToModel is called by ObjectBox during model build
 func (taskRelPtr_EntityInfo) AddToModel(model *objectbox.Model) {
-	model.Entity("TaskRelPtr", 2, 3390393562759376202)
-	model.Property("Id", objectbox.PropertyType_Long, 1, 2669985732393126063)
+	model.Entity("TaskRelPtr", 3, 6044372234677422456)
+	model.Property("Id", objectbox.PropertyType_Long, 1, 8274930044578894929)
 	model.PropertyFlags(objectbox.PropertyFlags_ID)
-	model.Property("Group", objectbox.PropertyType_Relation, 2, 1774932891286980153)
-	model.PropertyRelation("Group", 2, 6044372234677422456)
-	model.EntityLastPropertyId(2, 1774932891286980153)
+	model.Property("Group", objectbox.PropertyType_Relation, 2, 1543572285742637646)
+	model.PropertyRelation("Group", 2, 2661732831099943416)
+	model.EntityLastPropertyId(2, 1543572285742637646)
 }
 
 // GetId is called by ObjectBox during Put operations to check for existing ID on an object
@@ -149,7 +149,7 @@ type TaskRelPtrBox struct {
 // BoxForTaskRelPtr opens a box of TaskRelPtr objects
 func BoxForTaskRelPtr(ob *objectbox.ObjectBox) *TaskRelPtrBox {
 	return &TaskRelPtrBox{
-		Box: ob.InternalBox(2),
+		Box: ob.InternalBox(3),
 	}
 }
 

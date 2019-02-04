@@ -104,7 +104,7 @@ func mergeModelEntity(bindingEntity *Entity, modelEntity *modelinfo.Entity, mode
 
 	{ //region Relations
 
-		// add all relations from the bindings to the model and update/rename the changed ones
+		// add all standalone relations from the bindings to the model and update/rename the changed ones
 		for _, bindingRelation := range bindingEntity.Relations {
 			if modelRelation, err := getModelRelation(bindingRelation, modelEntity); err != nil {
 				return err

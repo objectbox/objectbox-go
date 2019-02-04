@@ -14,8 +14,8 @@ type taskRelEmbedded_EntityInfo struct {
 }
 
 var TaskRelEmbeddedBinding = taskRelEmbedded_EntityInfo{
-	Id:  4,
-	Uid: 7837839688282259259,
+	Id:  5,
+	Uid: 2339563716805116249,
 }
 
 // TaskRelEmbedded_ contains type-based Property helpers to facilitate some common operations such as Queries.
@@ -27,7 +27,7 @@ var TaskRelEmbedded_ = struct {
 		BaseProperty: &objectbox.BaseProperty{
 			Id: 1,
 			Entity: &objectbox.Entity{
-				Id: 4,
+				Id: 5,
 			},
 		},
 	},
@@ -35,7 +35,7 @@ var TaskRelEmbedded_ = struct {
 		BaseProperty: &objectbox.BaseProperty{
 			Id: 2,
 			Entity: &objectbox.Entity{
-				Id: 4,
+				Id: 5,
 			},
 		},
 	},
@@ -48,12 +48,13 @@ func (taskRelEmbedded_EntityInfo) GeneratorVersion() int {
 
 // AddToModel is called by ObjectBox during model build
 func (taskRelEmbedded_EntityInfo) AddToModel(model *objectbox.Model) {
-	model.Entity("TaskRelEmbedded", 4, 7837839688282259259)
-	model.Property("Id", objectbox.PropertyType_Long, 1, 2518412263346885298)
+	model.Entity("TaskRelEmbedded", 5, 2339563716805116249)
+	model.Property("Id", objectbox.PropertyType_Long, 1, 7144924247938981575)
 	model.PropertyFlags(objectbox.PropertyFlags_ID)
-	model.Property("Group", objectbox.PropertyType_Relation, 2, 5617773211005988520)
-	model.PropertyRelation("Group", 4, 2339563716805116249)
-	model.EntityLastPropertyId(2, 5617773211005988520)
+	model.Property("Group", objectbox.PropertyType_Relation, 2, 161231572858529631)
+	model.PropertyRelation("Group", 4, 7259475919510918339)
+	model.EntityLastPropertyId(2, 161231572858529631)
+	model.Relation(1, 7373105480197164748, 1, 8717895732742165505)
 }
 
 // GetId is called by ObjectBox during Put operations to check for existing ID on an object
@@ -80,6 +81,60 @@ func (taskRelEmbedded_EntityInfo) PutRelated(txn *objectbox.Transaction, object 
 			}
 		}
 		// NOTE Put/PutAsync() has a side-effect of setting the rel.ID, so at this point, it is already set
+	}
+	if cursor, err := txn.CursorForName("TaskRelEmbedded"); err != nil {
+		panic(err)
+	} else if rSlice := object.(*TaskRelEmbedded).Groups; rSlice != nil {
+		// get id from the object, if inserting, it would be 0 even if the argument id is already non-zero
+		// this saves us an unnecessary request to RelationIds for new objects (there can't be any relations yet)
+		objId, err := TaskRelEmbeddedBinding.GetId(object)
+		if err != nil {
+			return err
+		}
+
+		// make a map of related target entity IDs, marking those that were originally related but should be removed
+		var idsToRemove = make(map[uint64]bool)
+
+		if objId != 0 {
+			if oldRelIds, err := cursor.RelationIds(1, id); err != nil {
+				return err
+			} else {
+				for _, rId := range oldRelIds {
+					idsToRemove[rId] = true
+				}
+			}
+		}
+
+		// walk over the current related objects, mark those that still exist, add the new ones
+		for _, rel := range rSlice {
+			rId, err := GroupBinding.GetId(rel)
+			if err != nil {
+				return err
+			} else if rId == 0 {
+				if rCursor, err := txn.CursorForName("Group"); err != nil {
+					return err
+				} else if rId, err = rCursor.Put(rel); err != nil {
+					return err
+				}
+			}
+
+			if idsToRemove[rId] {
+				// old relation that still exists, keep it
+				delete(idsToRemove, rId)
+			} else {
+				// new relation, add it
+				if err := cursor.RelationPut(1, id, rId); err != nil {
+					return err
+				}
+			}
+		}
+
+		// remove those that were not found in the rSlice but were originally related to this entity
+		for rId := range idsToRemove {
+			if err := cursor.RelationRemove(1, id, rId); err != nil {
+				return err
+			}
+		}
 	}
 	return nil
 }
@@ -125,10 +180,20 @@ func (taskRelEmbedded_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte)
 		}
 	}
 
+	var relGroups Group
+	if cursor, err := txn.CursorForName("TaskRelEmbedded"); err != nil {
+		panic(err)
+	} else if rSlice, err := cursor.RelationGetAll(1, 1, id); err != nil {
+		panic(err)
+	} else {
+		relGroups = rSlice.(Group)
+	}
+
 	return &TaskRelEmbedded{
 		Id: id,
 		WithGroup: WithGroup{
-			Group: relGroup,
+			Group:  relGroup,
+			Groups: relGroups,
 		},
 	}
 }
@@ -151,7 +216,7 @@ type TaskRelEmbeddedBox struct {
 // BoxForTaskRelEmbedded opens a box of TaskRelEmbedded objects
 func BoxForTaskRelEmbedded(ob *objectbox.ObjectBox) *TaskRelEmbeddedBox {
 	return &TaskRelEmbeddedBox{
-		Box: ob.InternalBox(4),
+		Box: ob.InternalBox(5),
 	}
 }
 

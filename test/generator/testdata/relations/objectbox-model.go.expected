@@ -12,16 +12,16 @@ func ObjectBoxModel() *objectbox.Model {
 	model := objectbox.NewModel()
 	model.GeneratorVersion(1)
 
+	model.RegisterBinding(GroupBinding)
 	model.RegisterBinding(TaskRelIdBinding)
 	model.RegisterBinding(TaskRelPtrBinding)
 	model.RegisterBinding(TaskRelValueBinding)
 	model.RegisterBinding(TaskRelEmbeddedBinding)
-	model.RegisterBinding(GroupBinding)
 	model.RegisterBinding(TaskRelManyPtrBinding)
 	model.RegisterBinding(TaskRelManyValueBinding)
-	model.LastEntityId(7, 4706154865122290029)
-	model.LastIndexId(4, 2339563716805116249)
-	model.LastRelationId(2, 1929546706668609706)
+	model.LastEntityId(7, 2217592893536642650)
+	model.LastIndexId(4, 7259475919510918339)
+	model.LastRelationId(3, 6392442863481646880)
 
 	return model
 }

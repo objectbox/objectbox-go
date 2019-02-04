@@ -15,7 +15,7 @@ type taskRelManyValue_EntityInfo struct {
 
 var TaskRelManyValueBinding = taskRelManyValue_EntityInfo{
 	Id:  7,
-	Uid: 4706154865122290029,
+	Uid: 2217592893536642650,
 }
 
 // TaskRelManyValue_ contains type-based Property helpers to facilitate some common operations such as Queries.
@@ -39,11 +39,11 @@ func (taskRelManyValue_EntityInfo) GeneratorVersion() int {
 
 // AddToModel is called by ObjectBox during model build
 func (taskRelManyValue_EntityInfo) AddToModel(model *objectbox.Model) {
-	model.Entity("TaskRelManyValue", 7, 4706154865122290029)
-	model.Property("Id", objectbox.PropertyType_Long, 1, 2217592893536642650)
+	model.Entity("TaskRelManyValue", 7, 2217592893536642650)
+	model.Property("Id", objectbox.PropertyType_Long, 1, 1929546706668609706)
 	model.PropertyFlags(objectbox.PropertyFlags_ID)
-	model.EntityLastPropertyId(1, 2217592893536642650)
-	model.Relation(2, 1929546706668609706, 5, 7144924247938981575)
+	model.EntityLastPropertyId(1, 1929546706668609706)
+	model.Relation(3, 6392442863481646880, 1, 8717895732742165505)
 }
 
 // GetId is called by ObjectBox during Put operations to check for existing ID on an object
@@ -72,7 +72,7 @@ func (taskRelManyValue_EntityInfo) PutRelated(txn *objectbox.Transaction, object
 		var idsToRemove = make(map[uint64]bool)
 
 		if objId != 0 {
-			if oldRelIds, err := cursor.RelationIds(2, id); err != nil {
+			if oldRelIds, err := cursor.RelationIds(3, id); err != nil {
 				return err
 			} else {
 				for _, rId := range oldRelIds {
@@ -100,7 +100,7 @@ func (taskRelManyValue_EntityInfo) PutRelated(txn *objectbox.Transaction, object
 				delete(idsToRemove, rId)
 			} else {
 				// new relation, add it
-				if err := cursor.RelationPut(2, id, rId); err != nil {
+				if err := cursor.RelationPut(3, id, rId); err != nil {
 					return err
 				}
 			}
@@ -108,7 +108,7 @@ func (taskRelManyValue_EntityInfo) PutRelated(txn *objectbox.Transaction, object
 
 		// remove those that were not found in the rSlice but were originally related to this entity
 		for rId := range idsToRemove {
-			if err := cursor.RelationRemove(2, id, rId); err != nil {
+			if err := cursor.RelationRemove(3, id, rId); err != nil {
 				return err
 			}
 		}
@@ -132,13 +132,13 @@ func (taskRelManyValue_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte
 	}
 	var id = table.GetUint64Slot(4, 0)
 
-	var relGroups []Group
+	var relGroups Group
 	if cursor, err := txn.CursorForName("TaskRelManyValue"); err != nil {
 		panic(err)
-	} else if rSlice, err := cursor.RelationGetAll(2, 5, id); err != nil {
+	} else if rSlice, err := cursor.RelationGetAll(3, 1, id); err != nil {
 		panic(err)
 	} else {
-		relGroups = rSlice.([]Group)
+		relGroups = rSlice.(Group)
 	}
 
 	return &TaskRelManyValue{

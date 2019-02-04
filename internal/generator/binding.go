@@ -91,7 +91,8 @@ type StandaloneRelation struct {
 		Name      string
 		IsPointer bool
 	}
-	Name string
+	Name       string
+	uidRequest bool
 }
 
 type Index struct {
@@ -377,16 +378,8 @@ func (entity *Entity) addFields(fields fieldList, fieldPath string) ([]*Field, e
 			entity.propertiesByName[realObName] = true
 		}
 
-		if property.Annotations["uid"] != nil {
-			if len(property.Annotations["uid"].Value) == 0 {
-				// in case the user doesn't provide `uid` value, it's considered in-process of setting up UID
-				// this flag is handled by the merge mechanism and prints the UID of the already existing property
-				property.uidRequest = true
-			} else if uid, err := strconv.ParseUint(property.Annotations["uid"].Value, 10, 64); err != nil {
-				return nil, propertyError(fmt.Errorf("can't parse uid - %s", err), property)
-			} else {
-				property.Uid = uid
-			}
+		if err := property.handleUid(); err != nil {
+			return nil, propertyError(err, property)
 		}
 
 		entity.Properties = append(entity.Properties, property)
@@ -457,8 +450,11 @@ func (field *Field) processType(f field) (fields fieldList, err error) {
 			return nil, err
 		}
 
+		if err := property.handleUid(); err != nil {
+			return nil, err
+		}
+
 		// add this as a standalone relation to the entity
-		// TODO handle rename of the property (relation) using the uidRequest
 		if field.Entity.Relations[field.Name] != nil {
 			return nil, fmt.Errorf("relation with the name %s already exists", field.Name)
 		}
@@ -466,6 +462,8 @@ func (field *Field) processType(f field) (fields fieldList, err error) {
 		rel := &StandaloneRelation{}
 		rel.Name = field.Name
 		rel.Target.Name = property.Annotations["link"].Value
+		rel.uidRequest = property.uidRequest
+		rel.Uid = property.Uid
 
 		if _, isPointer := elementType.(*types.Pointer); isPointer {
 			rel.Target.IsPointer = true
@@ -605,6 +603,21 @@ func (property *Property) forceRelation(target string, manyToMany bool) error {
 		}
 	}
 
+	return nil
+}
+
+func (property *Property) handleUid() error {
+	if property.Annotations["uid"] != nil {
+		if len(property.Annotations["uid"].Value) == 0 {
+			// in case the user doesn't provide `uid` value, it's considered in-process of setting up UID
+			// this flag is handled by the merge mechanism and prints the UID of the already existing property
+			property.uidRequest = true
+		} else if uid, err := strconv.ParseUint(property.Annotations["uid"].Value, 10, 64); err != nil {
+			return fmt.Errorf("can't parse uid - %s", err)
+		} else {
+			property.Uid = uid
+		}
+	}
 	return nil
 }
 

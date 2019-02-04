@@ -211,21 +211,21 @@ func getModelRelation(bindingRelation *StandaloneRelation, modelEntity *modelinf
 	// we don't care about this error, either the relation is found or we create it
 	relation, _ := modelEntity.FindRelationByName(bindingRelation.Name)
 
-	// TODO handle uid request
-	//if bindingRelation.uidRequest {
-	//	var errInfo string
-	//	if relation != nil {
-	//		if uid, err := relation.Id.GetUid(); err != nil {
-	//			return nil, err
-	//		} else {
-	//			errInfo = fmt.Sprintf("model relation UID = %d", uid)
-	//		}
-	//	} else {
-	//		errInfo = "relation not found in the model"
-	//	}
-	//	return nil, fmt.Errorf("uid annotation value must not be empty (%s) on relation %s, entity %s",
-	//		errInfo, bindingRelation.Name, bindingRelation.entity.Name)
-	//}
+	// handle uid request
+	if bindingRelation.uidRequest {
+		var errInfo string
+		if relation != nil {
+			if uid, err := relation.Id.GetUid(); err != nil {
+				return nil, err
+			} else {
+				errInfo = fmt.Sprintf("model relation UID = %d", uid)
+			}
+		} else {
+			errInfo = "relation not found in the model"
+		}
+		return nil, fmt.Errorf("uid annotation value must not be empty (%s) on relation %s, entity %s",
+			errInfo, bindingRelation.Name, modelEntity.Name)
+	}
 
 	if relation != nil {
 		return relation, nil

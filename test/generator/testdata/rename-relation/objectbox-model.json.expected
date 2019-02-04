@@ -1,0 +1,135 @@
+{
+  "comment": [
+    "KEEP THIS FILE! Check it into a version control system (VCS) like git.",
+    "ObjectBox manages crucial IDs for your object model. See docs for details.",
+    "If you have VCS merge conflicts, you must resolve them according to ObjectBox docs."
+  ],
+  "entities": [
+    {
+      "id": "1:8717895732742165505",
+      "name": "TaskRelId",
+      "lastPropertyId": "2:6050128673802995827",
+      "properties": [
+        {
+          "id": "1:2259404117704393152",
+          "name": "Id"
+        },
+        {
+          "id": "2:6050128673802995827",
+          "name": "GroupNew",
+          "indexId": "1:501233450539197794"
+        }
+      ]
+    },
+    {
+      "id": "2:3390393562759376202",
+      "name": "TaskRelPtr",
+      "lastPropertyId": "2:1774932891286980153",
+      "properties": [
+        {
+          "id": "1:2669985732393126063",
+          "name": "Id"
+        },
+        {
+          "id": "2:1774932891286980153",
+          "name": "GroupNew",
+          "indexId": "2:6044372234677422456"
+        }
+      ]
+    },
+    {
+      "id": "3:8274930044578894929",
+      "name": "TaskRelValue",
+      "lastPropertyId": "2:2661732831099943416",
+      "properties": [
+        {
+          "id": "1:1543572285742637646",
+          "name": "Id"
+        },
+        {
+          "id": "2:2661732831099943416",
+          "name": "GroupNew",
+          "indexId": "3:8325060299420976708"
+        }
+      ]
+    },
+    {
+      "id": "4:7837839688282259259",
+      "name": "TaskRelEmbedded",
+      "lastPropertyId": "2:5617773211005988520",
+      "properties": [
+        {
+          "id": "1:2518412263346885298",
+          "name": "Id"
+        },
+        {
+          "id": "2:5617773211005988520",
+          "name": "Group",
+          "indexId": "4:2339563716805116249"
+        }
+      ],
+      "relations": [
+        {
+          "id": "3:6392442863481646880",
+          "name": "GroupsNew"
+        }
+      ]
+    },
+    {
+      "id": "5:7144924247938981575",
+      "name": "Group",
+      "lastPropertyId": "2:7259475919510918339",
+      "properties": [
+        {
+          "id": "1:161231572858529631",
+          "name": "Id"
+        },
+        {
+          "id": "2:7259475919510918339",
+          "name": "Name"
+        }
+      ]
+    },
+    {
+      "id": "6:7373105480197164748",
+      "name": "TaskRelManyPtr",
+      "lastPropertyId": "1:3287288577352441706",
+      "properties": [
+        {
+          "id": "1:3287288577352441706",
+          "name": "Id"
+        }
+      ],
+      "relations": [
+        {
+          "id": "1:3930927879439176946",
+          "name": "GroupsNew"
+        }
+      ]
+    },
+    {
+      "id": "7:4706154865122290029",
+      "name": "TaskRelManyValue",
+      "lastPropertyId": "1:2217592893536642650",
+      "properties": [
+        {
+          "id": "1:2217592893536642650",
+          "name": "Id"
+        }
+      ],
+      "relations": [
+        {
+          "id": "2:1929546706668609706",
+          "name": "GroupsNew"
+        }
+      ]
+    }
+  ],
+  "lastEntityId": "7:4706154865122290029",
+  "lastIndexId": "4:2339563716805116249",
+  "lastRelationId": "3:6392442863481646880",
+  "retiredEntityUids": [],
+  "retiredIndexUids": [],
+  "retiredPropertyUids": [],
+  "retiredRelationUids": []
+}

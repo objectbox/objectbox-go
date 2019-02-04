@@ -332,12 +332,12 @@ func (entity_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface
 		}
 	}
 	if err := txn.RunWithCursor(EntityBinding.Id, func(cursor *objectbox.Cursor) error {
-		return cursor.RelationUpdate(4, EntityByValueBinding.Id, id, object, object.(*Entity).RelatedSlice)
+		return cursor.RelationReplace(4, EntityByValueBinding.Id, id, object, object.(*Entity).RelatedSlice)
 	}); err != nil {
 		return err
 	}
 	if err := txn.RunWithCursor(EntityBinding.Id, func(cursor *objectbox.Cursor) error {
-		return cursor.RelationUpdate(5, TestEntityRelatedBinding.Id, id, object, object.(*Entity).RelatedPtrSlice)
+		return cursor.RelationReplace(5, TestEntityRelatedBinding.Id, id, object, object.(*Entity).RelatedPtrSlice)
 	}); err != nil {
 		return err
 	}

@@ -59,7 +59,7 @@ func (taskRelManyPtr_EntityInfo) SetId(object interface{}, id uint64) {
 // PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
 func (taskRelManyPtr_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}, id uint64) error {
 	if err := txn.RunWithCursor(TaskRelManyPtrBinding.Id, func(cursor *objectbox.Cursor) error {
-		return cursor.RelationUpdate(2, GroupBinding.Id, id, object, object.(*TaskRelManyPtr).Groups)
+		return cursor.RelationReplace(2, GroupBinding.Id, id, object, object.(*TaskRelManyPtr).Groups)
 	}); err != nil {
 		return err
 	}

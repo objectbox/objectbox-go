@@ -162,7 +162,7 @@ func ({{$entityNameCamel}}_EntityInfo) PutRelated(txn *objectbox.Transaction, ob
 			}
 		{{- else if $field.StandaloneRelation}}
 			if err := txn.RunWithCursor({{$field.Entity.Name}}Binding.Id, func(cursor *objectbox.Cursor) error {
-				return cursor.RelationUpdate({{$field.StandaloneRelation.Id}}, {{$field.StandaloneRelation.Target.Name}}Binding.Id, id, object, object.(*{{$field.Entity.Name}}).{{$field.Name}})
+				return cursor.RelationReplace({{$field.StandaloneRelation.Id}}, {{$field.StandaloneRelation.Target.Name}}Binding.Id, id, object, object.(*{{$field.Entity.Name}}).{{$field.Name}})
 			}); err != nil {
 				return err
 			}

@@ -233,10 +233,10 @@ func (cursor *Cursor) bytesArrayToObjects(bytesArray *bytesArray) (slice interfa
 	return
 }
 
-// RelationUpdate replaces all targets for a given source in a standalone many-to-many relation
+// RelationReplace replaces all targets for a given source in a standalone many-to-many relation
 // It also inserts new related objects (with a 0 ID).
 // TODO don't require a targetEntityId, it can retrieved using a relationId
-func (cursor *Cursor) RelationUpdate(relationId TypeId, targetEntityId TypeId, sourceId uint64, sourceObject interface{}, targetObjects interface{}) (err error) {
+func (cursor *Cursor) RelationReplace(relationId TypeId, targetEntityId TypeId, sourceId uint64, sourceObject interface{}, targetObjects interface{}) (err error) {
 	// get id from the object, if inserting, it would be 0 even if the argument id is already non-zero
 	// this saves us an unnecessary request to RelationIds for new objects (there can't be any relations yet)
 	objId, err := cursor.entity.binding.GetId(sourceObject)

@@ -83,7 +83,7 @@ func (taskRelEmbedded_EntityInfo) PutRelated(txn *objectbox.Transaction, object 
 		}
 	}
 	if err := txn.RunWithCursor(TaskRelEmbeddedBinding.Id, func(cursor *objectbox.Cursor) error {
-		return cursor.RelationUpdate(1, GroupBinding.Id, id, object, object.(*TaskRelEmbedded).Groups)
+		return cursor.RelationReplace(1, GroupBinding.Id, id, object, object.(*TaskRelEmbedded).Groups)
 	}); err != nil {
 		return err
 	}

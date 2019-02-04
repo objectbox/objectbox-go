@@ -132,13 +132,13 @@ func (taskRelManyValue_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte
 	}
 	var id = table.GetUint64Slot(4, 0)
 
-	var relGroups Group
+	var relGroups []Group
 	if cursor, err := txn.CursorForName("TaskRelManyValue"); err != nil {
 		panic(err)
 	} else if rSlice, err := cursor.RelationGetAll(3, 1, id); err != nil {
 		panic(err)
 	} else {
-		relGroups = rSlice.(Group)
+		relGroups = rSlice.([]Group)
 	}
 
 	return &TaskRelManyValue{

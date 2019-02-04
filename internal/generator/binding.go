@@ -470,10 +470,15 @@ func (field *Field) processType(f field) (fields fieldList, err error) {
 		}
 
 		field.Entity.Relations[field.Name] = rel
+		field.StandaloneRelation = rel
 
 		// fill in the field information
 		field.fillInfo(f, typesTypeErrorful{elementType})
-		field.StandaloneRelation = rel
+		if rel.Target.IsPointer {
+			field.Type = "[]*" + field.Type
+		} else {
+			field.Type = "[]" + field.Type
+		}
 
 		// we need to skip adding this field (it's not persisted in DB) so we add an empty list of fields
 		return structFieldList{}, nil
@@ -496,7 +501,6 @@ func (field *Field) fillInfo(f field, typ typeErrorful) {
 
 	// if the package path is specified (happens for embedded fields), check whether it's current package
 	if strings.ContainsRune(field.Type, '/') {
-
 		// if the package is the current package, strip the path & name
 		var parts = strings.Split(field.Type, ".")
 

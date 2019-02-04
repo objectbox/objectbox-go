@@ -180,13 +180,13 @@ func (taskRelEmbedded_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte)
 		}
 	}
 
-	var relGroups Group
+	var relGroups []*Group
 	if cursor, err := txn.CursorForName("TaskRelEmbedded"); err != nil {
 		panic(err)
 	} else if rSlice, err := cursor.RelationGetAll(1, 1, id); err != nil {
 		panic(err)
 	} else {
-		relGroups = rSlice.(Group)
+		relGroups = rSlice.([]*Group)
 	}
 
 	return &TaskRelEmbedded{

@@ -54,7 +54,7 @@ func (taskRelEmbedded_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Property("Group", objectbox.PropertyType_Relation, 2, 161231572858529631)
 	model.PropertyRelation("Group", 4, 7259475919510918339)
 	model.EntityLastPropertyId(2, 161231572858529631)
-	model.Relation(1, 7373105480197164748, 1, 8717895732742165505)
+	model.Relation(1, 7373105480197164748, GroupBinding.Id, GroupBinding.Uid)
 }
 
 // GetId is called by ObjectBox during Put operations to check for existing ID on an object

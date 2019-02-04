@@ -276,8 +276,8 @@ func (entity_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Property("RelatedPtr2", objectbox.PropertyType_Relation, 24, 7776035803207726954)
 	model.PropertyRelation("TestEntityRelated", 3, 6077259218141868916)
 	model.EntityLastPropertyId(24, 7776035803207726954)
-	model.Relation(5, 1694321226239708534, 5, 145948658381494339)
-	model.Relation(4, 5379891792880176678, 3, 2793387980842421409)
+	model.Relation(5, 1694321226239708534, TestEntityRelatedBinding.Id, TestEntityRelatedBinding.Uid)
+	model.Relation(4, 5379891792880176678, EntityByValueBinding.Id, EntityByValueBinding.Uid)
 }
 
 // GetId is called by ObjectBox during Put operations to check for existing ID on an object

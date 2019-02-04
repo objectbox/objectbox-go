@@ -106,7 +106,7 @@ func ({{$entityNameCamel}}_EntityInfo) AddToModel(model *objectbox.Model) {
     {{end -}}
     model.EntityLastPropertyId({{$entity.LastPropertyId.GetId}}, {{$entity.LastPropertyId.GetUid}})
 	{{range $relation := $entity.Relations -}}
-    model.Relation({{$relation.Id}}, {{$relation.Uid}}, {{$relation.Target.Id}}, {{$relation.Target.Uid}})
+    model.Relation({{$relation.Id}}, {{$relation.Uid}}, {{$relation.Target.Name}}Binding.Id, {{$relation.Target.Name}}Binding.Uid)
     {{end -}}
 }
 

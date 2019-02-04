@@ -43,7 +43,7 @@ func (taskRelManyValue_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Property("Id", objectbox.PropertyType_Long, 1, 2217592893536642650)
 	model.PropertyFlags(objectbox.PropertyFlags_ID)
 	model.EntityLastPropertyId(1, 2217592893536642650)
-	model.Relation(2, 1929546706668609706, 5, 7144924247938981575)
+	model.Relation(2, 1929546706668609706, GroupBinding.Id, GroupBinding.Uid)
 }
 
 // GetId is called by ObjectBox during Put operations to check for existing ID on an object

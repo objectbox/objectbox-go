@@ -216,6 +216,25 @@ func TestBoxEmpty(t *testing.T) {
 	assert.Eq(t, true, isEmpty)
 }
 
+func TestBoxContains(t *testing.T) {
+	var env = model.NewTestEnv(t)
+	defer env.Close()
+
+	found, err := env.Box.Contains(1)
+	assert.NoErr(t, err)
+	assert.Eq(t, false, found)
+
+	env.Populate(1)
+
+	found, err = env.Box.Contains(1)
+	assert.NoErr(t, err)
+	assert.Eq(t, true, found)
+
+	found, err = env.Box.Contains(2)
+	assert.NoErr(t, err)
+	assert.Eq(t, false, found)
+}
+
 // Includes testing the default string vector (containing 2 normal values and one "")
 func TestBoxPutData(t *testing.T) {
 	env := model.NewTestEnv(t)

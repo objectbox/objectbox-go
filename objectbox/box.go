@@ -282,3 +282,14 @@ func (box *Box) GetAll() (slice interface{}, err error) {
 	})
 	return
 }
+
+// Contains checks whether an object with the given ID is stored.
+func (box *Box) Contains(id uint64) (bool, error) {
+	var found = false
+	var err = box.objectBox.runWithCursor(box.entity, true, func(cursor *cursor) error {
+		var errInner error
+		found, errInner = cursor.seek(id)
+		return errInner
+	})
+	return found, err
+}

@@ -77,25 +77,29 @@ func (env *TestEnv) Populate(count uint) {
 	// the first one is always the special Entity47
 	env.PutEntity(entity47(1, &env.options))
 
-	// additionally an entity with upper case String
-	var e = entity47(1, &env.options)
-	e.String = strings.ToUpper(e.String)
-	env.PutEntity(e)
-
-	var toInsert = count - 2
-
-	// insert some data - different values but dependable
-	var limit = float64(4294967295) // uint max so that when we multiply with 42, we get some large int64 values
-	var step = limit / float64(toInsert) * 2
-	var entities = make([]*Entity, toInsert)
-	var i = uint(0)
-	for coef := -limit; i < toInsert; coef += step {
-		entities[i] = entity47(int64(coef), &env.options)
-		i++
+	if count > 1 {
+		// additionally an entity with upper case String
+		var e = entity47(1, &env.options)
+		e.String = strings.ToUpper(e.String)
+		env.PutEntity(e)
 	}
 
-	_, err := env.Box.PutAll(entities)
-	assert.NoErr(env.t, err)
+	if count > 2 {
+		var toInsert = count - 2
+
+		// insert some data - different values but dependable
+		var limit = float64(4294967295) // uint max so that when we multiply with 42, we get some large int64 values
+		var step = limit / float64(toInsert) * 2
+		var entities = make([]*Entity, toInsert)
+		var i = uint(0)
+		for coef := -limit; i < toInsert; coef += step {
+			entities[i] = entity47(int64(coef), &env.options)
+			i++
+		}
+
+		_, err := env.Box.PutAll(entities)
+		assert.NoErr(env.t, err)
+	}
 
 	c, err := env.Box.Count()
 	assert.NoErr(env.t, err)

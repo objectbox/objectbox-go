@@ -29,6 +29,8 @@ import (
 	"sync/atomic"
 	"unsafe"
 
+	"github.com/pkg/errors"
+
 	"github.com/google/flatbuffers/go"
 )
 
@@ -111,18 +113,23 @@ func (box *Box) PutAsyncWithTimeout(object interface{}, timeoutMs uint) (id uint
 		return 0, err
 	}
 
+	if box.entity.hasRelations {
+		return 0, errors.New("PutAsync is currently not supported on entities that have relations")
+	}
+
 	if id, err = box.idForPut(idFromObject); err != nil {
 		return 0, err
 	}
 
-	if box.entity.hasRelations {
-		err = box.objectBox.runInTxn(false, func(txn *Transaction) error {
-			return box.entity.binding.PutRelated(txn, object, id)
-		})
-		if err != nil {
-			return 0, err
-		}
-	}
+	// TODO put related antities and this one within a single transaction
+	//if box.entity.hasRelations {
+	//	err = box.objectBox.runInTxn(false, func(txn *Transaction) error {
+	//		return box.entity.binding.PutRelated(txn, object, id)
+	//	})
+	//	if err != nil {
+	//		return 0, err
+	//	}
+	//}
 
 	var fbb *flatbuffers.Builder
 	if atomic.CompareAndSwapUint32(&box.fbbInUseAtomic, 0, 1) {

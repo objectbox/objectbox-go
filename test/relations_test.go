@@ -27,7 +27,12 @@ import (
 
 func TestRelationsInsert(t *testing.T) {
 	// run once for Put & once for PutAsync
-	for i := 0; i <= 100; i++ {
+	for i := 0; i <= 1; i++ {
+		if i == 1 {
+			// TODO Box.PutAsync currently doesn't support relations
+			continue
+		}
+
 		// starting the environment inside the for loop ensures the database is empty & IDs start from 0
 		var env = model.NewTestEnv(t)
 		var relBox = model.BoxForTestEntityRelated(env.ObjectBox)
@@ -105,6 +110,11 @@ func TestRelationsInsert(t *testing.T) {
 func TestRelationsUpdate(t *testing.T) {
 	// run once for Put & once for PutAsync
 	for i := 0; i <= 1; i++ {
+		if i == 1 {
+			// TODO Box.PutAsync currently doesn't support relations
+			continue
+		}
+
 		// starting the environment inside the for loop ensures the database is empty & IDs start from 0
 		var env = model.NewTestEnv(t).SetOptions(model.TestEnvOptions{PopulateRelations: true})
 		var relBox = model.BoxForTestEntityRelated(env.ObjectBox)

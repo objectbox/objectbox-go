@@ -175,7 +175,7 @@ func TestRelationsUpdate(t *testing.T) {
 		assert.Eq(t, uint64(5), object.RelatedPtr.Id)
 		assert.Eq(t, 3, len(object.RelatedSlice))
 		assert.Eq(t, 3, len(object.RelatedPtrSlice))
-		assert.EqItems(t, []uint64{2, 3, 11}, []uint64{object.RelatedSlice[0].Id, object.RelatedSlice[1].Id, object.RelatedSlice[2].Id})
+		assert.Eq(t, []uint64{2, 3, 11}, []uint64{object.RelatedSlice[0].Id, object.RelatedSlice[1].Id, object.RelatedSlice[2].Id})
 		assert.EqItems(t, []uint64{5, 6, 31}, []uint64{object.RelatedPtrSlice[0].Id, object.RelatedPtrSlice[1].Id, object.RelatedPtrSlice[2].Id})
 
 		// remove some relations

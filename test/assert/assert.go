@@ -47,7 +47,7 @@ func Eq(t *testing.T, expected interface{}, actual interface{}) {
 	}
 }
 
-// EqItems chechks whether two slices have the same elements
+// EqItems checks whether two slices have the same elements (regardless of their order)
 func EqItems(t *testing.T, expected interface{}, actual interface{}) {
 	var exp = reflect.ValueOf(expected)
 	var act = reflect.ValueOf(actual)

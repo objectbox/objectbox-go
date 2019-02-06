@@ -388,6 +388,10 @@ func (entity *Entity) addFields(fields fieldList, fieldPath string) ([]*Field, e
 	return fieldsTree, nil
 }
 
+// processType analyzes field type information and configures it.
+// It might result in setting a field.Type (in case it's one of the basic types),
+// field.StandaloneRelation (in case of many-to-many relations) or field.SimpleRelation (one-to-many relations).
+// It also updates (fixes) the field.Name on embedded fields
 func (field *Field) processType(f field) (fields fieldList, err error) {
 	var typ = f.Type()
 	var property = field.Property
@@ -428,7 +432,7 @@ func (field *Field) processType(f field) (fields fieldList, err error) {
 
 		if property.Annotations["link"] != nil {
 			// if it's a one-to-many relation
-			if err := property.forceRelation(typeBaseName(typ.String()), false); err != nil {
+			if err := property.setRelation(typeBaseName(typ.String()), false); err != nil {
 				return nil, err
 			}
 
@@ -446,7 +450,7 @@ func (field *Field) processType(f field) (fields fieldList, err error) {
 		var elementType = slice.Elem()
 
 		// it's a many-to-many relation
-		if err := property.forceRelation(typeBaseName(elementType.String()), true); err != nil {
+		if err := property.setRelation(typeBaseName(elementType.String()), true); err != nil {
 			return nil, err
 		}
 
@@ -583,7 +587,9 @@ func (property *Property) setAnnotations(tags string) error {
 	return nil
 }
 
-func (property *Property) forceRelation(target string, manyToMany bool) error {
+// setRelation sets a relation on the property.
+// If the user has previously defined a relation manually, it must match the arguments (relation target)
+func (property *Property) setRelation(target string, manyToMany bool) error {
 	if property.Annotations == nil {
 		property.Annotations = make(map[string]*Annotation)
 	}

@@ -242,9 +242,7 @@ func getModelRelation(bindingRelation *StandaloneRelation, modelEntity *modelinf
 	}
 }
 
-func mergeModelRelation(bindingRelation *StandaloneRelation, modelRelation *modelinfo.StandaloneRelation,
-	modelInfo *modelinfo.ModelInfo) (err error) {
-
+func mergeModelRelation(bindingRelation *StandaloneRelation, modelRelation *modelinfo.StandaloneRelation, modelInfo *modelinfo.ModelInfo) (err error) {
 	modelRelation.Name = bindingRelation.Name
 
 	if bindingRelation.Id, bindingRelation.Uid, err = modelRelation.Id.Get(); err != nil {
@@ -256,6 +254,9 @@ func mergeModelRelation(bindingRelation *StandaloneRelation, modelRelation *mode
 		return err
 	} else if bindingRelation.Target.Id, bindingRelation.Target.Uid, err = targetEntity.Id.Get(); err != nil {
 		return err
+	} else {
+		// store this info in the model = necessary for cycle checks
+		modelRelation.Target = targetEntity
 	}
 
 	return nil

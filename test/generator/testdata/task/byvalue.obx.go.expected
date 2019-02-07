@@ -40,9 +40,9 @@ func (taskByValue_EntityInfo) GeneratorVersion() int {
 // AddToModel is called by ObjectBox during model build
 func (taskByValue_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("TaskByValue", 3, 2661732831099943416)
-	model.Property("Id", objectbox.PropertyType_Long, 1, 8325060299420976708)
+	model.Property("Id", objectbox.PropertyType_Long, 1, 7837839688282259259)
 	model.PropertyFlags(objectbox.PropertyFlags_ID)
-	model.EntityLastPropertyId(1, 8325060299420976708)
+	model.EntityLastPropertyId(1, 7837839688282259259)
 }
 
 // GetId is called by ObjectBox during Put operations to check for existing ID on an object
@@ -239,7 +239,7 @@ type taskStringByValue_EntityInfo struct {
 
 var TaskStringByValueBinding = taskStringByValue_EntityInfo{
 	Id:  4,
-	Uid: 7837839688282259259,
+	Uid: 8325060299420976708,
 }
 
 // TaskStringByValue_ contains type-based Property helpers to facilitate some common operations such as Queries.
@@ -263,7 +263,7 @@ func (taskStringByValue_EntityInfo) GeneratorVersion() int {
 
 // AddToModel is called by ObjectBox during model build
 func (taskStringByValue_EntityInfo) AddToModel(model *objectbox.Model) {
-	model.Entity("TaskStringByValue", 4, 7837839688282259259)
+	model.Entity("TaskStringByValue", 4, 8325060299420976708)
 	model.Property("Id", objectbox.PropertyType_Long, 1, 2518412263346885298)
 	model.PropertyFlags(objectbox.PropertyFlags_ID)
 	model.EntityLastPropertyId(1, 2518412263346885298)

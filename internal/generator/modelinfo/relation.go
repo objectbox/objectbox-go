@@ -36,10 +36,9 @@ func (relation *Relation) Validate() error {
 	return nil
 }
 
-// this is kept as a separate type for clear differentiation in other parts of the code
-// and in case we wanted to persist other fields collected in the binding (such as target entity id)
 type StandaloneRelation struct {
 	Relation
+	Target *Entity `json:"-"`
 }
 
 func CreateStandaloneRelation(id IdUid) *StandaloneRelation {

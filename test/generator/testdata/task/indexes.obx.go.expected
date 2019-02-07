@@ -153,7 +153,7 @@ func (taskIndexed_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Build
 }
 
 // Load is called by ObjectBox to load an object from a FlatBuffer
-func (taskIndexed_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interface{} {
+func (taskIndexed_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) (interface{}, error) {
 	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
@@ -168,7 +168,7 @@ func (taskIndexed_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) int
 		Group:    fbutils.GetStringSlot(table, 12),
 		Place:    fbutils.GetStringSlot(table, 14),
 		Source:   fbutils.GetStringSlot(table, 16),
-	}
+	}, nil
 }
 
 // MakeSlice is called by ObjectBox to construct a new slice to hold the read objects

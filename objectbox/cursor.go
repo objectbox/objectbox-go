@@ -58,7 +58,7 @@ func (cursor *Cursor) Get(id uint64) (object interface{}, err error) {
 	if rc == 0 {
 		var bytes []byte
 		cVoidPtrToByteSlice(dataPtr, int(dataSize), &bytes)
-		return cursor.entity.binding.Load(cursor.txn, bytes), nil
+		return cursor.entity.binding.Load(cursor.txn, bytes)
 	} else if rc == C.OBX_NOT_FOUND {
 		return nil, nil
 	} else {
@@ -72,7 +72,7 @@ func (cursor *Cursor) GetAll() (slice interface{}, err error) {
 		if cBytesArray == nil {
 			return nil, createError()
 		}
-		return cursor.cBytesArrayToObjects(cBytesArray), nil
+		return cursor.cBytesArrayToObjects(cBytesArray)
 	} else {
 		return cursor.getAllSequential()
 	}
@@ -90,8 +90,11 @@ func (cursor *Cursor) getAllSequential() (slice interface{}, err error) {
 	var rc C.obx_err
 	for rc = C.obx_cursor_first(cursor.cursor, &dataPtr, &dataSize); rc == 0; rc = C.obx_cursor_next(cursor.cursor, &dataPtr, &dataSize) {
 		cVoidPtrToByteSlice(dataPtr, int(dataSize), &bytes)
-		object := binding.Load(cursor.txn, bytes)
-		slice = binding.AppendToSlice(slice, object)
+		if object, err := binding.Load(cursor.txn, bytes); err != nil {
+			return nil, err
+		} else {
+			slice = binding.AppendToSlice(slice, object)
+		}
 	}
 
 	// if there was an error
@@ -217,20 +220,23 @@ func (cursor *Cursor) RemoveAll() (err error) {
 	return
 }
 
-func (cursor *Cursor) cBytesArrayToObjects(cBytesArray *C.OBX_bytes_array) (slice interface{}) {
+func (cursor *Cursor) cBytesArrayToObjects(cBytesArray *C.OBX_bytes_array) (slice interface{}, err error) {
 	bytesArray := cBytesArrayToGo(cBytesArray)
 	defer bytesArray.free()
 	return cursor.bytesArrayToObjects(bytesArray)
 }
 
-func (cursor *Cursor) bytesArrayToObjects(bytesArray *bytesArray) (slice interface{}) {
+func (cursor *Cursor) bytesArrayToObjects(bytesArray *bytesArray) (slice interface{}, err error) {
 	var binding = cursor.entity.binding
 	slice = binding.MakeSlice(len(bytesArray.BytesArray))
 	for _, bytesData := range bytesArray.BytesArray {
-		object := binding.Load(cursor.txn, bytesData)
-		slice = binding.AppendToSlice(slice, object)
+		if object, err := binding.Load(cursor.txn, bytesData); err != nil {
+			return nil, err
+		} else {
+			slice = binding.AppendToSlice(slice, object)
+		}
 	}
-	return
+	return slice, nil
 }
 
 // RelationReplace replaces all targets for a given source in a standalone many-to-many relation

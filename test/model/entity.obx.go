@@ -408,7 +408,7 @@ func (entity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, i
 }
 
 // Load is called by ObjectBox to load an object from a FlatBuffer
-func (entity_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interface{} {
+func (entity_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) (interface{}, error) {
 	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
@@ -428,7 +428,7 @@ func (entity_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interfac
 			}
 			return nil
 		}); err != nil {
-			panic(err)
+			return nil, err
 		}
 	} else {
 		relRelated = &TestEntityRelated{}
@@ -447,7 +447,7 @@ func (entity_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interfac
 			}
 			return nil
 		}); err != nil {
-			panic(err)
+			return nil, err
 		}
 	}
 
@@ -464,7 +464,7 @@ func (entity_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interfac
 			}
 			return nil
 		}); err != nil {
-			panic(err)
+			return nil, err
 		}
 	}
 
@@ -477,7 +477,7 @@ func (entity_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interfac
 			return nil
 		}
 	}); err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	var relRelatedPtrSlice []*TestEntityRelated
@@ -489,7 +489,7 @@ func (entity_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interfac
 			return nil
 		}
 	}); err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	return &Entity{
@@ -519,7 +519,7 @@ func (entity_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interfac
 		RelatedPtr2:     relRelatedPtr2,
 		RelatedSlice:    relRelatedSlice,
 		RelatedPtrSlice: relRelatedPtrSlice,
-	}
+	}, nil
 }
 
 // MakeSlice is called by ObjectBox to construct a new slice to hold the read objects
@@ -724,7 +724,7 @@ func (testStringIdEntity_EntityInfo) Flatten(object interface{}, fbb *flatbuffer
 }
 
 // Load is called by ObjectBox to load an object from a FlatBuffer
-func (testStringIdEntity_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interface{} {
+func (testStringIdEntity_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) (interface{}, error) {
 	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
@@ -733,7 +733,7 @@ func (testStringIdEntity_EntityInfo) Load(txn *objectbox.Transaction, bytes []by
 
 	return &TestStringIdEntity{
 		Id: objectbox.StringIdConvertToEntityProperty(id),
-	}
+	}, nil
 }
 
 // MakeSlice is called by ObjectBox to construct a new slice to hold the read objects
@@ -961,7 +961,7 @@ func (testEntityInline_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.
 }
 
 // Load is called by ObjectBox to load an object from a FlatBuffer
-func (testEntityInline_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interface{} {
+func (testEntityInline_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) (interface{}, error) {
 	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
@@ -976,7 +976,7 @@ func (testEntityInline_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte
 			Value: table.GetFloat64Slot(6, 0),
 		},
 		Id: id,
-	}
+	}, nil
 }
 
 // MakeSlice is called by ObjectBox to construct a new slice to hold the read objects
@@ -1194,7 +1194,7 @@ func (testEntityRelated_EntityInfo) Flatten(object interface{}, fbb *flatbuffers
 }
 
 // Load is called by ObjectBox to load an object from a FlatBuffer
-func (testEntityRelated_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interface{} {
+func (testEntityRelated_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) (interface{}, error) {
 	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
@@ -1204,7 +1204,7 @@ func (testEntityRelated_EntityInfo) Load(txn *objectbox.Transaction, bytes []byt
 	return &TestEntityRelated{
 		Id:   id,
 		Name: fbutils.GetStringSlot(table, 6),
-	}
+	}, nil
 }
 
 // MakeSlice is called by ObjectBox to construct a new slice to hold the read objects

@@ -104,7 +104,7 @@ func (taskRelValue_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Buil
 }
 
 // Load is called by ObjectBox to load an object from a FlatBuffer
-func (taskRelValue_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interface{} {
+func (taskRelValue_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) (interface{}, error) {
 	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
@@ -124,7 +124,7 @@ func (taskRelValue_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) in
 			}
 			return nil
 		}); err != nil {
-			panic(err)
+			return nil, err
 		}
 	} else {
 		relGroup = &Group{}
@@ -133,7 +133,7 @@ func (taskRelValue_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) in
 	return &TaskRelValue{
 		Id:    id,
 		Group: *relGroup,
-	}
+	}, nil
 }
 
 // MakeSlice is called by ObjectBox to construct a new slice to hold the read objects

@@ -107,7 +107,7 @@ func (e_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uin
 }
 
 // Load is called by ObjectBox to load an object from a FlatBuffer
-func (e_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interface{} {
+func (e_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) (interface{}, error) {
 	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
@@ -121,7 +121,7 @@ func (e_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interface{} {
 		id:           id,
 		ForeignAlias: fbutils.GetStringSlot(table, 8),
 		ForeignNamed: other.ForeignNamed(fbutils.GetStringSlot(table, 10)),
-	}
+	}, nil
 }
 
 // MakeSlice is called by ObjectBox to construct a new slice to hold the read objects

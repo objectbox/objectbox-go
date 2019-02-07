@@ -78,7 +78,7 @@ func (entityByValue_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Bui
 }
 
 // Load is called by ObjectBox to load an object from a FlatBuffer
-func (entityByValue_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interface{} {
+func (entityByValue_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) (interface{}, error) {
 	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
@@ -87,7 +87,7 @@ func (entityByValue_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) i
 
 	return &EntityByValue{
 		Id: id,
-	}
+	}, nil
 }
 
 // MakeSlice is called by ObjectBox to construct a new slice to hold the read objects

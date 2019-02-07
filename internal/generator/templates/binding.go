@@ -213,7 +213,7 @@ func ({{$entityNameCamel}}_EntityInfo) Flatten(object interface{}, fbb *flatbuff
 }
 
 // Load is called by ObjectBox to load an object from a FlatBuffer 
-func ({{$entityNameCamel}}_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interface{} {
+func ({{$entityNameCamel}}_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) (interface{}, error) {
 	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
@@ -237,7 +237,7 @@ func ({{$entityNameCamel}}_EntityInfo) Load(txn *objectbox.Transaction, bytes []
 					}
 					return nil
 				}); err != nil {
-					panic(err)
+					return nil, err
 				}
 			{{if not $field.IsPointer -}} 
 			} else {
@@ -254,7 +254,7 @@ func ({{$entityNameCamel}}_EntityInfo) Load(txn *objectbox.Transaction, bytes []
 					return nil
 				}
 			}); err != nil {
-				panic(err)
+				return nil, err
 			}
 			
 		{{else}}{{/* recursively visit fields in embedded structs */}}{{template "load-relations" $field}}
@@ -276,7 +276,7 @@ func ({{$entityNameCamel}}_EntityInfo) Load(txn *objectbox.Transaction, bytes []
 				{{- else}}{{if $field.IsPointer}}&{{end}}{{$field.Type}}{ {{template "fields-initializer" $field}} }{{end}},
 		{{- end}}
 	{{end}}
-	}
+	}, nil
 }
 
 // MakeSlice is called by ObjectBox to construct a new slice to hold the read objects  

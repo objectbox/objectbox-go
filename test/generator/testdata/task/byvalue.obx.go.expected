@@ -78,7 +78,7 @@ func (taskByValue_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Build
 }
 
 // Load is called by ObjectBox to load an object from a FlatBuffer
-func (taskByValue_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interface{} {
+func (taskByValue_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) (interface{}, error) {
 	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
@@ -87,7 +87,7 @@ func (taskByValue_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) int
 
 	return &TaskByValue{
 		Id: id,
-	}
+	}, nil
 }
 
 // MakeSlice is called by ObjectBox to construct a new slice to hold the read objects
@@ -301,7 +301,7 @@ func (taskStringByValue_EntityInfo) Flatten(object interface{}, fbb *flatbuffers
 }
 
 // Load is called by ObjectBox to load an object from a FlatBuffer
-func (taskStringByValue_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interface{} {
+func (taskStringByValue_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) (interface{}, error) {
 	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
@@ -310,7 +310,7 @@ func (taskStringByValue_EntityInfo) Load(txn *objectbox.Transaction, bytes []byt
 
 	return &TaskStringByValue{
 		Id: objectbox.StringIdConvertToEntityProperty(id),
-	}
+	}, nil
 }
 
 // MakeSlice is called by ObjectBox to construct a new slice to hold the read objects

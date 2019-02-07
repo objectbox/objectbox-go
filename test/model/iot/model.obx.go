@@ -119,7 +119,7 @@ func (event_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id
 }
 
 // Load is called by ObjectBox to load an object from a FlatBuffer
-func (event_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interface{} {
+func (event_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) (interface{}, error) {
 	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
@@ -132,7 +132,7 @@ func (event_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interface
 		Device:  fbutils.GetStringSlot(table, 6),
 		Date:    table.GetInt64Slot(8, 0),
 		Picture: fbutils.GetByteVectorSlot(table, 12),
-	}
+	}, nil
 }
 
 // MakeSlice is called by ObjectBox to construct a new slice to hold the read objects
@@ -431,7 +431,7 @@ func (reading_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, 
 }
 
 // Load is called by ObjectBox to load an object from a FlatBuffer
-func (reading_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interface{} {
+func (reading_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) (interface{}, error) {
 	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
@@ -448,7 +448,7 @@ func (reading_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) interfa
 		ValueFloating:   table.GetFloat64Slot(16, 0),
 		ValueInt32:      table.GetInt32Slot(18, 0),
 		ValueFloating32: table.GetFloat32Slot(20, 0),
-	}
+	}, nil
 }
 
 // MakeSlice is called by ObjectBox to construct a new slice to hold the read objects

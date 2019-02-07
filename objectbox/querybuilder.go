@@ -163,9 +163,13 @@ func (qb *QueryBuilder) StringIn(property *BaseProperty, values []string, caseSe
 	var cid ConditionId
 
 	if qb.Err == nil && qb.checkEntityId(property.Entity.Id) {
-		cStringArray := goStringArrayToC(values)
-		defer cStringArray.free()
-		cid = qb.getConditionId(C.obx_qb_string_in(qb.cqb, C.obx_schema_id(property.Id), cStringArray.cArray, C.int(cStringArray.size), C.bool(caseSensitive)))
+		if len(values) > 0 {
+			cStringArray := goStringArrayToC(values)
+			defer cStringArray.free()
+			cid = qb.getConditionId(C.obx_qb_string_in(qb.cqb, C.obx_schema_id(property.Id), cStringArray.cArray, C.int(cStringArray.size), C.bool(caseSensitive)))
+		} else {
+			cid = qb.getConditionId(C.obx_qb_string_in(qb.cqb, C.obx_schema_id(property.Id), nil, 0, C.bool(caseSensitive)))
+		}
 	}
 
 	return cid, qb.Err
@@ -309,7 +313,11 @@ func (qb *QueryBuilder) Int64In(property *BaseProperty, values []int64) (Conditi
 	var cid ConditionId
 
 	if qb.Err == nil && qb.checkEntityId(property.Entity.Id) {
-		cid = qb.getConditionId(C.obx_qb_int64_in(qb.cqb, C.obx_schema_id(property.Id), (*C.int64_t)(unsafe.Pointer(&values[0])), C.int(len(values))))
+		if len(values) > 0 {
+			cid = qb.getConditionId(C.obx_qb_int64_in(qb.cqb, C.obx_schema_id(property.Id), (*C.int64_t)(unsafe.Pointer(&values[0])), C.int(len(values))))
+		} else {
+			cid = qb.getConditionId(C.obx_qb_int64_in(qb.cqb, C.obx_schema_id(property.Id), nil, 0))
+		}
 	}
 
 	return cid, qb.Err
@@ -319,7 +327,11 @@ func (qb *QueryBuilder) Int64NotIn(property *BaseProperty, values []int64) (Cond
 	var cid ConditionId
 
 	if qb.Err == nil && qb.checkEntityId(property.Entity.Id) {
-		cid = qb.getConditionId(C.obx_qb_int64_not_in(qb.cqb, C.obx_schema_id(property.Id), (*C.int64_t)(unsafe.Pointer(&values[0])), C.int(len(values))))
+		if len(values) > 0 {
+			cid = qb.getConditionId(C.obx_qb_int64_not_in(qb.cqb, C.obx_schema_id(property.Id), (*C.int64_t)(unsafe.Pointer(&values[0])), C.int(len(values))))
+		} else {
+			cid = qb.getConditionId(C.obx_qb_int64_not_in(qb.cqb, C.obx_schema_id(property.Id), nil, 0))
+		}
 	}
 
 	return cid, qb.Err
@@ -329,7 +341,11 @@ func (qb *QueryBuilder) Int32In(property *BaseProperty, values []int32) (Conditi
 	var cid ConditionId
 
 	if qb.Err == nil && qb.checkEntityId(property.Entity.Id) {
-		cid = qb.getConditionId(C.obx_qb_int32_in(qb.cqb, C.obx_schema_id(property.Id), (*C.int32_t)(unsafe.Pointer(&values[0])), C.int(len(values))))
+		if len(values) > 0 {
+			cid = qb.getConditionId(C.obx_qb_int32_in(qb.cqb, C.obx_schema_id(property.Id), (*C.int32_t)(unsafe.Pointer(&values[0])), C.int(len(values))))
+		} else {
+			cid = qb.getConditionId(C.obx_qb_int32_in(qb.cqb, C.obx_schema_id(property.Id), nil, 0))
+		}
 	}
 
 	return cid, qb.Err
@@ -339,7 +355,11 @@ func (qb *QueryBuilder) Int32NotIn(property *BaseProperty, values []int32) (Cond
 	var cid ConditionId
 
 	if qb.Err == nil && qb.checkEntityId(property.Entity.Id) {
-		cid = qb.getConditionId(C.obx_qb_int32_not_in(qb.cqb, C.obx_schema_id(property.Id), (*C.int32_t)(unsafe.Pointer(&values[0])), C.int(len(values))))
+		if len(values) > 0 {
+			cid = qb.getConditionId(C.obx_qb_int32_not_in(qb.cqb, C.obx_schema_id(property.Id), (*C.int32_t)(unsafe.Pointer(&values[0])), C.int(len(values))))
+		} else {
+			cid = qb.getConditionId(C.obx_qb_int32_not_in(qb.cqb, C.obx_schema_id(property.Id), nil, 0))
+		}
 	}
 
 	return cid, qb.Err

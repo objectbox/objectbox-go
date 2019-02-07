@@ -23,10 +23,18 @@ import (
 )
 
 func mergeBindingWithModelInfo(binding *Binding, modelInfo *modelinfo.ModelInfo) error {
-	for _, bindingEntity := range binding.Entities {
+	// we need to first prepare all entities - otherwise relations wouldn't be able to find them in the model
+	var models = make([]*modelinfo.Entity, len(binding.Entities))
+	for k, bindingEntity := range binding.Entities {
 		if modelEntity, err := getModelEntity(bindingEntity, modelInfo); err != nil {
 			return err
-		} else if err := mergeModelEntity(bindingEntity, modelEntity, modelInfo); err != nil {
+		} else {
+			models[k] = modelEntity
+		}
+	}
+
+	for k, bindingEntity := range binding.Entities {
+		if err := mergeModelEntity(bindingEntity, models[k], modelInfo); err != nil {
 			return err
 		}
 	}
@@ -63,7 +71,7 @@ func getModelEntity(bindingEntity *Entity, modelInfo *modelinfo.ModelInfo) (*mod
 	if entity != nil {
 		return entity, nil
 	} else {
-		return modelInfo.CreateEntity()
+		return modelInfo.CreateEntity(bindingEntity.Name)
 	}
 }
 

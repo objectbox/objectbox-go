@@ -148,7 +148,7 @@ func (model *ModelInfo) FindEntityByName(name string) (*Entity, error) {
 	return nil, fmt.Errorf("entity named %s was not found", name)
 }
 
-func (model *ModelInfo) CreateEntity() (*Entity, error) {
+func (model *ModelInfo) CreateEntity(name string) (*Entity, error) {
 	var id Id = 1
 	if len(model.Entities) > 0 {
 		id = model.LastEntityId.getIdSafe() + 1
@@ -161,6 +161,7 @@ func (model *ModelInfo) CreateEntity() (*Entity, error) {
 	}
 
 	var entity = CreateEntity(model, id, uniqueUid)
+	entity.Name = name
 
 	model.Entities = append(model.Entities, entity)
 	model.LastEntityId = entity.Id

@@ -907,8 +907,8 @@ func (testEntityInline_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.
 
 	// build the FlatBuffers object
 	fbb.StartObject(3)
-	fbutils.SetInt64Slot(fbb, 0, obj.Date)
-	fbutils.SetFloat64Slot(fbb, 1, obj.Value)
+	fbutils.SetInt64Slot(fbb, 0, obj.BaseWithDate.Date)
+	fbutils.SetFloat64Slot(fbb, 1, obj.BaseWithValue.Value)
 	fbutils.SetUint64Slot(fbb, 2, id)
 	return nil
 }

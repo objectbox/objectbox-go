@@ -1,5 +1,5 @@
 package object
 
 type D struct {
-	*IdAndFloat64Value // pointer
+	*IdAndFloat64Value `inline` // pointer
 }

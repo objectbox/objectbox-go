@@ -21,10 +21,10 @@ type IdAndFloat64Value struct {
 }
 
 type Combined struct {
-	Text string
-	Empty
-	Id
-	Float64Value
+	Text         string
+	Empty        `inline`
+	Id           `inline`
+	Float64Value `inline`
 }
 
 type val uint64

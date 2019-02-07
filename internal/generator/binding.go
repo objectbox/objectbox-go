@@ -333,7 +333,7 @@ func (entity *Entity) addFields(fields fieldList, fieldPath, prefix string) ([]*
 				if len(innerPrefix) == 0 {
 					innerPrefix = field.Name
 				} else {
-					innerPrefix = innerPrefix + field.Name
+					innerPrefix = innerPrefix + "_" + field.Name
 				}
 			}
 
@@ -383,8 +383,8 @@ func (entity *Entity) addFields(fields fieldList, fieldPath, prefix string) ([]*
 
 		property.BaseName = property.Name
 		if len(prefix) != 0 {
-			property.ObName = prefix + "." + property.ObName
-			property.Name = strings.Replace(prefix, ".", "_", -1) + "_" + property.Name
+			property.ObName = prefix + "_" + property.ObName
+			property.Name = prefix + "_" + property.Name
 		}
 
 		// ObjectBox core internally converts to lowercase so we should check it as this as well

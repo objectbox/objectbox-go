@@ -181,7 +181,7 @@ func ({{$entityNameCamel}}_EntityInfo) Flatten(object interface{}, fbb *flatbuff
 	{{- end}}{{end}}
 
 	{{- block "store-relations" $entity}}
-	{{- /* store relations, TODO return error, ideally we should be using BoxForTarget() with a manually assigned txn */}}
+	{{- /* store relations, TODO ideally we should be using BoxForTarget() with a manually assigned txn */}}
 	{{- range $field := .Fields}}
 		{{if $field.SimpleRelation}}
 			var rId{{$field.Property.Name}} uint64
@@ -222,7 +222,7 @@ func ({{$entityNameCamel}}_EntityInfo) Load(txn *objectbox.Transaction, bytes []
 	var id = table.Get{{$entity.IdProperty.GoType | StringTitle}}Slot({{$entity.IdProperty.FbvTableOffset}}, 0)
 	
 	{{- block "load-relations" $entity}}
-	{{- /* TODO return error, ideally we should be using BoxForTarget() with a manually assigned txn */}}
+	{{- /* TODO ideally we should be using BoxForTarget() with a manually assigned txn */}}
 	{{- range $field := .Fields}}
 		{{if $field.SimpleRelation -}}
 			var rel{{$field.Name}} *{{$field.Type}}

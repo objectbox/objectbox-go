@@ -345,7 +345,7 @@ func (entity_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface
 }
 
 // Flatten is called by ObjectBox to transform an object to a FlatBuffer
-func (entity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
+func (entity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) error {
 	obj := object.(*Entity)
 	var offsetString = fbutils.CreateStringOffset(fbb, obj.String)
 	var offsetStringVector = fbutils.CreateStringVectorOffset(fbb, obj.StringVector)
@@ -355,7 +355,7 @@ func (entity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, i
 	var rIdRelated uint64
 	if rel := &obj.Related; rel != nil {
 		if rId, err := TestEntityRelatedBinding.GetId(rel); err != nil {
-			panic(err) // this must never happen but let's keep the check just to be sure
+			return err
 		} else {
 			rIdRelated = rId
 		}
@@ -364,7 +364,7 @@ func (entity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, i
 	var rIdRelatedPtr uint64
 	if rel := obj.RelatedPtr; rel != nil {
 		if rId, err := TestEntityRelatedBinding.GetId(rel); err != nil {
-			panic(err) // this must never happen but let's keep the check just to be sure
+			return err
 		} else {
 			rIdRelatedPtr = rId
 		}
@@ -373,7 +373,7 @@ func (entity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, i
 	var rIdRelatedPtr2 uint64
 	if rel := obj.RelatedPtr2; rel != nil {
 		if rId, err := TestEntityRelatedBinding.GetId(rel); err != nil {
-			panic(err) // this must never happen but let's keep the check just to be sure
+			return err
 		} else {
 			rIdRelatedPtr2 = rId
 		}
@@ -405,6 +405,7 @@ func (entity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, i
 	fbutils.SetUint64Slot(fbb, 21, rIdRelated)
 	fbutils.SetUint64Slot(fbb, 22, rIdRelatedPtr)
 	fbutils.SetUint64Slot(fbb, 23, rIdRelatedPtr2)
+	return nil
 }
 
 // Load is called by ObjectBox to load an object from a FlatBuffer
@@ -716,11 +717,12 @@ func (testStringIdEntity_EntityInfo) PutRelated(txn *objectbox.Transaction, obje
 }
 
 // Flatten is called by ObjectBox to transform an object to a FlatBuffer
-func (testStringIdEntity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
+func (testStringIdEntity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) error {
 
 	// build the FlatBuffers object
 	fbb.StartObject(1)
 	fbutils.SetUint64Slot(fbb, 0, id)
+	return nil
 }
 
 // Load is called by ObjectBox to load an object from a FlatBuffer
@@ -950,7 +952,7 @@ func (testEntityInline_EntityInfo) PutRelated(txn *objectbox.Transaction, object
 }
 
 // Flatten is called by ObjectBox to transform an object to a FlatBuffer
-func (testEntityInline_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
+func (testEntityInline_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) error {
 	obj := object.(*TestEntityInline)
 
 	// build the FlatBuffers object
@@ -958,6 +960,7 @@ func (testEntityInline_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.
 	fbutils.SetInt64Slot(fbb, 0, obj.Date)
 	fbutils.SetFloat64Slot(fbb, 1, obj.Value)
 	fbutils.SetUint64Slot(fbb, 2, id)
+	return nil
 }
 
 // Load is called by ObjectBox to load an object from a FlatBuffer
@@ -1183,7 +1186,7 @@ func (testEntityRelated_EntityInfo) PutRelated(txn *objectbox.Transaction, objec
 }
 
 // Flatten is called by ObjectBox to transform an object to a FlatBuffer
-func (testEntityRelated_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
+func (testEntityRelated_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) error {
 	obj := object.(*TestEntityRelated)
 	var offsetName = fbutils.CreateStringOffset(fbb, obj.Name)
 
@@ -1191,6 +1194,7 @@ func (testEntityRelated_EntityInfo) Flatten(object interface{}, fbb *flatbuffers
 	fbb.StartObject(2)
 	fbutils.SetUint64Slot(fbb, 0, id)
 	fbutils.SetUOffsetTSlot(fbb, 1, offsetName)
+	return nil
 }
 
 // Load is called by ObjectBox to load an object from a FlatBuffer

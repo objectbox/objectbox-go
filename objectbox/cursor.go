@@ -164,7 +164,9 @@ func (cursor *Cursor) Put(object interface{}) (id uint64, err error) {
 		}
 	}
 
-	binding.Flatten(object, cursor.fbb, id)
+	if err = binding.Flatten(object, cursor.fbb, id); err != nil {
+		return 0, err
+	}
 
 	checkForPreviousValue := idFromObject != 0
 	if err = cursor.finishInternalFbbAndPut(id, checkForPreviousValue); err != nil {

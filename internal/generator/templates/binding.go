@@ -173,7 +173,7 @@ func ({{$entityNameCamel}}_EntityInfo) PutRelated(txn *objectbox.Transaction, ob
 }
 
 // Flatten is called by ObjectBox to transform an object to a FlatBuffer
-func ({{$entityNameCamel}}_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
+func ({{$entityNameCamel}}_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) error {
     {{if $entity.HasNonIdProperty}}obj := object.(*{{$entity.Name}}){{end -}}
 
     {{- range $property := $entity.Properties}}{{if eq $property.FbType "UOffsetT"}}
@@ -187,7 +187,7 @@ func ({{$entityNameCamel}}_EntityInfo) Flatten(object interface{}, fbb *flatbuff
 			var rId{{$field.Property.Name}} uint64
 			if rel := {{if not $field.IsPointer}}&{{end}}obj.{{$field.Name}}; rel != nil {
 				if rId, err := {{$field.SimpleRelation.Target.Name}}Binding.GetId(rel); err != nil {
-					panic(err) // this must never happen but let's keep the check just to be sure
+					return err
 				} else {
 					rId{{$field.Property.Name}} = rId
 				}
@@ -210,6 +210,7 @@ func ({{$entityNameCamel}}_EntityInfo) Flatten(object interface{}, fbb *flatbuff
         {{- else}} {{template "property-converter-encode" $property}})
         {{- end}}
     {{end -}}
+	return nil
 }
 
 // Load is called by ObjectBox to load an object from a FlatBuffer 

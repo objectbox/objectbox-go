@@ -87,7 +87,7 @@ type ObjectBinding interface {
 	GetId(object interface{}) (id uint64, err error)
 	SetId(object interface{}, id uint64)
 	PutRelated(txn *Transaction, object interface{}, id uint64) error
-	Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64)
+	Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) error
 	Load(txn *Transaction, bytes []byte) (interface{}, error)
 	MakeSlice(capacity int) interface{}
 	AppendToSlice(slice interface{}, object interface{}) (sliceNew interface{})

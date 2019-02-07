@@ -85,13 +85,13 @@ func (taskRelPtr_EntityInfo) PutRelated(txn *objectbox.Transaction, object inter
 }
 
 // Flatten is called by ObjectBox to transform an object to a FlatBuffer
-func (taskRelPtr_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
+func (taskRelPtr_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) error {
 	obj := object.(*TaskRelPtr)
 
 	var rIdGroup uint64
 	if rel := obj.Group; rel != nil {
 		if rId, err := GroupBinding.GetId(rel); err != nil {
-			panic(err) // this must never happen but let's keep the check just to be sure
+			return err
 		} else {
 			rIdGroup = rId
 		}
@@ -101,6 +101,7 @@ func (taskRelPtr_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builde
 	fbb.StartObject(2)
 	fbutils.SetUint64Slot(fbb, 0, id)
 	fbutils.SetUint64Slot(fbb, 1, rIdGroup)
+	return nil
 }
 
 // Load is called by ObjectBox to load an object from a FlatBuffer

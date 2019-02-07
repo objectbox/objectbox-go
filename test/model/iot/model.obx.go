@@ -103,7 +103,7 @@ func (event_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{
 }
 
 // Flatten is called by ObjectBox to transform an object to a FlatBuffer
-func (event_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
+func (event_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) error {
 	obj := object.(*Event)
 	var offsetUid = fbutils.CreateStringOffset(fbb, obj.Uid)
 	var offsetDevice = fbutils.CreateStringOffset(fbb, obj.Device)
@@ -116,6 +116,7 @@ func (event_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id
 	fbutils.SetUOffsetTSlot(fbb, 1, offsetDevice)
 	fbutils.SetInt64Slot(fbb, 2, obj.Date)
 	fbutils.SetUOffsetTSlot(fbb, 4, offsetPicture)
+	return nil
 }
 
 // Load is called by ObjectBox to load an object from a FlatBuffer
@@ -410,7 +411,7 @@ func (reading_EntityInfo) PutRelated(txn *objectbox.Transaction, object interfac
 }
 
 // Flatten is called by ObjectBox to transform an object to a FlatBuffer
-func (reading_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
+func (reading_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) error {
 	obj := object.(*Reading)
 	var offsetValueName = fbutils.CreateStringOffset(fbb, obj.ValueName)
 	var offsetValueString = fbutils.CreateStringOffset(fbb, obj.ValueString)
@@ -428,6 +429,7 @@ func (reading_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, 
 	fbutils.SetFloat64Slot(fbb, 6, obj.ValueFloating)
 	fbutils.SetInt32Slot(fbb, 7, obj.ValueInt32)
 	fbutils.SetFloat32Slot(fbb, 8, obj.ValueFloating32)
+	return nil
 }
 
 // Load is called by ObjectBox to load an object from a FlatBuffer

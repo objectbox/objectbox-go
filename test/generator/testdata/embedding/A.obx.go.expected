@@ -71,7 +71,7 @@ func (a_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}, i
 }
 
 // Flatten is called by ObjectBox to transform an object to a FlatBuffer
-func (a_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
+func (a_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) error {
 	obj := object.(*A)
 	var offsetName = fbutils.CreateStringOffset(fbb, obj.Name)
 
@@ -79,6 +79,7 @@ func (a_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uin
 	fbb.StartObject(2)
 	fbutils.SetUint64Slot(fbb, 0, id)
 	fbutils.SetUOffsetTSlot(fbb, 1, offsetName)
+	return nil
 }
 
 // Load is called by ObjectBox to load an object from a FlatBuffer

@@ -70,11 +70,12 @@ func (entityByValue_EntityInfo) PutRelated(txn *objectbox.Transaction, object in
 }
 
 // Flatten is called by ObjectBox to transform an object to a FlatBuffer
-func (entityByValue_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
+func (entityByValue_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) error {
 
 	// build the FlatBuffers object
 	fbb.StartObject(1)
 	fbutils.SetUint64Slot(fbb, 0, id)
+	return nil
 }
 
 // Load is called by ObjectBox to load an object from a FlatBuffer

@@ -133,7 +133,7 @@ func (taskIndexed_EntityInfo) PutRelated(txn *objectbox.Transaction, object inte
 }
 
 // Flatten is called by ObjectBox to transform an object to a FlatBuffer
-func (taskIndexed_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
+func (taskIndexed_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) error {
 	obj := object.(*TaskIndexed)
 	var offsetUid = fbutils.CreateStringOffset(fbb, obj.Uid)
 	var offsetName = fbutils.CreateStringOffset(fbb, obj.Name)
@@ -150,6 +150,7 @@ func (taskIndexed_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Build
 	fbutils.SetUOffsetTSlot(fbb, 4, offsetGroup)
 	fbutils.SetUOffsetTSlot(fbb, 5, offsetPlace)
 	fbutils.SetUOffsetTSlot(fbb, 6, offsetSource)
+	return nil
 }
 
 // Load is called by ObjectBox to load an object from a FlatBuffer

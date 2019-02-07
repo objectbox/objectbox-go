@@ -67,11 +67,12 @@ func (taskRelManyPtr_EntityInfo) PutRelated(txn *objectbox.Transaction, object i
 }
 
 // Flatten is called by ObjectBox to transform an object to a FlatBuffer
-func (taskRelManyPtr_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
+func (taskRelManyPtr_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) error {
 
 	// build the FlatBuffers object
 	fbb.StartObject(1)
 	fbutils.SetUint64Slot(fbb, 0, id)
+	return nil
 }
 
 // Load is called by ObjectBox to load an object from a FlatBuffer

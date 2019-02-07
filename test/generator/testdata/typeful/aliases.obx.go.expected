@@ -121,7 +121,7 @@ func (aliases_EntityInfo) PutRelated(txn *objectbox.Transaction, object interfac
 }
 
 // Flatten is called by ObjectBox to transform an object to a FlatBuffer
-func (aliases_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
+func (aliases_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) error {
 	obj := object.(*Aliases)
 	var offsetSameFile = fbutils.CreateStringOffset(fbb, obj.SameFile)
 	var offsetSameFile2 = fbutils.CreateStringOffset(fbb, string(obj.SameFile2))
@@ -137,6 +137,7 @@ func (aliases_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, 
 	fbutils.SetInt64Slot(fbb, 4, int64(int(obj.SamePackage2)))
 	fbutils.SetUOffsetTSlot(fbb, 5, offsetOtherPackage)
 	fbutils.SetUOffsetTSlot(fbb, 6, offsetOtherPackage2)
+	return nil
 }
 
 // Load is called by ObjectBox to load an object from a FlatBuffer

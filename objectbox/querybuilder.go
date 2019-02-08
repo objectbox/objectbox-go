@@ -86,7 +86,7 @@ func (qb *QueryBuilder) BuildWithConditions(conditions ...Condition) (*Query, er
 	}
 
 	var err error
-	if _, err = condition.applyTo(qb); err != nil {
+	if _, err = condition.applyTo(qb, true); err != nil {
 		return nil, err
 	}
 	return qb.Build()
@@ -125,6 +125,26 @@ func (qb *QueryBuilder) getConditionId(cid C.obx_qb_cond) ConditionId {
 	}
 
 	return ConditionId(cid)
+}
+
+func (qb *QueryBuilder) Any(ids []ConditionId) (ConditionId, error) {
+	var cid ConditionId
+
+	if qb.Err == nil {
+		cid = qb.getConditionId(C.obx_qb_any(qb.cqb, (*C.obx_qb_cond)(unsafe.Pointer(&ids[0])), C.int(len(ids))))
+	}
+
+	return cid, qb.Err
+}
+
+func (qb *QueryBuilder) All(ids []ConditionId) (ConditionId, error) {
+	var cid ConditionId
+
+	if qb.Err == nil {
+		cid = qb.getConditionId(C.obx_qb_all(qb.cqb, (*C.obx_qb_cond)(unsafe.Pointer(&ids[0])), C.int(len(ids))))
+	}
+
+	return cid, qb.Err
 }
 
 func (qb *QueryBuilder) Null(property *BaseProperty) (ConditionId, error) {

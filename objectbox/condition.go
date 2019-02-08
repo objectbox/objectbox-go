@@ -17,16 +17,16 @@
 package objectbox
 
 type Condition interface {
-	applyTo(qb *QueryBuilder) (ConditionId, error)
+	applyTo(qb *QueryBuilder, isRoot bool) (ConditionId, error)
 }
 
-type ConditionId = int
+type ConditionId = int32
 
 type conditionClosure struct {
 	applyFun func(qb *QueryBuilder) (ConditionId, error)
 }
 
-func (condition *conditionClosure) applyTo(qb *QueryBuilder) (ConditionId, error) {
+func (condition *conditionClosure) applyTo(qb *QueryBuilder, isRoot bool) (ConditionId, error) {
 	return condition.applyFun(qb)
 }
 
@@ -36,22 +36,41 @@ type conditionCombination struct {
 	conditions []Condition
 }
 
-func (condition *conditionCombination) applyTo(qb *QueryBuilder) (ConditionId, error) {
+func (condition *conditionCombination) applyTo(qb *QueryBuilder, isRoot bool) (ConditionId, error) {
+	if len(condition.conditions) == 0 {
+		return 0, nil
+	} else if len(condition.conditions) == 1 {
+		return condition.conditions[0].applyTo(qb, isRoot)
+	}
+
 	ids := make([]ConditionId, len(condition.conditions))
 
-	for _, sub := range condition.conditions {
-		if id, err := sub.applyTo(qb); err != nil {
+	var err error
+	for k, sub := range condition.conditions {
+		if ids[k], err = sub.applyTo(qb, false); err != nil {
 			return 0, err
-		} else {
-			ids = append(ids, id)
 		}
 	}
 
-	// TODO
-	//if condition.or {
-	//	return qb.Any(ids)
-	//} else {
-	//	return qb.All(ids)
-	//}
-	return 0, nil
+	if condition.or {
+		return qb.Any(ids)
+	} else if !isRoot {
+		// only necessary to use AND if it's not a root condition group
+		return qb.All(ids)
+	} else {
+		return 0, nil
+	}
+}
+
+func MatchAny(conditions ...Condition) Condition {
+	return &conditionCombination{
+		or:         true,
+		conditions: conditions,
+	}
+}
+
+func MatchAll(conditions ...Condition) Condition {
+	return &conditionCombination{
+		conditions: conditions,
+	}
 }

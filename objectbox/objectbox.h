@@ -41,7 +41,7 @@ extern "C" {
 // Note that you should use methods with prefix obx_version_ to check when linking against the dynamic library
 #define OBX_VERSION_MAJOR 0
 #define OBX_VERSION_MINOR 4
-#define OBX_VERSION_PATCH 105  // values >= 100 are reserved for dev releases leading to the next minor/major increase
+#define OBX_VERSION_PATCH 106  // values >= 100 are reserved for dev releases leading to the next minor/major increase
 
 /// Returns the version of the library as ints. Pointers may be null
 void obx_version(int* major, int* minor, int* patch);
@@ -482,8 +482,14 @@ obx_err obx_qb_param_alias(OBX_query_builder* builder, const char* alias);
 
 obx_err obx_qb_order(OBX_query_builder* builder, obx_schema_id property_id, OBXOrderFlags flags);
 
-OBX_query_builder* obx_qb_link_property(OBX_query_builder* builder, obx_schema_id owner_id, obx_schema_id prop_id,
-                                        obx_schema_id target_id, int backlink);
+OBX_query_builder* obx_qb_link_property(OBX_query_builder* builder, obx_schema_id property_id);
+
+OBX_query_builder* obx_qb_backlink_property(OBX_query_builder* builder, obx_schema_id source_entity_id,
+                                            obx_schema_id source_property_id);
+
+OBX_query_builder* obx_qb_link_standalone(OBX_query_builder* builder, obx_schema_id relation_id);
+
+OBX_query_builder* obx_qb_backlink_standalone(OBX_query_builder* builder, obx_schema_id relation_id);
 
 //----------------------------------------------
 // Query

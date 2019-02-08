@@ -71,15 +71,16 @@ var {{$entity.Name}}Binding = {{$entityNameCamel}}_EntityInfo {
 // {{$entity.Name}}_ contains type-based Property helpers to facilitate some common operations such as Queries. 
 var {{$entity.Name}}_ = struct {
 	{{range $property := $entity.Properties -}}
-    {{$property.Name}} *objectbox.Property{{$property.GoType | TypeIdentifier}}
+    {{$property.Name}} *objectbox.{{with $property.Relation}}RelationOneToMany{{else}}Property{{$property.GoType | TypeIdentifier}}{{end}}
     {{end -}}
 }{
 	{{range $property := $entity.Properties -}}
-    {{$property.Name}}: &objectbox.Property{{$property.GoType | TypeIdentifier}}{
+    {{$property.Name}}: &objectbox.{{with $property.Relation}}RelationOneToMany{{else}}Property{{$property.GoType | TypeIdentifier}}{{end}}{
 		BaseProperty: &objectbox.BaseProperty{
 			Id: {{$property.Id}},
 			Entity: &{{$entity.Name}}Binding.Entity,
 		},
+		{{with $property.Relation}}Target: &{{.Target.Name}}Binding.Entity,{{end -}}
 	},
     {{end -}}
 }

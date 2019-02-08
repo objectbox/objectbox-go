@@ -384,6 +384,32 @@ func TestQueryAndOr(t *testing.T) {
 	})
 }
 
+func TestQueryLinks(t *testing.T) {
+	env := model.NewTestEnv(t).SetOptions(model.TestEnvOptions{PopulateRelations: true})
+	defer env.Close()
+
+	var box = env.Box
+	//var boxR = model.BoxForTestEntityRelated(env.ObjectBox)
+
+	// let's alias the entity to make the test cases easier to read
+	var E = model.Entity_
+	var R = model.TestEntityRelated_
+
+	// Use this special entity for testing descriptions
+	//var e = model.Entity47()
+
+	// and a shorter type name for the setup function argument
+	//type eq = model.EntityQuery
+
+	testQueries(t, env, queryTestOptions{baseCount: 10}, []queryTestCase{
+		// one-to-many link
+		{2, s{`TRUE Link: Name == "rel-Val-1"`}, box.Query(E.Related.Link(R.Name.Equals("rel-Val-1", true))), nil},
+
+		// TODO one-to-many backlink
+		//{3, s{`Int == 47`}, boxR.Query(E.Related.Link(R.Name.Equals("text", true))), nil},
+	})
+}
+
 func TestQueryClose(t *testing.T) {
 	env := model.NewTestEnv(t)
 	defer env.Close()
@@ -523,9 +549,10 @@ func testQueries(t *testing.T, env *model.TestEnv, options queryTestOptions, tes
 		}
 
 		// DescribeParams
+		var removeSpecialChars = strings.NewReplacer("\n", "", "\t", "")
 		if actualDesc, err := query.DescribeParams(); err != nil {
 			assert.Failf(t, "case #%d {%s} - %s", i, desc, err)
-		} else if actualDesc = strings.Replace(actualDesc, "\n", "", -1); !isExpected(actualDesc) {
+		} else if actualDesc = removeSpecialChars.Replace(actualDesc); !isExpected(actualDesc) {
 			assert.Failf(t, "case #%d expected one of %v, but got {%s}", i, desc, actualDesc)
 		}
 

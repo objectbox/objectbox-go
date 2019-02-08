@@ -25,15 +25,17 @@ import "C"
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"unsafe"
 )
 
 // Internal class; use Box.Query instead.
 // Allows construction of queries; just check queryBuilder.Error or err from Build()
 type QueryBuilder struct {
-	objectBox *ObjectBox
-	cqb       *C.OBX_query_builder
-	typeId    TypeId
+	objectBox     *ObjectBox
+	cqb           *C.OBX_query_builder
+	typeId        TypeId
+	innerBuilders []*QueryBuilder
 
 	// The first error that occurred during a any of the calls on the query builder
 	Err error
@@ -46,21 +48,51 @@ func newQueryBuilder(ob *ObjectBox, typeId TypeId) *QueryBuilder {
 		err = createError()
 	}
 	return &QueryBuilder{
-		typeId:    typeId,
 		objectBox: ob,
 		cqb:       qb,
+		typeId:    typeId,
 		Err:       err,
 	}
 }
 
+func (qb *QueryBuilder) newInnerBuilder(typeId TypeId, cqb *C.OBX_query_builder) *QueryBuilder {
+	if cqb == nil {
+		qb.Err = createError()
+		return nil
+	}
+
+	var result = &QueryBuilder{
+		objectBox: qb.objectBox,
+		cqb:       cqb,
+		typeId:    typeId,
+	}
+
+	qb.innerBuilders = append(qb.innerBuilders, result)
+
+	return result
+}
+
 func (qb *QueryBuilder) Close() error {
+	// close inner builders while collecting errors
+	var errs []string
+	for _, iqb := range qb.innerBuilders {
+		if err := iqb.Close(); err != nil {
+			// even though there's an error, try to close the rest
+			errs = append(errs, err.Error())
+		}
+	}
+
 	toClose := qb.cqb
 	if toClose != nil {
 		qb.cqb = nil
 		rc := C.obx_qb_close(toClose)
 		if rc != 0 {
-			return createError()
+			errs = append(errs, createError().Error())
 		}
+	}
+
+	if errs != nil {
+		return errors.New(strings.Join(errs, "; "))
 	}
 	return nil
 }
@@ -97,10 +129,24 @@ func (qb *QueryBuilder) applyConditions(conditions []Condition) error {
 	if len(conditions) == 1 {
 		_, qb.Err = conditions[0].applyTo(qb, true)
 	} else if len(conditions) > 1 {
-		_, qb.Err = conditionCombination{conditions: conditions}.applyTo(qb, true)
+		_, qb.Err = (&conditionCombination{conditions: conditions}).applyTo(qb, true)
 	}
 
 	return qb.Err
+}
+
+func (qb *QueryBuilder) LinkProperty(relation *RelationOneToMany, conditions []Condition) error {
+	if qb.Err != nil {
+		return qb.Err
+	}
+
+	// create a new "inner" query builder
+	var iqb = qb.newInnerBuilder(relation.Target.Id, C.obx_qb_link_property(qb.cqb, C.obx_schema_id(relation.BaseProperty.Id)))
+	if iqb == nil {
+		return qb.Err // this has been set by newInnerBuilder()
+	}
+
+	return iqb.applyConditions(conditions)
 }
 
 func (qb *QueryBuilder) checkForCError() {

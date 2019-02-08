@@ -26,7 +26,7 @@ var Task_ = struct {
 	Uid     *objectbox.PropertyString
 	Text    *objectbox.PropertyString
 	Date    *objectbox.PropertyUint64
-	GroupId *objectbox.PropertyUint64
+	GroupId *objectbox.RelationOneToMany
 }{
 	Id: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
@@ -52,12 +52,12 @@ var Task_ = struct {
 			Entity: &TaskBinding.Entity,
 		},
 	},
-	GroupId: &objectbox.PropertyUint64{
+	GroupId: &objectbox.RelationOneToMany{
 		BaseProperty: &objectbox.BaseProperty{
 			Id:     5,
 			Entity: &TaskBinding.Entity,
 		},
-	},
+		Target: &GroupBinding.Entity},
 }
 
 // GeneratorVersion is called by ObjectBox to verify the compatibility of the generator used to generate this code

@@ -43,9 +43,9 @@ var Entity_ = struct {
 	Float64      *objectbox.PropertyFloat64
 	Date         *objectbox.PropertyInt64
 	Complex128   *objectbox.PropertyByteVector
-	Related      *objectbox.PropertyUint64
-	RelatedPtr   *objectbox.PropertyUint64
-	RelatedPtr2  *objectbox.PropertyUint64
+	Related      *objectbox.RelationOneToMany
+	RelatedPtr   *objectbox.RelationOneToMany
+	RelatedPtr2  *objectbox.RelationOneToMany
 }{
 	Id: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
@@ -173,24 +173,24 @@ var Entity_ = struct {
 			Entity: &EntityBinding.Entity,
 		},
 	},
-	Related: &objectbox.PropertyUint64{
+	Related: &objectbox.RelationOneToMany{
 		BaseProperty: &objectbox.BaseProperty{
 			Id:     22,
 			Entity: &EntityBinding.Entity,
 		},
-	},
-	RelatedPtr: &objectbox.PropertyUint64{
+		Target: &TestEntityRelatedBinding.Entity},
+	RelatedPtr: &objectbox.RelationOneToMany{
 		BaseProperty: &objectbox.BaseProperty{
 			Id:     23,
 			Entity: &EntityBinding.Entity,
 		},
-	},
-	RelatedPtr2: &objectbox.PropertyUint64{
+		Target: &TestEntityRelatedBinding.Entity},
+	RelatedPtr2: &objectbox.RelationOneToMany{
 		BaseProperty: &objectbox.BaseProperty{
 			Id:     24,
 			Entity: &EntityBinding.Entity,
 		},
-	},
+		Target: &TestEntityRelatedBinding.Entity},
 }
 
 // GeneratorVersion is called by ObjectBox to verify the compatibility of the generator used to generate this code

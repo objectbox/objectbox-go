@@ -53,11 +53,12 @@ var Task_ = struct {
 		},
 	},
 	GroupId: &objectbox.RelationOneToMany{
-		BaseProperty: &objectbox.BaseProperty{
+		Property: &objectbox.BaseProperty{
 			Id:     5,
 			Entity: &TaskBinding.Entity,
 		},
-		Target: &GroupBinding.Entity},
+		Target: &GroupBinding.Entity,
+	},
 }
 
 // GeneratorVersion is called by ObjectBox to verify the compatibility of the generator used to generate this code

@@ -22,12 +22,12 @@ type conditionRelationOneToMany struct {
 }
 
 func (condition *conditionRelationOneToMany) applyTo(qb *QueryBuilder) (ConditionId, error) {
-	return 0, qb.LinkProperty(condition.relation, condition.conditions)
+	return 0, qb.LinkOneToMany(condition.relation, condition.conditions)
 }
 
 type RelationOneToMany struct {
-	*BaseProperty
-	Target *Entity
+	Property *BaseProperty
+	Target   *Entity
 }
 
 func (relation *RelationOneToMany) Link(conditions ...Condition) Condition {
@@ -37,7 +37,7 @@ func (relation *RelationOneToMany) Link(conditions ...Condition) Condition {
 func (relation RelationOneToMany) Equals(value uint64) Condition {
 	return &conditionClosure{
 		func(qb *QueryBuilder) (ConditionId, error) {
-			return qb.IntEqual(relation.BaseProperty, int64(value))
+			return qb.IntEqual(relation.Property, int64(value))
 		},
 	}
 }
@@ -45,7 +45,7 @@ func (relation RelationOneToMany) Equals(value uint64) Condition {
 func (relation RelationOneToMany) NotEquals(value uint64) Condition {
 	return &conditionClosure{
 		func(qb *QueryBuilder) (ConditionId, error) {
-			return qb.IntNotEqual(relation.BaseProperty, int64(value))
+			return qb.IntNotEqual(relation.Property, int64(value))
 		},
 	}
 }
@@ -63,7 +63,7 @@ func (relation RelationOneToMany) int64Slice(values []uint64) []int64 {
 func (relation RelationOneToMany) In(values ...uint64) Condition {
 	return &conditionClosure{
 		func(qb *QueryBuilder) (ConditionId, error) {
-			return qb.Int64In(relation.BaseProperty, relation.int64Slice(values))
+			return qb.Int64In(relation.Property, relation.int64Slice(values))
 		},
 	}
 }
@@ -71,7 +71,27 @@ func (relation RelationOneToMany) In(values ...uint64) Condition {
 func (relation RelationOneToMany) NotIn(values ...uint64) Condition {
 	return &conditionClosure{
 		func(qb *QueryBuilder) (ConditionId, error) {
-			return qb.Int64NotIn(relation.BaseProperty, relation.int64Slice(values))
+			return qb.Int64NotIn(relation.Property, relation.int64Slice(values))
 		},
 	}
 }
+
+type conditionRelationManyToMany struct {
+	relation   *RelationManyToMany
+	conditions []Condition
+}
+
+func (condition *conditionRelationManyToMany) applyTo(qb *QueryBuilder) (ConditionId, error) {
+	return 0, qb.LinkManyToMany(condition.relation, condition.conditions)
+}
+
+type RelationManyToMany struct {
+	Id     TypeId
+	Target *Entity
+}
+
+func (relation *RelationManyToMany) Link(conditions ...Condition) Condition {
+	return &conditionRelationManyToMany{relation, conditions}
+}
+
+// TODO contains() would make sense for many-to-many (slice)

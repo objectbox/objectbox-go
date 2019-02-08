@@ -135,13 +135,27 @@ func (qb *QueryBuilder) applyConditions(conditions []Condition) error {
 	return qb.Err
 }
 
-func (qb *QueryBuilder) LinkProperty(relation *RelationOneToMany, conditions []Condition) error {
+func (qb *QueryBuilder) LinkOneToMany(relation *RelationOneToMany, conditions []Condition) error {
 	if qb.Err != nil {
 		return qb.Err
 	}
 
 	// create a new "inner" query builder
-	var iqb = qb.newInnerBuilder(relation.Target.Id, C.obx_qb_link_property(qb.cqb, C.obx_schema_id(relation.BaseProperty.Id)))
+	var iqb = qb.newInnerBuilder(relation.Target.Id, C.obx_qb_link_property(qb.cqb, C.obx_schema_id(relation.Property.Id)))
+	if iqb == nil {
+		return qb.Err // this has been set by newInnerBuilder()
+	}
+
+	return iqb.applyConditions(conditions)
+}
+
+func (qb *QueryBuilder) LinkManyToMany(relation *RelationManyToMany, conditions []Condition) error {
+	if qb.Err != nil {
+		return qb.Err
+	}
+
+	// create a new "inner" query builder
+	var iqb = qb.newInnerBuilder(relation.Target.Id, C.obx_qb_link_standalone(qb.cqb, C.obx_schema_id(relation.Id)))
 	if iqb == nil {
 		return qb.Err // this has been set by newInnerBuilder()
 	}

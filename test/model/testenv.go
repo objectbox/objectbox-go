@@ -156,7 +156,7 @@ func entity47(coef int64, options *TestEnvOptions) *Entity {
 		object.Related = TestEntityRelated{Name: "rel-" + String}
 		object.RelatedPtr = &TestEntityRelated{Name: "relPtr-" + String}
 		object.RelatedSlice = []EntityByValue{{}}
-		object.RelatedPtrSlice = []*TestEntityRelated{{}}
+		object.RelatedPtrSlice = []*TestEntityRelated{{Name: "relPtr-" + String}}
 	} else {
 		object.RelatedSlice = []EntityByValue{}
 		object.RelatedPtrSlice = []*TestEntityRelated{}

@@ -407,6 +407,9 @@ func TestQueryLinks(t *testing.T) {
 
 		// TODO one-to-many backlink
 		//{3, s{`Int == 47`}, boxR.Query(E.Related.Link(R.Name.Equals("text", true))), nil},
+
+		// many-to-many link
+		{2, s{`TRUE Link: Name == "relPtr-Val-1"`}, box.Query(E.RelatedPtrSlice.Link(R.Name.Equals("relPtr-Val-1", true))), nil},
 	})
 }
 

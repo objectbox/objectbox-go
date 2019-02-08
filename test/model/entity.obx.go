@@ -22,30 +22,32 @@ var EntityBinding = entity_EntityInfo{
 
 // Entity_ contains type-based Property helpers to facilitate some common operations such as Queries.
 var Entity_ = struct {
-	Id           *objectbox.PropertyUint64
-	Int          *objectbox.PropertyInt
-	Int8         *objectbox.PropertyInt8
-	Int16        *objectbox.PropertyInt16
-	Int32        *objectbox.PropertyInt32
-	Int64        *objectbox.PropertyInt64
-	Uint         *objectbox.PropertyUint
-	Uint8        *objectbox.PropertyUint8
-	Uint16       *objectbox.PropertyUint16
-	Uint32       *objectbox.PropertyUint32
-	Uint64       *objectbox.PropertyUint64
-	Bool         *objectbox.PropertyBool
-	String       *objectbox.PropertyString
-	StringVector *objectbox.PropertyStringVector
-	Byte         *objectbox.PropertyByte
-	ByteVector   *objectbox.PropertyByteVector
-	Rune         *objectbox.PropertyRune
-	Float32      *objectbox.PropertyFloat32
-	Float64      *objectbox.PropertyFloat64
-	Date         *objectbox.PropertyInt64
-	Complex128   *objectbox.PropertyByteVector
-	Related      *objectbox.RelationOneToMany
-	RelatedPtr   *objectbox.RelationOneToMany
-	RelatedPtr2  *objectbox.RelationOneToMany
+	Id              *objectbox.PropertyUint64
+	Int             *objectbox.PropertyInt
+	Int8            *objectbox.PropertyInt8
+	Int16           *objectbox.PropertyInt16
+	Int32           *objectbox.PropertyInt32
+	Int64           *objectbox.PropertyInt64
+	Uint            *objectbox.PropertyUint
+	Uint8           *objectbox.PropertyUint8
+	Uint16          *objectbox.PropertyUint16
+	Uint32          *objectbox.PropertyUint32
+	Uint64          *objectbox.PropertyUint64
+	Bool            *objectbox.PropertyBool
+	String          *objectbox.PropertyString
+	StringVector    *objectbox.PropertyStringVector
+	Byte            *objectbox.PropertyByte
+	ByteVector      *objectbox.PropertyByteVector
+	Rune            *objectbox.PropertyRune
+	Float32         *objectbox.PropertyFloat32
+	Float64         *objectbox.PropertyFloat64
+	Date            *objectbox.PropertyInt64
+	Complex128      *objectbox.PropertyByteVector
+	Related         *objectbox.RelationOneToMany
+	RelatedPtr      *objectbox.RelationOneToMany
+	RelatedPtr2     *objectbox.RelationOneToMany
+	RelatedPtrSlice *objectbox.RelationManyToMany
+	RelatedSlice    *objectbox.RelationManyToMany
 }{
 	Id: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
@@ -174,23 +176,34 @@ var Entity_ = struct {
 		},
 	},
 	Related: &objectbox.RelationOneToMany{
-		BaseProperty: &objectbox.BaseProperty{
+		Property: &objectbox.BaseProperty{
 			Id:     22,
 			Entity: &EntityBinding.Entity,
 		},
-		Target: &TestEntityRelatedBinding.Entity},
+		Target: &TestEntityRelatedBinding.Entity,
+	},
 	RelatedPtr: &objectbox.RelationOneToMany{
-		BaseProperty: &objectbox.BaseProperty{
+		Property: &objectbox.BaseProperty{
 			Id:     23,
 			Entity: &EntityBinding.Entity,
 		},
-		Target: &TestEntityRelatedBinding.Entity},
+		Target: &TestEntityRelatedBinding.Entity,
+	},
 	RelatedPtr2: &objectbox.RelationOneToMany{
-		BaseProperty: &objectbox.BaseProperty{
+		Property: &objectbox.BaseProperty{
 			Id:     24,
 			Entity: &EntityBinding.Entity,
 		},
-		Target: &TestEntityRelatedBinding.Entity},
+		Target: &TestEntityRelatedBinding.Entity,
+	},
+	RelatedPtrSlice: &objectbox.RelationManyToMany{
+		Id:     5,
+		Target: &TestEntityRelatedBinding.Entity,
+	},
+	RelatedSlice: &objectbox.RelationManyToMany{
+		Id:     4,
+		Target: &EntityByValueBinding.Entity,
+	},
 }
 
 // GeneratorVersion is called by ObjectBox to verify the compatibility of the generator used to generate this code

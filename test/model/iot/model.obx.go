@@ -306,11 +306,12 @@ var Reading_ = struct {
 		},
 	},
 	EventId: &objectbox.RelationOneToMany{
-		BaseProperty: &objectbox.BaseProperty{
+		Property: &objectbox.BaseProperty{
 			Id:     3,
 			Entity: &ReadingBinding.Entity,
 		},
-		Target: &EventBinding.Entity},
+		Target: &EventBinding.Entity,
+	},
 	ValueName: &objectbox.PropertyString{
 		BaseProperty: &objectbox.BaseProperty{
 			Id:     4,

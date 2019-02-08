@@ -415,6 +415,18 @@ func TestQueryWrongEntity(t *testing.T) {
 
 }
 
+func TestQueryEmptyString(t *testing.T) {
+	env := model.NewTestEnv(t)
+	defer env.Close()
+
+	_, err := env.Box.Put(&model.Entity{})
+	assert.NoErr(t, err)
+
+	count, err := env.Box.Query(model.Entity_.String.Equals("", true)).Count()
+	assert.NoErr(t, err)
+	assert.Eq(t, uint64(1), count)
+}
+
 // define some type aliases to keep the test-case definitions short & readable
 type s = []string
 

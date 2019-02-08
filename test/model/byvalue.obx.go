@@ -9,12 +9,14 @@ import (
 )
 
 type entityByValue_EntityInfo struct {
-	Id  objectbox.TypeId
+	objectbox.Entity
 	Uid uint64
 }
 
 var EntityByValueBinding = entityByValue_EntityInfo{
-	Id:  3,
+	Entity: objectbox.Entity{
+		Id: 3,
+	},
 	Uid: 2793387980842421409,
 }
 
@@ -24,10 +26,8 @@ var EntityByValue_ = struct {
 }{
 	Id: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 1,
-			Entity: &objectbox.Entity{
-				Id: 3,
-			},
+			Id:     1,
+			Entity: &EntityByValueBinding.Entity,
 		},
 	},
 }

@@ -9,12 +9,14 @@ import (
 )
 
 type entity_EntityInfo struct {
-	Id  objectbox.TypeId
+	objectbox.Entity
 	Uid uint64
 }
 
 var EntityBinding = entity_EntityInfo{
-	Id:  1,
+	Entity: objectbox.Entity{
+		Id: 1,
+	},
 	Uid: 3022148985475790732,
 }
 
@@ -47,194 +49,146 @@ var Entity_ = struct {
 }{
 	Id: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 1,
-			Entity: &objectbox.Entity{
-				Id: 1,
-			},
+			Id:     1,
+			Entity: &EntityBinding.Entity,
 		},
 	},
 	Int: &objectbox.PropertyInt{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 2,
-			Entity: &objectbox.Entity{
-				Id: 1,
-			},
+			Id:     2,
+			Entity: &EntityBinding.Entity,
 		},
 	},
 	Int8: &objectbox.PropertyInt8{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 3,
-			Entity: &objectbox.Entity{
-				Id: 1,
-			},
+			Id:     3,
+			Entity: &EntityBinding.Entity,
 		},
 	},
 	Int16: &objectbox.PropertyInt16{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 4,
-			Entity: &objectbox.Entity{
-				Id: 1,
-			},
+			Id:     4,
+			Entity: &EntityBinding.Entity,
 		},
 	},
 	Int32: &objectbox.PropertyInt32{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 5,
-			Entity: &objectbox.Entity{
-				Id: 1,
-			},
+			Id:     5,
+			Entity: &EntityBinding.Entity,
 		},
 	},
 	Int64: &objectbox.PropertyInt64{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 6,
-			Entity: &objectbox.Entity{
-				Id: 1,
-			},
+			Id:     6,
+			Entity: &EntityBinding.Entity,
 		},
 	},
 	Uint: &objectbox.PropertyUint{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 7,
-			Entity: &objectbox.Entity{
-				Id: 1,
-			},
+			Id:     7,
+			Entity: &EntityBinding.Entity,
 		},
 	},
 	Uint8: &objectbox.PropertyUint8{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 8,
-			Entity: &objectbox.Entity{
-				Id: 1,
-			},
+			Id:     8,
+			Entity: &EntityBinding.Entity,
 		},
 	},
 	Uint16: &objectbox.PropertyUint16{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 9,
-			Entity: &objectbox.Entity{
-				Id: 1,
-			},
+			Id:     9,
+			Entity: &EntityBinding.Entity,
 		},
 	},
 	Uint32: &objectbox.PropertyUint32{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 10,
-			Entity: &objectbox.Entity{
-				Id: 1,
-			},
+			Id:     10,
+			Entity: &EntityBinding.Entity,
 		},
 	},
 	Uint64: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 11,
-			Entity: &objectbox.Entity{
-				Id: 1,
-			},
+			Id:     11,
+			Entity: &EntityBinding.Entity,
 		},
 	},
 	Bool: &objectbox.PropertyBool{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 12,
-			Entity: &objectbox.Entity{
-				Id: 1,
-			},
+			Id:     12,
+			Entity: &EntityBinding.Entity,
 		},
 	},
 	String: &objectbox.PropertyString{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 13,
-			Entity: &objectbox.Entity{
-				Id: 1,
-			},
+			Id:     13,
+			Entity: &EntityBinding.Entity,
 		},
 	},
 	StringVector: &objectbox.PropertyStringVector{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 21,
-			Entity: &objectbox.Entity{
-				Id: 1,
-			},
+			Id:     21,
+			Entity: &EntityBinding.Entity,
 		},
 	},
 	Byte: &objectbox.PropertyByte{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 14,
-			Entity: &objectbox.Entity{
-				Id: 1,
-			},
+			Id:     14,
+			Entity: &EntityBinding.Entity,
 		},
 	},
 	ByteVector: &objectbox.PropertyByteVector{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 15,
-			Entity: &objectbox.Entity{
-				Id: 1,
-			},
+			Id:     15,
+			Entity: &EntityBinding.Entity,
 		},
 	},
 	Rune: &objectbox.PropertyRune{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 16,
-			Entity: &objectbox.Entity{
-				Id: 1,
-			},
+			Id:     16,
+			Entity: &EntityBinding.Entity,
 		},
 	},
 	Float32: &objectbox.PropertyFloat32{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 17,
-			Entity: &objectbox.Entity{
-				Id: 1,
-			},
+			Id:     17,
+			Entity: &EntityBinding.Entity,
 		},
 	},
 	Float64: &objectbox.PropertyFloat64{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 18,
-			Entity: &objectbox.Entity{
-				Id: 1,
-			},
+			Id:     18,
+			Entity: &EntityBinding.Entity,
 		},
 	},
 	Date: &objectbox.PropertyInt64{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 19,
-			Entity: &objectbox.Entity{
-				Id: 1,
-			},
+			Id:     19,
+			Entity: &EntityBinding.Entity,
 		},
 	},
 	Complex128: &objectbox.PropertyByteVector{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 20,
-			Entity: &objectbox.Entity{
-				Id: 1,
-			},
+			Id:     20,
+			Entity: &EntityBinding.Entity,
 		},
 	},
 	Related: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 22,
-			Entity: &objectbox.Entity{
-				Id: 1,
-			},
+			Id:     22,
+			Entity: &EntityBinding.Entity,
 		},
 	},
 	RelatedPtr: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 23,
-			Entity: &objectbox.Entity{
-				Id: 1,
-			},
+			Id:     23,
+			Entity: &EntityBinding.Entity,
 		},
 	},
 	RelatedPtr2: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 24,
-			Entity: &objectbox.Entity{
-				Id: 1,
-			},
+			Id:     24,
+			Entity: &EntityBinding.Entity,
 		},
 	},
 }
@@ -665,12 +619,14 @@ func (query *EntityQuery) Limit(limit uint64) *EntityQuery {
 }
 
 type testStringIdEntity_EntityInfo struct {
-	Id  objectbox.TypeId
+	objectbox.Entity
 	Uid uint64
 }
 
 var TestStringIdEntityBinding = testStringIdEntity_EntityInfo{
-	Id:  2,
+	Entity: objectbox.Entity{
+		Id: 2,
+	},
 	Uid: 5412225159475839048,
 }
 
@@ -680,10 +636,8 @@ var TestStringIdEntity_ = struct {
 }{
 	Id: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 1,
-			Entity: &objectbox.Entity{
-				Id: 2,
-			},
+			Id:     1,
+			Entity: &TestStringIdEntityBinding.Entity,
 		},
 	},
 }
@@ -880,12 +834,14 @@ func (query *TestStringIdEntityQuery) Limit(limit uint64) *TestStringIdEntityQue
 }
 
 type testEntityInline_EntityInfo struct {
-	Id  objectbox.TypeId
+	objectbox.Entity
 	Uid uint64
 }
 
 var TestEntityInlineBinding = testEntityInline_EntityInfo{
-	Id:  4,
+	Entity: objectbox.Entity{
+		Id: 4,
+	},
 	Uid: 7566870022778519807,
 }
 
@@ -897,26 +853,20 @@ var TestEntityInline_ = struct {
 }{
 	Date: &objectbox.PropertyInt64{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 1,
-			Entity: &objectbox.Entity{
-				Id: 4,
-			},
+			Id:     1,
+			Entity: &TestEntityInlineBinding.Entity,
 		},
 	},
 	Value: &objectbox.PropertyFloat64{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 2,
-			Entity: &objectbox.Entity{
-				Id: 4,
-			},
+			Id:     2,
+			Entity: &TestEntityInlineBinding.Entity,
 		},
 	},
 	Id: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 3,
-			Entity: &objectbox.Entity{
-				Id: 4,
-			},
+			Id:     3,
+			Entity: &TestEntityInlineBinding.Entity,
 		},
 	},
 }
@@ -1124,12 +1074,14 @@ func (query *TestEntityInlineQuery) Limit(limit uint64) *TestEntityInlineQuery {
 }
 
 type testEntityRelated_EntityInfo struct {
-	Id  objectbox.TypeId
+	objectbox.Entity
 	Uid uint64
 }
 
 var TestEntityRelatedBinding = testEntityRelated_EntityInfo{
-	Id:  5,
+	Entity: objectbox.Entity{
+		Id: 5,
+	},
 	Uid: 145948658381494339,
 }
 
@@ -1140,18 +1092,14 @@ var TestEntityRelated_ = struct {
 }{
 	Id: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 1,
-			Entity: &objectbox.Entity{
-				Id: 5,
-			},
+			Id:     1,
+			Entity: &TestEntityRelatedBinding.Entity,
 		},
 	},
 	Name: &objectbox.PropertyString{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 2,
-			Entity: &objectbox.Entity{
-				Id: 5,
-			},
+			Id:     2,
+			Entity: &TestEntityRelatedBinding.Entity,
 		},
 	},
 }

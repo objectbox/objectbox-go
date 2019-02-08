@@ -9,12 +9,14 @@ import (
 )
 
 type c_EntityInfo struct {
-	Id  objectbox.TypeId
+	objectbox.Entity
 	Uid uint64
 }
 
 var CBinding = c_EntityInfo{
-	Id:  3,
+	Entity: objectbox.Entity{
+		Id: 3,
+	},
 	Uid: 6044372234677422456,
 }
 
@@ -25,18 +27,14 @@ var C_ = struct {
 }{
 	Id: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 1,
-			Entity: &objectbox.Entity{
-				Id: 3,
-			},
+			Id:     1,
+			Entity: &CBinding.Entity,
 		},
 	},
 	New: &objectbox.PropertyInt{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 3,
-			Entity: &objectbox.Entity{
-				Id: 3,
-			},
+			Id:     3,
+			Entity: &CBinding.Entity,
 		},
 	},
 }

@@ -10,12 +10,14 @@ import (
 )
 
 type e_EntityInfo struct {
-	Id  objectbox.TypeId
+	objectbox.Entity
 	Uid uint64
 }
 
 var EBinding = e_EntityInfo{
-	Id:  5,
+	Entity: objectbox.Entity{
+		Id: 5,
+	},
 	Uid: 7144924247938981575,
 }
 
@@ -28,34 +30,26 @@ var E_ = struct {
 }{
 	Location: &objectbox.PropertyString{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 1,
-			Entity: &objectbox.Entity{
-				Id: 5,
-			},
+			Id:     1,
+			Entity: &EBinding.Entity,
 		},
 	},
 	id: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 2,
-			Entity: &objectbox.Entity{
-				Id: 5,
-			},
+			Id:     2,
+			Entity: &EBinding.Entity,
 		},
 	},
 	ForeignAlias: &objectbox.PropertyString{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 3,
-			Entity: &objectbox.Entity{
-				Id: 5,
-			},
+			Id:     3,
+			Entity: &EBinding.Entity,
 		},
 	},
 	ForeignNamed: &objectbox.PropertyString{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 4,
-			Entity: &objectbox.Entity{
-				Id: 5,
-			},
+			Id:     4,
+			Entity: &EBinding.Entity,
 		},
 	},
 }

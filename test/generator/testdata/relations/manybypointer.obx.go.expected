@@ -9,12 +9,14 @@ import (
 )
 
 type taskRelManyPtr_EntityInfo struct {
-	Id  objectbox.TypeId
+	objectbox.Entity
 	Uid uint64
 }
 
 var TaskRelManyPtrBinding = taskRelManyPtr_EntityInfo{
-	Id:  6,
+	Entity: objectbox.Entity{
+		Id: 6,
+	},
 	Uid: 3287288577352441706,
 }
 
@@ -24,10 +26,8 @@ var TaskRelManyPtr_ = struct {
 }{
 	Id: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 1,
-			Entity: &objectbox.Entity{
-				Id: 6,
-			},
+			Id:     1,
+			Entity: &TaskRelManyPtrBinding.Entity,
 		},
 	},
 }

@@ -9,12 +9,14 @@ import (
 )
 
 type taskRelEmbedded_EntityInfo struct {
-	Id  objectbox.TypeId
+	objectbox.Entity
 	Uid uint64
 }
 
 var TaskRelEmbeddedBinding = taskRelEmbedded_EntityInfo{
-	Id:  4,
+	Entity: objectbox.Entity{
+		Id: 4,
+	},
 	Uid: 7837839688282259259,
 }
 
@@ -25,18 +27,14 @@ var TaskRelEmbedded_ = struct {
 }{
 	Id: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 1,
-			Entity: &objectbox.Entity{
-				Id: 4,
-			},
+			Id:     1,
+			Entity: &TaskRelEmbeddedBinding.Entity,
 		},
 	},
 	Group: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 2,
-			Entity: &objectbox.Entity{
-				Id: 4,
-			},
+			Id:     2,
+			Entity: &TaskRelEmbeddedBinding.Entity,
 		},
 	},
 }

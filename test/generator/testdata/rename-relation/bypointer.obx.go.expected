@@ -9,12 +9,14 @@ import (
 )
 
 type taskRelPtr_EntityInfo struct {
-	Id  objectbox.TypeId
+	objectbox.Entity
 	Uid uint64
 }
 
 var TaskRelPtrBinding = taskRelPtr_EntityInfo{
-	Id:  2,
+	Entity: objectbox.Entity{
+		Id: 2,
+	},
 	Uid: 3390393562759376202,
 }
 
@@ -25,18 +27,14 @@ var TaskRelPtr_ = struct {
 }{
 	Id: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 1,
-			Entity: &objectbox.Entity{
-				Id: 2,
-			},
+			Id:     1,
+			Entity: &TaskRelPtrBinding.Entity,
 		},
 	},
 	GroupNew: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 2,
-			Entity: &objectbox.Entity{
-				Id: 2,
-			},
+			Id:     2,
+			Entity: &TaskRelPtrBinding.Entity,
 		},
 	},
 }

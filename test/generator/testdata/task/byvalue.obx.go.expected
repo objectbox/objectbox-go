@@ -9,12 +9,14 @@ import (
 )
 
 type taskByValue_EntityInfo struct {
-	Id  objectbox.TypeId
+	objectbox.Entity
 	Uid uint64
 }
 
 var TaskByValueBinding = taskByValue_EntityInfo{
-	Id:  3,
+	Entity: objectbox.Entity{
+		Id: 3,
+	},
 	Uid: 2661732831099943416,
 }
 
@@ -24,10 +26,8 @@ var TaskByValue_ = struct {
 }{
 	Id: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 1,
-			Entity: &objectbox.Entity{
-				Id: 3,
-			},
+			Id:     1,
+			Entity: &TaskByValueBinding.Entity,
 		},
 	},
 }
@@ -233,12 +233,14 @@ func (query *TaskByValueQuery) Limit(limit uint64) *TaskByValueQuery {
 }
 
 type taskStringByValue_EntityInfo struct {
-	Id  objectbox.TypeId
+	objectbox.Entity
 	Uid uint64
 }
 
 var TaskStringByValueBinding = taskStringByValue_EntityInfo{
-	Id:  4,
+	Entity: objectbox.Entity{
+		Id: 4,
+	},
 	Uid: 8325060299420976708,
 }
 
@@ -248,10 +250,8 @@ var TaskStringByValue_ = struct {
 }{
 	Id: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 1,
-			Entity: &objectbox.Entity{
-				Id: 4,
-			},
+			Id:     1,
+			Entity: &TaskStringByValueBinding.Entity,
 		},
 	},
 }

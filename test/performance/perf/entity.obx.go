@@ -9,12 +9,14 @@ import (
 )
 
 type entity_EntityInfo struct {
-	Id  objectbox.TypeId
+	objectbox.Entity
 	Uid uint64
 }
 
 var EntityBinding = entity_EntityInfo{
-	Id:  1,
+	Entity: objectbox.Entity{
+		Id: 1,
+	},
 	Uid: 1737161401460991620,
 }
 
@@ -28,42 +30,32 @@ var Entity_ = struct {
 }{
 	Id: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 1,
-			Entity: &objectbox.Entity{
-				Id: 1,
-			},
+			Id:     1,
+			Entity: &EntityBinding.Entity,
 		},
 	},
 	Int32: &objectbox.PropertyInt32{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 2,
-			Entity: &objectbox.Entity{
-				Id: 1,
-			},
+			Id:     2,
+			Entity: &EntityBinding.Entity,
 		},
 	},
 	Int64: &objectbox.PropertyInt64{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 3,
-			Entity: &objectbox.Entity{
-				Id: 1,
-			},
+			Id:     3,
+			Entity: &EntityBinding.Entity,
 		},
 	},
 	String: &objectbox.PropertyString{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 4,
-			Entity: &objectbox.Entity{
-				Id: 1,
-			},
+			Id:     4,
+			Entity: &EntityBinding.Entity,
 		},
 	},
 	Float64: &objectbox.PropertyFloat64{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 5,
-			Entity: &objectbox.Entity{
-				Id: 1,
-			},
+			Id:     5,
+			Entity: &EntityBinding.Entity,
 		},
 	},
 }

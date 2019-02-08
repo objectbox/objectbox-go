@@ -9,12 +9,14 @@ import (
 )
 
 type taskRelManyValue_EntityInfo struct {
-	Id  objectbox.TypeId
+	objectbox.Entity
 	Uid uint64
 }
 
 var TaskRelManyValueBinding = taskRelManyValue_EntityInfo{
-	Id:  7,
+	Entity: objectbox.Entity{
+		Id: 7,
+	},
 	Uid: 4706154865122290029,
 }
 
@@ -24,10 +26,8 @@ var TaskRelManyValue_ = struct {
 }{
 	Id: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 1,
-			Entity: &objectbox.Entity{
-				Id: 7,
-			},
+			Id:     1,
+			Entity: &TaskRelManyValueBinding.Entity,
 		},
 	},
 }

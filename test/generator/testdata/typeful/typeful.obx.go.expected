@@ -9,12 +9,14 @@ import (
 )
 
 type typeful_EntityInfo struct {
-	Id  objectbox.TypeId
+	objectbox.Entity
 	Uid uint64
 }
 
 var TypefulBinding = typeful_EntityInfo{
-	Id:  2,
+	Entity: objectbox.Entity{
+		Id: 2,
+	},
 	Uid: 8274930044578894929,
 }
 
@@ -43,162 +45,122 @@ var Typeful_ = struct {
 }{
 	Id: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 1,
-			Entity: &objectbox.Entity{
-				Id: 2,
-			},
+			Id:     1,
+			Entity: &TypefulBinding.Entity,
 		},
 	},
 	Int: &objectbox.PropertyInt{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 2,
-			Entity: &objectbox.Entity{
-				Id: 2,
-			},
+			Id:     2,
+			Entity: &TypefulBinding.Entity,
 		},
 	},
 	Int8: &objectbox.PropertyInt8{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 3,
-			Entity: &objectbox.Entity{
-				Id: 2,
-			},
+			Id:     3,
+			Entity: &TypefulBinding.Entity,
 		},
 	},
 	Int16: &objectbox.PropertyInt16{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 4,
-			Entity: &objectbox.Entity{
-				Id: 2,
-			},
+			Id:     4,
+			Entity: &TypefulBinding.Entity,
 		},
 	},
 	Int32: &objectbox.PropertyInt32{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 5,
-			Entity: &objectbox.Entity{
-				Id: 2,
-			},
+			Id:     5,
+			Entity: &TypefulBinding.Entity,
 		},
 	},
 	Int64: &objectbox.PropertyInt64{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 6,
-			Entity: &objectbox.Entity{
-				Id: 2,
-			},
+			Id:     6,
+			Entity: &TypefulBinding.Entity,
 		},
 	},
 	Uint: &objectbox.PropertyUint{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 7,
-			Entity: &objectbox.Entity{
-				Id: 2,
-			},
+			Id:     7,
+			Entity: &TypefulBinding.Entity,
 		},
 	},
 	Uint8: &objectbox.PropertyUint8{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 8,
-			Entity: &objectbox.Entity{
-				Id: 2,
-			},
+			Id:     8,
+			Entity: &TypefulBinding.Entity,
 		},
 	},
 	Uint16: &objectbox.PropertyUint16{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 9,
-			Entity: &objectbox.Entity{
-				Id: 2,
-			},
+			Id:     9,
+			Entity: &TypefulBinding.Entity,
 		},
 	},
 	Uint32: &objectbox.PropertyUint32{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 10,
-			Entity: &objectbox.Entity{
-				Id: 2,
-			},
+			Id:     10,
+			Entity: &TypefulBinding.Entity,
 		},
 	},
 	Uint64: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 11,
-			Entity: &objectbox.Entity{
-				Id: 2,
-			},
+			Id:     11,
+			Entity: &TypefulBinding.Entity,
 		},
 	},
 	Bool: &objectbox.PropertyBool{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 12,
-			Entity: &objectbox.Entity{
-				Id: 2,
-			},
+			Id:     12,
+			Entity: &TypefulBinding.Entity,
 		},
 	},
 	String: &objectbox.PropertyString{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 13,
-			Entity: &objectbox.Entity{
-				Id: 2,
-			},
+			Id:     13,
+			Entity: &TypefulBinding.Entity,
 		},
 	},
 	StringVector: &objectbox.PropertyStringVector{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 14,
-			Entity: &objectbox.Entity{
-				Id: 2,
-			},
+			Id:     14,
+			Entity: &TypefulBinding.Entity,
 		},
 	},
 	Byte: &objectbox.PropertyByte{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 15,
-			Entity: &objectbox.Entity{
-				Id: 2,
-			},
+			Id:     15,
+			Entity: &TypefulBinding.Entity,
 		},
 	},
 	ByteVector: &objectbox.PropertyByteVector{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 16,
-			Entity: &objectbox.Entity{
-				Id: 2,
-			},
+			Id:     16,
+			Entity: &TypefulBinding.Entity,
 		},
 	},
 	Rune: &objectbox.PropertyRune{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 17,
-			Entity: &objectbox.Entity{
-				Id: 2,
-			},
+			Id:     17,
+			Entity: &TypefulBinding.Entity,
 		},
 	},
 	Float32: &objectbox.PropertyFloat32{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 18,
-			Entity: &objectbox.Entity{
-				Id: 2,
-			},
+			Id:     18,
+			Entity: &TypefulBinding.Entity,
 		},
 	},
 	Float64: &objectbox.PropertyFloat64{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 19,
-			Entity: &objectbox.Entity{
-				Id: 2,
-			},
+			Id:     19,
+			Entity: &TypefulBinding.Entity,
 		},
 	},
 	Date: &objectbox.PropertyInt64{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 20,
-			Entity: &objectbox.Entity{
-				Id: 2,
-			},
+			Id:     20,
+			Entity: &TypefulBinding.Entity,
 		},
 	},
 }

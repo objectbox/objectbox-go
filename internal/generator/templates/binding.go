@@ -57,12 +57,14 @@ import (
 {{range $entity := .Binding.Entities -}}
 {{$entityNameCamel := $entity.Name | StringCamel -}}
 type {{$entityNameCamel}}_EntityInfo struct {
-	Id objectbox.TypeId
+	objectbox.Entity
 	Uid uint64
 }
 
 var {{$entity.Name}}Binding = {{$entityNameCamel}}_EntityInfo {
-	Id: {{$entity.Id}}, 
+	Entity: objectbox.Entity{
+		Id: {{$entity.Id}},
+	}, 
 	Uid: {{$entity.Uid}},
 }
 
@@ -76,9 +78,7 @@ var {{$entity.Name}}_ = struct {
     {{$property.Name}}: &objectbox.Property{{$property.GoType | TypeIdentifier}}{
 		BaseProperty: &objectbox.BaseProperty{
 			Id: {{$property.Id}},
-			Entity: &objectbox.Entity{
-				Id: {{$entity.Id}},
-			},
+			Entity: &{{$entity.Name}}Binding.Entity,
 		},
 	},
     {{end -}}

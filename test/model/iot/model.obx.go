@@ -9,12 +9,14 @@ import (
 )
 
 type event_EntityInfo struct {
-	Id  objectbox.TypeId
+	objectbox.Entity
 	Uid uint64
 }
 
 var EventBinding = event_EntityInfo{
-	Id:  1,
+	Entity: objectbox.Entity{
+		Id: 1,
+	},
 	Uid: 1468539308767086854,
 }
 
@@ -28,42 +30,32 @@ var Event_ = struct {
 }{
 	Id: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 1,
-			Entity: &objectbox.Entity{
-				Id: 1,
-			},
+			Id:     1,
+			Entity: &EventBinding.Entity,
 		},
 	},
 	Uid: &objectbox.PropertyString{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 4,
-			Entity: &objectbox.Entity{
-				Id: 1,
-			},
+			Id:     4,
+			Entity: &EventBinding.Entity,
 		},
 	},
 	Device: &objectbox.PropertyString{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 2,
-			Entity: &objectbox.Entity{
-				Id: 1,
-			},
+			Id:     2,
+			Entity: &EventBinding.Entity,
 		},
 	},
 	Date: &objectbox.PropertyInt64{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 3,
-			Entity: &objectbox.Entity{
-				Id: 1,
-			},
+			Id:     3,
+			Entity: &EventBinding.Entity,
 		},
 	},
 	Picture: &objectbox.PropertyByteVector{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 5,
-			Entity: &objectbox.Entity{
-				Id: 1,
-			},
+			Id:     5,
+			Entity: &EventBinding.Entity,
 		},
 	},
 }
@@ -278,12 +270,14 @@ func (query *EventQuery) Limit(limit uint64) *EventQuery {
 }
 
 type reading_EntityInfo struct {
-	Id  objectbox.TypeId
+	objectbox.Entity
 	Uid uint64
 }
 
 var ReadingBinding = reading_EntityInfo{
-	Id:  2,
+	Entity: objectbox.Entity{
+		Id: 2,
+	},
 	Uid: 5284076134434938613,
 }
 
@@ -301,74 +295,56 @@ var Reading_ = struct {
 }{
 	Id: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 1,
-			Entity: &objectbox.Entity{
-				Id: 2,
-			},
+			Id:     1,
+			Entity: &ReadingBinding.Entity,
 		},
 	},
 	Date: &objectbox.PropertyInt64{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 2,
-			Entity: &objectbox.Entity{
-				Id: 2,
-			},
+			Id:     2,
+			Entity: &ReadingBinding.Entity,
 		},
 	},
 	EventId: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 3,
-			Entity: &objectbox.Entity{
-				Id: 2,
-			},
+			Id:     3,
+			Entity: &ReadingBinding.Entity,
 		},
 	},
 	ValueName: &objectbox.PropertyString{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 4,
-			Entity: &objectbox.Entity{
-				Id: 2,
-			},
+			Id:     4,
+			Entity: &ReadingBinding.Entity,
 		},
 	},
 	ValueString: &objectbox.PropertyString{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 5,
-			Entity: &objectbox.Entity{
-				Id: 2,
-			},
+			Id:     5,
+			Entity: &ReadingBinding.Entity,
 		},
 	},
 	ValueInteger: &objectbox.PropertyInt64{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 6,
-			Entity: &objectbox.Entity{
-				Id: 2,
-			},
+			Id:     6,
+			Entity: &ReadingBinding.Entity,
 		},
 	},
 	ValueFloating: &objectbox.PropertyFloat64{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 7,
-			Entity: &objectbox.Entity{
-				Id: 2,
-			},
+			Id:     7,
+			Entity: &ReadingBinding.Entity,
 		},
 	},
 	ValueInt32: &objectbox.PropertyInt32{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 8,
-			Entity: &objectbox.Entity{
-				Id: 2,
-			},
+			Id:     8,
+			Entity: &ReadingBinding.Entity,
 		},
 	},
 	ValueFloating32: &objectbox.PropertyFloat32{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 9,
-			Entity: &objectbox.Entity{
-				Id: 2,
-			},
+			Id:     9,
+			Entity: &ReadingBinding.Entity,
 		},
 	},
 }

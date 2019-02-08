@@ -9,12 +9,14 @@ import (
 )
 
 type taskIndexed_EntityInfo struct {
-	Id  objectbox.TypeId
+	objectbox.Entity
 	Uid uint64
 }
 
 var TaskIndexedBinding = taskIndexed_EntityInfo{
-	Id:  5,
+	Entity: objectbox.Entity{
+		Id: 5,
+	},
 	Uid: 5617773211005988520,
 }
 
@@ -30,58 +32,44 @@ var TaskIndexed_ = struct {
 }{
 	Id: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 1,
-			Entity: &objectbox.Entity{
-				Id: 5,
-			},
+			Id:     1,
+			Entity: &TaskIndexedBinding.Entity,
 		},
 	},
 	Uid: &objectbox.PropertyString{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 2,
-			Entity: &objectbox.Entity{
-				Id: 5,
-			},
+			Id:     2,
+			Entity: &TaskIndexedBinding.Entity,
 		},
 	},
 	Name: &objectbox.PropertyString{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 3,
-			Entity: &objectbox.Entity{
-				Id: 5,
-			},
+			Id:     3,
+			Entity: &TaskIndexedBinding.Entity,
 		},
 	},
 	Priority: &objectbox.PropertyInt{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 4,
-			Entity: &objectbox.Entity{
-				Id: 5,
-			},
+			Id:     4,
+			Entity: &TaskIndexedBinding.Entity,
 		},
 	},
 	Group: &objectbox.PropertyString{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 5,
-			Entity: &objectbox.Entity{
-				Id: 5,
-			},
+			Id:     5,
+			Entity: &TaskIndexedBinding.Entity,
 		},
 	},
 	Place: &objectbox.PropertyString{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 6,
-			Entity: &objectbox.Entity{
-				Id: 5,
-			},
+			Id:     6,
+			Entity: &TaskIndexedBinding.Entity,
 		},
 	},
 	Source: &objectbox.PropertyString{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 7,
-			Entity: &objectbox.Entity{
-				Id: 5,
-			},
+			Id:     7,
+			Entity: &TaskIndexedBinding.Entity,
 		},
 	},
 }

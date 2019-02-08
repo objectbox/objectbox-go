@@ -69,9 +69,24 @@ func (box *Box) Query(conditions ...Condition) *Query {
 }
 
 // Like Query() but with error handling; e.g. when you build conditions dynamically that may fail.
-func (box *Box) QueryOrError(conditions ...Condition) (*Query, error) {
-	queryBuilder := box.objectBox.InternalNewQueryBuilder(box.entity.id)
-	return queryBuilder.BuildWithConditions(conditions...)
+func (box *Box) QueryOrError(conditions ...Condition) (query *Query, err error) {
+	builder := newQueryBuilder(box.objectBox, box.entity.id)
+
+	defer func() {
+		err2 := builder.Close()
+		if err == nil && err2 != nil {
+			err = err2
+			query = nil
+		}
+	}()
+
+	if err = builder.applyConditions(conditions); err != nil {
+		return nil, err
+	}
+
+	query, err = builder.Build()
+
+	return // NOTE result might be overwritten by the deferred "closer" function
 }
 
 func (box *Box) idForPut(idCandidate uint64) (id uint64, err error) {

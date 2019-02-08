@@ -223,20 +223,6 @@ func (ob *ObjectBox) AwaitAsyncCompletion() *ObjectBox {
 	return ob
 }
 
-func (ob *ObjectBox) InternalNewQueryBuilder(typeId TypeId) *QueryBuilder {
-	qb := C.obx_qb_create(ob.store, C.obx_schema_id(typeId))
-	var err error = nil
-	if qb == nil {
-		err = createError()
-	}
-	return &QueryBuilder{
-		typeId:    typeId,
-		objectBox: ob,
-		cqb:       qb,
-		Err:       err,
-	}
-}
-
 func createError() error {
 	msg := C.obx_last_error_message()
 	if msg == nil {

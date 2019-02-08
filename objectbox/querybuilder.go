@@ -39,6 +39,20 @@ type QueryBuilder struct {
 	Err error
 }
 
+func newQueryBuilder(ob *ObjectBox, typeId TypeId) *QueryBuilder {
+	qb := C.obx_qb_create(ob.store, C.obx_schema_id(typeId))
+	var err error = nil
+	if qb == nil {
+		err = createError()
+	}
+	return &QueryBuilder{
+		typeId:    typeId,
+		objectBox: ob,
+		cqb:       qb,
+		Err:       err,
+	}
+}
+
 func (qb *QueryBuilder) Close() error {
 	toClose := qb.cqb
 	if toClose != nil {
@@ -58,7 +72,7 @@ func (qb *QueryBuilder) setError(err error) {
 }
 
 func (qb *QueryBuilder) Build() (*Query, error) {
-	qb.checkForCError()
+	qb.checkForCError() // TODO why is this called here? It could lead to incorrect error messages in a parallel app
 	if qb.Err != nil {
 		return nil, qb.Err
 	}
@@ -75,25 +89,22 @@ func (qb *QueryBuilder) Build() (*Query, error) {
 	return query, nil
 }
 
-func (qb *QueryBuilder) BuildWithConditions(conditions ...Condition) (*Query, error) {
-	var condition Condition
-	if len(conditions) == 1 {
-		condition = conditions[0]
-	} else {
-		condition = &conditionCombination{
-			conditions: conditions,
-		}
+func (qb *QueryBuilder) applyConditions(conditions []Condition) error {
+	if qb.Err != nil {
+		return qb.Err
 	}
 
-	var err error
-	if _, err = condition.applyTo(qb, true); err != nil {
-		return nil, err
+	if len(conditions) == 1 {
+		_, qb.Err = conditions[0].applyTo(qb, true)
+	} else if len(conditions) > 1 {
+		_, qb.Err = conditionCombination{conditions: conditions}.applyTo(qb, true)
 	}
-	return qb.Build()
+
+	return qb.Err
 }
 
 func (qb *QueryBuilder) checkForCError() {
-	if qb.Err != nil {
+	if qb.Err != nil { // TODO why if err != nil, doesn't make sense at a first glance
 		errCode := C.obx_qb_error_code(qb.cqb)
 		if errCode != 0 {
 			msg := C.obx_qb_error_message(qb.cqb)

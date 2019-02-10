@@ -41,6 +41,7 @@ var TaskRelEmbedded_ = struct {
 	},
 	Groups: &objectbox.RelationManyToMany{
 		Id:     1,
+		Source: &TaskRelEmbeddedBinding.Entity,
 		Target: &GroupBinding.Entity,
 	},
 }

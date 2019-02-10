@@ -409,6 +409,9 @@ func TestQueryLinks(t *testing.T) {
 
 		// many-to-many link
 		{2, s{`TRUE Link: Name == "relPtr-Val-1"`}, box.Query(E.RelatedPtrSlice.Link(R.Name.Equals("relPtr-Val-1", true))), nil},
+
+		// many-to-many backlink
+		{1, s{`TRUE Link: String == "Val-1"`}, boxR.Query(E.RelatedPtrSlice.Link(E.String.Equals(e.String, true))), nil},
 	})
 }
 
@@ -547,9 +550,6 @@ func testQueries(t *testing.T, env *model.TestEnv, options queryTestOptions, tes
 		} else if q, valid := tc.q.(*model.TestEntityRelatedQuery); valid {
 			query = q.Query
 			box = model.BoxForTestEntityRelated(env.ObjectBox).Box
-
-			fmt.Println(options)
-			fmt.Println(box.Count())
 			baseCount = uint64(options.baseCount) * 3 // TestEnv::Populate() currently inserts 3 relations for each main entity
 		}
 

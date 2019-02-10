@@ -198,10 +198,12 @@ var Entity_ = struct {
 	},
 	RelatedPtrSlice: &objectbox.RelationManyToMany{
 		Id:     5,
+		Source: &EntityBinding.Entity,
 		Target: &TestEntityRelatedBinding.Entity,
 	},
 	RelatedSlice: &objectbox.RelationManyToMany{
 		Id:     4,
+		Source: &EntityBinding.Entity,
 		Target: &EntityByValueBinding.Entity,
 	},
 }

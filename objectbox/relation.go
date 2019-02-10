@@ -87,6 +87,7 @@ func (condition *conditionRelationManyToMany) applyTo(qb *QueryBuilder) (Conditi
 
 type RelationManyToMany struct {
 	Id     TypeId
+	Source *Entity
 	Target *Entity
 }
 

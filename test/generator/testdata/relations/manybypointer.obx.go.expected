@@ -33,6 +33,7 @@ var TaskRelManyPtr_ = struct {
 	},
 	Groups: &objectbox.RelationManyToMany{
 		Id:     2,
+		Source: &TaskRelManyPtrBinding.Entity,
 		Target: &GroupBinding.Entity,
 	},
 }

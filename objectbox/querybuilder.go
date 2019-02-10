@@ -180,7 +180,18 @@ func (qb *QueryBuilder) LinkManyToMany(relation *RelationManyToMany, conditions 
 	}
 
 	// create a new "inner" query builder
-	var iqb = qb.newInnerBuilder(relation.Target.Id, C.obx_qb_link_standalone(qb.cqb, C.obx_schema_id(relation.Id)))
+	var iqb *QueryBuilder
+
+	// recognize whether it's a link or a backlink
+	if relation.Source.Id == qb.typeId && relation.Target.Id != qb.typeId {
+		//log.Printf("QB %p creating link to entity %d over relation %d", qb, relation.Target.Id, relation.Id)
+		iqb = qb.newInnerBuilder(relation.Target.Id, C.obx_qb_link_standalone(qb.cqb, C.obx_schema_id(relation.Id)))
+	} else if relation.Source.Id != qb.typeId && relation.Target.Id == qb.typeId {
+		//log.Printf("QB %p creating backlink from entity %d over relation %d", qb, relation.Source.Id, relation.Id)
+		iqb = qb.newInnerBuilder(relation.Source.Id, C.obx_qb_backlink_standalone(qb.cqb, C.obx_schema_id(relation.Id)))
+	} else {
+		return errors.New("relation not recognized as either link or backlink")
+	}
 	if iqb == nil {
 		return qb.Err // this has been set by newInnerBuilder()
 	}

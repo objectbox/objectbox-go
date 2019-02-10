@@ -94,6 +94,7 @@ var {{$entity.Name}}_ = struct {
 	{{range $relation := $entity.Relations -}}
     	{{$relation.Name}}: &objectbox.RelationManyToMany{
 			Id: {{$relation.Id}},
+			Source: &{{$entity.Name}}Binding.Entity,
 			Target: &{{$relation.Target.Name}}Binding.Entity,
 		},
     {{end -}}

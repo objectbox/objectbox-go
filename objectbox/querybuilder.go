@@ -42,17 +42,21 @@ type QueryBuilder struct {
 }
 
 func newQueryBuilder(ob *ObjectBox, typeId TypeId) *QueryBuilder {
-	qb := C.obx_qb_create(ob.store, C.obx_schema_id(typeId))
+	cqb := C.obx_qb_create(ob.store, C.obx_schema_id(typeId))
 	var err error = nil
-	if qb == nil {
+	if cqb == nil {
 		err = createError()
 	}
-	return &QueryBuilder{
+
+	var qb = &QueryBuilder{
 		objectBox: ob,
-		cqb:       qb,
+		cqb:       cqb,
 		typeId:    typeId,
 		Err:       err,
 	}
+
+	// log.Printf("QB %p created for entity %d\n", qb, typeId)
+	return qb
 }
 
 func (qb *QueryBuilder) newInnerBuilder(typeId TypeId, cqb *C.OBX_query_builder) *QueryBuilder {
@@ -61,15 +65,16 @@ func (qb *QueryBuilder) newInnerBuilder(typeId TypeId, cqb *C.OBX_query_builder)
 		return nil
 	}
 
-	var result = &QueryBuilder{
+	var iqb = &QueryBuilder{
 		objectBox: qb.objectBox,
 		cqb:       cqb,
 		typeId:    typeId,
 	}
 
-	qb.innerBuilders = append(qb.innerBuilders, result)
+	qb.innerBuilders = append(qb.innerBuilders, iqb)
 
-	return result
+	// log.Printf("QB %p attached inner QB %p, entity %d\n", qb, iqb, iqb.typeId)
+	return iqb
 }
 
 func (qb *QueryBuilder) Close() error {
@@ -108,16 +113,22 @@ func (qb *QueryBuilder) Build() (*Query, error) {
 	if qb.Err != nil {
 		return nil, qb.Err
 	}
-	cQuery, err := C.obx_query_create(qb.cqb)
-	if err != nil {
-		return nil, err
+
+	// log.Printf("Building %p\n", qb)
+
+	cQuery := C.obx_query_create(qb.cqb)
+	if cQuery == nil {
+		qb.Err = createError()
+		return nil, qb.Err
 	}
+
 	query := &Query{
 		objectBox: qb.objectBox,
 		cQuery:    cQuery,
 		entity:    qb.objectBox.getEntityById(qb.typeId),
 	}
 	query.installFinalizer()
+
 	return query, nil
 }
 
@@ -141,7 +152,21 @@ func (qb *QueryBuilder) LinkOneToMany(relation *RelationOneToMany, conditions []
 	}
 
 	// create a new "inner" query builder
-	var iqb = qb.newInnerBuilder(relation.Target.Id, C.obx_qb_link_property(qb.cqb, C.obx_schema_id(relation.Property.Id)))
+	var iqb *QueryBuilder
+
+	// recognize whether it's a link or a backlink
+	if relation.Property.Entity.Id == qb.typeId && relation.Target.Id != qb.typeId {
+		// if property belongs to the entity of the "main" query builder & target is another entity, it's a link
+		// log.Printf("QB %p creating link to entity %d over property %d", qb, relation.Target.Id, relation.Property.Id)
+		iqb = qb.newInnerBuilder(relation.Target.Id, C.obx_qb_link_property(qb.cqb, C.obx_schema_id(relation.Property.Id)))
+	} else if relation.Property.Entity.Id != qb.typeId && relation.Target.Id == qb.typeId {
+		// if property is not from the same entity as this query builder but the target is, it's a backlink
+		// log.Printf("QB %p creating backlink from entity %d over property %d", qb, relation.Property.Entity.Id, relation.Property.Id)
+		iqb = qb.newInnerBuilder(relation.Property.Entity.Id, C.obx_qb_backlink_property(qb.cqb, C.obx_schema_id(relation.Property.Entity.Id), C.obx_schema_id(relation.Property.Id)))
+	} else {
+		return errors.New("relation not recognized as either link or backlink")
+	}
+
 	if iqb == nil {
 		return qb.Err // this has been set by newInnerBuilder()
 	}

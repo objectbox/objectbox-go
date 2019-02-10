@@ -391,24 +391,21 @@ func TestQueryLinks(t *testing.T) {
 	defer env.Close()
 
 	var box = env.Box
-	//var boxR = model.BoxForTestEntityRelated(env.ObjectBox)
+	var boxR = model.BoxForTestEntityRelated(env.ObjectBox)
+
+	// Use this special entity for testing descriptions
+	var e = model.Entity47()
 
 	// let's alias the entity to make the test cases easier to read
 	var E = model.Entity_
 	var R = model.TestEntityRelated_
 
-	// Use this special entity for testing descriptions
-	//var e = model.Entity47()
-
-	// and a shorter type name for the setup function argument
-	//type eq = model.EntityQuery
-
 	testQueries(t, env, queryTestOptions{baseCount: 10}, []queryTestCase{
 		// one-to-many link
 		{2, s{`TRUE Link: Name == "rel-Val-1"`}, box.Query(E.Related.Link(R.Name.Equals("rel-Val-1", true))), nil},
 
-		// TODO one-to-many backlink
-		//{3, s{`Int == 47`}, boxR.Query(E.Related.Link(R.Name.Equals("text", true))), nil},
+		// one-to-many backlink
+		{1, s{`TRUE Link: String == "Val-1"`}, boxR.Query(E.Related.Link(E.String.Equals(e.String, true))), nil},
 
 		// many-to-many link
 		{2, s{`TRUE Link: Name == "relPtr-Val-1"`}, box.Query(E.RelatedPtrSlice.Link(R.Name.Equals("relPtr-Val-1", true))), nil},
@@ -520,7 +517,11 @@ func testQueries(t *testing.T, env *model.TestEnv, options queryTestOptions, tes
 	t.Logf("Executing %d test cases", len(testCases))
 
 	var resetDb = func() {
-		assert.NoErr(t, env.Box.RemoveAll())
+		assert.NoErr(t, model.BoxForEntity(env.ObjectBox).RemoveAll())
+		assert.NoErr(t, model.BoxForEntityByValue(env.ObjectBox).RemoveAll())
+		assert.NoErr(t, model.BoxForTestEntityRelated(env.ObjectBox).RemoveAll())
+		assert.NoErr(t, model.BoxForTestEntityInline(env.ObjectBox).RemoveAll())
+		assert.NoErr(t, model.BoxForTestStringIdEntity(env.ObjectBox).RemoveAll())
 
 		// insert new entries
 		env.Populate(options.baseCount)
@@ -535,11 +536,21 @@ func testQueries(t *testing.T, env *model.TestEnv, options queryTestOptions, tes
 		var count = tc.c
 		var desc = tc.d
 		var setup = tc.f
+
 		var query *objectbox.Query
+		var box *objectbox.Box
+		var baseCount uint64
 		if q, valid := tc.q.(*model.EntityQuery); valid {
 			query = q.Query
+			box = model.BoxForEntity(env.ObjectBox).Box
+			baseCount = uint64(options.baseCount)
 		} else if q, valid := tc.q.(*model.TestEntityRelatedQuery); valid {
 			query = q.Query
+			box = model.BoxForTestEntityRelated(env.ObjectBox).Box
+
+			fmt.Println(options)
+			fmt.Println(box.Count())
+			baseCount = uint64(options.baseCount) * 3 // TestEnv::Populate() currently inserts 3 relations for each main entity
 		}
 
 		// run query-setup function, if defined
@@ -591,7 +602,7 @@ func testQueries(t *testing.T, env *model.TestEnv, options queryTestOptions, tes
 		if ids, err := query.FindIds(); err != nil {
 			assert.Failf(t, "case #%d {%s} %s", i, desc, err)
 		} else {
-			t.Logf("case #%d {%s} - checking all IDs are present in the result", i, desc)
+			//t.Logf("case #%d {%s} - checking all IDs are present in the result", i, desc)
 			matchAllEntityIds(t, ids, actualData)
 		}
 
@@ -601,11 +612,11 @@ func testQueries(t *testing.T, env *model.TestEnv, options queryTestOptions, tes
 				assert.Failf(t, "case #%d {%s} %s", i, desc, err)
 			} else if uint64(count) != removedCount {
 				assert.Failf(t, "case #%d {%s} expected %d, but got %d Remove()", i, desc, count, removedCount)
-			} else if actualCount, err := env.Box.Count(); err != nil {
+			} else if actualCount, err := box.Count(); err != nil {
 				assert.Failf(t, "case #%d {%s} %s", i, desc, err)
-			} else if actualCount+removedCount != uint64(options.baseCount) {
+			} else if actualCount+removedCount != baseCount {
 				assert.Failf(t, "case #%d {%s} expected %d, but got %d Box.Count() after remove",
-					i, desc, uint64(options.baseCount)-removedCount, actualCount)
+					i, desc, baseCount-removedCount, actualCount)
 			}
 		}
 

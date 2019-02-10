@@ -30,6 +30,14 @@ type RelationOneToMany struct {
 	Target   *Entity
 }
 
+func (relation RelationOneToMany) entityId() TypeId {
+	return relation.Property.Entity.Id
+}
+
+func (relation RelationOneToMany) propertyId() TypeId {
+	return relation.Property.Id
+}
+
 func (relation *RelationOneToMany) Link(conditions ...Condition) Condition {
 	return &conditionRelationOneToMany{relation, conditions}
 }

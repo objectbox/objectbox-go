@@ -129,6 +129,10 @@ func (qb *QueryBuilder) Build() (*Query, error) {
 	}
 	query.installFinalizer()
 
+	for _, iqb := range qb.innerBuilders {
+		query.linkedEntityIds = append(query.linkedEntityIds, iqb.typeId)
+	}
+
 	return query, nil
 }
 

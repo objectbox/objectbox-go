@@ -400,18 +400,26 @@ func TestQueryLinks(t *testing.T) {
 	var E = model.Entity_
 	var R = model.TestEntityRelated_
 
+	// and a shorter type name for the setup function argument
+	type i = interface{}
+	var eq = func(q interface{}) *objectbox.Query { return q.(*objectbox.Query) }
+
 	testQueries(t, env, queryTestOptions{baseCount: 10}, []queryTestCase{
 		// one-to-many link
-		{2, s{`TRUE Link: Name == "rel-Val-1"`}, box.Query(E.Related.Link(R.Name.Equals("rel-Val-1", true))), nil},
+		{2, s{`TRUE Link: Name == "rel-Val-1"`}, box.Query(E.Related.Link(R.Name.Equals("", true))),
+			func(q i) error { return eq(q).SetStringParams(R.Name, "rel-Val-1") }},
 
 		// one-to-many backlink
-		{1, s{`TRUE Link: String == "Val-1"`}, boxR.Query(E.Related.Link(E.String.Equals(e.String, true))), nil},
+		{1, s{`TRUE Link: String == "Val-1"`}, boxR.Query(E.Related.Link(E.String.Equals("", true))),
+			func(q i) error { return eq(q).SetStringParams(E.String, e.String) }},
 
 		// many-to-many link
-		{2, s{`TRUE Link: Name == "relPtr-Val-1"`}, box.Query(E.RelatedPtrSlice.Link(R.Name.Equals("relPtr-Val-1", true))), nil},
+		{2, s{`TRUE Link: Name == "relPtr-Val-1"`}, box.Query(E.RelatedPtrSlice.Link(R.Name.Equals("", true))),
+			func(q i) error { return eq(q).SetStringParams(R.Name, "relPtr-Val-1") }},
 
 		// many-to-many backlink
-		{1, s{`TRUE Link: String == "Val-1"`}, boxR.Query(E.RelatedPtrSlice.Link(E.String.Equals(e.String, true))), nil},
+		{1, s{`TRUE Link: String == "Val-1"`}, boxR.Query(E.RelatedPtrSlice.Link(E.String.Equals("", true))),
+			func(q i) error { return eq(q).SetStringParams(E.String, e.String) }},
 	})
 }
 

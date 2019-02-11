@@ -24,12 +24,11 @@ package objectbox
 import "C"
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"sync/atomic"
 	"unsafe"
-
-	"github.com/pkg/errors"
 
 	"github.com/google/flatbuffers/go"
 )

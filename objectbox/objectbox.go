@@ -50,12 +50,11 @@ type TypeId uint32
 
 type ObjectBox struct {
 	store          *C.OBX_store
-	bindingsById   map[TypeId]ObjectBinding
-	bindingsByName map[string]ObjectBinding
+	entitiesById   map[TypeId]*entity
+	entitiesByName map[string]*entity
 	boxes          map[TypeId]*Box
 	boxesMutex     *sync.Mutex
 	options        options
-	entities       map[TypeId]*entity
 }
 
 type options struct {
@@ -64,7 +63,7 @@ type options struct {
 }
 
 type txnFun func(transaction *Transaction) error
-type cursorFun func(cursor *cursor) error
+type cursorFun func(cursor *Cursor) error
 
 // constant during runtime so no need to call this each time it's necessary
 var supportsBytesArray = bool(C.obx_supports_bytes_array())
@@ -143,22 +142,22 @@ func (ob *ObjectBox) runInTxn(readOnly bool, txnFun txnFun) (err error) {
 	return
 }
 
-func (ob ObjectBox) getBindingById(typeId TypeId) ObjectBinding {
-	binding := ob.bindingsById[typeId]
-	if binding == nil {
+func (ob ObjectBox) getEntityById(typeId TypeId) *entity {
+	entity := ob.entitiesById[typeId]
+	if entity == nil {
 		// Configuration error by the dev, OK to panic
-		panic("Configuration error; no binding registered for type ID " + strconv.Itoa(int(typeId)))
+		panic("Configuration error; no entity registered for type ID " + strconv.Itoa(int(typeId)))
 	}
-	return binding
+	return entity
 }
 
-func (ob ObjectBox) getBindingByName(typeName string) ObjectBinding {
-	binding := ob.bindingsByName[typeName]
-	if binding == nil {
+func (ob ObjectBox) getEntityByName(typeName string) *entity {
+	entity := ob.entitiesByName[typeName]
+	if entity == nil {
 		// Configuration error by the dev, OK to panic
-		panic("Configuration error; no binding registered for type name " + typeName)
+		panic("Configuration error; no entity registered for type name " + typeName)
 	}
-	return binding
+	return entity
 }
 
 func (ob *ObjectBox) runWithCursor(e *entity, readOnly bool, cursorFun cursorFun) error {
@@ -166,22 +165,8 @@ func (ob *ObjectBox) runWithCursor(e *entity, readOnly bool, cursorFun cursorFun
 		e.awaitAsyncCompletion()
 	}
 
-	binding := ob.getBindingById(e.id)
 	return ob.runInTxn(readOnly, func(txn *Transaction) error {
-		cursor, err := txn.createCursor(e.id, binding)
-		if err != nil {
-			return err
-		}
-
-		defer func() {
-			err2 := cursor.Close()
-			if err == nil {
-				err = err2
-			}
-		}()
-		err = cursorFun(cursor)
-
-		return err
+		return txn.runWithCursor(e, cursorFun)
 	})
 }
 
@@ -214,7 +199,7 @@ func (ob *ObjectBox) box(typeId TypeId) (*Box, error) {
 		return box, nil
 	}
 
-	binding := ob.getBindingById(typeId)
+	entity := ob.getEntityById(typeId)
 	cbox := C.obx_box_create(ob.store, C.obx_schema_id(typeId))
 	if cbox == nil {
 		return nil, createError()
@@ -223,9 +208,8 @@ func (ob *ObjectBox) box(typeId TypeId) (*Box, error) {
 	box = &Box{
 		objectBox: ob,
 		box:       cbox,
-		binding:   binding,
 		fbb:       flatbuffers.NewBuilder(512),
-		entity:    ob.entities[typeId],
+		entity:    entity,
 	}
 	ob.boxes[typeId] = box
 	return box, nil

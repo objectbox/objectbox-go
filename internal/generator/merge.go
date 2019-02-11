@@ -23,10 +23,18 @@ import (
 )
 
 func mergeBindingWithModelInfo(binding *Binding, modelInfo *modelinfo.ModelInfo) error {
-	for _, bindingEntity := range binding.Entities {
+	// we need to first prepare all entities - otherwise relations wouldn't be able to find them in the model
+	var models = make([]*modelinfo.Entity, len(binding.Entities))
+	for k, bindingEntity := range binding.Entities {
 		if modelEntity, err := getModelEntity(bindingEntity, modelInfo); err != nil {
 			return err
-		} else if err := mergeModelEntity(bindingEntity, modelEntity); err != nil {
+		} else {
+			models[k] = modelEntity
+		}
+	}
+
+	for k, bindingEntity := range binding.Entities {
+		if err := mergeModelEntity(bindingEntity, models[k], modelInfo); err != nil {
 			return err
 		}
 	}
@@ -63,41 +71,70 @@ func getModelEntity(bindingEntity *Entity, modelInfo *modelinfo.ModelInfo) (*mod
 	if entity != nil {
 		return entity, nil
 	} else {
-		return modelInfo.CreateEntity()
+		return modelInfo.CreateEntity(bindingEntity.Name)
 	}
 }
 
-func mergeModelEntity(bindingEntity *Entity, modelEntity *modelinfo.Entity) (err error) {
+func mergeModelEntity(bindingEntity *Entity, modelEntity *modelinfo.Entity, modelInfo *modelinfo.ModelInfo) (err error) {
 	modelEntity.Name = bindingEntity.Name
 
 	if bindingEntity.Id, bindingEntity.Uid, err = modelEntity.Id.Get(); err != nil {
 		return err
 	}
 
-	// add all properties from the bindings to the model and update/rename the changed ones
-	for _, bindingProperty := range bindingEntity.Properties {
-		if modelProperty, err := getModelProperty(bindingProperty, modelEntity); err != nil {
-			return err
-		} else if err := mergeModelProperty(bindingProperty, modelProperty); err != nil {
-			return err
-		}
-	}
+	{ //region Properties
 
-	// remove the missing (removed) properties
-	removedProperties := make([]*modelinfo.Property, 0)
-	for _, modelProperty := range modelEntity.Properties {
-		if !bindingPropertyExists(modelProperty, bindingEntity) {
-			removedProperties = append(removedProperties, modelProperty)
+		// add all properties from the bindings to the model and update/rename the changed ones
+		for _, bindingProperty := range bindingEntity.Properties {
+			if modelProperty, err := getModelProperty(bindingProperty, modelEntity); err != nil {
+				return err
+			} else if err := mergeModelProperty(bindingProperty, modelProperty); err != nil {
+				return err
+			}
 		}
-	}
 
-	for _, property := range removedProperties {
-		if err := modelEntity.RemoveProperty(property); err != nil {
-			return err
+		// remove the missing (removed) properties
+		removedProperties := make([]*modelinfo.Property, 0)
+		for _, modelProperty := range modelEntity.Properties {
+			if !bindingPropertyExists(modelProperty, bindingEntity) {
+				removedProperties = append(removedProperties, modelProperty)
+			}
 		}
-	}
 
-	bindingEntity.LastPropertyId = modelEntity.LastPropertyId
+		for _, property := range removedProperties {
+			if err := modelEntity.RemoveProperty(property); err != nil {
+				return err
+			}
+		}
+
+		bindingEntity.LastPropertyId = modelEntity.LastPropertyId
+	} //endregion
+
+	{ //region Relations
+
+		// add all standalone relations from the bindings to the model and update/rename the changed ones
+		for _, bindingRelation := range bindingEntity.Relations {
+			if modelRelation, err := getModelRelation(bindingRelation, modelEntity); err != nil {
+				return err
+			} else if err := mergeModelRelation(bindingRelation, modelRelation, modelInfo); err != nil {
+				return err
+			}
+		}
+
+		// remove the missing (removed) relations
+		removedRelations := make([]*modelinfo.StandaloneRelation, 0)
+		for _, modelRelation := range modelEntity.Relations {
+			if !bindingRelationExists(modelRelation, bindingEntity) {
+				removedRelations = append(removedRelations, modelRelation)
+			}
+		}
+
+		for _, relation := range removedRelations {
+			if err := modelEntity.RemoveRelation(relation); err != nil {
+				return err
+			}
+		}
+	} //endregion
 
 	return nil
 }
@@ -167,6 +204,67 @@ func mergeModelProperty(bindingProperty *Property, modelProperty *modelinfo.Prop
 func bindingPropertyExists(modelProperty *modelinfo.Property, bindingEntity *Entity) bool {
 	for _, bindingProperty := range bindingEntity.Properties {
 		if bindingProperty.Name == modelProperty.Name {
+			return true
+		}
+	}
+
+	return false
+}
+
+func getModelRelation(bindingRelation *StandaloneRelation, modelEntity *modelinfo.Entity) (*modelinfo.StandaloneRelation, error) {
+	if bindingRelation.Uid != 0 {
+		return modelEntity.FindRelationByUid(bindingRelation.Uid)
+	}
+
+	// we don't care about this error, either the relation is found or we create it
+	relation, _ := modelEntity.FindRelationByName(bindingRelation.Name)
+
+	// handle uid request
+	if bindingRelation.uidRequest {
+		var errInfo string
+		if relation != nil {
+			if uid, err := relation.Id.GetUid(); err != nil {
+				return nil, err
+			} else {
+				errInfo = fmt.Sprintf("model relation UID = %d", uid)
+			}
+		} else {
+			errInfo = "relation not found in the model"
+		}
+		return nil, fmt.Errorf("uid annotation value must not be empty (%s) on relation %s, entity %s",
+			errInfo, bindingRelation.Name, modelEntity.Name)
+	}
+
+	if relation != nil {
+		return relation, nil
+	} else {
+		return modelEntity.CreateRelation()
+	}
+}
+
+func mergeModelRelation(bindingRelation *StandaloneRelation, modelRelation *modelinfo.StandaloneRelation, modelInfo *modelinfo.ModelInfo) (err error) {
+	modelRelation.Name = bindingRelation.Name
+
+	if bindingRelation.Id, bindingRelation.Uid, err = modelRelation.Id.Get(); err != nil {
+		return err
+	}
+
+	// find the target entity & read it's ID/UID for the binding code
+	if targetEntity, err := modelInfo.FindEntityByName(bindingRelation.Target.Name); err != nil {
+		return err
+	} else if bindingRelation.Target.Id, bindingRelation.Target.Uid, err = targetEntity.Id.Get(); err != nil {
+		return err
+	} else {
+		// store this info in the model = necessary for cycle checks
+		modelRelation.Target = targetEntity
+	}
+
+	return nil
+}
+
+func bindingRelationExists(modelRelation *modelinfo.StandaloneRelation, bindingEntity *Entity) bool {
+	for _, bindingRelation := range bindingEntity.Relations {
+		if bindingRelation.Name == modelRelation.Name {
 			return true
 		}
 	}

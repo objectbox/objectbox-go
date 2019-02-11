@@ -45,7 +45,9 @@
   ],
   "lastEntityId": "3:3390393562759376202",
   "lastIndexId": "",
+  "lastRelationId": "",
   "retiredEntityUids": [],
   "retiredIndexUids": [],
-  "retiredPropertyUids": []
+  "retiredPropertyUids": [],
+  "retiredRelationUids": []
 }

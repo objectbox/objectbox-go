@@ -9,12 +9,14 @@ import (
 )
 
 type taskByValue_EntityInfo struct {
-	Id  objectbox.TypeId
+	objectbox.Entity
 	Uid uint64
 }
 
 var TaskByValueBinding = taskByValue_EntityInfo{
-	Id:  3,
+	Entity: objectbox.Entity{
+		Id: 3,
+	},
 	Uid: 2661732831099943416,
 }
 
@@ -24,10 +26,8 @@ var TaskByValue_ = struct {
 }{
 	Id: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 1,
-			Entity: &objectbox.Entity{
-				Id: 3,
-			},
+			Id:     1,
+			Entity: &TaskByValueBinding.Entity,
 		},
 	},
 }
@@ -40,9 +40,9 @@ func (taskByValue_EntityInfo) GeneratorVersion() int {
 // AddToModel is called by ObjectBox during model build
 func (taskByValue_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("TaskByValue", 3, 2661732831099943416)
-	model.Property("Id", objectbox.PropertyType_Long, 1, 8325060299420976708)
+	model.Property("Id", objectbox.PropertyType_Long, 1, 7837839688282259259)
 	model.PropertyFlags(objectbox.PropertyFlags_ID)
-	model.EntityLastPropertyId(1, 8325060299420976708)
+	model.EntityLastPropertyId(1, 7837839688282259259)
 }
 
 // GetId is called by ObjectBox during Put operations to check for existing ID on an object
@@ -55,34 +55,40 @@ func (taskByValue_EntityInfo) GetId(object interface{}) (uint64, error) {
 }
 
 // SetId is called by ObjectBox during Put to update an ID on an object that has just been inserted
-func (taskByValue_EntityInfo) SetId(object interface{}, id uint64) error {
+func (taskByValue_EntityInfo) SetId(object interface{}, id uint64) {
 	if obj, ok := object.(*TaskByValue); ok {
 		obj.Id = id
 	} else {
 		// NOTE while this can't update, it will at least behave consistently (panic in case of a wrong type)
 		_ = object.(TaskByValue).Id
 	}
+}
+
+// PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
+func (taskByValue_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}, id uint64) error {
 	return nil
 }
 
 // Flatten is called by ObjectBox to transform an object to a FlatBuffer
-func (taskByValue_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
+func (taskByValue_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) error {
 
 	// build the FlatBuffers object
 	fbb.StartObject(1)
 	fbutils.SetUint64Slot(fbb, 0, id)
+	return nil
 }
 
-// ToObject is called by ObjectBox to load an object from a FlatBuffer
-func (taskByValue_EntityInfo) ToObject(bytes []byte) interface{} {
-	table := &flatbuffers.Table{
+// Load is called by ObjectBox to load an object from a FlatBuffer
+func (taskByValue_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) (interface{}, error) {
+	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
+	var id = table.GetUint64Slot(4, 0)
 
 	return &TaskByValue{
-		Id: table.GetUint64Slot(4, 0),
-	}
+		Id: id,
+	}, nil
 }
 
 // MakeSlice is called by ObjectBox to construct a new slice to hold the read objects
@@ -227,13 +233,15 @@ func (query *TaskByValueQuery) Limit(limit uint64) *TaskByValueQuery {
 }
 
 type taskStringByValue_EntityInfo struct {
-	Id  objectbox.TypeId
+	objectbox.Entity
 	Uid uint64
 }
 
 var TaskStringByValueBinding = taskStringByValue_EntityInfo{
-	Id:  4,
-	Uid: 7837839688282259259,
+	Entity: objectbox.Entity{
+		Id: 4,
+	},
+	Uid: 8325060299420976708,
 }
 
 // TaskStringByValue_ contains type-based Property helpers to facilitate some common operations such as Queries.
@@ -242,10 +250,8 @@ var TaskStringByValue_ = struct {
 }{
 	Id: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 1,
-			Entity: &objectbox.Entity{
-				Id: 4,
-			},
+			Id:     1,
+			Entity: &TaskStringByValueBinding.Entity,
 		},
 	},
 }
@@ -257,7 +263,7 @@ func (taskStringByValue_EntityInfo) GeneratorVersion() int {
 
 // AddToModel is called by ObjectBox during model build
 func (taskStringByValue_EntityInfo) AddToModel(model *objectbox.Model) {
-	model.Entity("TaskStringByValue", 4, 7837839688282259259)
+	model.Entity("TaskStringByValue", 4, 8325060299420976708)
 	model.Property("Id", objectbox.PropertyType_Long, 1, 2518412263346885298)
 	model.PropertyFlags(objectbox.PropertyFlags_ID)
 	model.EntityLastPropertyId(1, 2518412263346885298)
@@ -273,34 +279,40 @@ func (taskStringByValue_EntityInfo) GetId(object interface{}) (uint64, error) {
 }
 
 // SetId is called by ObjectBox during Put to update an ID on an object that has just been inserted
-func (taskStringByValue_EntityInfo) SetId(object interface{}, id uint64) error {
+func (taskStringByValue_EntityInfo) SetId(object interface{}, id uint64) {
 	if obj, ok := object.(*TaskStringByValue); ok {
 		obj.Id = objectbox.StringIdConvertToEntityProperty(id)
 	} else {
 		// NOTE while this can't update, it will at least behave consistently (panic in case of a wrong type)
 		_ = object.(TaskStringByValue).Id
 	}
+}
+
+// PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
+func (taskStringByValue_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}, id uint64) error {
 	return nil
 }
 
 // Flatten is called by ObjectBox to transform an object to a FlatBuffer
-func (taskStringByValue_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
+func (taskStringByValue_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) error {
 
 	// build the FlatBuffers object
 	fbb.StartObject(1)
 	fbutils.SetUint64Slot(fbb, 0, id)
+	return nil
 }
 
-// ToObject is called by ObjectBox to load an object from a FlatBuffer
-func (taskStringByValue_EntityInfo) ToObject(bytes []byte) interface{} {
-	table := &flatbuffers.Table{
+// Load is called by ObjectBox to load an object from a FlatBuffer
+func (taskStringByValue_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) (interface{}, error) {
+	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
+	var id = table.GetUint64Slot(4, 0)
 
 	return &TaskStringByValue{
-		Id: objectbox.StringIdConvertToEntityProperty(table.GetUint64Slot(4, 0)),
-	}
+		Id: objectbox.StringIdConvertToEntityProperty(id),
+	}, nil
 }
 
 // MakeSlice is called by ObjectBox to construct a new slice to hold the read objects

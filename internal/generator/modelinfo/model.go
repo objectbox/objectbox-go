@@ -27,15 +27,17 @@ type Id = uint32
 type Uid = uint64
 
 type ModelInfo struct {
-	Comment      []string  `json:"comment"`
-	Entities     []*Entity `json:"entities"`
-	LastEntityId IdUid     `json:"lastEntityId"`
-	LastIndexId  IdUid     `json:"lastIndexId"`
+	Comment        []string  `json:"comment"`
+	Entities       []*Entity `json:"entities"`
+	LastEntityId   IdUid     `json:"lastEntityId"`
+	LastIndexId    IdUid     `json:"lastIndexId"`
+	LastRelationId IdUid     `json:"lastRelationId"`
 	//ModelVersion        int
 	//Version             int
 	RetiredEntityUids   []Uid `json:"retiredEntityUids"`
 	RetiredIndexUids    []Uid `json:"retiredIndexUids"`
 	RetiredPropertyUids []Uid `json:"retiredPropertyUids"`
+	RetiredRelationUids []Uid `json:"retiredRelationUids"`
 
 	file *os.File // file handle, locked while the model is open
 
@@ -54,6 +56,7 @@ func createModelInfo() *ModelInfo {
 		RetiredEntityUids:   make([]Uid, 0),
 		RetiredIndexUids:    make([]Uid, 0),
 		RetiredPropertyUids: make([]Uid, 0),
+		RetiredRelationUids: make([]Uid, 0),
 	}
 }
 
@@ -132,7 +135,7 @@ func (model *ModelInfo) FindEntityByUid(uid Uid) (*Entity, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("entity with Uid %d not found", uid)
+	return nil, fmt.Errorf("entity with uid %d was not found", uid)
 }
 
 func (model *ModelInfo) FindEntityByName(name string) (*Entity, error) {
@@ -142,10 +145,10 @@ func (model *ModelInfo) FindEntityByName(name string) (*Entity, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("entity with Name %s not found", name)
+	return nil, fmt.Errorf("entity named %s was not found", name)
 }
 
-func (model *ModelInfo) CreateEntity() (*Entity, error) {
+func (model *ModelInfo) CreateEntity(name string) (*Entity, error) {
 	var id Id = 1
 	if len(model.Entities) > 0 {
 		id = model.LastEntityId.getIdSafe() + 1
@@ -158,6 +161,7 @@ func (model *ModelInfo) CreateEntity() (*Entity, error) {
 	}
 
 	var entity = CreateEntity(model, id, uniqueUid)
+	entity.Name = name
 
 	model.Entities = append(model.Entities, entity)
 	model.LastEntityId = entity.Id
@@ -183,7 +187,7 @@ func (model *ModelInfo) generateUid() (result Uid, err error) {
 	return result, err
 }
 
-func (model *ModelInfo) createIndex() (IdUid, error) {
+func (model *ModelInfo) createIndexId() (IdUid, error) {
 	var id Id = 1
 	if len(model.LastIndexId) > 0 {
 		id = model.LastIndexId.getIdSafe() + 1
@@ -199,6 +203,22 @@ func (model *ModelInfo) createIndex() (IdUid, error) {
 	return model.LastIndexId, nil
 }
 
+func (model *ModelInfo) createRelationId() (IdUid, error) {
+	var id Id = 1
+	if len(model.LastRelationId) > 0 {
+		id = model.LastRelationId.getIdSafe() + 1
+	}
+
+	uniqueUid, err := model.generateUid()
+
+	if err != nil {
+		return "", err
+	}
+
+	model.LastRelationId = CreateIdUid(id, uniqueUid)
+	return model.LastRelationId, nil
+}
+
 // recursively checks whether given UID is present in the model
 func (model *ModelInfo) containsUid(searched Uid) bool {
 	if model.LastEntityId.getUidSafe() == searched {
@@ -206,6 +226,10 @@ func (model *ModelInfo) containsUid(searched Uid) bool {
 	}
 
 	if model.LastIndexId.getUidSafe() == searched {
+		return true
+	}
+
+	if model.LastRelationId.getUidSafe() == searched {
 		return true
 	}
 

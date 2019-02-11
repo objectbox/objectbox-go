@@ -9,12 +9,14 @@ import (
 )
 
 type timeEntity_EntityInfo struct {
-	Id  objectbox.TypeId
+	objectbox.Entity
 	Uid uint64
 }
 
 var TimeEntityBinding = timeEntity_EntityInfo{
-	Id:  3,
+	Entity: objectbox.Entity{
+		Id: 3,
+	},
 	Uid: 3390393562759376202,
 }
 
@@ -25,18 +27,14 @@ var TimeEntity_ = struct {
 }{
 	Id: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 1,
-			Entity: &objectbox.Entity{
-				Id: 3,
-			},
+			Id:     1,
+			Entity: &TimeEntityBinding.Entity,
 		},
 	},
 	Time: &objectbox.PropertyInt64{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 2,
-			Entity: &objectbox.Entity{
-				Id: 3,
-			},
+			Id:     2,
+			Entity: &TimeEntityBinding.Entity,
 		},
 	},
 }
@@ -61,32 +59,38 @@ func (timeEntity_EntityInfo) GetId(object interface{}) (uint64, error) {
 }
 
 // SetId is called by ObjectBox during Put to update an ID on an object that has just been inserted
-func (timeEntity_EntityInfo) SetId(object interface{}, id uint64) error {
+func (timeEntity_EntityInfo) SetId(object interface{}, id uint64) {
 	object.(*TimeEntity).Id = id
+}
+
+// PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
+func (timeEntity_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}, id uint64) error {
 	return nil
 }
 
 // Flatten is called by ObjectBox to transform an object to a FlatBuffer
-func (timeEntity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
+func (timeEntity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) error {
 	obj := object.(*TimeEntity)
 
 	// build the FlatBuffers object
 	fbb.StartObject(2)
 	fbutils.SetUint64Slot(fbb, 0, id)
 	fbutils.SetInt64Slot(fbb, 1, timeInt64ToDatabaseValue(obj.Time))
+	return nil
 }
 
-// ToObject is called by ObjectBox to load an object from a FlatBuffer
-func (timeEntity_EntityInfo) ToObject(bytes []byte) interface{} {
-	table := &flatbuffers.Table{
+// Load is called by ObjectBox to load an object from a FlatBuffer
+func (timeEntity_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) (interface{}, error) {
+	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
+	var id = table.GetUint64Slot(4, 0)
 
 	return &TimeEntity{
-		Id:   table.GetUint64Slot(4, 0),
+		Id:   id,
 		Time: timeInt64ToEntityProperty(table.GetInt64Slot(6, 0)),
-	}
+	}, nil
 }
 
 // MakeSlice is called by ObjectBox to construct a new slice to hold the read objects

@@ -154,16 +154,15 @@ func (builder *Builder) BuildOrError() (*ObjectBox, error) {
 
 	ob := &ObjectBox{
 		store:          cStore,
-		bindingsById:   builder.model.bindingsById,
-		bindingsByName: builder.model.bindingsByName,
-		boxes:          make(map[TypeId]*Box, len(builder.model.bindingsById)),
+		entitiesById:   builder.model.entitiesById,
+		entitiesByName: builder.model.entitiesByName,
+		boxes:          make(map[TypeId]*Box, len(builder.model.entitiesById)),
 		boxesMutex:     &sync.Mutex{},
-		entities:       make(map[TypeId]*entity),
 		options:        builder.options,
 	}
 
-	for id := range builder.model.bindingsById {
-		ob.entities[id] = &entity{id: id, objectBox: ob}
+	for _, entity := range builder.model.entitiesById {
+		entity.objectBox = ob
 	}
 	return ob, nil
 }

@@ -60,23 +60,51 @@ func (txn *Transaction) Commit() error {
 	return nil
 }
 
-func (txn *Transaction) createCursor(typeId TypeId, binding ObjectBinding) (*cursor, error) {
-	ccursor := C.obx_cursor_create(txn.txn, C.obx_schema_id(typeId))
-	if ccursor == nil {
-		return nil, createError()
-	}
-	return &cursor{ccursor, binding, flatbuffers.NewBuilder(512)}, nil
+// Internal: won't be available in future versions
+func (txn *Transaction) RunWithCursor(entityId TypeId, cursorFun cursorFun) error {
+	return txn.runWithCursor(txn.objectBox.getEntityById(entityId), cursorFun)
 }
 
 // Internal: won't be available in future versions
-func (txn *Transaction) CursorForName(entitySchemaName string) (*cursor, error) {
-	binding := txn.objectBox.getBindingByName(entitySchemaName)
+func (txn *Transaction) runWithCursor(entity *entity, cursorFun cursorFun) error {
+	if txn.objectBox.options.alwaysAwaitAsync {
+		entity.awaitAsyncCompletion()
+	}
+
+	cursor, err := txn.createCursor(entity)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		err2 := cursor.Close()
+		if err == nil {
+			err = err2
+		}
+	}()
+	err = cursorFun(cursor)
+
+	return err
+}
+
+func (txn *Transaction) createCursor(entity *entity) (*Cursor, error) {
+	ccursor := C.obx_cursor_create(txn.txn, C.obx_schema_id(entity.id))
+	if ccursor == nil {
+		return nil, createError()
+	}
+	return &Cursor{txn, ccursor, entity, flatbuffers.NewBuilder(512)}, nil
+}
+
+// Internal: won't be available in future versions
+func (txn *Transaction) cursorForName(entitySchemaName string) (*Cursor, error) {
+	entity := txn.objectBox.getEntityByName(entitySchemaName)
 	cname := C.CString(entitySchemaName)
 	defer C.free(unsafe.Pointer(cname))
 
+	// TODO this is not necessary, we can use createCursor because we already have a concrete entity
 	ccursor := C.obx_cursor_create2(txn.txn, cname)
 	if ccursor == nil {
 		return nil, createError()
 	}
-	return &cursor{ccursor, binding, flatbuffers.NewBuilder(512)}, nil
+	return &Cursor{txn, ccursor, entity, flatbuffers.NewBuilder(512)}, nil
 }

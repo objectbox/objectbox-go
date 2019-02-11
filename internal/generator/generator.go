@@ -104,6 +104,10 @@ func createBinding(sourceFile string, modelInfo *modelinfo.ModelInfo, options Op
 		return fmt.Errorf("can't merge binding model information: %s", err)
 	}
 
+	if err = modelInfo.CheckRelationCycles(); err != nil {
+		return err
+	}
+
 	var bindingSource []byte
 	if bindingSource, err = generateBindingFile(binding, options); err != nil {
 		return fmt.Errorf("can't generate binding file %s: %s", sourceFile, err)

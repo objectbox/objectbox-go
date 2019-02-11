@@ -9,12 +9,14 @@ import (
 )
 
 type entityByValue_EntityInfo struct {
-	Id  objectbox.TypeId
+	objectbox.Entity
 	Uid uint64
 }
 
 var EntityByValueBinding = entityByValue_EntityInfo{
-	Id:  3,
+	Entity: objectbox.Entity{
+		Id: 3,
+	},
 	Uid: 2793387980842421409,
 }
 
@@ -24,10 +26,8 @@ var EntityByValue_ = struct {
 }{
 	Id: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 1,
-			Entity: &objectbox.Entity{
-				Id: 3,
-			},
+			Id:     1,
+			Entity: &EntityByValueBinding.Entity,
 		},
 	},
 }
@@ -55,34 +55,40 @@ func (entityByValue_EntityInfo) GetId(object interface{}) (uint64, error) {
 }
 
 // SetId is called by ObjectBox during Put to update an ID on an object that has just been inserted
-func (entityByValue_EntityInfo) SetId(object interface{}, id uint64) error {
+func (entityByValue_EntityInfo) SetId(object interface{}, id uint64) {
 	if obj, ok := object.(*EntityByValue); ok {
 		obj.Id = id
 	} else {
 		// NOTE while this can't update, it will at least behave consistently (panic in case of a wrong type)
 		_ = object.(EntityByValue).Id
 	}
+}
+
+// PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
+func (entityByValue_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}, id uint64) error {
 	return nil
 }
 
 // Flatten is called by ObjectBox to transform an object to a FlatBuffer
-func (entityByValue_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
+func (entityByValue_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) error {
 
 	// build the FlatBuffers object
 	fbb.StartObject(1)
 	fbutils.SetUint64Slot(fbb, 0, id)
+	return nil
 }
 
-// ToObject is called by ObjectBox to load an object from a FlatBuffer
-func (entityByValue_EntityInfo) ToObject(bytes []byte) interface{} {
-	table := &flatbuffers.Table{
+// Load is called by ObjectBox to load an object from a FlatBuffer
+func (entityByValue_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) (interface{}, error) {
+	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
+	var id = table.GetUint64Slot(4, 0)
 
 	return &EntityByValue{
-		Id: table.GetUint64Slot(4, 0),
-	}
+		Id: id,
+	}, nil
 }
 
 // MakeSlice is called by ObjectBox to construct a new slice to hold the read objects

@@ -29,6 +29,8 @@ import (
 	"sync/atomic"
 	"unsafe"
 
+	"github.com/pkg/errors"
+
 	"github.com/google/flatbuffers/go"
 )
 
@@ -37,7 +39,6 @@ type Box struct {
 	objectBox *ObjectBox
 	box       *C.OBX_box
 	entity    *entity
-	binding   ObjectBinding
 
 	// Must be used in combination with fbbInUseAtomic
 	fbb *flatbuffers.Builder
@@ -107,15 +108,28 @@ func (box *Box) PutAsync(object interface{}) (id uint64, err error) {
 
 // Same as PutAsync but with a custom enqueue timeout
 func (box *Box) PutAsyncWithTimeout(object interface{}, timeoutMs uint) (id uint64, err error) {
-	idFromObject, err := box.binding.GetId(object)
+	idFromObject, err := box.entity.binding.GetId(object)
 	if err != nil {
-		return
+		return 0, err
 	}
 
-	id, err = box.idForPut(idFromObject)
-	if err != nil {
-		return
+	if box.entity.hasRelations {
+		return 0, errors.New("PutAsync is currently not supported on entities that have relations")
 	}
+
+	if id, err = box.idForPut(idFromObject); err != nil {
+		return 0, err
+	}
+
+	// TODO put related antities and this one within a single transaction
+	//if box.entity.hasRelations {
+	//	err = box.objectBox.runInTxn(false, func(txn *Transaction) error {
+	//		return box.entity.binding.PutRelated(txn, object, id)
+	//	})
+	//	if err != nil {
+	//		return 0, err
+	//	}
+	//}
 
 	var fbb *flatbuffers.Builder
 	if atomic.CompareAndSwapUint32(&box.fbbInUseAtomic, 0, 1) {
@@ -124,7 +138,10 @@ func (box *Box) PutAsyncWithTimeout(object interface{}, timeoutMs uint) (id uint
 	} else {
 		fbb = flatbuffers.NewBuilder(256)
 	}
-	box.binding.Flatten(object, fbb, id)
+
+	if err = box.entity.binding.Flatten(object, fbb, id); err != nil {
+		return 0, err
+	}
 
 	checkForPreviousValue := idFromObject != 0
 	if err = box.finishFbbAndPutAsync(fbb, id, checkForPreviousValue, timeoutMs); err != nil {
@@ -133,10 +150,7 @@ func (box *Box) PutAsyncWithTimeout(object interface{}, timeoutMs uint) (id uint
 
 	// update the id on the object
 	if idFromObject != id {
-		// TODO SetId never errs
-		if err = box.binding.SetId(object, id); err != nil {
-			return 0, err
-		}
+		box.entity.binding.SetId(object, id)
 	}
 
 	return id, nil
@@ -164,7 +178,7 @@ func (box *Box) finishFbbAndPutAsync(fbb *flatbuffers.Builder, id uint64, checkF
 // In case the ID is not specified, it would be assigned automatically (auto-increment).
 // When inserting, the ID property on the passed object will be assigned the new ID as well.
 func (box *Box) Put(object interface{}) (id uint64, err error) {
-	err = box.objectBox.runWithCursor(box.entity, false, func(cursor *cursor) error {
+	err = box.objectBox.runWithCursor(box.entity, false, func(cursor *Cursor) error {
 		var errInner error
 		id, errInner = cursor.Put(object)
 		return errInner
@@ -186,13 +200,13 @@ func (box *Box) PutAll(slice interface{}) (ids []uint64, err error) {
 	if slice == nil {
 		return []uint64{}, nil
 	}
-	// TODO Check if reflect is fast; we could go via ObjectBinding and concrete types otherwise
+
 	sliceValue := reflect.ValueOf(slice)
 	count := sliceValue.Len()
 	if count == 0 {
 		return []uint64{}, nil
 	}
-	err = box.objectBox.runWithCursor(box.entity, false, func(cursor *cursor) error {
+	err = box.objectBox.runWithCursor(box.entity, false, func(cursor *Cursor) error {
 		ids = make([]uint64, count)
 		for i := 0; i < count; i++ {
 			id, errPut := cursor.Put(sliceValue.Index(i).Interface())
@@ -209,7 +223,7 @@ func (box *Box) PutAll(slice interface{}) (ids []uint64, err error) {
 
 // Remove deletes a single object
 func (box *Box) Remove(id uint64) (err error) {
-	return box.objectBox.runWithCursor(box.entity, false, func(cursor *cursor) error {
+	return box.objectBox.runWithCursor(box.entity, false, func(cursor *Cursor) error {
 		return cursor.Remove(id)
 	})
 }
@@ -217,14 +231,14 @@ func (box *Box) Remove(id uint64) (err error) {
 // RemoveAll removes all stored objects.
 // This is much faster than removing objects one by one in a loop.
 func (box *Box) RemoveAll() (err error) {
-	return box.objectBox.runWithCursor(box.entity, false, func(cursor *cursor) error {
+	return box.objectBox.runWithCursor(box.entity, false, func(cursor *Cursor) error {
 		return cursor.RemoveAll()
 	})
 }
 
 // Count returns a number of objects stored
 func (box *Box) Count() (count uint64, err error) {
-	err = box.objectBox.runWithCursor(box.entity, true, func(cursor *cursor) error {
+	err = box.objectBox.runWithCursor(box.entity, true, func(cursor *Cursor) error {
 		var errInner error
 		count, errInner = cursor.Count()
 		return errInner
@@ -234,7 +248,7 @@ func (box *Box) Count() (count uint64, err error) {
 
 // CountMax returns a number of objects stored (up to a given maximum)
 func (box *Box) CountMax(max uint64) (count uint64, err error) {
-	err = box.objectBox.runWithCursor(box.entity, true, func(cursor *cursor) error {
+	err = box.objectBox.runWithCursor(box.entity, true, func(cursor *Cursor) error {
 		var errInner error
 		count, errInner = cursor.CountMax(max)
 		return errInner
@@ -244,7 +258,7 @@ func (box *Box) CountMax(max uint64) (count uint64, err error) {
 
 // IsEmpty checks whether the box contains any objects
 func (box *Box) IsEmpty() (result bool, err error) {
-	err = box.objectBox.runWithCursor(box.entity, true, func(cursor *cursor) error {
+	err = box.objectBox.runWithCursor(box.entity, true, func(cursor *Cursor) error {
 		var errInner error
 		result, errInner = cursor.IsEmpty()
 		return errInner
@@ -258,7 +272,7 @@ func (box *Box) IsEmpty() (result bool, err error) {
 // Returns nil in case the object with the given ID doesn't exist.
 // The cast is done automatically when using the generated BoxFor* code
 func (box *Box) Get(id uint64) (object interface{}, err error) {
-	err = box.objectBox.runWithCursor(box.entity, true, func(cursor *cursor) error {
+	err = box.objectBox.runWithCursor(box.entity, true, func(cursor *Cursor) error {
 		var errInner error
 		object, errInner = cursor.Get(id)
 		return errInner
@@ -271,7 +285,7 @@ func (box *Box) Get(id uint64) (object interface{}, err error) {
 // Returns a slice of objects that should be cast to the appropriate type.
 // The cast is done automatically when using the generated BoxFor* code
 func (box *Box) GetAll() (slice interface{}, err error) {
-	err = box.objectBox.runWithCursor(box.entity, true, func(cursor *cursor) error {
+	err = box.objectBox.runWithCursor(box.entity, true, func(cursor *Cursor) error {
 		var errInner error
 		slice, errInner = cursor.GetAll()
 		return errInner
@@ -282,7 +296,7 @@ func (box *Box) GetAll() (slice interface{}, err error) {
 // Contains checks whether an object with the given ID is stored.
 func (box *Box) Contains(id uint64) (bool, error) {
 	var found = false
-	var err = box.objectBox.runWithCursor(box.entity, true, func(cursor *cursor) error {
+	var err = box.objectBox.runWithCursor(box.entity, true, func(cursor *Cursor) error {
 		var errInner error
 		found, errInner = cursor.seek(id)
 		return errInner

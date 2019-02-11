@@ -9,12 +9,14 @@ import (
 )
 
 type entity_EntityInfo struct {
-	Id  objectbox.TypeId
+	objectbox.Entity
 	Uid uint64
 }
 
 var EntityBinding = entity_EntityInfo{
-	Id:  1,
+	Entity: objectbox.Entity{
+		Id: 1,
+	},
 	Uid: 1737161401460991620,
 }
 
@@ -28,42 +30,32 @@ var Entity_ = struct {
 }{
 	Id: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 1,
-			Entity: &objectbox.Entity{
-				Id: 1,
-			},
+			Id:     1,
+			Entity: &EntityBinding.Entity,
 		},
 	},
 	Int32: &objectbox.PropertyInt32{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 2,
-			Entity: &objectbox.Entity{
-				Id: 1,
-			},
+			Id:     2,
+			Entity: &EntityBinding.Entity,
 		},
 	},
 	Int64: &objectbox.PropertyInt64{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 3,
-			Entity: &objectbox.Entity{
-				Id: 1,
-			},
+			Id:     3,
+			Entity: &EntityBinding.Entity,
 		},
 	},
 	String: &objectbox.PropertyString{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 4,
-			Entity: &objectbox.Entity{
-				Id: 1,
-			},
+			Id:     4,
+			Entity: &EntityBinding.Entity,
 		},
 	},
 	Float64: &objectbox.PropertyFloat64{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 5,
-			Entity: &objectbox.Entity{
-				Id: 1,
-			},
+			Id:     5,
+			Entity: &EntityBinding.Entity,
 		},
 	},
 }
@@ -91,13 +83,17 @@ func (entity_EntityInfo) GetId(object interface{}) (uint64, error) {
 }
 
 // SetId is called by ObjectBox during Put to update an ID on an object that has just been inserted
-func (entity_EntityInfo) SetId(object interface{}, id uint64) error {
+func (entity_EntityInfo) SetId(object interface{}, id uint64) {
 	object.(*Entity).Id = id
+}
+
+// PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
+func (entity_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}, id uint64) error {
 	return nil
 }
 
 // Flatten is called by ObjectBox to transform an object to a FlatBuffer
-func (entity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
+func (entity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) error {
 	obj := object.(*Entity)
 	var offsetString = fbutils.CreateStringOffset(fbb, obj.String)
 
@@ -108,22 +104,24 @@ func (entity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, i
 	fbutils.SetInt64Slot(fbb, 2, obj.Int64)
 	fbutils.SetUOffsetTSlot(fbb, 3, offsetString)
 	fbutils.SetFloat64Slot(fbb, 4, obj.Float64)
+	return nil
 }
 
-// ToObject is called by ObjectBox to load an object from a FlatBuffer
-func (entity_EntityInfo) ToObject(bytes []byte) interface{} {
-	table := &flatbuffers.Table{
+// Load is called by ObjectBox to load an object from a FlatBuffer
+func (entity_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) (interface{}, error) {
+	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
+	var id = table.GetUint64Slot(4, 0)
 
 	return &Entity{
-		Id:      table.GetUint64Slot(4, 0),
+		Id:      id,
 		Int32:   table.GetInt32Slot(6, 0),
 		Int64:   table.GetInt64Slot(8, 0),
 		String:  fbutils.GetStringSlot(table, 10),
 		Float64: table.GetFloat64Slot(12, 0),
-	}
+	}, nil
 }
 
 // MakeSlice is called by ObjectBox to construct a new slice to hold the read objects

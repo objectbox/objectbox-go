@@ -42,13 +42,13 @@ type Binding struct {
 }
 
 type Entity struct {
+	Identifier
 	Name           string
-	Id             id
-	Uid            uid
 	Fields         []*Field // the tree of struct fields (necessary for embedded structs)
 	Properties     []*Property
 	IdProperty     *Property
 	LastPropertyId modelinfo.IdUid
+	Relations      map[string]*StandaloneRelation
 	Annotations    map[string]*Annotation
 
 	binding          *Binding // parent
@@ -57,10 +57,9 @@ type Entity struct {
 }
 
 type Property struct {
+	Identifier
 	Name        string
 	ObName      string
-	Id          id
-	Uid         uid
 	Annotations map[string]*Annotation
 	ObType      string
 	ObFlags     []string
@@ -80,12 +79,24 @@ type Property struct {
 }
 
 type Relation struct {
-	Target string
+	Target struct {
+		Name string
+	}
+}
+
+type StandaloneRelation struct {
+	Identifier
+	Target struct {
+		Identifier
+		Name      string
+		IsPointer bool
+	}
+	Name       string
+	uidRequest bool
 }
 
 type Index struct {
-	Id  id
-	Uid uid
+	Identifier
 }
 
 type Annotation struct {
@@ -93,11 +104,19 @@ type Annotation struct {
 }
 
 type Field struct {
-	Name      string
-	Type      string
-	IsPointer bool
-	Property  *Property // nil if it's an embedded struct
-	Fields    []*Field  // inner fields, nil if it's a property
+	Entity             *Entity // parent entity
+	Name               string
+	Type               string
+	IsPointer          bool
+	Property           *Property // nil if it's an embedded struct
+	Fields             []*Field  // inner fields, nil if it's a property
+	SimpleRelation     *Relation
+	StandaloneRelation *StandaloneRelation
+}
+
+type Identifier struct {
+	Id  id
+	Uid uid
 }
 
 func newBinding() (*Binding, error) {
@@ -176,6 +195,7 @@ func (binding *Binding) createEntityFromAst(strct *ast.StructType, name string, 
 		binding:          binding,
 		Name:             name,
 		propertiesByName: make(map[string]bool),
+		Relations:        make(map[string]*StandaloneRelation),
 	}
 
 	if comments != nil {
@@ -230,7 +250,7 @@ func (binding *Binding) createEntityFromAst(strct *ast.StructType, name string, 
 
 	// special handling for string IDs = they are transformed to uint64 in the binding
 	if entity.IdProperty.GoType == "string" {
-		if err := entity.IdProperty.setType("uint64"); err != nil {
+		if err := entity.IdProperty.setBasicType("uint64"); err != nil {
 			return fmt.Errorf("%s on property %s, entity %s", err, entity.IdProperty.Name, entity.Name)
 		}
 
@@ -268,6 +288,7 @@ func (entity *Entity) addFields(fields fieldList, fieldPath string) ([]*Field, e
 
 		// this is used to correctly render embedded-structs initialization template
 		var field = &Field{
+			Entity:   entity,
 			Name:     property.Name,
 			Property: property,
 		}
@@ -297,65 +318,24 @@ func (entity *Entity) addFields(fields fieldList, fieldPath string) ([]*Field, e
 		fieldsTree = append(fieldsTree, field)
 
 		if property.Annotations["type"] != nil {
-			if err := property.setType(property.Annotations["type"].Value); err != nil {
+			if err := property.setBasicType(property.Annotations["type"].Value); err != nil {
 				return nil, propertyError(err, property)
 			}
-		} else {
-			// try to setType if it's one of the basic supported types
-			typ := f.Type()
-			if err := property.setType(typ.String()); err != nil {
-				// if not, get the underlying type and try again
-				baseType, err := typ.UnderlyingOrError()
-				if err != nil {
-					return nil, propertyError(err, property)
-				}
-
-				// in case it's a pointer, get it's underlying type
-				if pointer, isPointer := baseType.(*types.Pointer); isPointer {
-					baseType = pointer.Elem().Underlying()
-					field.IsPointer = true
-				}
-
-				// in case it's an embedded struct, inline all fields
-				if embedded, isStruct := baseType.(*types.Struct); isStruct {
-					if innerFields, err := entity.addFields(structFieldList{embedded}, fieldPath+"."+property.Name); err != nil {
-						return nil, err
-					} else {
-						// apply some struct-related settings
-						field.Property = nil
-						field.Fields = innerFields
-
-						if namedType, isNamed := f.TypeInternal().(*types.Named); isNamed {
-							field.Type = namedType.Obj().Name()
-						} else {
-							field.Type = typ.String()
-						}
-
-						// strip the '*' if it's a pointer type
-						if len(field.Type) > 1 && field.Type[0] == '*' {
-							field.Type = field.Type[1:]
-						}
-
-						// get just the last component from `packagename.typename` for the field name
-						var parts = strings.Split(field.Name, ".")
-						field.Name = parts[len(parts)-1]
-					}
-
-					// this struct itself is not added, just the inner properties
-					// TODO error on unknown (unhandled) Annotations
-					continue
-				}
-
-				if err = property.setType(baseType.String()); err != nil {
-					return nil, propertyError(err, property)
-				}
-
-				// check if it needs a type cast (it is a named type, not an alias)
-				if typ.IsNamed() {
-					property.CastOnRead = baseType.String()
-					property.CastOnWrite = path.Base(typ.String()) // sometimes, it may contain a full import path
-				}
+		} else if innerStructFields, err := field.processType(f); err != nil {
+			return nil, propertyError(err, property)
+		} else if innerStructFields != nil {
+			// if it was recognized as a struct that should be embedded, add all the fields
+			if innerFields, err := entity.addFields(innerStructFields, fieldPath+"."+property.Name); err != nil {
+				return nil, err
+			} else {
+				// apply some struct-related settings to the field
+				field.Property = nil
+				field.Fields = innerFields
 			}
+
+			// this struct itself is not added, just the inner properties
+			// so skip the the following steps of adding the property
+			continue
 		}
 
 		if err := property.setObFlags(); err != nil {
@@ -398,22 +378,147 @@ func (entity *Entity) addFields(fields fieldList, fieldPath string) ([]*Field, e
 			entity.propertiesByName[realObName] = true
 		}
 
-		if property.Annotations["uid"] != nil {
-			if len(property.Annotations["uid"].Value) == 0 {
-				// in case the user doesn't provide `uid` value, it's considered in-process of setting up UID
-				// this flag is handled by the merge mechanism and prints the UID of the already existing property
-				property.uidRequest = true
-			} else if uid, err := strconv.ParseUint(property.Annotations["uid"].Value, 10, 64); err != nil {
-				return nil, propertyError(fmt.Errorf("can't parse uid - %s", err), property)
-			} else {
-				property.Uid = uid
-			}
+		if err := property.handleUid(); err != nil {
+			return nil, propertyError(err, property)
 		}
 
 		entity.Properties = append(entity.Properties, property)
 	}
 
 	return fieldsTree, nil
+}
+
+// processType analyzes field type information and configures it.
+// It might result in setting a field.Type (in case it's one of the basic types),
+// field.StandaloneRelation (in case of many-to-many relations) or field.SimpleRelation (one-to-many relations).
+// It also updates (fixes) the field.Name on embedded fields
+func (field *Field) processType(f field) (fields fieldList, err error) {
+	var typ = f.Type()
+	var property = field.Property
+
+	if err := property.setBasicType(typ.String()); err == nil {
+		// if it's one of the basic supported types
+		return nil, nil
+	}
+
+	// if not, get the underlying type and try again
+	baseType, err := typ.UnderlyingOrError()
+	if err != nil {
+		return nil, err
+	}
+
+	// in case it's a pointer, get it's underlying type
+	if pointer, isPointer := baseType.(*types.Pointer); isPointer {
+		baseType = pointer.Elem().Underlying()
+		field.IsPointer = true
+	}
+
+	if err := property.setBasicType(baseType.String()); err == nil {
+		// if the baseType is one of the basic supported types
+
+		// check if it needs a type cast (it is a named type, not an alias)
+		if typ.IsNamed() {
+			property.CastOnRead = baseType.String()
+			property.CastOnWrite = path.Base(typ.String()) // sometimes, it may contain a full import path
+		}
+
+		return nil, nil
+	}
+
+	// try if it's a struct - it can be either embedded or a relation
+	if strct, isStruct := baseType.(*types.Struct); isStruct {
+		// fill in the field information
+		field.fillInfo(f, typ)
+
+		if property.Annotations["link"] != nil {
+			// if it's a one-to-many relation
+			if err := property.setRelation(typeBaseName(typ.String()), false); err != nil {
+				return nil, err
+			}
+
+			field.SimpleRelation = property.Relation
+			return nil, nil
+
+		} else {
+			// otherwise inline all fields
+			return structFieldList{strct}, nil
+		}
+	}
+
+	// check if it's a slice of a non-base type
+	if slice, isSlice := baseType.(*types.Slice); isSlice {
+		var elementType = slice.Elem()
+
+		// it's a many-to-many relation
+		if err := property.setRelation(typeBaseName(elementType.String()), true); err != nil {
+			return nil, err
+		}
+
+		if err := property.handleUid(); err != nil {
+			return nil, err
+		}
+
+		// add this as a standalone relation to the entity
+		if field.Entity.Relations[field.Name] != nil {
+			return nil, fmt.Errorf("relation with the name %s already exists", field.Name)
+		}
+
+		rel := &StandaloneRelation{}
+		rel.Name = field.Name
+		rel.Target.Name = property.Annotations["link"].Value
+		rel.uidRequest = property.uidRequest
+		rel.Uid = property.Uid
+
+		if _, isPointer := elementType.(*types.Pointer); isPointer {
+			rel.Target.IsPointer = true
+		}
+
+		field.Entity.Relations[field.Name] = rel
+		field.StandaloneRelation = rel
+
+		// fill in the field information
+		field.fillInfo(f, typesTypeErrorful{elementType})
+		if rel.Target.IsPointer {
+			field.Type = "[]*" + field.Type
+		} else {
+			field.Type = "[]" + field.Type
+		}
+
+		// we need to skip adding this field (it's not persisted in DB) so we add an empty list of fields
+		return structFieldList{}, nil
+	}
+
+	return nil, fmt.Errorf("unknown type %s", typ.String())
+}
+
+func (field *Field) fillInfo(f field, typ typeErrorful) {
+	if namedType, isNamed := f.TypeInternal().(*types.Named); isNamed {
+		field.Type = namedType.Obj().Name()
+	} else {
+		field.Type = typ.String()
+	}
+
+	// strip the '*' if it's a pointer type
+	if len(field.Type) > 1 && field.Type[0] == '*' {
+		field.Type = field.Type[1:]
+	}
+
+	// strip leading dots (happens sometimes, I think it's for local types from type-checked package)
+	field.Type = strings.TrimLeft(field.Type, ".")
+
+	// if the package path is specified (happens for embedded fields), check whether it's current package
+	if strings.ContainsRune(field.Type, '/') {
+		// if the package is the current package, strip the path & name
+		var parts = strings.Split(field.Type, ".")
+
+		if len(parts) == 2 && parts[0] == field.Entity.binding.Package.Path() {
+			field.Type = parts[len(parts)-1]
+		}
+
+	}
+	// get just the last component from `packagename.typename` for the field name
+	var parts = strings.Split(field.Name, ".")
+	field.Name = parts[len(parts)-1]
 }
 
 func (entity *Entity) setAnnotations(comments []*ast.Comment) error {
@@ -429,7 +534,6 @@ func (entity *Entity) setAnnotations(comments []*ast.Comment) error {
 				return err
 			}
 		}
-
 	}
 
 	if len(entity.Annotations) == 0 {
@@ -483,6 +587,53 @@ func (property *Property) setAnnotations(tags string) error {
 	return nil
 }
 
+// setRelation sets a relation on the property.
+// If the user has previously defined a relation manually, it must match the arguments (relation target)
+func (property *Property) setRelation(target string, manyToMany bool) error {
+	if property.Annotations == nil {
+		property.Annotations = make(map[string]*Annotation)
+	}
+
+	if property.Annotations["link"] == nil {
+		property.Annotations["link"] = &Annotation{}
+	}
+
+	if len(property.Annotations["link"].Value) == 0 {
+		// set the relation target to the type of the target entity
+		// TODO this doesn't respect nameInDb on the entity (but we don't support that at the moment)
+		property.Annotations["link"].Value = target
+	} else if property.Annotations["link"].Value != target {
+		return fmt.Errorf("relation target mismatch, expected %s, got %s", target, property.Annotations["link"].Value)
+	}
+
+	if manyToMany {
+		// nothing to do here, it's handled as a standalone relation so this "property" is skipped completely
+
+	} else {
+		// add this field as an ID field
+		if err := property.setBasicType("uint64"); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (property *Property) handleUid() error {
+	if property.Annotations["uid"] != nil {
+		if len(property.Annotations["uid"].Value) == 0 {
+			// in case the user doesn't provide `uid` value, it's considered in-process of setting up UID
+			// this flag is handled by the merge mechanism and prints the UID of the already existing property
+			property.uidRequest = true
+		} else if uid, err := strconv.ParseUint(property.Annotations["uid"].Value, 10, 64); err != nil {
+			return fmt.Errorf("can't parse uid - %s", err)
+		} else {
+			property.Uid = uid
+		}
+	}
+	return nil
+}
+
 func parseAnnotations(tags string, annotations *map[string]*Annotation) error {
 	if len(tags) > 1 && tags[0] == tags[len(tags)-1] && (tags[0] == '`' || tags[0] == '"') {
 		tags = tags[1 : len(tags)-1]
@@ -527,7 +678,7 @@ func parseAnnotations(tags string, annotations *map[string]*Annotation) error {
 	return nil
 }
 
-func (property *Property) setType(baseType string) error {
+func (property *Property) setBasicType(baseType string) error {
 	property.GoType = baseType
 
 	ts := property.GoType
@@ -594,9 +745,8 @@ func (property *Property) setType(baseType string) error {
 		} else {
 			property.ObType = "Relation"
 		}
-		property.Relation = &Relation{
-			Target: property.Annotations["link"].Value,
-		}
+		property.Relation = &Relation{}
+		property.Relation.Target.Name = property.Annotations["link"].Value
 	}
 
 	return nil
@@ -673,6 +823,35 @@ func (entity *Entity) HasNonIdProperty() bool {
 	return false
 }
 
+func (entity *Entity) HasRelations() bool {
+	for _, field := range entity.Fields {
+		if field.HasRelations() {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (field *Field) HasRelations() bool {
+	if field.StandaloneRelation != nil || field.SimpleRelation != nil {
+		return true
+	}
+
+	for _, inner := range field.Fields {
+		if inner.HasRelations() {
+			return true
+		}
+	}
+
+	return false
+}
+
+// called from the template
+func (field *Field) IsId() bool {
+	return field.Property == field.Entity.IdProperty
+}
+
 // calculates flatbuffers vTableOffset
 // called from the template
 func (property *Property) FbvTableOffset() uint16 {
@@ -703,4 +882,16 @@ func (property *Property) Path() string {
 
 	parts = append(parts, property.Name)
 	return strings.Join(parts, ".")
+}
+
+func typeBaseName(name string) string {
+	// strip the '*' if it's a pointer type
+	name = strings.TrimPrefix(name, "*")
+
+	// get just the last component from `packagename.typename` for the field name
+	if strings.ContainsRune(name, '.') {
+		name = strings.TrimPrefix(path.Ext(name), ".")
+	}
+
+	return name
 }

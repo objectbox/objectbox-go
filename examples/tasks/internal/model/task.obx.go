@@ -9,12 +9,14 @@ import (
 )
 
 type task_EntityInfo struct {
-	Id  objectbox.TypeId
+	objectbox.Entity
 	Uid uint64
 }
 
 var TaskBinding = task_EntityInfo{
-	Id:  1,
+	Entity: objectbox.Entity{
+		Id: 1,
+	},
 	Uid: 1306759095002958910,
 }
 
@@ -27,34 +29,26 @@ var Task_ = struct {
 }{
 	Id: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 1,
-			Entity: &objectbox.Entity{
-				Id: 1,
-			},
+			Id:     1,
+			Entity: &TaskBinding.Entity,
 		},
 	},
 	Text: &objectbox.PropertyString{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 2,
-			Entity: &objectbox.Entity{
-				Id: 1,
-			},
+			Id:     2,
+			Entity: &TaskBinding.Entity,
 		},
 	},
 	DateCreated: &objectbox.PropertyInt64{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 3,
-			Entity: &objectbox.Entity{
-				Id: 1,
-			},
+			Id:     3,
+			Entity: &TaskBinding.Entity,
 		},
 	},
 	DateFinished: &objectbox.PropertyInt64{
 		BaseProperty: &objectbox.BaseProperty{
-			Id: 4,
-			Entity: &objectbox.Entity{
-				Id: 1,
-			},
+			Id:     4,
+			Entity: &TaskBinding.Entity,
 		},
 	},
 }
@@ -81,13 +75,17 @@ func (task_EntityInfo) GetId(object interface{}) (uint64, error) {
 }
 
 // SetId is called by ObjectBox during Put to update an ID on an object that has just been inserted
-func (task_EntityInfo) SetId(object interface{}, id uint64) error {
+func (task_EntityInfo) SetId(object interface{}, id uint64) {
 	object.(*Task).Id = id
+}
+
+// PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
+func (task_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}, id uint64) error {
 	return nil
 }
 
 // Flatten is called by ObjectBox to transform an object to a FlatBuffer
-func (task_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) {
+func (task_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) error {
 	obj := object.(*Task)
 	var offsetText = fbutils.CreateStringOffset(fbb, obj.Text)
 
@@ -97,21 +95,23 @@ func (task_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id 
 	fbutils.SetUOffsetTSlot(fbb, 1, offsetText)
 	fbutils.SetInt64Slot(fbb, 2, obj.DateCreated)
 	fbutils.SetInt64Slot(fbb, 3, obj.DateFinished)
+	return nil
 }
 
-// ToObject is called by ObjectBox to load an object from a FlatBuffer
-func (task_EntityInfo) ToObject(bytes []byte) interface{} {
-	table := &flatbuffers.Table{
+// Load is called by ObjectBox to load an object from a FlatBuffer
+func (task_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) (interface{}, error) {
+	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
+	var id = table.GetUint64Slot(4, 0)
 
 	return &Task{
-		Id:           table.GetUint64Slot(4, 0),
+		Id:           id,
 		Text:         fbutils.GetStringSlot(table, 6),
 		DateCreated:  table.GetInt64Slot(8, 0),
 		DateFinished: table.GetInt64Slot(10, 0),
-	}
+	}, nil
 }
 
 // MakeSlice is called by ObjectBox to construct a new slice to hold the read objects

@@ -30,12 +30,7 @@ function postBuild {
 
 function test {
     echo "******** Testing ********"
-    # ./build/test.sh
-    testFlags=""
-    if [[ $(go env GOARCH) == "amd64" ]]; then
-        testFlags="$testFlags -race"
-    fi
-    go test $testFlags ./...
+    ./build/test.sh
 }
 
 function generate {

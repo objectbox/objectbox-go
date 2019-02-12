@@ -7,7 +7,7 @@ A client/server mode will follow soon.
 ObjectBox persists your native Go structs using a simple CRUD API:
 
 ```go
-    id, err := box.Put(&Person{ FirstName: "Joe", LastName:  "Green" })
+id, err := box.Put(&Person{ FirstName: "Joe", LastName:  "Green" })
 ```
 
 Want details? **[Read the docs](https://golang.objectbox.io/)** or
@@ -53,8 +53,8 @@ With the dependencies installed, you can start adding entities to your project:
 //go:generate objectbox-gogen
 ​
 type Task struct {
-	Id           uint64
-	Text         string
+	Id   uint64
+	Text string
 }
 ```
 And run code generation in your project dir
@@ -65,9 +65,9 @@ This generates a few files in the same folder as the entity - remember to add th
 
 Once code generation finished successfully, you can start using ObjectBox:
 ```go
-   obx := objectbox.NewBuilder().Model(ObjectBoxModel()).Build()
-   box := BoxForTask(obx) // Generated function to provide a Box for Task objects
-   id, _ := box.Put(&Task{ Text: "Buy milk" })
+obx := objectbox.NewBuilder().Model(ObjectBoxModel()).Build()
+box := BoxForTask(obx) // Generated function to provide a Box for Task objects
+id, _ := box.Put(&Task{ Text: "Buy milk" })
 ```
 
 See the [Getting started](https://golang.objectbox.io/getting-started) section of our docs for a more thorough intro. 

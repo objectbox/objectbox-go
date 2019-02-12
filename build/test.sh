@@ -4,16 +4,8 @@ set -eu
 # TODO vet
 # go fmt $(go list ./... | grep -v /vendor/)
 # go vet $(go list ./... | grep -v /vendor/)
-# go test -race $(go list ./... | grep -v /vendor/)
 
-# on amd64, we run extended tests (memory sanitizer & race checks)
-if [[ $(go env GOARCH) == "amd64" ]]; then
-    # exclude the generator
-    extendedTests=$(go list ./... | grep -v test/generator)
-    go test ./test/generator/...
-    go test -race $extendedTests
-    go test -msan $extendedTests
+# this is a list of all tests in the project
+tests=$(go list -test ./... | grep -oP '\[\K.*(?=.test\])')
 
-else
-    go test ./...
-fi
+go test "$@" $tests

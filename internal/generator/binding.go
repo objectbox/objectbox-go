@@ -344,7 +344,6 @@ func (entity *Entity) addFields(fields fieldList, fieldPath string) ([]*Field, e
 
 		if property.Annotations["converter"] != nil {
 			if property.Annotations["type"] == nil {
-				// TODO this could probably be derived from the type-checker results - see getUnderlyingType()
 				return nil, propertyError(errors.New("type annotation has to be specified when using converters"), property)
 			}
 			property.Converter = &property.Annotations["converter"].Value

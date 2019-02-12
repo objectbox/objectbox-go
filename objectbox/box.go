@@ -120,7 +120,7 @@ func (box *Box) PutAsyncWithTimeout(object interface{}, timeoutMs uint) (id uint
 		return 0, err
 	}
 
-	// TODO put related antities and this one within a single transaction
+	// TODO put related entities and this one within a single transaction
 	//if box.entity.hasRelations {
 	//	err = box.objectBox.runInTxn(false, func(txn *Transaction) error {
 	//		return box.entity.binding.PutRelated(txn, object, id)

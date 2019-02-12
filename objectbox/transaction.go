@@ -24,8 +24,6 @@ package objectbox
 import "C"
 
 import (
-	"unsafe"
-
 	"github.com/google/flatbuffers/go"
 )
 
@@ -97,14 +95,5 @@ func (txn *Transaction) createCursor(entity *entity) (*Cursor, error) {
 
 // Internal: won't be available in future versions
 func (txn *Transaction) cursorForName(entitySchemaName string) (*Cursor, error) {
-	entity := txn.objectBox.getEntityByName(entitySchemaName)
-	cname := C.CString(entitySchemaName)
-	defer C.free(unsafe.Pointer(cname))
-
-	// TODO this is not necessary, we can use createCursor because we already have a concrete entity
-	ccursor := C.obx_cursor_create2(txn.txn, cname)
-	if ccursor == nil {
-		return nil, createError()
-	}
-	return &Cursor{txn, ccursor, entity, flatbuffers.NewBuilder(512)}, nil
+	return txn.createCursor(txn.objectBox.getEntityByName(entitySchemaName))
 }

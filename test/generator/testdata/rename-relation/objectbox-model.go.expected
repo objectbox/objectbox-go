@@ -19,9 +19,15 @@ func ObjectBoxModel() *objectbox.Model {
 	model.RegisterBinding(GroupBinding)
 	model.RegisterBinding(TaskRelManyPtrBinding)
 	model.RegisterBinding(TaskRelManyValueBinding)
-	model.LastEntityId(7, 4706154865122290029)
-	model.LastIndexId(4, 2339563716805116249)
-	model.LastRelationId(3, 6392442863481646880)
+	model.RegisterBinding(NegTaskRelIdBinding)
+	model.RegisterBinding(NegTaskRelPtrBinding)
+	model.RegisterBinding(NegTaskRelValueBinding)
+	model.RegisterBinding(NegTaskRelEmbeddedBinding)
+	model.RegisterBinding(NegTaskRelManyPtrBinding)
+	model.RegisterBinding(NegTaskRelManyValueBinding)
+	model.LastEntityId(13, 2914295034816259174)
+	model.LastIndexId(8, 5558237345453186302)
+	model.LastRelationId(6, 4345851588384648695)
 
 	return model
 }

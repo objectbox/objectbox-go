@@ -123,11 +123,115 @@
           "name": "Groups"
         }
       ]
+    },
+    {
+      "id": "8:3706853784096366226",
+      "name": "NegTaskRelId",
+      "lastPropertyId": "2:6745438398739480977",
+      "properties": [
+        {
+          "id": "1:1395437218309923052",
+          "name": "Id"
+        },
+        {
+          "id": "2:6745438398739480977",
+          "name": "Group",
+          "indexId": "5:2897681629866238117"
+        }
+      ]
+    },
+    {
+      "id": "9:2627038740284806767",
+      "name": "NegTaskRelPtr",
+      "lastPropertyId": "2:5974317550424871033",
+      "properties": [
+        {
+          "id": "1:3398579248012586914",
+          "name": "Id"
+        },
+        {
+          "id": "2:5974317550424871033",
+          "name": "Group",
+          "indexId": "6:3317123977833389635"
+        }
+      ]
+    },
+    {
+      "id": "10:6303220950515014660",
+      "name": "NegTaskRelValue",
+      "lastPropertyId": "2:167566062957544642",
+      "properties": [
+        {
+          "id": "1:5001958211167890979",
+          "name": "Id"
+        },
+        {
+          "id": "2:167566062957544642",
+          "name": "Group",
+          "indexId": "7:4778690082005258714"
+        }
+      ]
+    },
+    {
+      "id": "11:4035568504096476779",
+      "name": "NegTaskRelEmbedded",
+      "lastPropertyId": "2:6972732843819909978",
+      "properties": [
+        {
+          "id": "1:1059542851699319360",
+          "name": "Id"
+        },
+        {
+          "id": "2:6972732843819909978",
+          "name": "Group",
+          "indexId": "8:5558237345453186302"
+        }
+      ],
+      "relations": [
+        {
+          "id": "4:7845762441295307478",
+          "name": "Groups"
+        }
+      ]
+    },
+    {
+      "id": "12:959367522974354090",
+      "name": "NegTaskRelManyPtr",
+      "lastPropertyId": "1:771642788862502430",
+      "properties": [
+        {
+          "id": "1:771642788862502430",
+          "name": "Id"
+        }
+      ],
+      "relations": [
+        {
+          "id": "5:8514850266767180993",
+          "name": "Groups"
+        }
+      ]
+    },
+    {
+      "id": "13:2914295034816259174",
+      "name": "NegTaskRelManyValue",
+      "lastPropertyId": "1:8683452355129068124",
+      "properties": [
+        {
+          "id": "1:8683452355129068124",
+          "name": "Id"
+        }
+      ],
+      "relations": [
+        {
+          "id": "6:4345851588384648695",
+          "name": "Groups"
+        }
+      ]
     }
   ],
-  "lastEntityId": "7:4706154865122290029",
-  "lastIndexId": "4:2339563716805116249",
-  "lastRelationId": "3:6392442863481646880",
+  "lastEntityId": "13:2914295034816259174",
+  "lastIndexId": "8:5558237345453186302",
+  "lastRelationId": "6:4345851588384648695",
   "retiredEntityUids": [],
   "retiredIndexUids": [],
   "retiredPropertyUids": [],

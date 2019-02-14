@@ -128,21 +128,21 @@ func TestPutAll(t *testing.T) {
 
 	eventRead, err := box.Get(objectIds[0])
 	assert.NoErr(t, err)
-	assert.EqString(t, "Pi 3B", eventRead.Device)
+	assert.Eq(t, "Pi 3B", eventRead.Device)
 
 	eventRead, err = box.Get(objectIds[1])
 	assert.NoErr(t, err)
-	assert.EqString(t, "Pi Zero", eventRead.Device)
+	assert.Eq(t, "Pi Zero", eventRead.Device)
 
 	// And passing nil & empty slice
 	objectIds, err = box.PutAll(nil)
 	assert.NoErr(t, err)
-	assert.EqInt(t, len(objectIds), 0)
+	assert.Eq(t, len(objectIds), 0)
 	//noinspection GoPreferNilSlice
 	noEvents := []*iot.Event{}
 	objectIds, err = box.PutAll(noEvents)
 	assert.NoErr(t, err)
-	assert.EqInt(t, len(objectIds), 0)
+	assert.Eq(t, len(objectIds), 0)
 }
 
 func TestPut(t *testing.T) {
@@ -174,7 +174,7 @@ func TestPut(t *testing.T) {
 
 	all, err := box.GetAll()
 	assert.NoErr(t, err)
-	assert.EqInt(t, 2, len(all))
+	assert.Eq(t, 2, len(all))
 	assert.Eq(t, &event, all[0])
 	assert.Eq(t, &event2, all[1])
 }

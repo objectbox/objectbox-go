@@ -25,17 +25,6 @@ import (
 	"testing"
 )
 
-func EqString(t *testing.T, expected string, actual string) {
-	if expected != actual {
-		Failf(t, "Expected \""+expected+"\", but got \""+actual+"\"")
-	}
-}
-
-func EqInt(t *testing.T, expected int, actual int) {
-	if expected != actual {
-		Failf(t, "Expected %v, but got %v", expected, actual)
-	}
-}
 
 // Uses reflect.DeepEqual to test for equality
 func Eq(t *testing.T, expected interface{}, actual interface{}) {
@@ -43,7 +32,7 @@ func Eq(t *testing.T, expected interface{}, actual interface{}) {
 		return
 	}
 	if !reflect.DeepEqual(expected, actual) {
-		Failf(t, "Expected %v, but got %v", expected, actual)
+		Failf(t, "Values are not equal\nExpected: %v\nReceived: %v", expected, actual)
 	}
 }
 
@@ -53,11 +42,11 @@ func EqItems(t *testing.T, expected interface{}, actual interface{}) {
 	var act = reflect.ValueOf(actual)
 
 	if exp.Type() != act.Type() {
-		Failf(t, "Expected %v, but got %v", exp.Type(), act.Type())
+		Failf(t, "Types are not equal\nExpected: %v\nReceived: %v", exp.Type(), act.Type())
 	}
 
 	if exp.Len() != act.Len() {
-		Failf(t, "Expected %v (%d elements), but got %v (%d elements)", exp, exp.Len(), act, act.Len())
+		Failf(t, "Lengths are not equal\nExpected: %v (%d elements)\nReceived: %v (%d elements)", exp, exp.Len(), act, act.Len())
 	}
 
 	if exp.Len() == 0 {
@@ -155,13 +144,13 @@ func MustPanic(t *testing.T, match *regexp.Regexp) {
 		case error:
 			str = x.Error()
 		default:
-			Failf(t, "unknown panic result '%v' for an expected panic: %s", r, match.String())
+			Failf(t, "Unknown panic result '%v' for an expected panic: %s", r, match.String())
 		}
 
 		if !match.MatchString(str) {
-			Failf(t, "expected panic '%s' but got '%s'", match.String(), str)
+			Failf(t, "Errors are not equal\nExpected: panic '%s'\nReceived: '%s'", match.String(), str)
 		}
 	} else {
-		Failf(t, "expected panic hasn't occurred: %s", match.String())
+		Failf(t, "Expected panic hasn't occurred: %s", match.String())
 	}
 }

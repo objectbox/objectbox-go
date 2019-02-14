@@ -41,7 +41,7 @@ func concurrentInsert(t *testing.T, count, concurrency int, putAsync bool) {
 	assert.NoErr(t, err)
 
 	var countPart = count / concurrency
-	assert.EqInt(t, 0, count%concurrency)
+	assert.Eq(t, 0, count%concurrency)
 
 	// prepare channels and launch the goroutines
 	ids := make(chan uint64, count)
@@ -82,8 +82,8 @@ func concurrentInsert(t *testing.T, count, concurrency int, putAsync bool) {
 	wg.Wait()
 
 	t.Log("validating counts")
-	assert.EqInt(t, 0, len(errors))
-	assert.EqInt(t, count, len(ids))
+	assert.Eq(t, 0, len(errors))
+	assert.Eq(t, count, len(ids))
 
 	actualCount, err := box.Count()
 	assert.NoErr(t, err)

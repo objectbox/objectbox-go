@@ -49,8 +49,15 @@ func parseFile(sourceFile string) (f *file, err error) {
 	}
 
 	// parse the whole directory to read & understand the used types
+	var filter = func(file os.FileInfo) bool {
+		// never skip the sourceFile
+		if file.Name() == filepath.Base(sourceFile) {
+			return true
+		}
+		return parserFilter(file)
+	}
 	var pkgs map[string]*ast.Package
-	if pkgs, err = parser.ParseDir(f.fileset, f.dir, parserFilter, parser.ParseComments); err != nil {
+	if pkgs, err = parser.ParseDir(f.fileset, f.dir, filter, parser.ParseComments); err != nil {
 		return nil, err
 	}
 

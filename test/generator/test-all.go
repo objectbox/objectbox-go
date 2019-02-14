@@ -18,6 +18,7 @@ package generator
 
 import (
 	"bytes"
+	"errors"
 	"io/ioutil"
 	"math/rand"
 	"os"
@@ -134,11 +135,12 @@ func generateAllFiles(t *testing.T, overwriteExpected bool, dir string, modelInf
 		err = generator.Process(sourceFile, getOptions(t, sourceFile, modelInfoFile))
 
 		// handle negative test
-		var shouldFail = strings.HasPrefix(filepath.Base(sourceFile), "_")
+		var shouldFail = strings.HasPrefix(filepath.Base(sourceFile), "!")
 		if shouldFail {
 			if err == nil {
 				assert.Failf(t, "Unexpected PASS on a negative test %s", sourceFile)
 			} else {
+				assert.Eq(t, getExpectedError(t, sourceFile), err)
 				continue
 			}
 		}
@@ -167,6 +169,20 @@ func getOptions(t *testing.T, sourceFile, modelInfoFile string) generator.Option
 	}
 
 	return options
+}
+
+var expectedErrorRegexp = regexp.MustCompile("// *ERROR *=(.+)[\n|\r]")
+
+func getExpectedError(t *testing.T, sourceFile string) error {
+	source, err := ioutil.ReadFile(sourceFile)
+	assert.NoErr(t, err)
+
+	var match = expectedErrorRegexp.FindSubmatch(source)
+	if len(match) > 1 {
+		return errors.New(strings.TrimSpace(string(match[1])))
+	}
+
+	return nil
 }
 
 func setArgs(t *testing.T, args map[string]string, options *generator.Options) {

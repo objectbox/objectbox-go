@@ -158,15 +158,17 @@ func (qb *QueryBuilder) LinkOneToMany(relation *RelationOneToMany, conditions []
 	// create a new "inner" query builder
 	var iqb *QueryBuilder
 
+	cRelPropertyId := C.obx_schema_id(relation.Property.Id)
 	// recognize whether it's a link or a backlink
 	if relation.Property.Entity.Id == qb.typeId && relation.Target.Id != qb.typeId {
 		// if property belongs to the entity of the "main" query builder & target is another entity, it's a link
 		// log.Printf("QB %p creating link to entity %d over property %d", qb, relation.Target.Id, relation.Property.Id)
-		iqb = qb.newInnerBuilder(relation.Target.Id, C.obx_qb_link_property(qb.cqb, C.obx_schema_id(relation.Property.Id)))
+		iqb = qb.newInnerBuilder(relation.Target.Id, C.obx_qb_link_property(qb.cqb, cRelPropertyId))
 	} else if relation.Property.Entity.Id != qb.typeId && relation.Target.Id == qb.typeId {
 		// if property is not from the same entity as this query builder but the target is, it's a backlink
 		// log.Printf("QB %p creating backlink from entity %d over property %d", qb, relation.Property.Entity.Id, relation.Property.Id)
-		iqb = qb.newInnerBuilder(relation.Property.Entity.Id, C.obx_qb_backlink_property(qb.cqb, C.obx_schema_id(relation.Property.Entity.Id), C.obx_schema_id(relation.Property.Id)))
+		cInnerQB := C.obx_qb_backlink_property(qb.cqb, C.obx_schema_id(relation.Property.Entity.Id), cRelPropertyId)
+		iqb = qb.newInnerBuilder(relation.Property.Entity.Id, cInnerQB)
 	} else {
 		return errors.New("relation not recognized as either link or backlink")
 	}

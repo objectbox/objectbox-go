@@ -313,11 +313,11 @@ func (qb *QueryBuilder) Int64In(property *BaseProperty, values []int64) (Conditi
 	var cid ConditionId
 
 	if qb.Err == nil && qb.checkEntityId(property.Entity.Id) {
+		var valuesPtr *C.int64_t = nil
 		if len(values) > 0 {
-			cid = qb.getConditionId(C.obx_qb_int64_in(qb.cqb, C.obx_schema_id(property.Id), (*C.int64_t)(unsafe.Pointer(&values[0])), C.int(len(values))))
-		} else {
-			cid = qb.getConditionId(C.obx_qb_int64_in(qb.cqb, C.obx_schema_id(property.Id), nil, 0))
+			valuesPtr = (*C.int64_t)(unsafe.Pointer(&values[0]))
 		}
+		cid = qb.getConditionId(C.obx_qb_int64_in(qb.cqb, C.obx_schema_id(property.Id), valuesPtr, C.int(len(values))))
 	}
 
 	return cid, qb.Err

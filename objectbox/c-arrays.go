@@ -126,6 +126,22 @@ func goStringArrayToC(values []string) *stringArray {
 	return result
 }
 
+func goInt64ArrayToC(values []int64) *C.int64_t {
+	if len(values) > 0 {
+		return (*C.int64_t)(unsafe.Pointer(&values[0]))
+	} else {
+		return nil
+	}
+}
+
+func goInt32ArrayToC(values []int32) *C.int32_t {
+	if len(values) > 0 {
+		return (*C.int32_t)(unsafe.Pointer(&values[0]))
+	} else {
+		return nil
+	}
+}
+
 func cBytesPtr(value []byte) unsafe.Pointer {
 	if len(value) >= 1 {
 		return unsafe.Pointer(&value[0])

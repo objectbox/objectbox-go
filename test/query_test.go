@@ -413,6 +413,10 @@ func TestQueryLinks(t *testing.T) {
 		{1, s{`TRUE Link: String == "Val-1"`}, boxR.Query(E.Related.Link(E.String.Equals("", true))),
 			func(q i) error { return eq(q).SetStringParams(E.String, e.String) }},
 
+		// one-to-many empty
+		{10, s{`TRUE Link: TRUE`}, box.Query(E.Related.Link()), nil},
+		{10, s{`TRUE Link: TRUE`}, boxR.Query(E.Related.Link()), nil},
+
 		// many-to-many link
 		{2, s{`TRUE Link: Name == "relPtr-Val-1"`}, box.Query(E.RelatedPtrSlice.Link(R.Name.Equals("", true))),
 			func(q i) error { return eq(q).SetStringParams(R.Name, "relPtr-Val-1") }},
@@ -420,6 +424,10 @@ func TestQueryLinks(t *testing.T) {
 		// many-to-many backlink
 		{1, s{`TRUE Link: String == "Val-1"`}, boxR.Query(E.RelatedPtrSlice.Link(E.String.Equals("", true))),
 			func(q i) error { return eq(q).SetStringParams(E.String, e.String) }},
+
+		// many-to-many empty
+		{10, s{`TRUE Link: TRUE`}, box.Query(E.RelatedPtrSlice.Link()), nil},
+		{10, s{`TRUE Link: TRUE`}, boxR.Query(E.RelatedPtrSlice.Link()), nil},
 	})
 }
 

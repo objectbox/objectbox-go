@@ -23,8 +23,8 @@ var TaskRelEmbeddedBinding = taskRelEmbedded_EntityInfo{
 // TaskRelEmbedded_ contains type-based Property helpers to facilitate some common operations such as Queries.
 var TaskRelEmbedded_ = struct {
 	Id        *objectbox.PropertyUint64
-	Group     *objectbox.RelationOneToMany
-	GroupsNew *objectbox.RelationManyToMany
+	Group     *objectbox.RelationToOne
+	GroupsNew *objectbox.RelationToMany
 }{
 	Id: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
@@ -32,14 +32,14 @@ var TaskRelEmbedded_ = struct {
 			Entity: &TaskRelEmbeddedBinding.Entity,
 		},
 	},
-	Group: &objectbox.RelationOneToMany{
+	Group: &objectbox.RelationToOne{
 		Property: &objectbox.BaseProperty{
 			Id:     2,
 			Entity: &TaskRelEmbeddedBinding.Entity,
 		},
 		Target: &GroupBinding.Entity,
 	},
-	GroupsNew: &objectbox.RelationManyToMany{
+	GroupsNew: &objectbox.RelationToMany{
 		Id:     3,
 		Source: &TaskRelEmbeddedBinding.Entity,
 		Target: &GroupBinding.Entity,

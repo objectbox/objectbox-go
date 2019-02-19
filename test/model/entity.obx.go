@@ -43,11 +43,11 @@ var Entity_ = struct {
 	Float64         *objectbox.PropertyFloat64
 	Date            *objectbox.PropertyInt64
 	Complex128      *objectbox.PropertyByteVector
-	Related         *objectbox.RelationOneToMany
-	RelatedPtr      *objectbox.RelationOneToMany
-	RelatedPtr2     *objectbox.RelationOneToMany
-	RelatedPtrSlice *objectbox.RelationManyToMany
-	RelatedSlice    *objectbox.RelationManyToMany
+	Related         *objectbox.RelationToOne
+	RelatedPtr      *objectbox.RelationToOne
+	RelatedPtr2     *objectbox.RelationToOne
+	RelatedPtrSlice *objectbox.RelationToMany
+	RelatedSlice    *objectbox.RelationToMany
 }{
 	Id: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
@@ -175,33 +175,33 @@ var Entity_ = struct {
 			Entity: &EntityBinding.Entity,
 		},
 	},
-	Related: &objectbox.RelationOneToMany{
+	Related: &objectbox.RelationToOne{
 		Property: &objectbox.BaseProperty{
 			Id:     22,
 			Entity: &EntityBinding.Entity,
 		},
 		Target: &TestEntityRelatedBinding.Entity,
 	},
-	RelatedPtr: &objectbox.RelationOneToMany{
+	RelatedPtr: &objectbox.RelationToOne{
 		Property: &objectbox.BaseProperty{
 			Id:     23,
 			Entity: &EntityBinding.Entity,
 		},
 		Target: &TestEntityRelatedBinding.Entity,
 	},
-	RelatedPtr2: &objectbox.RelationOneToMany{
+	RelatedPtr2: &objectbox.RelationToOne{
 		Property: &objectbox.BaseProperty{
 			Id:     24,
 			Entity: &EntityBinding.Entity,
 		},
 		Target: &TestEntityRelatedBinding.Entity,
 	},
-	RelatedPtrSlice: &objectbox.RelationManyToMany{
+	RelatedPtrSlice: &objectbox.RelationToMany{
 		Id:     5,
 		Source: &EntityBinding.Entity,
 		Target: &TestEntityRelatedBinding.Entity,
 	},
-	RelatedSlice: &objectbox.RelationManyToMany{
+	RelatedSlice: &objectbox.RelationToMany{
 		Id:     4,
 		Source: &EntityBinding.Entity,
 		Target: &EntityByValueBinding.Entity,

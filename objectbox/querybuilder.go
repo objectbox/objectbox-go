@@ -150,7 +150,7 @@ func (qb *QueryBuilder) applyConditions(conditions []Condition) error {
 	return qb.Err
 }
 
-func (qb *QueryBuilder) LinkOneToMany(relation *RelationOneToMany, conditions []Condition) error {
+func (qb *QueryBuilder) LinkOneToMany(relation *RelationToOne, conditions []Condition) error {
 	if qb.Err != nil {
 		return qb.Err
 	}
@@ -180,7 +180,7 @@ func (qb *QueryBuilder) LinkOneToMany(relation *RelationOneToMany, conditions []
 	return iqb.applyConditions(conditions)
 }
 
-func (qb *QueryBuilder) LinkManyToMany(relation *RelationManyToMany, conditions []Condition) error {
+func (qb *QueryBuilder) LinkManyToMany(relation *RelationToMany, conditions []Condition) error {
 	if qb.Err != nil {
 		return qb.Err
 	}

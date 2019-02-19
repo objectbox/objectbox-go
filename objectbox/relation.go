@@ -17,7 +17,7 @@
 package objectbox
 
 type conditionRelationOneToMany struct {
-	relation   *RelationOneToMany
+	relation   *RelationToOne
 	conditions []Condition
 }
 
@@ -25,24 +25,27 @@ func (condition *conditionRelationOneToMany) applyTo(qb *QueryBuilder) (Conditio
 	return 0, qb.LinkOneToMany(condition.relation, condition.conditions)
 }
 
-type RelationOneToMany struct {
+// RelationToOne holds information about a relation link on a property.
+// It is used in generated entity code, providing a way to create a query across multiple related entities.
+// Internally, the property value holds an ID of an object in the target entity.
+type RelationToOne struct {
 	Property *BaseProperty
 	Target   *Entity
 }
 
-func (relation RelationOneToMany) entityId() TypeId {
+func (relation RelationToOne) entityId() TypeId {
 	return relation.Property.Entity.Id
 }
 
-func (relation RelationOneToMany) propertyId() TypeId {
+func (relation RelationToOne) propertyId() TypeId {
 	return relation.Property.Id
 }
 
-func (relation *RelationOneToMany) Link(conditions ...Condition) Condition {
+func (relation *RelationToOne) Link(conditions ...Condition) Condition {
 	return &conditionRelationOneToMany{relation, conditions}
 }
 
-func (relation RelationOneToMany) Equals(value uint64) Condition {
+func (relation RelationToOne) Equals(value uint64) Condition {
 	return &conditionClosure{
 		func(qb *QueryBuilder) (ConditionId, error) {
 			return qb.IntEqual(relation.Property, int64(value))
@@ -50,7 +53,7 @@ func (relation RelationOneToMany) Equals(value uint64) Condition {
 	}
 }
 
-func (relation RelationOneToMany) NotEquals(value uint64) Condition {
+func (relation RelationToOne) NotEquals(value uint64) Condition {
 	return &conditionClosure{
 		func(qb *QueryBuilder) (ConditionId, error) {
 			return qb.IntNotEqual(relation.Property, int64(value))
@@ -58,7 +61,7 @@ func (relation RelationOneToMany) NotEquals(value uint64) Condition {
 	}
 }
 
-func (relation RelationOneToMany) int64Slice(values []uint64) []int64 {
+func (relation RelationToOne) int64Slice(values []uint64) []int64 {
 	result := make([]int64, len(values))
 
 	for i, v := range values {
@@ -68,7 +71,7 @@ func (relation RelationOneToMany) int64Slice(values []uint64) []int64 {
 	return result
 }
 
-func (relation RelationOneToMany) In(values ...uint64) Condition {
+func (relation RelationToOne) In(values ...uint64) Condition {
 	return &conditionClosure{
 		func(qb *QueryBuilder) (ConditionId, error) {
 			return qb.Int64In(relation.Property, relation.int64Slice(values))
@@ -76,7 +79,7 @@ func (relation RelationOneToMany) In(values ...uint64) Condition {
 	}
 }
 
-func (relation RelationOneToMany) NotIn(values ...uint64) Condition {
+func (relation RelationToOne) NotIn(values ...uint64) Condition {
 	return &conditionClosure{
 		func(qb *QueryBuilder) (ConditionId, error) {
 			return qb.Int64NotIn(relation.Property, relation.int64Slice(values))
@@ -85,7 +88,7 @@ func (relation RelationOneToMany) NotIn(values ...uint64) Condition {
 }
 
 type conditionRelationManyToMany struct {
-	relation   *RelationManyToMany
+	relation   *RelationToMany
 	conditions []Condition
 }
 
@@ -93,13 +96,16 @@ func (condition *conditionRelationManyToMany) applyTo(qb *QueryBuilder) (Conditi
 	return 0, qb.LinkManyToMany(condition.relation, condition.conditions)
 }
 
-type RelationManyToMany struct {
+// RelationToMany holds information about a standalone relation link between two entities.
+// It is used in generated entity code, providing a way to create a query across multiple related entities.
+// Internally, the relation is stored separately, holding pairs of source & target object IDs.
+type RelationToMany struct {
 	Id     TypeId
 	Source *Entity
 	Target *Entity
 }
 
-func (relation *RelationManyToMany) Link(conditions ...Condition) Condition {
+func (relation *RelationToMany) Link(conditions ...Condition) Condition {
 	return &conditionRelationManyToMany{relation, conditions}
 }
 

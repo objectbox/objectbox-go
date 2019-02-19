@@ -22,11 +22,18 @@ var TaskByValueBinding = taskByValue_EntityInfo{
 
 // TaskByValue_ contains type-based Property helpers to facilitate some common operations such as Queries.
 var TaskByValue_ = struct {
-	Id *objectbox.PropertyUint64
+	Id   *objectbox.PropertyUint64
+	Name *objectbox.PropertyString
 }{
 	Id: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
 			Id:     1,
+			Entity: &TaskByValueBinding.Entity,
+		},
+	},
+	Name: &objectbox.PropertyString{
+		BaseProperty: &objectbox.BaseProperty{
+			Id:     2,
 			Entity: &TaskByValueBinding.Entity,
 		},
 	},
@@ -42,7 +49,8 @@ func (taskByValue_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("TaskByValue", 3, 2661732831099943416)
 	model.Property("Id", objectbox.PropertyType_Long, 1, 7837839688282259259)
 	model.PropertyFlags(objectbox.PropertyFlags_ID)
-	model.EntityLastPropertyId(1, 7837839688282259259)
+	model.Property("Name", objectbox.PropertyType_String, 2, 2518412263346885298)
+	model.EntityLastPropertyId(2, 2518412263346885298)
 }
 
 // GetId is called by ObjectBox during Put operations to check for existing ID on an object
@@ -71,10 +79,20 @@ func (taskByValue_EntityInfo) PutRelated(txn *objectbox.Transaction, object inte
 
 // Flatten is called by ObjectBox to transform an object to a FlatBuffer
 func (taskByValue_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) error {
+	var obj *TaskByValue
+	if objPtr, ok := object.(*TaskByValue); ok {
+		obj = objPtr
+	} else {
+		objVal := object.(TaskByValue)
+		obj = &objVal
+	}
+
+	var offsetName = fbutils.CreateStringOffset(fbb, obj.Name)
 
 	// build the FlatBuffers object
-	fbb.StartObject(1)
+	fbb.StartObject(2)
 	fbutils.SetUint64Slot(fbb, 0, id)
+	fbutils.SetUOffsetTSlot(fbb, 1, offsetName)
 	return nil
 }
 
@@ -87,7 +105,8 @@ func (taskByValue_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) (in
 	var id = table.GetUint64Slot(4, 0)
 
 	return &TaskByValue{
-		Id: id,
+		Id:   id,
+		Name: fbutils.GetStringSlot(table, 6),
 	}, nil
 }
 
@@ -246,11 +265,18 @@ var TaskStringByValueBinding = taskStringByValue_EntityInfo{
 
 // TaskStringByValue_ contains type-based Property helpers to facilitate some common operations such as Queries.
 var TaskStringByValue_ = struct {
-	Id *objectbox.PropertyUint64
+	Id   *objectbox.PropertyUint64
+	Name *objectbox.PropertyString
 }{
 	Id: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
 			Id:     1,
+			Entity: &TaskStringByValueBinding.Entity,
+		},
+	},
+	Name: &objectbox.PropertyString{
+		BaseProperty: &objectbox.BaseProperty{
+			Id:     2,
 			Entity: &TaskStringByValueBinding.Entity,
 		},
 	},
@@ -264,9 +290,10 @@ func (taskStringByValue_EntityInfo) GeneratorVersion() int {
 // AddToModel is called by ObjectBox during model build
 func (taskStringByValue_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("TaskStringByValue", 4, 8325060299420976708)
-	model.Property("Id", objectbox.PropertyType_Long, 1, 2518412263346885298)
+	model.Property("Id", objectbox.PropertyType_Long, 1, 5617773211005988520)
 	model.PropertyFlags(objectbox.PropertyFlags_ID)
-	model.EntityLastPropertyId(1, 2518412263346885298)
+	model.Property("Name", objectbox.PropertyType_String, 2, 2339563716805116249)
+	model.EntityLastPropertyId(2, 2339563716805116249)
 }
 
 // GetId is called by ObjectBox during Put operations to check for existing ID on an object
@@ -295,10 +322,20 @@ func (taskStringByValue_EntityInfo) PutRelated(txn *objectbox.Transaction, objec
 
 // Flatten is called by ObjectBox to transform an object to a FlatBuffer
 func (taskStringByValue_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) error {
+	var obj *TaskStringByValue
+	if objPtr, ok := object.(*TaskStringByValue); ok {
+		obj = objPtr
+	} else {
+		objVal := object.(TaskStringByValue)
+		obj = &objVal
+	}
+
+	var offsetName = fbutils.CreateStringOffset(fbb, obj.Name)
 
 	// build the FlatBuffers object
-	fbb.StartObject(1)
+	fbb.StartObject(2)
 	fbutils.SetUint64Slot(fbb, 0, id)
+	fbutils.SetUOffsetTSlot(fbb, 1, offsetName)
 	return nil
 }
 
@@ -311,7 +348,8 @@ func (taskStringByValue_EntityInfo) Load(txn *objectbox.Transaction, bytes []byt
 	var id = table.GetUint64Slot(4, 0)
 
 	return &TaskStringByValue{
-		Id: objectbox.StringIdConvertToEntityProperty(id),
+		Id:   objectbox.StringIdConvertToEntityProperty(id),
+		Name: fbutils.GetStringSlot(table, 6),
 	}, nil
 }
 

@@ -174,7 +174,18 @@ func ({{$entityNameCamel}}_EntityInfo) PutRelated(txn *objectbox.Transaction, ob
 
 // Flatten is called by ObjectBox to transform an object to a FlatBuffer
 func ({{$entityNameCamel}}_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) error {
-    {{if $entity.HasNonIdProperty}}obj := object.(*{{$entity.Name}}){{end -}}
+    {{if $entity.HasNonIdProperty -}}
+		{{- if not $.Options.ByValue}}obj := object.(*{{$entity.Name}}) 
+		{{- else -}}
+		var obj *{{$entity.Name}}
+		if objPtr, ok := object.(*{{$entity.Name}}); ok {
+			obj = objPtr 
+		} else {
+			objVal := object.({{$entity.Name}})
+			obj = &objVal
+		}
+		{{end}}
+	{{- end -}}
 
     {{- range $property := $entity.Properties}}{{if eq $property.FbType "UOffsetT"}}
     var offset{{$property.Name}} = fbutils.Create{{$property.ObType}}Offset(fbb, {{template "property-converter-encode" $property}})

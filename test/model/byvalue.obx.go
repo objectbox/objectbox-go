@@ -22,11 +22,18 @@ var EntityByValueBinding = entityByValue_EntityInfo{
 
 // EntityByValue_ contains type-based Property helpers to facilitate some common operations such as Queries.
 var EntityByValue_ = struct {
-	Id *objectbox.PropertyUint64
+	Id   *objectbox.PropertyUint64
+	Text *objectbox.PropertyString
 }{
 	Id: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
 			Id:     1,
+			Entity: &EntityByValueBinding.Entity,
+		},
+	},
+	Text: &objectbox.PropertyString{
+		BaseProperty: &objectbox.BaseProperty{
+			Id:     2,
 			Entity: &EntityByValueBinding.Entity,
 		},
 	},
@@ -42,7 +49,8 @@ func (entityByValue_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("EntityByValue", 3, 2793387980842421409)
 	model.Property("Id", objectbox.PropertyType_Long, 1, 8853550994304785841)
 	model.PropertyFlags(objectbox.PropertyFlags_ID)
-	model.EntityLastPropertyId(1, 8853550994304785841)
+	model.Property("Text", objectbox.PropertyType_String, 2, 6704507893545428268)
+	model.EntityLastPropertyId(2, 6704507893545428268)
 }
 
 // GetId is called by ObjectBox during Put operations to check for existing ID on an object
@@ -71,10 +79,20 @@ func (entityByValue_EntityInfo) PutRelated(txn *objectbox.Transaction, object in
 
 // Flatten is called by ObjectBox to transform an object to a FlatBuffer
 func (entityByValue_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) error {
+	var obj *EntityByValue
+	if objPtr, ok := object.(*EntityByValue); ok {
+		obj = objPtr
+	} else {
+		objVal := object.(EntityByValue)
+		obj = &objVal
+	}
+
+	var offsetText = fbutils.CreateStringOffset(fbb, obj.Text)
 
 	// build the FlatBuffers object
-	fbb.StartObject(1)
+	fbb.StartObject(2)
 	fbutils.SetUint64Slot(fbb, 0, id)
+	fbutils.SetUOffsetTSlot(fbb, 1, offsetText)
 	return nil
 }
 
@@ -87,7 +105,8 @@ func (entityByValue_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) (
 	var id = table.GetUint64Slot(4, 0)
 
 	return &EntityByValue{
-		Id: id,
+		Id:   id,
+		Text: fbutils.GetStringSlot(table, 6),
 	}, nil
 }
 

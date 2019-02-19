@@ -19,5 +19,6 @@ package model
 //go:generate objectbox-gogen -byValue
 
 type EntityByValue struct {
-	Id uint64
+	Id   uint64
+	Text string
 }

@@ -62,14 +62,14 @@ func (condition *conditionCombination) applyTo(qb *QueryBuilder, isRoot bool) (C
 	}
 }
 
-func MatchAny(conditions ...Condition) Condition {
+func Any(conditions ...Condition) Condition {
 	return &conditionCombination{
 		or:         true,
 		conditions: conditions,
 	}
 }
 
-func MatchAll(conditions ...Condition) Condition {
+func All(conditions ...Condition) Condition {
 	return &conditionCombination{
 		conditions: conditions,
 	}

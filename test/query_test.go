@@ -363,11 +363,11 @@ func TestQueryAndOr(t *testing.T) {
 	// test standard queries
 	testQueries(t, env, queryTestOptions{baseCount: 1000}, []queryTestCase{
 		{1, s{`(Int == 0 AND Int32 == 0 AND Int64 == 0)`}, box.Query(E.Int.Equals(0), E.Int32.Equals(0), E.Int64.Equals(0)), nil},
-		{1, s{`(Int == 0 AND Int32 == 0 AND Int64 == 0)`}, box.Query(objectbox.MatchAll(E.Int.Equals(0), E.Int32.Equals(0), E.Int64.Equals(0))), nil},
-		{1, s{`(Int == 0 OR Int32 == 0 OR Int64 == 0)`}, box.Query(objectbox.MatchAny(E.Int.Equals(0), E.Int32.Equals(0), E.Int64.Equals(0))), nil},
-		{1, s{`(Int == 0 OR (Int == 0 AND Int32 == 0 AND Int64 == 0) OR Int64 == 0)`}, box.Query(objectbox.MatchAny(E.Int.Equals(0), objectbox.MatchAll(E.Int.Equals(0), E.Int32.Equals(0), E.Int64.Equals(0)), E.Int64.Equals(0))), nil},
-		{1, s{`(Int == 0 AND Int64 == 0)`}, box.Query(objectbox.MatchAny(E.Int.Equals(0)), objectbox.MatchAll(E.Int64.Equals(0))), nil},
-		{1000, s{`TRUE`}, box.Query(objectbox.MatchAny(), objectbox.MatchAll()), nil},
+		{1, s{`(Int == 0 AND Int32 == 0 AND Int64 == 0)`}, box.Query(objectbox.All(E.Int.Equals(0), E.Int32.Equals(0), E.Int64.Equals(0))), nil},
+		{1, s{`(Int == 0 OR Int32 == 0 OR Int64 == 0)`}, box.Query(objectbox.Any(E.Int.Equals(0), E.Int32.Equals(0), E.Int64.Equals(0))), nil},
+		{1, s{`(Int == 0 OR (Int == 0 AND Int32 == 0 AND Int64 == 0) OR Int64 == 0)`}, box.Query(objectbox.Any(E.Int.Equals(0), objectbox.All(E.Int.Equals(0), E.Int32.Equals(0), E.Int64.Equals(0)), E.Int64.Equals(0))), nil},
+		{1, s{`(Int == 0 AND Int64 == 0)`}, box.Query(objectbox.Any(E.Int.Equals(0)), objectbox.All(E.Int64.Equals(0))), nil},
+		{1000, s{`TRUE`}, box.Query(objectbox.Any(), objectbox.All()), nil},
 		{1000, s{`TRUE`}, box.Query(), nil},
 	})
 
@@ -375,11 +375,11 @@ func TestQueryAndOr(t *testing.T) {
 	testQueries(t, env, queryTestOptions{baseCount: 1000}, []queryTestCase{
 		{0, s{`(Int == 0 AND Int32 == 0 AND Int64 == 47)`}, box.Query(E.Int.Equals(0), E.Int32.Equals(0), E.Int64.Equals(0)),
 			func(q *eq) error { return q.SetInt64Params(E.Int64, e.Int64) }},
-		{3, s{`(Int == 0 OR Int32 == 0 OR Int64 == 47)`}, box.Query(objectbox.MatchAny(E.Int.Equals(0), E.Int32.Equals(0), E.Int64.Equals(0))),
+		{3, s{`(Int == 0 OR Int32 == 0 OR Int64 == 47)`}, box.Query(objectbox.Any(E.Int.Equals(0), E.Int32.Equals(0), E.Int64.Equals(0))),
 			func(q *eq) error { return q.SetInt64Params(E.Int64, e.Int64) }},
-		{1, s{`(Int == 0 OR (Int == 0 AND Int32 == 0 AND Int64 == 47) OR Int64 == 0)`}, box.Query(objectbox.MatchAny(E.Int.Equals(0), objectbox.MatchAll(E.Int.Equals(0), E.Int32.Equals(0), E.Int64.Equals(0)), E.Int64.Equals(0))),
+		{1, s{`(Int == 0 OR (Int == 0 AND Int32 == 0 AND Int64 == 47) OR Int64 == 0)`}, box.Query(objectbox.Any(E.Int.Equals(0), objectbox.All(E.Int.Equals(0), E.Int32.Equals(0), E.Int64.Equals(0)), E.Int64.Equals(0))),
 			func(q *eq) error { return q.SetInt64Params(E.Int64, e.Int64) }},
-		{0, s{`(Int == 0 AND Int64 == 47)`}, box.Query(objectbox.MatchAny(E.Int.Equals(0)), objectbox.MatchAll(E.Int64.Equals(0))),
+		{0, s{`(Int == 0 AND Int64 == 47)`}, box.Query(objectbox.Any(E.Int.Equals(0)), objectbox.All(E.Int64.Equals(0))),
 			func(q *eq) error { return q.SetInt64Params(E.Int64, e.Int64) }},
 	})
 }

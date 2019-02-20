@@ -166,6 +166,7 @@ func entity47(coef int64, options *TestEnvOptions) *Entity {
 			NextSlice: []EntityByValue{{Text:"RelatedPtrSlice-NextSlice-"+String}},
 		}}
 	} else {
+		object.Related.NextSlice = []EntityByValue{}
 		object.RelatedSlice = []EntityByValue{}
 		object.RelatedPtrSlice = []*TestEntityRelated{}
 	}

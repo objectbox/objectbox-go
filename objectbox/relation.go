@@ -21,7 +21,7 @@ type conditionRelationOneToMany struct {
 	conditions []Condition
 }
 
-func (condition *conditionRelationOneToMany) applyTo(qb *QueryBuilder) (ConditionId, error) {
+func (condition *conditionRelationOneToMany) applyTo(qb *QueryBuilder, isRoot bool) (ConditionId, error) {
 	return 0, qb.LinkOneToMany(condition.relation, condition.conditions)
 }
 
@@ -92,7 +92,7 @@ type conditionRelationManyToMany struct {
 	conditions []Condition
 }
 
-func (condition *conditionRelationManyToMany) applyTo(qb *QueryBuilder) (ConditionId, error) {
+func (condition *conditionRelationManyToMany) applyTo(qb *QueryBuilder, isRoot bool) (ConditionId, error) {
 	return 0, qb.LinkManyToMany(condition.relation, condition.conditions)
 }
 

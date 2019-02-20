@@ -360,7 +360,8 @@ func TestQueryAndOr(t *testing.T) {
 	var e = model.Entity47()
 
 	// and a shorter type name for the setup function argument
-	type eq = model.EntityQuery
+	type i = interface{}
+	var eq = func(q interface{}) *objectbox.Query { return q.(*objectbox.Query) }
 
 	// test standard queries
 	testQueries(t, env, queryTestOptions{baseCount: 1000}, []queryTestCase{
@@ -376,13 +377,13 @@ func TestQueryAndOr(t *testing.T) {
 	// test when using setParams
 	testQueries(t, env, queryTestOptions{baseCount: 1000}, []queryTestCase{
 		{0, s{`(Int == 0 AND Int32 == 0 AND Int64 == 47)`}, box.Query(E.Int.Equals(0), E.Int32.Equals(0), E.Int64.Equals(0)),
-			func(q *eq) error { return q.SetInt64Params(E.Int64, e.Int64) }},
+			func(q i) error { return eq(q).SetInt64Params(E.Int64, e.Int64) }},
 		{3, s{`(Int == 0 OR Int32 == 0 OR Int64 == 47)`}, box.Query(objectbox.Any(E.Int.Equals(0), E.Int32.Equals(0), E.Int64.Equals(0))),
-			func(q *eq) error { return q.SetInt64Params(E.Int64, e.Int64) }},
+			func(q i) error { return eq(q).SetInt64Params(E.Int64, e.Int64) }},
 		{1, s{`(Int == 0 OR (Int == 0 AND Int32 == 0 AND Int64 == 47) OR Int64 == 0)`}, box.Query(objectbox.Any(E.Int.Equals(0), objectbox.All(E.Int.Equals(0), E.Int32.Equals(0), E.Int64.Equals(0)), E.Int64.Equals(0))),
-			func(q *eq) error { return q.SetInt64Params(E.Int64, e.Int64) }},
+			func(q i) error { return eq(q).SetInt64Params(E.Int64, e.Int64) }},
 		{0, s{`(Int == 0 AND Int64 == 47)`}, box.Query(objectbox.Any(E.Int.Equals(0)), objectbox.All(E.Int64.Equals(0))),
-			func(q *eq) error { return q.SetInt64Params(E.Int64, e.Int64) }},
+			func(q i) error { return eq(q).SetInt64Params(E.Int64, e.Int64) }},
 	})
 }
 

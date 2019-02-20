@@ -48,7 +48,7 @@ func (entityByValue_EntityInfo) GeneratorVersion() int {
 func (entityByValue_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("EntityByValue", 3, 2793387980842421409)
 	model.Property("Id", objectbox.PropertyType_Long, 1, 8853550994304785841)
-	model.PropertyFlags(objectbox.PropertyFlags_ID)
+	model.PropertyFlags(objectbox.PropertyFlags_UNSIGNED | objectbox.PropertyFlags_ID)
 	model.Property("Text", objectbox.PropertyType_String, 2, 6704507893545428268)
 	model.EntityLastPropertyId(2, 6704507893545428268)
 }

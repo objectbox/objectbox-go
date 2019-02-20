@@ -708,24 +708,28 @@ func (property *Property) setBasicType(baseType string) error {
 	} else if ts == "uint" || ts == "uint64" {
 		property.ObType = "Long"
 		property.FbType = "Uint64"
+		property.addObFlag("UNSIGNED")
 	} else if ts == "int32" || ts == "rune" {
 		property.ObType = "Int"
 		property.FbType = "Int32"
 	} else if ts == "uint32" {
 		property.ObType = "Int"
 		property.FbType = "Uint32"
+		property.addObFlag("UNSIGNED")
 	} else if ts == "int16" {
 		property.ObType = "Short"
 		property.FbType = "Int16"
 	} else if ts == "uint16" {
 		property.ObType = "Short"
 		property.FbType = "Uint16"
+		property.addObFlag("UNSIGNED")
 	} else if ts == "int8" {
 		property.ObType = "Byte"
 		property.FbType = "Int8"
 	} else if ts == "uint8" {
 		property.ObType = "Byte"
 		property.FbType = "Uint8"
+		property.addObFlag("UNSIGNED")
 	} else if ts == "byte" {
 		property.ObType = "Byte"
 		property.FbType = "Byte"

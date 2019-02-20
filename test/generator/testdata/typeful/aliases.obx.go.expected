@@ -83,7 +83,7 @@ func (aliases_EntityInfo) GeneratorVersion() int {
 func (aliases_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("Aliases", 1, 8717895732742165505)
 	model.Property("Id", objectbox.PropertyType_Long, 1, 2259404117704393152)
-	model.PropertyFlags(objectbox.PropertyFlags_ID)
+	model.PropertyFlags(objectbox.PropertyFlags_UNSIGNED | objectbox.PropertyFlags_ID)
 	model.Property("SameFile", objectbox.PropertyType_String, 2, 6050128673802995827)
 	model.Property("SamePackage", objectbox.PropertyType_Long, 3, 501233450539197794)
 	model.Property("SameFile2", objectbox.PropertyType_String, 4, 3390393562759376202)

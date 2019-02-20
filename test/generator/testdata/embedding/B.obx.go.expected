@@ -63,7 +63,7 @@ func (b_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("B", 2, 501233450539197794)
 	model.Property("Text", objectbox.PropertyType_String, 1, 3390393562759376202)
 	model.Property("Id", objectbox.PropertyType_Long, 2, 2669985732393126063)
-	model.PropertyFlags(objectbox.PropertyFlags_ID)
+	model.PropertyFlags(objectbox.PropertyFlags_UNSIGNED | objectbox.PropertyFlags_ID)
 	model.Property("Value", objectbox.PropertyType_Double, 3, 1774932891286980153)
 	model.PropertyFlags(objectbox.PropertyFlags_UNIQUE)
 	model.PropertyIndex(1, 6044372234677422456)

@@ -70,13 +70,15 @@ func (task_EntityInfo) GeneratorVersion() int {
 func (task_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("Task", 1, 8717895732742165505)
 	model.Property("Id", objectbox.PropertyType_Long, 1, 6050128673802995827)
-	model.PropertyFlags(objectbox.PropertyFlags_ID)
+	model.PropertyFlags(objectbox.PropertyFlags_UNSIGNED | objectbox.PropertyFlags_ID)
 	model.Property("Uid", objectbox.PropertyType_String, 2, 501233450539197794)
 	model.PropertyFlags(objectbox.PropertyFlags_UNIQUE)
 	model.PropertyIndex(1, 3390393562759376202)
 	model.Property("text", objectbox.PropertyType_String, 3, 2669985732393126063)
 	model.Property("Date", objectbox.PropertyType_Date, 4, 1774932891286980153)
+	model.PropertyFlags(objectbox.PropertyFlags_UNSIGNED)
 	model.Property("GroupId", objectbox.PropertyType_Relation, 5, 6044372234677422456)
+	model.PropertyFlags(objectbox.PropertyFlags_UNSIGNED)
 	model.PropertyRelation("Group", 2, 8274930044578894929)
 	model.EntityLastPropertyId(5, 6044372234677422456)
 }
@@ -305,7 +307,7 @@ func (group_EntityInfo) GeneratorVersion() int {
 func (group_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("Group", 2, 2259404117704393152)
 	model.Property("Id", objectbox.PropertyType_Long, 1, 1543572285742637646)
-	model.PropertyFlags(objectbox.PropertyFlags_ID)
+	model.PropertyFlags(objectbox.PropertyFlags_UNSIGNED | objectbox.PropertyFlags_ID)
 	model.EntityLastPropertyId(1, 1543572285742637646)
 }
 

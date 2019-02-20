@@ -278,6 +278,30 @@ func (property PropertyUint64) NotEquals(value uint64) Condition {
 	}
 }
 
+func (property PropertyUint64) GreaterThan(value uint64) Condition {
+	return &conditionClosure{
+		func(qb *QueryBuilder) (ConditionId, error) {
+			return qb.IntGreater(property.BaseProperty, int64(value))
+		},
+	}
+}
+
+func (property PropertyUint64) LessThan(value uint64) Condition {
+	return &conditionClosure{
+		func(qb *QueryBuilder) (ConditionId, error) {
+			return qb.IntLess(property.BaseProperty, int64(value))
+		},
+	}
+}
+
+func (property PropertyUint64) Between(a, b uint64) Condition {
+	return &conditionClosure{
+		func(qb *QueryBuilder) (ConditionId, error) {
+			return qb.IntBetween(property.BaseProperty, int64(a), int64(b))
+		},
+	}
+}
+
 func (property PropertyUint64) int64Slice(values []uint64) []int64 {
 	result := make([]int64, len(values))
 
@@ -320,6 +344,30 @@ func (property PropertyUint) NotEquals(value uint) Condition {
 	return &conditionClosure{
 		func(qb *QueryBuilder) (ConditionId, error) {
 			return qb.IntNotEqual(property.BaseProperty, int64(value))
+		},
+	}
+}
+
+func (property PropertyUint) GreaterThan(value uint) Condition {
+	return &conditionClosure{
+		func(qb *QueryBuilder) (ConditionId, error) {
+			return qb.IntGreater(property.BaseProperty, int64(value))
+		},
+	}
+}
+
+func (property PropertyUint) LessThan(value uint) Condition {
+	return &conditionClosure{
+		func(qb *QueryBuilder) (ConditionId, error) {
+			return qb.IntLess(property.BaseProperty, int64(value))
+		},
+	}
+}
+
+func (property PropertyUint) Between(a, b uint) Condition {
+	return &conditionClosure{
+		func(qb *QueryBuilder) (ConditionId, error) {
+			return qb.IntBetween(property.BaseProperty, int64(a), int64(b))
 		},
 	}
 }

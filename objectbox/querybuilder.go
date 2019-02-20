@@ -129,11 +129,17 @@ func (qb *QueryBuilder) Build() (*Query, error) {
 	}
 	query.installFinalizer()
 
-	for _, iqb := range qb.innerBuilders {
-		query.linkedEntityIds = append(query.linkedEntityIds, iqb.typeId)
-	}
+	// search all inner builders recursively and collect linked entity IDs
+	qb.setQueryLinkedEntityIds(query)
 
 	return query, nil
+}
+
+func (qb *QueryBuilder) setQueryLinkedEntityIds(query *Query) {
+	for _, iqb := range qb.innerBuilders {
+		query.linkedEntityIds = append(query.linkedEntityIds, iqb.typeId)
+		iqb.setQueryLinkedEntityIds(query)
+	}
 }
 
 func (qb *QueryBuilder) applyConditions(conditions []Condition) error {

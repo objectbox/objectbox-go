@@ -72,4 +72,8 @@ type TestEntityInline struct {
 type TestEntityRelated struct {
 	Id   uint64
 	Name string
+
+	// have another level of relations
+	Next *EntityByValue `link`
+	NextSlice []EntityByValue
 }

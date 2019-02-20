@@ -392,6 +392,7 @@ func TestQueryLinks(t *testing.T) {
 
 	var box = env.Box
 	var boxR = model.BoxForTestEntityRelated(env.ObjectBox)
+	var boxV = model.BoxForEntityByValue(env.ObjectBox)
 
 	// Use this special entity for testing descriptions
 	var e = model.Entity47()
@@ -399,35 +400,56 @@ func TestQueryLinks(t *testing.T) {
 	// let's alias the entity to make the test cases easier to read
 	var E = model.Entity_
 	var R = model.TestEntityRelated_
+	var V = model.EntityByValue_
 
 	// and a shorter type name for the setup function argument
 	type i = interface{}
 	var eq = func(q interface{}) *objectbox.Query { return q.(*objectbox.Query) }
 
 	testQueries(t, env, queryTestOptions{baseCount: 10}, []queryTestCase{
-		// one-to-many link
+		// to-one link
 		{2, s{`TRUE Link: Name == "rel-Val-1"`}, box.Query(E.Related.Link(R.Name.Equals("", true))),
 			func(q i) error { return eq(q).SetStringParams(R.Name, "rel-Val-1") }},
 
-		// one-to-many backlink
+		// to-one backlink = one-to-many
 		{1, s{`TRUE Link: String == "Val-1"`}, boxR.Query(E.Related.Link(E.String.Equals("", true))),
 			func(q i) error { return eq(q).SetStringParams(E.String, e.String) }},
 
-		// one-to-many empty
+		// to-one empty
 		{10, s{`TRUE Link: TRUE`}, box.Query(E.Related.Link()), nil},
 		{10, s{`TRUE Link: TRUE`}, boxR.Query(E.Related.Link()), nil},
 
-		// many-to-many link
+		// to-many link
 		{2, s{`TRUE Link: Name == "relPtr-Val-1"`}, box.Query(E.RelatedPtrSlice.Link(R.Name.Equals("", true))),
 			func(q i) error { return eq(q).SetStringParams(R.Name, "relPtr-Val-1") }},
 
-		// many-to-many backlink
+		// to-many backlink = many-to-many
 		{1, s{`TRUE Link: String == "Val-1"`}, boxR.Query(E.RelatedPtrSlice.Link(E.String.Equals("", true))),
 			func(q i) error { return eq(q).SetStringParams(E.String, e.String) }},
 
-		// many-to-many empty
+		// to-many empty
 		{10, s{`TRUE Link: TRUE`}, box.Query(E.RelatedPtrSlice.Link()), nil},
 		{10, s{`TRUE Link: TRUE`}, boxR.Query(E.RelatedPtrSlice.Link()), nil},
+
+		// to-one three entities deep link
+		{2, s{`TRUE Link: TRUE Link: Text == "RelatedPtr-Next-Val-1"`},
+			box.Query(E.RelatedPtr.Link(R.Next.Link(V.Text.Equals("", true)))),
+			func(q i) error { return eq(q).SetStringParams(V.Text, "RelatedPtr-Next-Val-1") }},
+
+		// to-one three entities deep backlink
+		{1, s{`TRUE Link: TRUE Link: String == "Val-1"`},
+			boxV.Query(R.Next.Link(E.RelatedPtr.Link(E.String.Equals("", true)))),
+			func(q i) error { return eq(q).SetStringParams(E.String, e.String) }},
+
+		// to-many three entities deep link
+		{2, s{`TRUE Link: TRUE Link: Text == "RelatedPtr-NextSlice-Val-1"`},
+			box.Query(E.RelatedPtr.Link(R.NextSlice.Link(V.Text.Equals("", true)))),
+			func(q i) error { return eq(q).SetStringParams(V.Text, "RelatedPtr-NextSlice-Val-1") }},
+
+		// to-many three entities deep backlink
+		{1, s{`TRUE Link: TRUE Link: String == "Val-1"`},
+			boxV.Query(R.NextSlice.Link(E.RelatedPtr.Link(E.String.Equals("", true)))),
+			func(q i) error { return eq(q).SetStringParams(E.String, e.String) }},
 	})
 }
 
@@ -567,6 +589,12 @@ func testQueries(t *testing.T, env *model.TestEnv, options queryTestOptions, tes
 			query = q.Query
 			box = model.BoxForTestEntityRelated(env.ObjectBox).Box
 			baseCount = uint64(options.baseCount) * 3 // TestEnv::Populate() currently inserts 3 relations for each main entity
+		} else if q, valid := tc.q.(*model.EntityByValueQuery); valid {
+			query = q.Query
+			box = model.BoxForEntityByValue(env.ObjectBox).Box
+			baseCount = uint64(options.baseCount) * 5 // TestEnv::Populate() currently inserts 5 relations for each main entity
+		} else {
+			assert.Failf(t, "Query is not supported by the test executor: %v", tc.q)
 		}
 
 		// run query-setup function, if defined
@@ -653,6 +681,8 @@ func matchAllEntityIds(t *testing.T, ids []uint64, items interface{}) {
 		if obj, valid := item.(*model.Entity); valid {
 			actualIds = append(actualIds, obj.Id)
 		} else if obj, valid := item.(*model.TestEntityRelated); valid {
+			actualIds = append(actualIds, obj.Id)
+		} else if obj, valid := item.(model.EntityByValue); valid {
 			actualIds = append(actualIds, obj.Id)
 		} else {
 			t.Fatalf("type not supported: %v", slice.Type())

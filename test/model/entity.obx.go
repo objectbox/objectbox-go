@@ -1102,8 +1102,10 @@ var TestEntityRelatedBinding = testEntityRelated_EntityInfo{
 
 // TestEntityRelated_ contains type-based Property helpers to facilitate some common operations such as Queries.
 var TestEntityRelated_ = struct {
-	Id   *objectbox.PropertyUint64
-	Name *objectbox.PropertyString
+	Id        *objectbox.PropertyUint64
+	Name      *objectbox.PropertyString
+	Next      *objectbox.RelationToOne
+	NextSlice *objectbox.RelationToMany
 }{
 	Id: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
@@ -1116,6 +1118,18 @@ var TestEntityRelated_ = struct {
 			Id:     2,
 			Entity: &TestEntityRelatedBinding.Entity,
 		},
+	},
+	Next: &objectbox.RelationToOne{
+		Property: &objectbox.BaseProperty{
+			Id:     3,
+			Entity: &TestEntityRelatedBinding.Entity,
+		},
+		Target: &EntityByValueBinding.Entity,
+	},
+	NextSlice: &objectbox.RelationToMany{
+		Id:     6,
+		Source: &TestEntityRelatedBinding.Entity,
+		Target: &EntityByValueBinding.Entity,
 	},
 }
 
@@ -1130,7 +1144,10 @@ func (testEntityRelated_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Property("Id", objectbox.PropertyType_Long, 1, 710127486443861244)
 	model.PropertyFlags(objectbox.PropertyFlags_ID)
 	model.Property("Name", objectbox.PropertyType_String, 2, 1781092268467778149)
-	model.EntityLastPropertyId(2, 1781092268467778149)
+	model.Property("Next", objectbox.PropertyType_Relation, 3, 3103593908461833729)
+	model.PropertyRelation("EntityByValue", 4, 3414034888235702623)
+	model.EntityLastPropertyId(3, 3103593908461833729)
+	model.Relation(6, 3119566795324383223, EntityByValueBinding.Id, EntityByValueBinding.Uid)
 }
 
 // GetId is called by ObjectBox during Put operations to check for existing ID on an object
@@ -1145,6 +1162,24 @@ func (testEntityRelated_EntityInfo) SetId(object interface{}, id uint64) {
 
 // PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
 func (testEntityRelated_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}, id uint64) error {
+	if rel := object.(*TestEntityRelated).Next; rel != nil {
+		rId, err := EntityByValueBinding.GetId(rel)
+		if err != nil {
+			return err
+		} else if rId == 0 {
+			if err := txn.RunWithCursor(EntityByValueBinding.Id, func(targetCursor *objectbox.Cursor) error {
+				_, err := targetCursor.Put(rel) // NOTE Put/PutAsync() has a side-effect of setting the rel.ID
+				return err
+			}); err != nil {
+				return err
+			}
+		}
+	}
+	if err := txn.RunWithCursor(TestEntityRelatedBinding.Id, func(cursor *objectbox.Cursor) error {
+		return cursor.RelationReplace(6, EntityByValueBinding.Id, id, object, object.(*TestEntityRelated).NextSlice)
+	}); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -1153,10 +1188,20 @@ func (testEntityRelated_EntityInfo) Flatten(object interface{}, fbb *flatbuffers
 	obj := object.(*TestEntityRelated)
 	var offsetName = fbutils.CreateStringOffset(fbb, obj.Name)
 
+	var rIdNext uint64
+	if rel := obj.Next; rel != nil {
+		if rId, err := EntityByValueBinding.GetId(rel); err != nil {
+			return err
+		} else {
+			rIdNext = rId
+		}
+	}
+
 	// build the FlatBuffers object
-	fbb.StartObject(2)
+	fbb.StartObject(3)
 	fbutils.SetUint64Slot(fbb, 0, id)
 	fbutils.SetUOffsetTSlot(fbb, 1, offsetName)
+	fbutils.SetUint64Slot(fbb, 2, rIdNext)
 	return nil
 }
 
@@ -1168,9 +1213,40 @@ func (testEntityRelated_EntityInfo) Load(txn *objectbox.Transaction, bytes []byt
 	}
 	var id = table.GetUint64Slot(4, 0)
 
+	var relNext *EntityByValue
+	if rId := table.GetUint64Slot(8, 0); rId > 0 {
+		if err := txn.RunWithCursor(EntityByValueBinding.Id, func(targetCursor *objectbox.Cursor) error {
+			if relObject, err := targetCursor.Get(rId); err != nil {
+				return err
+			} else if relObj, ok := relObject.(*EntityByValue); ok {
+				relNext = relObj
+			} else {
+				var relObj = relObject.(EntityByValue)
+				relNext = &relObj
+			}
+			return nil
+		}); err != nil {
+			return nil, err
+		}
+	}
+
+	var relNextSlice []EntityByValue
+	if err := txn.RunWithCursor(TestEntityRelatedBinding.Id, func(cursor *objectbox.Cursor) error {
+		if rSlice, err := cursor.RelationGetAll(6, EntityByValueBinding.Id, id); err != nil {
+			return err
+		} else {
+			relNextSlice = rSlice.([]EntityByValue)
+			return nil
+		}
+	}); err != nil {
+		return nil, err
+	}
+
 	return &TestEntityRelated{
-		Id:   id,
-		Name: fbutils.GetStringSlot(table, 6),
+		Id:        id,
+		Name:      fbutils.GetStringSlot(table, 6),
+		Next:      relNext,
+		NextSlice: relNextSlice,
 	}, nil
 }
 

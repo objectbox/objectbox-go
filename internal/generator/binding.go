@@ -58,8 +58,9 @@ type Entity struct {
 
 type Property struct {
 	Identifier
-	Name        string
-	ObName      string
+	BaseName    string // name in the containing struct (might be embedded)
+	Name        string // prefixed name (unique)
+	ObName      string // name of the field in DB
 	Annotations map[string]*Annotation
 	ObType      string
 	ObFlags     []string
@@ -216,7 +217,7 @@ func (binding *Binding) createEntityFromAst(strct *ast.StructType, name string, 
 		}
 	}
 
-	if fields, err := entity.addFields(astStructFieldList{strct, binding.source}, entity.Name); err != nil {
+	if fields, err := entity.addFields(astStructFieldList{strct, binding.source}, entity.Name, ""); err != nil {
 		return err
 	} else {
 		entity.Fields = fields
@@ -237,7 +238,7 @@ func (binding *Binding) createEntityFromAst(strct *ast.StructType, name string, 
 				} else {
 					// fail in case multiple fields match this condition
 					return fmt.Errorf(
-						"id field is missing on entity %s - annotate a field with `id` tag", entity.Name)
+						"id field is missing or multiple fields match the automatic detection condition on entity %s - annotate a field with `id` tag", entity.Name)
 				}
 			}
 		}
@@ -264,7 +265,7 @@ func (binding *Binding) createEntityFromAst(strct *ast.StructType, name string, 
 	return nil
 }
 
-func (entity *Entity) addFields(fields fieldList, fieldPath string) ([]*Field, error) {
+func (entity *Entity) addFields(fields fieldList, fieldPath, prefix string) ([]*Field, error) {
 	var propertyError = func(err error, property *Property) error {
 		return fmt.Errorf("%s on property %s, entity %s", err, property.Name, fieldPath)
 	}
@@ -325,7 +326,18 @@ func (entity *Entity) addFields(fields fieldList, fieldPath string) ([]*Field, e
 			return nil, propertyError(err, property)
 		} else if innerStructFields != nil {
 			// if it was recognized as a struct that should be embedded, add all the fields
-			if innerFields, err := entity.addFields(innerStructFields, fieldPath+"."+property.Name); err != nil {
+
+			var innerPrefix = prefix
+			if property.Annotations["inline"] == nil {
+				// if NOT inline, use prefix based on the field name
+				if len(innerPrefix) == 0 {
+					innerPrefix = field.Name
+				} else {
+					innerPrefix = innerPrefix + "_" + field.Name
+				}
+			}
+
+			if innerFields, err := entity.addFields(innerStructFields, fieldPath+"."+property.Name, innerPrefix); err != nil {
 				return nil, err
 			} else {
 				// apply some struct-related settings to the field
@@ -366,6 +378,12 @@ func (entity *Entity) addFields(fields fieldList, fieldPath string) ([]*Field, e
 			}
 		} else {
 			property.ObName = property.Name
+		}
+
+		property.BaseName = property.Name
+		if len(prefix) != 0 {
+			property.ObName = prefix + "_" + property.ObName
+			property.Name = prefix + "_" + property.Name
 		}
 
 		// ObjectBox core internally converts to lowercase so we should check it as this as well
@@ -879,7 +897,7 @@ func (property *Property) Path() string {
 	// strip the first component
 	parts = parts[1:]
 
-	parts = append(parts, property.Name)
+	parts = append(parts, property.BaseName)
 	return strings.Join(parts, ".")
 }
 

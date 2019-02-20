@@ -63,8 +63,8 @@ type TestStringIdEntity struct {
 }
 
 type TestEntityInline struct {
-	BaseWithDate
-	*BaseWithValue
+	BaseWithDate   `inline`
+	*BaseWithValue `inline`
 
 	Id uint64
 }

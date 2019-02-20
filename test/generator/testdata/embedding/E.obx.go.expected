@@ -88,7 +88,7 @@ func (e_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}, i
 // Flatten is called by ObjectBox to transform an object to a FlatBuffer
 func (e_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) error {
 	obj := object.(*E)
-	var offsetLocation = fbutils.CreateStringOffset(fbb, obj.Location)
+	var offsetLocation = fbutils.CreateStringOffset(fbb, obj.Trackable.Location)
 	var offsetForeignAlias = fbutils.CreateStringOffset(fbb, obj.ForeignAlias)
 	var offsetForeignNamed = fbutils.CreateStringOffset(fbb, string(obj.ForeignNamed))
 

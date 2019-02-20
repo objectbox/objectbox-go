@@ -37,9 +37,9 @@ var BindingTemplate = template.Must(template.New("binding").Funcs(funcMap).Parse
 {{- end -}}
 
 {{define "property-converter-encode"}}{{/* used in Flatten*/ -}}
-	{{- if .Converter}}{{.Converter}}ToDatabaseValue(obj.{{.Name}})
-	{{- else if .CastOnRead}}{{.CastOnRead}}(obj.{{.Name}})
-	{{- else}}obj.{{.Name}}{{end}}
+	{{- if .Converter}}{{.Converter}}ToDatabaseValue(obj.{{.Path}})
+	{{- else if .CastOnRead}}{{.CastOnRead}}(obj.{{.Path}})
+	{{- else}}obj.{{.Path}}{{end}}
 {{- end -}}
 
 

@@ -1,6 +1,6 @@
 package object
 
 type A struct {
-	Id
+	Id   `inline`
 	Name string
 }

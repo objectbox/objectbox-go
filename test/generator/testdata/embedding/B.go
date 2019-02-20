@@ -1,6 +1,6 @@
 package object
 
 type B struct {
-	Combined
-	Name string
+	Combined `inline`
+	Name     string
 }

@@ -285,7 +285,7 @@ var ReadingBinding = reading_EntityInfo{
 var Reading_ = struct {
 	Id              *objectbox.PropertyUint64
 	Date            *objectbox.PropertyInt64
-	EventId         *objectbox.PropertyUint64
+	EventId         *objectbox.RelationToOne
 	ValueName       *objectbox.PropertyString
 	ValueString     *objectbox.PropertyString
 	ValueInteger    *objectbox.PropertyInt64
@@ -305,11 +305,12 @@ var Reading_ = struct {
 			Entity: &ReadingBinding.Entity,
 		},
 	},
-	EventId: &objectbox.PropertyUint64{
-		BaseProperty: &objectbox.BaseProperty{
+	EventId: &objectbox.RelationToOne{
+		Property: &objectbox.BaseProperty{
 			Id:     3,
 			Entity: &ReadingBinding.Entity,
 		},
+		Target: &EventBinding.Entity,
 	},
 	ValueName: &objectbox.PropertyString{
 		BaseProperty: &objectbox.BaseProperty{

@@ -169,7 +169,7 @@
     {
       "id": "5:145948658381494339",
       "name": "TestEntityRelated",
-      "lastPropertyId": "2:1781092268467778149",
+      "lastPropertyId": "3:3103593908461833729",
       "properties": [
         {
           "id": "1:710127486443861244",
@@ -178,13 +178,24 @@
         {
           "id": "2:1781092268467778149",
           "name": "Name"
+        },
+        {
+          "id": "3:3103593908461833729",
+          "name": "Next",
+          "indexId": "4:3414034888235702623"
+        }
+      ],
+      "relations": [
+        {
+          "id": "6:3119566795324383223",
+          "name": "NextSlice"
         }
       ]
     }
   ],
   "lastEntityId": "5:145948658381494339",
-  "lastIndexId": "3:6077259218141868916",
-  "lastRelationId": "5:1694321226239708534",
+  "lastIndexId": "4:3414034888235702623",
+  "lastRelationId": "6:3119566795324383223",
   "retiredEntityUids": [],
   "retiredIndexUids": [],
   "retiredPropertyUids": [],

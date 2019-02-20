@@ -18,6 +18,7 @@ package objectbox_test
 
 import (
 	"fmt"
+	"reflect"
 	"regexp"
 	"runtime"
 	"strings"
@@ -240,108 +241,109 @@ func TestQueryParams(t *testing.T) {
 	var e = model.Entity47()
 
 	// and a shorter type name for the setup function argument
-	type eq = model.EntityQuery
+	type i = interface{}
+	var eq = func(q interface{}) *objectbox.Query { return q.(*objectbox.Query) }
 
 	testQueries(t, env, queryTestOptions{baseCount: 1000}, []queryTestCase{
 		{1, s{`String == "Val-1"`}, box.Query(E.String.Equals("", true)),
-			func(q *eq) error { return q.SetStringParams(E.String, e.String) }},
+			func(q i) error { return eq(q).SetStringParams(E.String, e.String) }},
 		{1, s{`String in ["VAL-1"]`}, box.Query(E.String.In(true)),
-			func(q *eq) error { return q.SetStringParamsIn(E.String, "VAL-1") }},
+			func(q i) error { return eq(q).SetStringParamsIn(E.String, "VAL-1") }},
 		{2, s{`String in ["VAL-1", "val-860714888"]`, `String in ["val-860714888", "VAL-1"]`},
 			box.Query(E.String.In(true)),
-			func(q *eq) error { return q.SetStringParamsIn(E.String, "val-860714888", "VAL-1") }},
+			func(q i) error { return eq(q).SetStringParamsIn(E.String, "val-860714888", "VAL-1") }},
 
 		{2, s{`StringVector contains "first-1"`}, box.Query(E.StringVector.Contains("", true)),
-			func(q *eq) error { return q.SetStringParams(E.StringVector, "first-1") }},
+			func(q i) error { return eq(q).SetStringParams(E.StringVector, "first-1") }},
 
 		{2, s{`Int64 == 47`}, box.Query(E.Int64.Equals(0)),
-			func(q *eq) error { return q.SetInt64Params(E.Int64, e.Int64) }},
+			func(q i) error { return eq(q).SetInt64Params(E.Int64, e.Int64) }},
 		{1, s{`Int64 between -1 and 1`}, box.Query(E.Int64.Between(0, 0)),
-			func(q *eq) error { return q.SetInt64Params(E.Int64, -1, 1) }},
+			func(q i) error { return eq(q).SetInt64Params(E.Int64, -1, 1) }},
 		{2, s{`Int64 in [94|47]`, `Int64 in [47|94]`}, box.Query(E.Int64.In()),
-			func(q *eq) error { return q.SetInt64ParamsIn(E.Int64, e.Int64, e.Int64*2) }},
+			func(q i) error { return eq(q).SetInt64ParamsIn(E.Int64, e.Int64, e.Int64*2) }},
 
 		{2, s{`Uint64 == 47`}, box.Query(E.Uint64.Equals(0)),
-			func(q *eq) error { return q.SetInt64Params(E.Uint64, int64(e.Uint64)) }},
+			func(q i) error { return eq(q).SetInt64Params(E.Uint64, int64(e.Uint64)) }},
 		{2, s{`Uint64 in [94|47]`, `Uint64 in [47|94]`}, box.Query(E.Uint64.In()),
-			func(q *eq) error { return q.SetInt64ParamsIn(E.Uint64, int64(e.Uint64), int64(e.Uint64*2)) }},
+			func(q i) error { return eq(q).SetInt64ParamsIn(E.Uint64, int64(e.Uint64), int64(e.Uint64*2)) }},
 
 		{3, s{`Int == 47`}, box.Query(E.Int.Equals(0)),
-			func(q *eq) error { return q.SetInt64Params(E.Int, int64(e.Int)) }},
+			func(q i) error { return eq(q).SetInt64Params(E.Int, int64(e.Int)) }},
 		{1, s{`Int between -1 and 1`}, box.Query(E.Int.Between(0, 0)),
-			func(q *eq) error { return q.SetInt64Params(E.Int, -1, 1) }},
+			func(q i) error { return eq(q).SetInt64Params(E.Int, -1, 1) }},
 		{3, s{`Int in [94|47]`, `Int in [47|94]`}, box.Query(E.Int.In()),
-			func(q *eq) error { return q.SetInt64ParamsIn(E.Int, int64(e.Int), int64(e.Int*2)) }},
+			func(q i) error { return eq(q).SetInt64ParamsIn(E.Int, int64(e.Int), int64(e.Int*2)) }},
 
 		{3, s{`Uint == 47`}, box.Query(E.Uint.Equals(0)),
-			func(q *eq) error { return q.SetInt64Params(E.Uint, int64(e.Uint)) }},
+			func(q i) error { return eq(q).SetInt64Params(E.Uint, int64(e.Uint)) }},
 		{3, s{`Uint in [94|47]`, `Uint in [47|94]`}, box.Query(E.Uint.In()),
-			func(q *eq) error { return q.SetInt64ParamsIn(E.Uint, int64(e.Uint), int64(e.Uint*2)) }},
+			func(q i) error { return eq(q).SetInt64ParamsIn(E.Uint, int64(e.Uint), int64(e.Uint*2)) }},
 
 		{3, s{`Rune == 47`}, box.Query(E.Rune.Equals(0)),
-			func(q *eq) error { return q.SetInt64Params(E.Rune, int64(e.Rune)) }},
+			func(q i) error { return eq(q).SetInt64Params(E.Rune, int64(e.Rune)) }},
 		{1, s{`Rune between -1 and 1`}, box.Query(E.Rune.Between(0, 0)),
-			func(q *eq) error { return q.SetInt64Params(E.Rune, -1, 1) }},
+			func(q i) error { return eq(q).SetInt64Params(E.Rune, -1, 1) }},
 		{3, s{`Rune in [94|47]`, `Rune in [47|94]`}, box.Query(E.Rune.In()),
-			func(q *eq) error { return q.SetInt32ParamsIn(E.Rune, int32(e.Rune), int32(e.Rune*2)) }},
+			func(q i) error { return eq(q).SetInt32ParamsIn(E.Rune, int32(e.Rune), int32(e.Rune*2)) }},
 
 		{3, s{`Int32 == 47`}, box.Query(E.Int32.Equals(0)),
-			func(q *eq) error { return q.SetInt64Params(E.Int32, int64(e.Int32)) }},
+			func(q i) error { return eq(q).SetInt64Params(E.Int32, int64(e.Int32)) }},
 		{1, s{`Int32 between -1 and 1`}, box.Query(E.Int32.Between(0, 0)),
-			func(q *eq) error { return q.SetInt64Params(E.Int32, -1, 1) }},
+			func(q i) error { return eq(q).SetInt64Params(E.Int32, -1, 1) }},
 		{3, s{`Int32 in [94|47]`, `Int32 in [47|94]`}, box.Query(E.Int32.In()),
-			func(q *eq) error { return q.SetInt32ParamsIn(E.Int32, e.Int32, e.Int32*2) }},
+			func(q i) error { return eq(q).SetInt32ParamsIn(E.Int32, e.Int32, e.Int32*2) }},
 
 		{3, s{`Uint32 == 47`}, box.Query(E.Uint32.Equals(0)),
-			func(q *eq) error { return q.SetInt64Params(E.Uint32, int64(e.Int32)) }},
+			func(q i) error { return eq(q).SetInt64Params(E.Uint32, int64(e.Int32)) }},
 		{1, s{`Uint32 between 0 and 1`}, box.Query(E.Uint32.Between(0, 0)),
-			func(q *eq) error { return q.SetInt64Params(E.Uint32, 0, 1) }},
+			func(q i) error { return eq(q).SetInt64Params(E.Uint32, 0, 1) }},
 		{3, s{`Uint32 in [94|47]`, `Uint32 in [47|94]`}, box.Query(E.Uint32.In()),
-			func(q *eq) error { return q.SetInt32ParamsIn(E.Uint32, int32(e.Uint32), int32(e.Uint32*2)) }},
+			func(q i) error { return eq(q).SetInt32ParamsIn(E.Uint32, int32(e.Uint32), int32(e.Uint32*2)) }},
 
 		{3, s{`Int16 == 47`}, box.Query(E.Int16.Equals(0)),
-			func(q *eq) error { return q.SetInt64Params(E.Int16, int64(e.Int16)) }},
+			func(q i) error { return eq(q).SetInt64Params(E.Int16, int64(e.Int16)) }},
 		{1, s{`Int16 between -1 and 1`}, box.Query(E.Int16.Between(0, 0)),
-			func(q *eq) error { return q.SetInt64Params(E.Int16, -1, 1) }},
+			func(q i) error { return eq(q).SetInt64Params(E.Int16, -1, 1) }},
 
 		{3, s{`Uint16 == 47`}, box.Query(E.Uint16.Equals(0)),
-			func(q *eq) error { return q.SetInt64Params(E.Uint16, int64(e.Uint16)) }},
+			func(q i) error { return eq(q).SetInt64Params(E.Uint16, int64(e.Uint16)) }},
 		{1, s{`Uint16 between 0 and 1`}, box.Query(E.Uint16.Between(0, 0)),
-			func(q *eq) error { return q.SetInt64Params(E.Uint16, 0, 1) }},
+			func(q i) error { return eq(q).SetInt64Params(E.Uint16, 0, 1) }},
 
 		{6, s{`Int8 == 47`}, box.Query(E.Int8.Equals(0)),
-			func(q *eq) error { return q.SetInt64Params(E.Int8, int64(e.Int8)) }},
+			func(q i) error { return eq(q).SetInt64Params(E.Int8, int64(e.Int8)) }},
 		{11, s{`Int8 between -1 and 1`}, box.Query(E.Int8.Between(0, 0)),
-			func(q *eq) error { return q.SetInt64Params(E.Int8, -1, 1) }},
+			func(q i) error { return eq(q).SetInt64Params(E.Int8, -1, 1) }},
 
 		{6, s{`Uint8 == 47`}, box.Query(E.Uint8.Equals(0)),
-			func(q *eq) error { return q.SetInt64Params(E.Uint8, int64(e.Uint8)) }},
+			func(q i) error { return eq(q).SetInt64Params(E.Uint8, int64(e.Uint8)) }},
 		{8, s{`Uint8 between 0 and 1`}, box.Query(E.Uint8.Between(0, 0)),
-			func(q *eq) error { return q.SetInt64Params(E.Uint8, 0, 1) }},
+			func(q i) error { return eq(q).SetInt64Params(E.Uint8, 0, 1) }},
 
 		{6, s{`Byte == 47`}, box.Query(E.Byte.Equals(0)),
-			func(q *eq) error { return q.SetInt64Params(E.Byte, int64(e.Byte)) }},
+			func(q i) error { return eq(q).SetInt64Params(E.Byte, int64(e.Byte)) }},
 		{8, s{`Byte between 0 and 1`}, box.Query(E.Byte.Between(0, 0)),
-			func(q *eq) error { return q.SetInt64Params(E.Byte, 0, 1) }},
+			func(q i) error { return eq(q).SetInt64Params(E.Byte, 0, 1) }},
 
 		{2, s{`Float64 between 47.739999 and 47.740001`}, box.Query(E.Float64.Between(0, 0)),
-			func(q *eq) error { return q.SetFloat64Params(E.Float64, e.Float64-0.000001, e.Float64+0.000001) }},
+			func(q i) error { return eq(q).SetFloat64Params(E.Float64, e.Float64-0.000001, e.Float64+0.000001) }},
 		{498, s{`Float64 > 47.740000`}, box.Query(E.Float64.GreaterThan(0)),
-			func(q *eq) error { return q.SetFloat64Params(E.Float64, e.Float64) }},
+			func(q i) error { return eq(q).SetFloat64Params(E.Float64, e.Float64) }},
 
 		{2, s{`Float32 between 47.739990 and 47.740013`}, box.Query(E.Float32.Between(0, 0)),
-			func(q *eq) error {
-				return q.SetFloat64Params(E.Float32, float64(e.Float32-0.00001), float64(e.Float32+0.00001))
+			func(q i) error {
+				return eq(q).SetFloat64Params(E.Float32, float64(e.Float32-0.00001), float64(e.Float32+0.00001))
 			}},
 		{498, s{`Float32 > 47.740002`}, box.Query(E.Float32.GreaterThan(e.Float32)),
-			func(q *eq) error { return q.SetFloat64Params(E.Float32, float64(e.Float32)) }},
+			func(q i) error { return eq(q).SetFloat64Params(E.Float32, float64(e.Float32)) }},
 
 		{6, s{`ByteVector == byte[5]{0x01020305 08}`}, box.Query(E.ByteVector.Equals(nil)),
-			func(q *eq) error { return q.SetBytesParams(E.ByteVector, e.ByteVector) }},
+			func(q i) error { return eq(q).SetBytesParams(E.ByteVector, e.ByteVector) }},
 		{1000, s{`ByteVector > byte[0]""`}, box.Query(E.ByteVector.GreaterThan(nil)),
-			func(q *eq) error { return q.SetBytesParams(E.ByteVector, nil) }},
+			func(q i) error { return eq(q).SetBytesParams(E.ByteVector, nil) }},
 		{5, s{`ByteVector < byte[5]{0x01020305 08}`}, box.Query(E.ByteVector.LessThan(nil)),
-			func(q *eq) error { return q.SetBytesParams(E.ByteVector, e.ByteVector) }},
+			func(q i) error { return eq(q).SetBytesParams(E.ByteVector, e.ByteVector) }},
 	})
 }
 
@@ -358,7 +360,8 @@ func TestQueryAndOr(t *testing.T) {
 	var e = model.Entity47()
 
 	// and a shorter type name for the setup function argument
-	type eq = model.EntityQuery
+	type i = interface{}
+	var eq = func(q interface{}) *objectbox.Query { return q.(*objectbox.Query) }
 
 	// test standard queries
 	testQueries(t, env, queryTestOptions{baseCount: 1000}, []queryTestCase{
@@ -374,13 +377,80 @@ func TestQueryAndOr(t *testing.T) {
 	// test when using setParams
 	testQueries(t, env, queryTestOptions{baseCount: 1000}, []queryTestCase{
 		{0, s{`(Int == 0 AND Int32 == 0 AND Int64 == 47)`}, box.Query(E.Int.Equals(0), E.Int32.Equals(0), E.Int64.Equals(0)),
-			func(q *eq) error { return q.SetInt64Params(E.Int64, e.Int64) }},
+			func(q i) error { return eq(q).SetInt64Params(E.Int64, e.Int64) }},
 		{3, s{`(Int == 0 OR Int32 == 0 OR Int64 == 47)`}, box.Query(objectbox.Any(E.Int.Equals(0), E.Int32.Equals(0), E.Int64.Equals(0))),
-			func(q *eq) error { return q.SetInt64Params(E.Int64, e.Int64) }},
+			func(q i) error { return eq(q).SetInt64Params(E.Int64, e.Int64) }},
 		{1, s{`(Int == 0 OR (Int == 0 AND Int32 == 0 AND Int64 == 47) OR Int64 == 0)`}, box.Query(objectbox.Any(E.Int.Equals(0), objectbox.All(E.Int.Equals(0), E.Int32.Equals(0), E.Int64.Equals(0)), E.Int64.Equals(0))),
-			func(q *eq) error { return q.SetInt64Params(E.Int64, e.Int64) }},
+			func(q i) error { return eq(q).SetInt64Params(E.Int64, e.Int64) }},
 		{0, s{`(Int == 0 AND Int64 == 47)`}, box.Query(objectbox.Any(E.Int.Equals(0)), objectbox.All(E.Int64.Equals(0))),
-			func(q *eq) error { return q.SetInt64Params(E.Int64, e.Int64) }},
+			func(q i) error { return eq(q).SetInt64Params(E.Int64, e.Int64) }},
+	})
+}
+
+func TestQueryLinks(t *testing.T) {
+	env := model.NewTestEnv(t).SetOptions(model.TestEnvOptions{PopulateRelations: true})
+	defer env.Close()
+
+	var box = env.Box
+	var boxR = model.BoxForTestEntityRelated(env.ObjectBox)
+	var boxV = model.BoxForEntityByValue(env.ObjectBox)
+
+	// Use this special entity for testing descriptions
+	var e = model.Entity47()
+
+	// let's alias the entity to make the test cases easier to read
+	var E = model.Entity_
+	var R = model.TestEntityRelated_
+	var V = model.EntityByValue_
+
+	// and a shorter type name for the setup function argument
+	type i = interface{}
+	var eq = func(q interface{}) *objectbox.Query { return q.(*objectbox.Query) }
+
+	testQueries(t, env, queryTestOptions{baseCount: 10}, []queryTestCase{
+		// to-one link
+		{2, s{`TRUE Link: Name == "rel-Val-1"`}, box.Query(E.Related.Link(R.Name.Equals("", true))),
+			func(q i) error { return eq(q).SetStringParams(R.Name, "rel-Val-1") }},
+
+		// to-one backlink = one-to-many
+		{1, s{`TRUE Link: String == "Val-1"`}, boxR.Query(E.Related.Link(E.String.Equals("", true))),
+			func(q i) error { return eq(q).SetStringParams(E.String, e.String) }},
+
+		// to-one empty
+		{10, s{`TRUE Link: TRUE`}, box.Query(E.Related.Link()), nil},
+		{10, s{`TRUE Link: TRUE`}, boxR.Query(E.Related.Link()), nil},
+
+		// to-many link
+		{2, s{`TRUE Link: Name == "relPtr-Val-1"`}, box.Query(E.RelatedPtrSlice.Link(R.Name.Equals("", true))),
+			func(q i) error { return eq(q).SetStringParams(R.Name, "relPtr-Val-1") }},
+
+		// to-many backlink = many-to-many
+		{1, s{`TRUE Link: String == "Val-1"`}, boxR.Query(E.RelatedPtrSlice.Link(E.String.Equals("", true))),
+			func(q i) error { return eq(q).SetStringParams(E.String, e.String) }},
+
+		// to-many empty
+		{10, s{`TRUE Link: TRUE`}, box.Query(E.RelatedPtrSlice.Link()), nil},
+		{10, s{`TRUE Link: TRUE`}, boxR.Query(E.RelatedPtrSlice.Link()), nil},
+
+		// to-one three entities deep link
+		{2, s{`TRUE Link: TRUE Link: Text == "RelatedPtr-Next-Val-1"`},
+			box.Query(E.RelatedPtr.Link(R.Next.Link(V.Text.Equals("", true)))),
+			func(q i) error { return eq(q).SetStringParams(V.Text, "RelatedPtr-Next-Val-1") }},
+
+		// to-one three entities deep backlink
+		{1, s{`TRUE Link: TRUE Link: String == "Val-1"`},
+			boxV.Query(R.Next.Link(E.RelatedPtr.Link(E.String.Equals("", true)))),
+			func(q i) error { return eq(q).SetStringParams(E.String, e.String) }},
+
+		// to-many three entities deep link
+		{2, s{`TRUE Link: TRUE Link: Text == "RelatedPtr-NextSlice-Val-1"`},
+			box.Query(E.RelatedPtr.Link(R.NextSlice.Link(V.Text.Equals("", true)))),
+			func(q i) error { return eq(q).SetStringParams(V.Text, "RelatedPtr-NextSlice-Val-1") }},
+
+		// to-many three entities deep backlink
+		{1, s{`TRUE Link: TRUE Link: String == "Val-1"`},
+			boxV.Query(R.NextSlice.Link(E.RelatedPtr.Link(E.String.Equals("", true)))),
+			func(q i) error { return eq(q).SetStringParams(E.String, e.String) }},
 	})
 }
 
@@ -472,10 +542,10 @@ type s = []string
 
 type queryTestCase struct {
 	// using short variable names because the IDE auto-fills (displays) them in the value initialization
-	c int // expected Query.Count()
-	d s   // expected Query.DescribeParams()
-	q *model.EntityQuery
-	f func(*model.EntityQuery) error // function to configure & check query before executing
+	c int                     // expected Query.Count()
+	d s                       // expected Query.DescribeParams()
+	q interface{}             // any of the model.*Query
+	f func(interface{}) error // function to configure & check query before executing
 }
 
 type queryTestOptions struct {
@@ -489,7 +559,11 @@ func testQueries(t *testing.T, env *model.TestEnv, options queryTestOptions, tes
 	t.Logf("Executing %d test cases", len(testCases))
 
 	var resetDb = func() {
-		assert.NoErr(t, env.Box.RemoveAll())
+		assert.NoErr(t, model.BoxForEntity(env.ObjectBox).RemoveAll())
+		assert.NoErr(t, model.BoxForEntityByValue(env.ObjectBox).RemoveAll())
+		assert.NoErr(t, model.BoxForTestEntityRelated(env.ObjectBox).RemoveAll())
+		assert.NoErr(t, model.BoxForTestEntityInline(env.ObjectBox).RemoveAll())
+		assert.NoErr(t, model.BoxForTestStringIdEntity(env.ObjectBox).RemoveAll())
 
 		// insert new entries
 		env.Populate(options.baseCount)
@@ -503,8 +577,26 @@ func testQueries(t *testing.T, env *model.TestEnv, options queryTestOptions, tes
 		// assign some readable variable names
 		var count = tc.c
 		var desc = tc.d
-		var query = tc.q
 		var setup = tc.f
+
+		var query *objectbox.Query
+		var box *objectbox.Box
+		var baseCount uint64
+		if q, valid := tc.q.(*model.EntityQuery); valid {
+			query = q.Query
+			box = model.BoxForEntity(env.ObjectBox).Box
+			baseCount = uint64(options.baseCount)
+		} else if q, valid := tc.q.(*model.TestEntityRelatedQuery); valid {
+			query = q.Query
+			box = model.BoxForTestEntityRelated(env.ObjectBox).Box
+			baseCount = uint64(options.baseCount) * 3 // TestEnv::Populate() currently inserts 3 relations for each main entity
+		} else if q, valid := tc.q.(*model.EntityByValueQuery); valid {
+			query = q.Query
+			box = model.BoxForEntityByValue(env.ObjectBox).Box
+			baseCount = uint64(options.baseCount) * 5 // TestEnv::Populate() currently inserts 5 relations for each main entity
+		} else {
+			assert.Failf(t, "Query is not supported by the test executor: %v", tc.q)
+		}
 
 		// run query-setup function, if defined
 		if setup != nil {
@@ -523,20 +615,21 @@ func testQueries(t *testing.T, env *model.TestEnv, options queryTestOptions, tes
 		}
 
 		// DescribeParams
+		var removeSpecialChars = strings.NewReplacer("\n", "", "\t", "")
 		if actualDesc, err := query.DescribeParams(); err != nil {
 			assert.Failf(t, "case #%d {%s} - %s", i, desc, err)
-		} else if actualDesc = strings.Replace(actualDesc, "\n", "", -1); !isExpected(actualDesc) {
+		} else if actualDesc = removeSpecialChars.Replace(actualDesc); !isExpected(actualDesc) {
 			assert.Failf(t, "case #%d expected one of %v, but got {%s}", i, desc, actualDesc)
 		}
 
 		// Find
-		var actualData []*model.Entity
+		var actualData interface{}
 		if data, err := query.Find(); err != nil {
 			assert.Failf(t, "case #%d {%s} %s", i, desc, err)
 		} else if data == nil {
 			assert.Failf(t, "case #%d {%s} data is nil", i, desc)
-		} else if len(data) != count {
-			assert.Failf(t, "case #%d {%s} expected %d, but got %d len(Find())", i, desc, count, len(data))
+		} else if reflect.ValueOf(data).Len() != count {
+			assert.Failf(t, "case #%d {%s} expected %d, but got %d len(Find())", i, desc, count, reflect.ValueOf(data).Len())
 		} else {
 			actualData = data
 		}
@@ -553,8 +646,9 @@ func testQueries(t *testing.T, env *model.TestEnv, options queryTestOptions, tes
 		// FindIds
 		if ids, err := query.FindIds(); err != nil {
 			assert.Failf(t, "case #%d {%s} %s", i, desc, err)
-		} else if err := matchAllEntityIds(ids, actualData); err != nil {
-			assert.Failf(t, "case #%d {%s} %s", i, desc, err)
+		} else {
+			//t.Logf("case #%d {%s} - checking all IDs are present in the result", i, desc)
+			matchAllEntityIds(t, ids, actualData)
 		}
 
 		// Remove
@@ -563,11 +657,11 @@ func testQueries(t *testing.T, env *model.TestEnv, options queryTestOptions, tes
 				assert.Failf(t, "case #%d {%s} %s", i, desc, err)
 			} else if uint64(count) != removedCount {
 				assert.Failf(t, "case #%d {%s} expected %d, but got %d Remove()", i, desc, count, removedCount)
-			} else if actualCount, err := env.Box.Count(); err != nil {
+			} else if actualCount, err := box.Count(); err != nil {
 				assert.Failf(t, "case #%d {%s} %s", i, desc, err)
-			} else if actualCount+removedCount != uint64(options.baseCount) {
+			} else if actualCount+removedCount != baseCount {
 				assert.Failf(t, "case #%d {%s} expected %d, but got %d Box.Count() after remove",
-					i, desc, uint64(options.baseCount)-removedCount, actualCount)
+					i, desc, baseCount-removedCount, actualCount)
 			}
 		}
 
@@ -577,29 +671,24 @@ func testQueries(t *testing.T, env *model.TestEnv, options queryTestOptions, tes
 	}
 }
 
-func matchAllEntityIds(ids []uint64, items []*model.Entity) error {
-	if len(ids) != len(items) {
-		return fmt.Errorf("count mismatch = ids=%d, items=%d", len(ids), len(items))
-	}
+// takes ids & items (slice of one of the model.*Entity) and makes sure all IDs are present
+func matchAllEntityIds(t *testing.T, ids []uint64, items interface{}) {
+	var actualIds []uint64
 
-	var merged = map[uint64]int{}
+	var slice = reflect.ValueOf(items)
+	for i := 0; i < slice.Len(); i++ {
+		var item = slice.Index(i).Interface()
 
-	for _, id := range ids {
-		merged[id] = 1
-	}
-
-	for _, item := range items {
-		if merged[item.Id] == 0 {
-			return fmt.Errorf("item %d is missing in the IDs list %v", item.Id, ids)
-		}
-		merged[item.Id] = merged[item.Id] + 1
-	}
-
-	for id, count := range merged {
-		if count != 2 {
-			return fmt.Errorf("ID %d is missing in the items list", id)
+		if obj, valid := item.(*model.Entity); valid {
+			actualIds = append(actualIds, obj.Id)
+		} else if obj, valid := item.(*model.TestEntityRelated); valid {
+			actualIds = append(actualIds, obj.Id)
+		} else if obj, valid := item.(model.EntityByValue); valid {
+			actualIds = append(actualIds, obj.Id)
+		} else {
+			t.Fatalf("type not supported: %v", slice.Type())
 		}
 	}
 
-	return nil
+	assert.EqItems(t, ids, actualIds)
 }

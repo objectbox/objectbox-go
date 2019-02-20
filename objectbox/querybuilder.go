@@ -25,28 +25,79 @@ import "C"
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"unsafe"
 )
 
 // Internal class; use Box.Query instead.
 // Allows construction of queries; just check queryBuilder.Error or err from Build()
 type QueryBuilder struct {
-	objectBox *ObjectBox
-	cqb       *C.OBX_query_builder
-	typeId    TypeId
+	objectBox     *ObjectBox
+	cqb           *C.OBX_query_builder
+	typeId        TypeId
+	innerBuilders []*QueryBuilder
 
 	// The first error that occurred during a any of the calls on the query builder
 	Err error
 }
 
+func newQueryBuilder(ob *ObjectBox, typeId TypeId) *QueryBuilder {
+	cqb := C.obx_qb_create(ob.store, C.obx_schema_id(typeId))
+	var err error = nil
+	if cqb == nil {
+		err = createError()
+	}
+
+	var qb = &QueryBuilder{
+		objectBox: ob,
+		cqb:       cqb,
+		typeId:    typeId,
+		Err:       err,
+	}
+
+	// log.Printf("QB %p created for entity %d\n", qb, typeId)
+	return qb
+}
+
+func (qb *QueryBuilder) newInnerBuilder(typeId TypeId, cqb *C.OBX_query_builder) *QueryBuilder {
+	if cqb == nil {
+		qb.Err = createError()
+		return nil
+	}
+
+	var iqb = &QueryBuilder{
+		objectBox: qb.objectBox,
+		cqb:       cqb,
+		typeId:    typeId,
+	}
+
+	qb.innerBuilders = append(qb.innerBuilders, iqb)
+
+	// log.Printf("QB %p attached inner QB %p, entity %d\n", qb, iqb, iqb.typeId)
+	return iqb
+}
+
 func (qb *QueryBuilder) Close() error {
+	// close inner builders while collecting errors
+	var errs []string
+	for _, iqb := range qb.innerBuilders {
+		if err := iqb.Close(); err != nil {
+			// even though there's an error, try to close the rest
+			errs = append(errs, err.Error())
+		}
+	}
+
 	toClose := qb.cqb
 	if toClose != nil {
 		qb.cqb = nil
 		rc := C.obx_qb_close(toClose)
 		if rc != 0 {
-			return createError()
+			errs = append(errs, createError().Error())
 		}
+	}
+
+	if errs != nil {
+		return errors.New(strings.Join(errs, "; "))
 	}
 	return nil
 }
@@ -58,42 +109,110 @@ func (qb *QueryBuilder) setError(err error) {
 }
 
 func (qb *QueryBuilder) Build() (*Query, error) {
-	qb.checkForCError()
+	qb.checkForCError() // TODO why is this called here? It could lead to incorrect error messages in a parallel app
 	if qb.Err != nil {
 		return nil, qb.Err
 	}
-	cQuery, err := C.obx_query_create(qb.cqb)
-	if err != nil {
-		return nil, err
+
+	// log.Printf("Building %p\n", qb)
+
+	cQuery := C.obx_query_create(qb.cqb)
+	if cQuery == nil {
+		qb.Err = createError()
+		return nil, qb.Err
 	}
+
 	query := &Query{
 		objectBox: qb.objectBox,
 		cQuery:    cQuery,
 		entity:    qb.objectBox.getEntityById(qb.typeId),
 	}
 	query.installFinalizer()
+
+	// search all inner builders recursively and collect linked entity IDs
+	qb.setQueryLinkedEntityIds(query)
+
 	return query, nil
 }
 
-func (qb *QueryBuilder) BuildWithConditions(conditions ...Condition) (*Query, error) {
-	var condition Condition
-	if len(conditions) == 1 {
-		condition = conditions[0]
-	} else {
-		condition = &conditionCombination{
-			conditions: conditions,
-		}
+func (qb *QueryBuilder) setQueryLinkedEntityIds(query *Query) {
+	for _, iqb := range qb.innerBuilders {
+		query.linkedEntityIds = append(query.linkedEntityIds, iqb.typeId)
+		iqb.setQueryLinkedEntityIds(query)
+	}
+}
+
+func (qb *QueryBuilder) applyConditions(conditions []Condition) error {
+	if qb.Err != nil {
+		return qb.Err
 	}
 
-	var err error
-	if _, err = condition.applyTo(qb, true); err != nil {
-		return nil, err
+	if len(conditions) == 1 {
+		_, qb.Err = conditions[0].applyTo(qb, true)
+	} else if len(conditions) > 1 {
+		_, qb.Err = (&conditionCombination{conditions: conditions}).applyTo(qb, true)
 	}
-	return qb.Build()
+
+	return qb.Err
+}
+
+func (qb *QueryBuilder) LinkOneToMany(relation *RelationToOne, conditions []Condition) error {
+	if qb.Err != nil {
+		return qb.Err
+	}
+
+	// create a new "inner" query builder
+	var iqb *QueryBuilder
+
+	cRelPropertyId := C.obx_schema_id(relation.Property.Id)
+	// recognize whether it's a link or a backlink
+	if relation.Property.Entity.Id == qb.typeId && relation.Target.Id != qb.typeId {
+		// if property belongs to the entity of the "main" query builder & target is another entity, it's a link
+		// log.Printf("QB %p creating link to entity %d over property %d", qb, relation.Target.Id, relation.Property.Id)
+		iqb = qb.newInnerBuilder(relation.Target.Id, C.obx_qb_link_property(qb.cqb, cRelPropertyId))
+	} else if relation.Property.Entity.Id != qb.typeId && relation.Target.Id == qb.typeId {
+		// if property is not from the same entity as this query builder but the target is, it's a backlink
+		// log.Printf("QB %p creating backlink from entity %d over property %d", qb, relation.Property.Entity.Id, relation.Property.Id)
+		cInnerQB := C.obx_qb_backlink_property(qb.cqb, C.obx_schema_id(relation.Property.Entity.Id), cRelPropertyId)
+		iqb = qb.newInnerBuilder(relation.Property.Entity.Id, cInnerQB)
+	} else {
+		return errors.New("relation not recognized as either link or backlink")
+	}
+
+	if iqb == nil {
+		return qb.Err // this has been set by newInnerBuilder()
+	}
+
+	return iqb.applyConditions(conditions)
+}
+
+func (qb *QueryBuilder) LinkManyToMany(relation *RelationToMany, conditions []Condition) error {
+	if qb.Err != nil {
+		return qb.Err
+	}
+
+	// create a new "inner" query builder
+	var iqb *QueryBuilder
+
+	// recognize whether it's a link or a backlink
+	if relation.Source.Id == qb.typeId && relation.Target.Id != qb.typeId {
+		//log.Printf("QB %p creating link to entity %d over relation %d", qb, relation.Target.Id, relation.Id)
+		iqb = qb.newInnerBuilder(relation.Target.Id, C.obx_qb_link_standalone(qb.cqb, C.obx_schema_id(relation.Id)))
+	} else if relation.Source.Id != qb.typeId && relation.Target.Id == qb.typeId {
+		//log.Printf("QB %p creating backlink from entity %d over relation %d", qb, relation.Source.Id, relation.Id)
+		iqb = qb.newInnerBuilder(relation.Source.Id, C.obx_qb_backlink_standalone(qb.cqb, C.obx_schema_id(relation.Id)))
+	} else {
+		return errors.New("relation not recognized as either link or backlink")
+	}
+	if iqb == nil {
+		return qb.Err // this has been set by newInnerBuilder()
+	}
+
+	return iqb.applyConditions(conditions)
 }
 
 func (qb *QueryBuilder) checkForCError() {
-	if qb.Err != nil {
+	if qb.Err != nil { // TODO why if err != nil, doesn't make sense at a first glance
 		errCode := C.obx_qb_error_code(qb.cqb)
 		if errCode != 0 {
 			msg := C.obx_qb_error_message(qb.cqb)

@@ -42,12 +42,12 @@ func TestRelationsInsert(t *testing.T) {
 		var err error
 
 		// this object is used in many-to-many (slice) & one-to-many relations and is inserted only once
-		var relReused = &model.TestEntityRelated{Name: "Ptr"}
+		var relReused = &model.TestEntityRelated{Name: "Ptr", NextSlice: []model.EntityByValue{}}
 		var object = &model.Entity{
-			Related:         model.TestEntityRelated{Name: "Val"},
+			Related:         model.TestEntityRelated{Name: "Val", NextSlice: []model.EntityByValue{}},
 			RelatedPtr:      relReused,
 			RelatedSlice:    []model.EntityByValue{{}, {}},
-			RelatedPtrSlice: []*model.TestEntityRelated{relReused, {Name: "New"}},
+			RelatedPtrSlice: []*model.TestEntityRelated{relReused, {Name: "New", NextSlice: []model.EntityByValue{}}},
 		}
 
 		if i == 0 {
@@ -144,7 +144,7 @@ func TestRelationsUpdate(t *testing.T) {
 
 		count, err = relValueBox.Count()
 		assert.NoErr(t, err)
-		assert.Eq(t, uint64(baseCount), count)
+		assert.Eq(t, uint64(baseCount*5), count)
 
 		// get one of the entities
 		var id uint64 = 2
@@ -154,7 +154,7 @@ func TestRelationsUpdate(t *testing.T) {
 		assert.Eq(t, uint64(5), object.RelatedPtr.Id)
 		assert.Eq(t, 1, len(object.RelatedSlice))
 		assert.Eq(t, 1, len(object.RelatedPtrSlice))
-		assert.Eq(t, uint64(2), object.RelatedSlice[0].Id)
+		assert.Eq(t, uint64(8), object.RelatedSlice[0].Id)
 		assert.Eq(t, uint64(6), object.RelatedPtrSlice[0].Id)
 
 		// add new (non-existent) items to many-to-many relations
@@ -175,7 +175,7 @@ func TestRelationsUpdate(t *testing.T) {
 		assert.Eq(t, uint64(5), object.RelatedPtr.Id)
 		assert.Eq(t, 3, len(object.RelatedSlice))
 		assert.Eq(t, 3, len(object.RelatedPtrSlice))
-		assert.Eq(t, []uint64{2, 3, 11}, []uint64{object.RelatedSlice[0].Id, object.RelatedSlice[1].Id, object.RelatedSlice[2].Id})
+		assert.Eq(t, []uint64{3, 8, 51}, []uint64{object.RelatedSlice[0].Id, object.RelatedSlice[1].Id, object.RelatedSlice[2].Id})
 		assert.EqItems(t, []uint64{5, 6, 31}, []uint64{object.RelatedPtrSlice[0].Id, object.RelatedPtrSlice[1].Id, object.RelatedPtrSlice[2].Id})
 
 		// remove some relations
@@ -191,7 +191,7 @@ func TestRelationsUpdate(t *testing.T) {
 		assert.Eq(t, true, nil == object.RelatedPtr)
 		assert.Eq(t, 2, len(object.RelatedSlice))
 		assert.Eq(t, 2, len(object.RelatedPtrSlice))
-		assert.EqItems(t, []uint64{3, 11}, []uint64{object.RelatedSlice[0].Id, object.RelatedSlice[1].Id})
+		assert.EqItems(t, []uint64{8, 51}, []uint64{object.RelatedSlice[0].Id, object.RelatedSlice[1].Id})
 		assert.EqItems(t, []uint64{6, 31}, []uint64{object.RelatedPtrSlice[0].Id, object.RelatedPtrSlice[1].Id})
 	}
 }

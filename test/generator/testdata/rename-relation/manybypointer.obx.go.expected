@@ -22,13 +22,19 @@ var TaskRelManyPtrBinding = taskRelManyPtr_EntityInfo{
 
 // TaskRelManyPtr_ contains type-based Property helpers to facilitate some common operations such as Queries.
 var TaskRelManyPtr_ = struct {
-	Id *objectbox.PropertyUint64
+	Id        *objectbox.PropertyUint64
+	GroupsNew *objectbox.RelationToMany
 }{
 	Id: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
 			Id:     1,
 			Entity: &TaskRelManyPtrBinding.Entity,
 		},
+	},
+	GroupsNew: &objectbox.RelationToMany{
+		Id:     1,
+		Source: &TaskRelManyPtrBinding.Entity,
+		Target: &GroupBinding.Entity,
 	},
 }
 

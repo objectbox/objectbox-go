@@ -23,7 +23,7 @@ var TaskRelIdBinding = taskRelId_EntityInfo{
 // TaskRelId_ contains type-based Property helpers to facilitate some common operations such as Queries.
 var TaskRelId_ = struct {
 	Id    *objectbox.PropertyUint64
-	Group *objectbox.PropertyUint64
+	Group *objectbox.RelationToOne
 }{
 	Id: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
@@ -31,11 +31,12 @@ var TaskRelId_ = struct {
 			Entity: &TaskRelIdBinding.Entity,
 		},
 	},
-	Group: &objectbox.PropertyUint64{
-		BaseProperty: &objectbox.BaseProperty{
+	Group: &objectbox.RelationToOne{
+		Property: &objectbox.BaseProperty{
 			Id:     2,
 			Entity: &TaskRelIdBinding.Entity,
 		},
+		Target: &GroupBinding.Entity,
 	},
 }
 

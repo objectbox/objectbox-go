@@ -23,6 +23,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/objectbox/objectbox-go/objectbox"
 	"github.com/objectbox/objectbox-go/test/assert"
 	"github.com/objectbox/objectbox-go/test/model"
 )
@@ -341,6 +342,45 @@ func TestQueryParams(t *testing.T) {
 			func(q *eq) error { return q.SetBytesParams(E.ByteVector, nil) }},
 		{5, s{`ByteVector < byte[5]{0x01020305 08}`}, box.Query(E.ByteVector.LessThan(nil)),
 			func(q *eq) error { return q.SetBytesParams(E.ByteVector, e.ByteVector) }},
+	})
+}
+
+func TestQueryAndOr(t *testing.T) {
+	env := model.NewTestEnv(t)
+	defer env.Close()
+
+	var box = env.Box
+
+	// let's alias the entity to make the test cases easier to read
+	var E = model.Entity_
+
+	// Use this special entity for testing descriptions
+	var e = model.Entity47()
+
+	// and a shorter type name for the setup function argument
+	type eq = model.EntityQuery
+
+	// test standard queries
+	testQueries(t, env, queryTestOptions{baseCount: 1000}, []queryTestCase{
+		{1, s{`(Int == 0 AND Int32 == 0 AND Int64 == 0)`}, box.Query(E.Int.Equals(0), E.Int32.Equals(0), E.Int64.Equals(0)), nil},
+		{1, s{`(Int == 0 AND Int32 == 0 AND Int64 == 0)`}, box.Query(objectbox.All(E.Int.Equals(0), E.Int32.Equals(0), E.Int64.Equals(0))), nil},
+		{1, s{`(Int == 0 OR Int32 == 0 OR Int64 == 0)`}, box.Query(objectbox.Any(E.Int.Equals(0), E.Int32.Equals(0), E.Int64.Equals(0))), nil},
+		{1, s{`(Int == 0 OR (Int == 0 AND Int32 == 0 AND Int64 == 0) OR Int64 == 0)`}, box.Query(objectbox.Any(E.Int.Equals(0), objectbox.All(E.Int.Equals(0), E.Int32.Equals(0), E.Int64.Equals(0)), E.Int64.Equals(0))), nil},
+		{1, s{`(Int == 0 AND Int64 == 0)`}, box.Query(objectbox.Any(E.Int.Equals(0)), objectbox.All(E.Int64.Equals(0))), nil},
+		{1000, s{`TRUE`}, box.Query(objectbox.Any(), objectbox.All()), nil},
+		{1000, s{`TRUE`}, box.Query(), nil},
+	})
+
+	// test when using setParams
+	testQueries(t, env, queryTestOptions{baseCount: 1000}, []queryTestCase{
+		{0, s{`(Int == 0 AND Int32 == 0 AND Int64 == 47)`}, box.Query(E.Int.Equals(0), E.Int32.Equals(0), E.Int64.Equals(0)),
+			func(q *eq) error { return q.SetInt64Params(E.Int64, e.Int64) }},
+		{3, s{`(Int == 0 OR Int32 == 0 OR Int64 == 47)`}, box.Query(objectbox.Any(E.Int.Equals(0), E.Int32.Equals(0), E.Int64.Equals(0))),
+			func(q *eq) error { return q.SetInt64Params(E.Int64, e.Int64) }},
+		{1, s{`(Int == 0 OR (Int == 0 AND Int32 == 0 AND Int64 == 47) OR Int64 == 0)`}, box.Query(objectbox.Any(E.Int.Equals(0), objectbox.All(E.Int.Equals(0), E.Int32.Equals(0), E.Int64.Equals(0)), E.Int64.Equals(0))),
+			func(q *eq) error { return q.SetInt64Params(E.Int64, e.Int64) }},
+		{0, s{`(Int == 0 AND Int64 == 47)`}, box.Query(objectbox.Any(E.Int.Equals(0)), objectbox.All(E.Int64.Equals(0))),
+			func(q *eq) error { return q.SetInt64Params(E.Int64, e.Int64) }},
 	})
 }
 

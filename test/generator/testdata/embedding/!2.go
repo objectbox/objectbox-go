@@ -4,6 +4,6 @@ package object
 
 // duplicate field
 type Negative2 struct {
-	Id
-	IdAndFloat64Value
+	Id  `inline`
+	IdAndFloat64Value  `inline`
 }

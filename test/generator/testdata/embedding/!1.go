@@ -4,6 +4,6 @@ package object
 
 // both contain Value field but of two distinct types
 type Negative1 struct {
-	Float64Value
-	BytesValue
+	Float64Value `inline`
+	BytesValue `inline`
 }

@@ -40,8 +40,8 @@ extern "C" {
 
 // Note that you should use methods with prefix obx_version_ to check when linking against the dynamic library
 #define OBX_VERSION_MAJOR 0
-#define OBX_VERSION_MINOR 4
-#define OBX_VERSION_PATCH 107  // values >= 100 are reserved for dev releases leading to the next minor/major increase
+#define OBX_VERSION_MINOR 5
+#define OBX_VERSION_PATCH 0  // values >= 100 are reserved for dev releases leading to the next minor/major increase
 
 /// Returns the version of the library as ints. Pointers may be null
 void obx_version(int* major, int* minor, int* patch);

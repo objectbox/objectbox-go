@@ -55,7 +55,7 @@ var Task_ = struct {
 
 // GeneratorVersion is called by ObjectBox to verify the compatibility of the generator used to generate this code
 func (task_EntityInfo) GeneratorVersion() int {
-	return 1
+	return 2
 }
 
 // AddToModel is called by ObjectBox during model build

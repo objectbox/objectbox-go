@@ -68,7 +68,7 @@ Some quick notes on IDs and UIDs in the ObjectBox model:
 * See [Meta Model, IDs, and UIDs](https://docs.objectbox.io/advanced/meta-model-ids-and-uids) docs for more details.
 
 ### License
-    Copyright 2018 ObjectBox Ltd. All rights reserved.
+    Copyright 2019 ObjectBox Ltd. All rights reserved.
     
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ObjectBox Ltd. All rights reserved.
+ * Copyright 2019 ObjectBox Ltd. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ func (v Version) String() string {
 
 // ObjectBox Version Go
 func VersionGo() Version {
-	return Version{0, 8, 0}
+	return Version{0, 9, 0}
 }
 
 // Version of the dynamic linked ObjectBox library

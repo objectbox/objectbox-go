@@ -13,15 +13,16 @@ id, err := box.Put(&Person{ FirstName: "Joe", LastName:  "Green" })
 Want details? **[Read the docs](https://golang.objectbox.io/)** or
 **[check out the API reference](https://godoc.org/github.com/objectbox/objectbox-go/objectbox)**.
 
-Latest release: [v0.8.0 (2018-12-06)](https://golang.objectbox.io/)
+Latest release: [v0.9.0 (2019-02-21)](https://golang.objectbox.io/)
 
 Some features
 -------------
 * [Powerful queries](https://golang.objectbox.io/queries)
+* [Relations (to-one, to-many)](https://golang.objectbox.io/relations)
 * Secondary indexes based on object properties
 * Asynchronous puts
-* Automatic model migration (no schema upgrade scripts etc.) 
-* (Coming soon: Relations to other objects) 
+* Automatic model migration (no schema upgrade scripts etc.)
+* inline/prefix complex embedded structs (or you can use custom converters)
 
 Installation
 ------------

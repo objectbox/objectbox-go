@@ -38,7 +38,7 @@ func (v Version) String() string {
 
 // ObjectBox Version Go
 func VersionGo() Version {
-	return Version{0, 8, 0}
+	return Version{0, 9, 0}
 }
 
 // Version of the dynamic linked ObjectBox library

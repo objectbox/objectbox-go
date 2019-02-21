@@ -81,10 +81,10 @@ func TestQueries(t *testing.T) {
 		{1, s{`Uint64 == 0`}, box.Query(E.Uint64.Equals(0)), nil},
 		{2, s{`Uint64 == 47`}, box.Query(E.Uint64.Equals(e.Uint64)), nil},
 		{998, s{`Uint64 != 47`}, box.Query(E.Uint64.NotEquals(e.Uint64)), nil},
-		//{498,`Uint64 > 47`}, box.Query(E.Uint64.GreaterThan(e.Uint64)), nil},
-		//{500,`Uint64 < 47`}, box.Query(E.Uint64.LessThan(e.Uint64)), nil},
-		//{1,`Uint64 between 0 and 1`}, box.Query(E.Uint64.Between(0, 1)), nil},
-		//{2,`Uint64 between 47 and 94`}, box.Query(E.Uint64.Between(e.Uint64, e.Uint64*2)), nil},
+		{997, s{`Uint64 > 47`}, box.Query(E.Uint64.GreaterThan(e.Uint64)), nil},
+		{1, s{`Uint64 < 47`}, box.Query(E.Uint64.LessThan(e.Uint64)), nil},
+		{1, s{`Uint64 between 0 and 1`}, box.Query(E.Uint64.Between(0, 1)), nil},
+		{2, s{`Uint64 between 47 and 94`}, box.Query(E.Uint64.Between(e.Uint64, e.Uint64*2)), nil},
 		{2, s{`Uint64 in [94|47]`, `Uint64 in [47|94]`}, box.Query(E.Uint64.In(e.Uint64, e.Uint64*2)), nil},
 		{998, s{`Uint64 not in [94|47]`, `Uint64 not in [47|94]`}, box.Query(E.Uint64.NotIn(e.Uint64, e.Uint64*2)), nil},
 
@@ -101,10 +101,10 @@ func TestQueries(t *testing.T) {
 		{1, s{`Uint == 0`}, box.Query(E.Uint.Equals(0)), nil},
 		{3, s{`Uint == 47`}, box.Query(E.Uint.Equals(e.Uint)), nil},
 		{997, s{`Uint != 47`}, box.Query(E.Uint.NotEquals(e.Uint)), nil},
-		//{498,`Uint > 47`}, box.Query(E.Uint.GreaterThan(e.Uint)), nil},
-		//{499,`Uint < 47`}, box.Query(E.Uint.LessThan(e.Uint)), nil},
-		//{1,`Uint between 0 and 1`}, box.Query(E.Uint.Between(0, 1)), nil},
-		//{3,`Uint between 47 and 94`}, box.Query(E.Uint.Between(e.Uint, e.Uint*2)), nil},
+		{996, s{`Uint > 47`}, box.Query(E.Uint.GreaterThan(e.Uint)), nil},
+		{1, s{`Uint < 47`}, box.Query(E.Uint.LessThan(e.Uint)), nil},
+		{1, s{`Uint between 0 and 1`}, box.Query(E.Uint.Between(0, 1)), nil},
+		{3, s{`Uint between 47 and 94`}, box.Query(E.Uint.Between(e.Uint, e.Uint*2)), nil},
 		{3, s{`Uint in [94|47]`, `Uint in [47|94]`}, box.Query(E.Uint.In(e.Uint, e.Uint*2)), nil},
 		{997, s{`Uint not in [94|47]`, `Uint not in [47|94]`}, box.Query(E.Uint.NotIn(e.Uint, e.Uint*2)), nil},
 
@@ -131,8 +131,8 @@ func TestQueries(t *testing.T) {
 		{1, s{`Uint32 == 0`}, box.Query(E.Uint32.Equals(0)), nil},
 		{3, s{`Uint32 == 47`}, box.Query(E.Uint32.Equals(e.Uint32)), nil},
 		{997, s{`Uint32 != 47`}, box.Query(E.Uint32.NotEquals(e.Uint32)), nil},
-		{498, s{`Uint32 > 47`}, box.Query(E.Uint32.GreaterThan(e.Uint32)), nil},
-		{499, s{`Uint32 < 47`}, box.Query(E.Uint32.LessThan(e.Uint32)), nil},
+		{996, s{`Uint32 > 47`}, box.Query(E.Uint32.GreaterThan(e.Uint32)), nil},
+		{1, s{`Uint32 < 47`}, box.Query(E.Uint32.LessThan(e.Uint32)), nil},
 		{1, s{`Uint32 between 0 and 1`}, box.Query(E.Uint32.Between(0, 1)), nil},
 		{3, s{`Uint32 between 47 and 94`}, box.Query(E.Uint32.Between(e.Uint32, e.Uint32*2)), nil},
 		{3, s{`Uint32 in [94|47]`, `Uint32 in [47|94]`}, box.Query(E.Uint32.In(e.Uint32, e.Uint32*2)), nil},
@@ -151,12 +151,12 @@ func TestQueries(t *testing.T) {
 		{1, s{`Uint16 == 0`}, box.Query(E.Uint16.Equals(0)), nil},
 		{3, s{`Uint16 == 47`}, box.Query(E.Uint16.Equals(e.Uint16)), nil},
 		{997, s{`Uint16 != 47`}, box.Query(E.Uint16.NotEquals(e.Uint16)), nil},
-		{498, s{`Uint16 > 47`}, box.Query(E.Uint16.GreaterThan(e.Uint16)), nil},
-		{499, s{`Uint16 < 47`}, box.Query(E.Uint16.LessThan(e.Uint16)), nil},
+		{996, s{`Uint16 > 47`}, box.Query(E.Uint16.GreaterThan(e.Uint16)), nil},
+		{1, s{`Uint16 < 47`}, box.Query(E.Uint16.LessThan(e.Uint16)), nil},
 		{1, s{`Uint16 between 0 and 1`}, box.Query(E.Uint16.Between(0, 1)), nil},
 		{4, s{`Uint16 between 47 and 94`}, box.Query(E.Uint16.Between(e.Uint16, e.Uint16*2)), nil},
-		//{0, {`Uint16 in [94|47]`, `Uint16 in [47|94]`}, box.Query(E.Uint16.In(e.Uint16, e.Uint16*2)), nil},
-		//{0, {`Uint16 in [94|47]`, `Uint16 in [47|94]`}, box.Query(E.Uint16.NotIn(e.Uint16, e.Uint16*2)), nil},
+		//{0, s{`Uint16 in [94|47]`, `Uint16 in [47|94]`}, box.Query(E.Uint16.In(e.Uint16, e.Uint16*2)), nil},
+		//{0, s{`Uint16 in [94|47]`, `Uint16 in [47|94]`}, box.Query(E.Uint16.NotIn(e.Uint16, e.Uint16*2)), nil},
 
 		{5, s{`Int8 == 0`}, box.Query(E.Int8.Equals(0)), nil},
 		{6, s{`Int8 == 47`}, box.Query(E.Int8.Equals(e.Int8)), nil},
@@ -165,18 +165,18 @@ func TestQueries(t *testing.T) {
 		{686, s{`Int8 < 47`}, box.Query(E.Int8.LessThan(e.Int8)), nil},
 		{11, s{`Int8 between -1 and 1`}, box.Query(E.Int8.Between(-1, 1)), nil},
 		{179, s{`Int8 between 47 and 94`}, box.Query(E.Int8.Between(e.Int8, e.Int8*2)), nil},
-		//{0, {`Int8 in [94|47]`, `Int8 in [47|94]`}, box.Query(E.Int8.In(e.Int8, e.Int8*2)), nil},
-		//{0, {`Int8 in [94|47]`, `Int8 in [47|94]`}, box.Query(E.Int8.NotIn(e.Int8, e.Int8*2)), nil},
+		//{0, s{`Int8 in [94|47]`, `Int8 in [47|94]`}, box.Query(E.Int8.In(e.Int8, e.Int8*2)), nil},
+		//{0, s{`Int8 in [94|47]`, `Int8 in [47|94]`}, box.Query(E.Int8.NotIn(e.Int8, e.Int8*2)), nil},
 
 		{5, s{`Uint8 == 0`}, box.Query(E.Uint8.Equals(0)), nil},
 		{6, s{`Uint8 == 47`}, box.Query(E.Uint8.Equals(e.Uint8)), nil},
 		{994, s{`Uint8 != 47`}, box.Query(E.Uint8.NotEquals(e.Uint8)), nil},
-		{308, s{`Uint8 > 47`}, box.Query(E.Uint8.GreaterThan(e.Uint8)), nil},
-		{686, s{`Uint8 < 47`}, box.Query(E.Uint8.LessThan(e.Uint8)), nil},
+		{806, s{`Uint8 > 47`}, box.Query(E.Uint8.GreaterThan(e.Uint8)), nil},
+		{188, s{`Uint8 < 47`}, box.Query(E.Uint8.LessThan(e.Uint8)), nil},
 		{8, s{`Uint8 between 0 and 1`}, box.Query(E.Uint8.Between(0, 1)), nil},
 		{179, s{`Uint8 between 47 and 94`}, box.Query(E.Uint8.Between(e.Uint8, e.Uint8*2)), nil},
-		//{0, {`Uint8 in [94|47]`, `Uint8 in [47|94]`}, box.Query(E.Uint8.In(e.Uint8, e.Uint8*2)), nil},
-		//{0, {`Uint8 in [94|47]`, `Uint8 in [47|94]`}, box.Query(E.Uint8.NotIn(e.Uint8, e.Uint8*2)), nil},
+		//{0, s{`Uint8 in [94|47]`, `Uint8 in [47|94]`}, box.Query(E.Uint8.In(e.Uint8, e.Uint8*2)), nil},
+		//{0, s{`Uint8 in [94|47]`, `Uint8 in [47|94]`}, box.Query(E.Uint8.NotIn(e.Uint8, e.Uint8*2)), nil},
 
 		{5, s{`Byte == 0`}, box.Query(E.Byte.Equals(0)), nil},
 		{6, s{`Byte == 47`}, box.Query(E.Byte.Equals(e.Byte)), nil},
@@ -201,7 +201,7 @@ func TestQueries(t *testing.T) {
 		{2, s{`Float32 between 47.740002 and 95.480003`}, box.Query(E.Float32.Between(e.Float32, e.Float32*2)), nil},
 
 		{6, s{`ByteVector == byte[5]{0x01020305 08}`}, box.Query(E.ByteVector.Equals(e.ByteVector)), nil},
-		//{994,`ByteVector != byte[5]{0x01020305 08`}, box.Query(E.ByteVector.NotEquals(e.ByteVector)), nil},
+		//{994, s{`ByteVector != byte[5]{0x01020305 08`}, box.Query(E.ByteVector.NotEquals(e.ByteVector)), nil},
 		{989, s{`ByteVector > byte[5]{0x01020305 08}`}, box.Query(E.ByteVector.GreaterThan(e.ByteVector)), nil},
 		{995, s{`ByteVector >= byte[5]{0x01020305 08}`}, box.Query(E.ByteVector.GreaterOrEqual(e.ByteVector)), nil},
 		{5, s{`ByteVector < byte[5]{0x01020305 08}`}, box.Query(E.ByteVector.LessThan(e.ByteVector)), nil},
@@ -533,6 +533,32 @@ func TestQueryEmptyString(t *testing.T) {
 	assert.NoErr(t, err)
 
 	count, err := env.Box.Query(model.Entity_.String.Equals("", true)).Count()
+	assert.NoErr(t, err)
+	assert.Eq(t, uint64(1), count)
+}
+
+func TestQueryUint(t *testing.T) {
+	env := model.NewTestEnv(t)
+	defer env.Close()
+
+	env.Box.Put(&model.Entity{})
+
+	const MaxInt = int(^uint(0) >> 1)
+
+	var e = model.Entity47()
+	e.Uint = uint(MaxInt) + 10          // > int max
+	e.Uint64 = 9223372036854775807 + 10 // > int64 max
+	e.Uint32 = 2147483647 + 10          // > int32 max
+
+	id, err := env.Box.Put(e)
+	assert.NoErr(t, err)
+
+	read, err := env.Box.Get(id)
+	assert.NoErr(t, err)
+	assert.Eq(t, *e, *read)
+
+	count, err := env.Box.Query(model.Entity_.Uint64.GreaterThan(e.Uint64 - 1)).Count()
+	fmt.Println(env.Box.Query(model.Entity_.Uint64.GreaterThan(e.Uint64 - 1)).DescribeParams())
 	assert.NoErr(t, err)
 	assert.Eq(t, uint64(1), count)
 }

@@ -41,7 +41,7 @@ func (b_EntityInfo) GeneratorVersion() int {
 func (b_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("B", 1, 8717895732742165505)
 	model.Property("Id", objectbox.PropertyType_Long, 1, 2259404117704393152)
-	model.PropertyFlags(objectbox.PropertyFlags_ID)
+	model.PropertyFlags(objectbox.PropertyFlags_UNSIGNED | objectbox.PropertyFlags_ID)
 	model.EntityLastPropertyId(1, 2259404117704393152)
 }
 

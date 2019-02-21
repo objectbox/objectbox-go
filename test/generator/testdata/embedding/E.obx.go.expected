@@ -64,7 +64,7 @@ func (e_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("E", 5, 7144924247938981575)
 	model.Property("Location", objectbox.PropertyType_String, 1, 161231572858529631)
 	model.Property("id", objectbox.PropertyType_Long, 2, 7259475919510918339)
-	model.PropertyFlags(objectbox.PropertyFlags_ID)
+	model.PropertyFlags(objectbox.PropertyFlags_UNSIGNED | objectbox.PropertyFlags_ID)
 	model.Property("ForeignAlias", objectbox.PropertyType_String, 3, 7373105480197164748)
 	model.Property("ForeignNamed", objectbox.PropertyType_String, 4, 3287288577352441706)
 	model.EntityLastPropertyId(4, 3287288577352441706)

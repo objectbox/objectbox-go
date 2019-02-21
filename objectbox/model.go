@@ -79,6 +79,9 @@ const (
 	/// Index uses a 64 bit hash instead of the value
 	/// (recommended mostly for 64 bit machines with values longer >200 bytes; small values are faster with a 32 bit hash)
 	PropertyFlags_INDEX_HASH64 = 4096
+
+	/// The actual type of the variable is unsigned (used in combination with numeric OBXPropertyType_*)
+	PropertyFlags_UNSIGNED = 8192
 )
 
 // An ObjectBinding provides an interface for various object types to be included in the model

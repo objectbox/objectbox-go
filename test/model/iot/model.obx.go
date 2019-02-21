@@ -69,7 +69,7 @@ func (event_EntityInfo) GeneratorVersion() int {
 func (event_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("Event", 1, 1468539308767086854)
 	model.Property("Id", objectbox.PropertyType_Long, 1, 3098166604415018001)
-	model.PropertyFlags(objectbox.PropertyFlags_ID)
+	model.PropertyFlags(objectbox.PropertyFlags_UNSIGNED | objectbox.PropertyFlags_ID)
 	model.Property("Uid", objectbox.PropertyType_String, 4, 472416569173577818)
 	model.PropertyFlags(objectbox.PropertyFlags_UNIQUE)
 	model.PropertyIndex(1, 3297791712577314158)
@@ -359,9 +359,10 @@ func (reading_EntityInfo) GeneratorVersion() int {
 func (reading_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("Reading", 2, 5284076134434938613)
 	model.Property("Id", objectbox.PropertyType_Long, 1, 3968063745680890327)
-	model.PropertyFlags(objectbox.PropertyFlags_ID)
+	model.PropertyFlags(objectbox.PropertyFlags_UNSIGNED | objectbox.PropertyFlags_ID)
 	model.Property("Date", objectbox.PropertyType_Date, 2, 4852407661923085028)
 	model.Property("EventId", objectbox.PropertyType_Relation, 3, 1403806151574554320)
+	model.PropertyFlags(objectbox.PropertyFlags_UNSIGNED)
 	model.PropertyRelation("Event", 2, 2642563953244304959)
 	model.Property("ValueName", objectbox.PropertyType_String, 4, 5626221656121286670)
 	model.Property("ValueString", objectbox.PropertyType_String, 5, 7303099924122013060)

@@ -41,7 +41,7 @@ extern "C" {
 // Note that you should use methods with prefix obx_version_ to check when linking against the dynamic library
 #define OBX_VERSION_MAJOR 0
 #define OBX_VERSION_MINOR 4
-#define OBX_VERSION_PATCH 106  // values >= 100 are reserved for dev releases leading to the next minor/major increase
+#define OBX_VERSION_PATCH 107  // values >= 100 are reserved for dev releases leading to the next minor/major increase
 
 /// Returns the version of the library as ints. Pointers may be null
 void obx_version(int* major, int* minor, int* patch);
@@ -173,30 +173,40 @@ typedef enum {
 
     /// Unused yet
     OBXPropertyFlags_NOT_NULL = 4,
+
     OBXPropertyFlags_INDEXED = 8,
+
+    /// Unused yet
     OBXPropertyFlags_RESERVED = 16,
-    /// Unused yet: Unique index
+
+    /// Unique index
     OBXPropertyFlags_UNIQUE = 32,
+
     /// Unused yet: Use a persisted sequence to enforce ID to rise monotonic (no ID reuse)
     OBXPropertyFlags_ID_MONOTONIC_SEQUENCE = 64,
+
     /// Allow IDs to be assigned by the developer
     OBXPropertyFlags_ID_SELF_ASSIGNABLE = 128,
+
     /// Unused yet
     OBXPropertyFlags_INDEX_PARTIAL_SKIP_NULL = 256,
-    /// Unused yet, used by References for 1) back-references and 2) to clear references to deleted objects (required
-    /// for ID reuse)
+
+    /// used by References for 1) back-references and 2) to clear references to deleted objects (required for ID reuse)
     OBXPropertyFlags_INDEX_PARTIAL_SKIP_ZERO = 512,
+
     /// Virtual properties may not have a dedicated field in their entity class, e.g. target IDs of to-one relations
     OBXPropertyFlags_VIRTUAL = 1024,
+
     /// Index uses a 32 bit hash instead of the value
-    /// (32 bits is shorter on disk, runs well on 32 bit systems, and should be OK even with a few collisions)
-
+    /// 32 bits is shorter on disk, runs well on 32 bit systems, and should be OK even with a few collisions
     OBXPropertyFlags_INDEX_HASH = 2048,
-    /// Index uses a 64 bit hash instead of the value
-    /// (recommended mostly for 64 bit machines with values longer >200 bytes; small values are faster with a 32 bit
-    /// hash)
-    OBXPropertyFlags_INDEX_HASH64 = 4096
 
+    /// Index uses a 64 bit hash instead of the value
+    /// recommended mostly for 64 bit machines with values longer >200 bytes; small values are faster with a 32 bit hash
+    OBXPropertyFlags_INDEX_HASH64 = 4096,
+
+    /// The actual type of the variable is unsigned (used in combination with numeric OBXPropertyType_*)
+    OBXPropertyFlags_UNSIGNED = 8192,
 } OBXPropertyFlags;
 
 struct OBX_model;
@@ -328,9 +338,11 @@ obx_id obx_cursor_id_for_put(OBX_cursor* cursor, obx_id id_or_zero);
 /// ATTENTION: ensure that the given value memory is allocated to the next 4 bytes boundary.
 /// ObjectBox needs to store bytes with sizes dividable by 4 for internal reasons.
 /// Use obx_cursor_put_padded otherwise.
-obx_err obx_cursor_put(OBX_cursor* cursor, obx_id id, const void* data, size_t size, bool checkForPreviousValueFlag);
+obx_err obx_cursor_put(OBX_cursor* cursor, obx_id id, const void* data, size_t size, bool checkForPreviousValue);
 
 /// Prefer obx_cursor_put (non-padded) if possible, as this does a memcpy if the size is not dividable by 4.
+obx_err obx_cursor_put_padded(OBX_cursor* cursor, uint64_t id, const void* data, size_t size, bool checkForPreviousValue);
+
 obx_err obx_cursor_get(OBX_cursor* cursor, obx_id id, void** data, size_t* size);
 
 /// Gets all objects as bytes.
@@ -383,7 +395,7 @@ obx_err obx_box_close(OBX_box* box);
 
 obx_id obx_box_id_for_put(OBX_box* box, obx_id id_or_zero);
 
-obx_err obx_box_put_async(OBX_box* box, obx_id id, const void* data, size_t size, bool checkForPreviousValueFlag,
+obx_err obx_box_put_async(OBX_box* box, obx_id id, const void* data, size_t size, bool checkForPreviousValue,
                           uint64_t timeoutMillis);
 
 //----------------------------------------------
@@ -482,13 +494,17 @@ obx_err obx_qb_param_alias(OBX_query_builder* builder, const char* alias);
 
 obx_err obx_qb_order(OBX_query_builder* builder, obx_schema_id property_id, OBXOrderFlags flags);
 
+/// Create a link based on a property-relation (many-to-one)
 OBX_query_builder* obx_qb_link_property(OBX_query_builder* builder, obx_schema_id property_id);
 
+/// Create a backlink based on a property-relation used in reverse (one-to-many)
 OBX_query_builder* obx_qb_backlink_property(OBX_query_builder* builder, obx_schema_id source_entity_id,
                                             obx_schema_id source_property_id);
 
+// Create a link based on a standalone relation (many-to-many)
 OBX_query_builder* obx_qb_link_standalone(OBX_query_builder* builder, obx_schema_id relation_id);
 
+// Create a backlink based on a standalone relation (many-to-many, reverse direction)
 OBX_query_builder* obx_qb_backlink_standalone(OBX_query_builder* builder, obx_schema_id relation_id);
 
 //----------------------------------------------

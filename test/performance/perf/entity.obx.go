@@ -69,7 +69,7 @@ func (entity_EntityInfo) GeneratorVersion() int {
 func (entity_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("Entity", 1, 1737161401460991620)
 	model.Property("Id", objectbox.PropertyType_Long, 1, 7373286741377356014)
-	model.PropertyFlags(objectbox.PropertyFlags_ID)
+	model.PropertyFlags(objectbox.PropertyFlags_UNSIGNED | objectbox.PropertyFlags_ID)
 	model.Property("Int32", objectbox.PropertyType_Int, 2, 4837914178321008766)
 	model.Property("Int64", objectbox.PropertyType_Long, 3, 3841825182616422591)
 	model.Property("String", objectbox.PropertyType_String, 4, 6473251296493454829)

@@ -30,15 +30,20 @@ type Version struct {
 	Major int
 	Minor int
 	Patch int
+	Label string
 }
 
 func (v Version) String() string {
-	return fmt.Sprintf("%d.%d.%d", v.Major, v.Minor, v.Patch)
+	versionString := fmt.Sprintf("%d.%d.%d", v.Major, v.Minor, v.Patch)
+	if len(v.Label) > 0 {
+		versionString += "-" + v.Label
+	}
+	return versionString
 }
 
 // ObjectBox Version Go
 func VersionGo() Version {
-	return Version{0, 9, 0}
+	return Version{0, 9, 0, "rc"}
 }
 
 // Version of the dynamic linked ObjectBox library
@@ -47,7 +52,7 @@ func VersionLib() Version {
 	var minor C.int
 	var patch C.int
 	C.obx_version(&major, &minor, &patch)
-	return Version{int(major), int(minor), int(patch)}
+	return Version{int(major), int(minor), int(patch), ""}
 }
 
 // A printable version string

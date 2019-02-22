@@ -43,7 +43,7 @@ type Builder struct {
 
 func NewBuilder() *Builder {
 	// these constants are based on the objectbox.h file, not on the loaded library
-	var obxMinVersion = Version{C.OBX_VERSION_MAJOR, C.OBX_VERSION_MINOR, C.OBX_VERSION_PATCH}
+	var obxMinVersion = Version{C.OBX_VERSION_MAJOR, C.OBX_VERSION_MINOR, C.OBX_VERSION_PATCH, ""}
 
 	if !C.obx_version_is_at_least(C.int(obxMinVersion.Major), C.int(obxMinVersion.Minor), C.int(obxMinVersion.Patch)) {
 		var version string

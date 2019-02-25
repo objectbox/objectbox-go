@@ -33,31 +33,6 @@ type Transaction struct {
 	objectBox *ObjectBox
 }
 
-func (txn *Transaction) Close() error {
-	rc := C.obx_txn_close(txn.txn)
-	txn.txn = nil
-	if rc != 0 {
-		return createError()
-	}
-	return nil
-}
-
-func (txn *Transaction) Abort() error {
-	rc := C.obx_txn_abort(txn.txn)
-	if rc != 0 {
-		return createError()
-	}
-	return nil
-}
-
-func (txn *Transaction) Commit() error {
-	rc := C.obx_txn_commit(txn.txn)
-	if rc != 0 {
-		return createError()
-	}
-	return nil
-}
-
 // Internal: won't be available in future versions
 func (txn *Transaction) RunWithCursor(entityId TypeId, cursorFun cursorFun) error {
 	return txn.runWithCursor(txn.objectBox.getEntityById(entityId), cursorFun)

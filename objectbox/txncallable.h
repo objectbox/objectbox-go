@@ -14,13 +14,8 @@
  * limitations under the License.
  */
 
-package objectbox
+// this file is included from different parts of the program that need to reference C.txn_callable_read|write
+#include "objectbox.h"
 
-// Internal: Reserved for internal unit tests only and won't be exposed in the future
-type InternalTestAccessObjectBox struct {
-	ObjectBox *ObjectBox
-}
-
-func (obx *InternalTestAccessObjectBox) RunInTxn(readOnly bool, txnFun txnFun) (err error) {
-	return obx.ObjectBox.runInTxn(readOnly, txnFun)
-}
+obx_txn_callable_read*  txn_callable_read;
+obx_txn_callable_write* txn_callable_write;

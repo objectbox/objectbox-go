@@ -20,6 +20,7 @@ package objectbox
 #cgo LDFLAGS: -lobjectbox
 #include <stdlib.h>
 #include "objectbox.h"
+#include "txncallable.h"
 */
 import "C"
 
@@ -29,6 +30,7 @@ import (
 	"runtime"
 	"strconv"
 	"sync"
+	"unsafe"
 
 	"github.com/google/flatbuffers/go"
 )
@@ -86,6 +88,21 @@ func (ob *ObjectBox) Close() {
 	ob.boxes = nil
 }
 
+// View executes the given function inside a read transaction.
+// Note, you must not launch Go routines inside this function - the call must be sequential.
+// The error returned by your callback is passed-through as the output error
+func (ob *ObjectBox) View(fn func() error) error {
+	return ob.runInTxn(true, nil, fn)
+}
+
+// Update executes the given function inside a write transaction.
+// Note, you must not launch Go routines inside this function - the call must be sequential.
+// The error returned by your callback is passed-through as the output error.
+// If the resulting error is not nil, the transaction is aborted (rolled-back)
+func (ob *ObjectBox) Update(fn func() error) error {
+	return ob.runInTxn(false, nil, fn)
+}
+
 func (ob *ObjectBox) beginTxn() (*Transaction, error) {
 	var ctxn = C.obx_txn_begin(ob.store)
 	if ctxn == nil {
@@ -102,44 +119,61 @@ func (ob *ObjectBox) beginTxnRead() (*Transaction, error) {
 	return &Transaction{ctxn, ob}, nil
 }
 
-func (ob *ObjectBox) runInTxn(readOnly bool, txnFun txnFun) (err error) {
+// runInTxn executes one of the given function inside a transaction
+// if the function returns an error, the transaction is rolled-back
+func (ob *ObjectBox) runInTxn(readOnly bool, fnWithTxn txnFun, fnNoTxn func() error) error {
 	runtime.LockOSThread()
-	var txn *Transaction
-	if readOnly {
-		txn, err = ob.beginTxnRead()
-	} else {
-		txn, err = ob.beginTxn()
-	}
-	if err != nil {
-		runtime.UnlockOSThread()
-		return
-	}
+	defer runtime.UnlockOSThread()
 
-	//fmt.Println(">>> START TX")
-	//os.Stdout.Sync()
+	var visitorId uint32
+	var err error
+	var pnc interface{}
 
-	// Defer to ensure a TX is ALWAYS closed, even in a panic
-	defer func() {
-		err2 := txn.Close()
-		if err == nil {
-			err = err2
+	visitorId, err = txnCallableRegister(func(tx *Transaction) (result bool) {
+		// this function must not panic or the call to C would not return and the transaction wouldn't finish
+		defer func() {
+			pnc = recover()
+			if pnc != nil {
+				fmt.Printf("panic during transaction callback: %v", pnc)
+				err = fmt.Errorf("%v", pnc)
+				result = false
+			}
+		}()
+
+		if fnWithTxn != nil {
+			if tx.objectBox == nil {
+				tx.objectBox = ob
+			}
+			err = fnWithTxn(tx)
+		} else {
+			err = fnNoTxn()
 		}
-		runtime.UnlockOSThread()
-	}()
+		return err == nil
+	})
+	if err != nil {
+		return err
+	}
+	defer txnCallableUnregister(visitorId)
 
-	err = txnFun(txn)
-
-	//fmt.Println("<<< END TX")
-	//os.Stdout.Sync()
-
-	if !readOnly && err == nil {
-		err = txn.Commit()
+	var rc C.obx_err
+	if readOnly {
+		rc = C.obx_store_exec_read(ob.store, C.txn_callable_read, unsafe.Pointer(&visitorId))
+	} else {
+		rc = C.obx_store_exec_write(ob.store, C.txn_callable_write, unsafe.Pointer(&visitorId))
 	}
 
-	//fmt.Println("<<< END TX Close")
-	//os.Stdout.Sync()
-
-	return
+	// handle errors in order of their priorities
+	if pnc != nil {
+		// propagate the panic
+		panic(pnc)
+	} else if err != nil {
+		// err set by the visitor callback above
+		return err
+	} else if rc != 0 {
+		return createError()
+	} else {
+		return nil
+	}
 }
 
 func (ob ObjectBox) getEntityById(typeId TypeId) *entity {
@@ -167,7 +201,7 @@ func (ob *ObjectBox) runWithCursor(e *entity, readOnly bool, cursorFun cursorFun
 
 	return ob.runInTxn(readOnly, func(txn *Transaction) error {
 		return txn.runWithCursor(e, cursorFun)
-	})
+	}, nil)
 }
 
 // SetDebugFlags configures debug logging of the ObjectBox core.

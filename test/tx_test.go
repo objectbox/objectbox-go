@@ -17,35 +17,78 @@
 package objectbox_test
 
 import (
+	"github.com/pkg/errors"
 	"testing"
 
 	"github.com/objectbox/objectbox-go/test/assert"
 
-	"github.com/objectbox/objectbox-go/objectbox"
 	"github.com/objectbox/objectbox-go/test/model/iot"
 )
 
-func TestTransactionInsert(t *testing.T) {
+func TestTransactionMassiveInsert(t *testing.T) {
 	ob := iot.LoadEmptyTestObjectBox()
 	defer ob.Close()
 
-	assert.NoErr(t, iot.BoxForEvent(ob).RemoveAll())
+	var box = iot.BoxForEvent(ob)
 
-	var insert = uint64(1000000)
+	assert.NoErr(t, box.RemoveAll())
 
-	testObx := objectbox.InternalTestAccessObjectBox{ObjectBox: ob}
-	assert.NoErr(t, testObx.RunInTxn(false, func(tx *objectbox.Transaction) (err error) {
-		return tx.RunWithCursor(iot.EventBinding.Id, func(cursor *objectbox.Cursor) error {
-			for i := insert; i > 0; i-- {
-				_, err := cursor.Put(&iot.Event{})
-				assert.NoErr(t, err)
-			}
-			return nil
-		})
-	}))
+	// TODO increase this after we switch to the c-api box interface,
+	//  current implementation still creates transaction for each Put()
+	var insert = uint64(10000)
 
-	count, err := iot.BoxForEvent(ob).Count()
+	err := ob.Update(func() error {
+		for i := insert; i > 0; i-- {
+			_, err := box.Put(&iot.Event{})
+			assert.NoErr(t, err)
+		}
+		return nil
+	})
+
+	count, err := box.Count()
+	assert.NoErr(t, err)
+	assert.Eq(t, insert, count)
+}
+
+func TestTransactionRollback(t *testing.T) {
+	ob := iot.LoadEmptyTestObjectBox()
+	defer ob.Close()
+
+	var box = iot.BoxForEvent(ob)
+
+	assert.NoErr(t, box.RemoveAll())
+
+	var insert = make([]*iot.Event, 100)
+	for i := 0; i < len(insert); i++ {
+		insert[i] = &iot.Event{}
+	}
+
+	_, err := box.PutAll(insert)
 	assert.NoErr(t, err)
 
-	assert.Eq(t, insert, count)
+	count, err := box.Count()
+	assert.NoErr(t, err)
+	assert.Eq(t, len(insert), int(count))
+
+	// rolled-back Tx
+	var expected = errors.New("expected")
+	assert.Eq(t, expected, ob.Update(func() error {
+		assert.NoErr(t, box.RemoveAll())
+		return expected
+	}))
+
+	count, err = box.Count()
+	assert.NoErr(t, err)
+	assert.Eq(t, len(insert), int(count))
+
+	// successful tx
+	assert.NoErr(t, ob.Update(func() error {
+		assert.NoErr(t, box.RemoveAll())
+		return nil
+	}))
+
+	count, err = box.Count()
+	assert.NoErr(t, err)
+	assert.Eq(t, 0, int(count))
+
 }

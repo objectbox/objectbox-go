@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 ObjectBox Ltd. All rights reserved.
+ * Copyright 2018 ObjectBox Ltd. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ extern "C" {
 // Note that you should use methods with prefix obx_version_ to check when linking against the dynamic library
 #define OBX_VERSION_MAJOR 0
 #define OBX_VERSION_MINOR 5
-#define OBX_VERSION_PATCH 0  // values >= 100 are reserved for dev releases leading to the next minor/major increase
+#define OBX_VERSION_PATCH 100  // values >= 100 are reserved for dev releases leading to the next minor/major increase
 
 /// Returns the version of the library as ints. Pointers may be null
 void obx_version(int* major, int* minor, int* patch);
@@ -131,6 +131,20 @@ typedef int obx_err;
 /// @param data is the read data buffer
 /// @param size specifies the length of the read data
 typedef bool obx_data_visitor(void* arg, const void* data, size_t size);
+
+struct OBX_txn;
+typedef struct OBX_txn OBX_txn;
+
+/// The function to run inside a read transaction
+/// @param arg is a pass-through argument passed to the called API
+/// @param txn is a read-only transaction
+typedef void obx_txn_callable_read(void* arg, OBX_txn* txn);
+
+/// The function to run inside a write transaction
+/// @param arg is a pass-through argument passed to the called API
+/// @param txn is a transaction - do not commit or abort it manually
+/// @return successful - whether to commit (true) or abort (false) the transaction
+typedef bool obx_txn_callable_write(void* arg, OBX_txn* txn);
 
 //----------------------------------------------
 // Error info
@@ -302,6 +316,12 @@ obx_err obx_store_await_async_completion(OBX_store* store);
 obx_err obx_store_debug_flags(OBX_store* store, OBXDebugFlags flags);
 
 obx_err obx_store_close(OBX_store* store);
+
+/// Execute the passed function inside a read transaction
+obx_err obx_store_exec_read(OBX_store* store, obx_txn_callable_read * callable, void* callable_arg);
+
+/// Execute the passed function inside a write transaction
+obx_err obx_store_exec_write(OBX_store* store, obx_txn_callable_write * callable, void* callable_arg);
 
 //----------------------------------------------
 // Transaction

@@ -17,11 +17,10 @@
 package objectbox_test
 
 import (
-	"github.com/pkg/errors"
+	"errors"
 	"testing"
 
 	"github.com/objectbox/objectbox-go/test/assert"
-
 	"github.com/objectbox/objectbox-go/test/model/iot"
 )
 

@@ -230,8 +230,8 @@ func (cursor *Cursor) cBytesArrayToObjects(cBytesArray *C.OBX_bytes_array) (slic
 
 func (cursor *Cursor) bytesArrayToObjects(bytesArray *bytesArray) (slice interface{}, err error) {
 	var binding = cursor.entity.binding
-	slice = binding.MakeSlice(len(bytesArray.BytesArray))
-	for _, bytesData := range bytesArray.BytesArray {
+	slice = binding.MakeSlice(len(bytesArray.array))
+	for _, bytesData := range bytesArray.array {
 		if object, err := binding.Load(cursor.txn, bytesData); err != nil {
 			return nil, err
 		} else {

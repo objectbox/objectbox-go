@@ -43,7 +43,7 @@ import (
 )
 
 type bytesArray struct {
-	BytesArray  [][]byte
+	array       [][]byte
 	cBytesArray *C.OBX_bytes_array
 }
 
@@ -53,7 +53,7 @@ func (bytesArray *bytesArray) free() {
 		bytesArray.cBytesArray = nil
 		C.obx_bytes_array_free(cBytesArray)
 	}
-	bytesArray.BytesArray = nil
+	bytesArray.array = nil
 }
 
 func cBytesArrayToGo(cBytesArray *C.OBX_bytes_array) *bytesArray {

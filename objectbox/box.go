@@ -312,48 +312,42 @@ func (box *Box) PutAll(objects interface{}) (ids []uint64, err error) {
 }
 
 // Remove deletes a single object
-func (box *Box) Remove(id uint64) (err error) {
-	return box.objectBox.runWithCursor(box.entity, false, func(cursor *Cursor) error {
-		return cursor.Remove(id)
+func (box *Box) Remove(id uint64) error {
+	return callC(func() C.obx_err {
+		return C.obx_box_remove(box.box, C.obx_id(id))
 	})
 }
 
 // RemoveAll removes all stored objects.
 // This is much faster than removing objects one by one in a loop.
-func (box *Box) RemoveAll() (err error) {
-	return box.objectBox.runWithCursor(box.entity, false, func(cursor *Cursor) error {
-		return cursor.RemoveAll()
+func (box *Box) RemoveAll() error {
+	return callC(func() C.obx_err {
+		return C.obx_box_remove_all(box.box, nil)
 	})
 }
 
 // Count returns a number of objects stored
-func (box *Box) Count() (count uint64, err error) {
-	err = box.objectBox.runWithCursor(box.entity, true, func(cursor *Cursor) error {
-		var errInner error
-		count, errInner = cursor.Count()
-		return errInner
-	})
-	return
+func (box *Box) Count() (uint64, error) {
+	return box.CountMax(0)
 }
 
 // CountMax returns a number of objects stored (up to a given maximum)
-func (box *Box) CountMax(max uint64) (count uint64, err error) {
-	err = box.objectBox.runWithCursor(box.entity, true, func(cursor *Cursor) error {
-		var errInner error
-		count, errInner = cursor.CountMax(max)
-		return errInner
-	})
-	return
+// passing limit=0 is the same as calling Count() - counts all objects without a limit
+func (box *Box) CountMax(limit uint64) (uint64, error) {
+	var cResult C.uint64_t
+	if err := callC(func() C.obx_err { return C.obx_box_count(box.box, C.uint64_t(limit), &cResult) }); err != nil {
+		return 0, err
+	}
+	return uint64(cResult), nil
 }
 
 // IsEmpty checks whether the box contains any objects
-func (box *Box) IsEmpty() (result bool, err error) {
-	err = box.objectBox.runWithCursor(box.entity, true, func(cursor *Cursor) error {
-		var errInner error
-		result, errInner = cursor.IsEmpty()
-		return errInner
-	})
-	return
+func (box *Box) IsEmpty() (bool, error) {
+	var cResult C.bool
+	if err := callC(func() C.obx_err { return C.obx_box_is_empty(box.box, &cResult) }); err != nil {
+		return false, err
+	}
+	return bool(cResult), nil
 }
 
 // Get reads a single object.
@@ -420,11 +414,9 @@ func (box *Box) bytesArrayToObjects(bytesArray *bytesArray) (slice interface{}, 
 
 // Contains checks whether an object with the given ID is stored.
 func (box *Box) Contains(id uint64) (bool, error) {
-	var found = false
-	var err = box.objectBox.runWithCursor(box.entity, true, func(cursor *Cursor) error {
-		var errInner error
-		found, errInner = cursor.seek(id)
-		return errInner
-	})
-	return found, err
+	var cResult C.bool
+	if err := callC(func() C.obx_err { return C.obx_box_contains(box.box, C.obx_id(id), &cResult) }); err != nil {
+		return false, err
+	}
+	return bool(cResult), nil
 }

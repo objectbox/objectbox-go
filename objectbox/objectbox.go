@@ -223,6 +223,22 @@ func (ob *ObjectBox) AwaitAsyncCompletion() *ObjectBox {
 	return ob
 }
 
+var cCallMutex sync.Mutex
+
+// calls objectbox C-api function while synchronously, making sure the returned error belongs to this call
+// TODO migrate all native C.obx_* calls so that they use this wrapper
+type nativeLibCall func() C.obx_err
+func callC(fn nativeLibCall) error {
+	cCallMutex.Lock()
+	defer cCallMutex.Unlock()
+
+	if rc := fn(); rc != 0 {
+		return createError()
+	} else {
+		return nil
+	}
+}
+
 func createError() error {
 	msg := C.obx_last_error_message()
 	if msg == nil {

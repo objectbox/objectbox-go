@@ -423,7 +423,7 @@ obx_err obx_box_put_async(OBX_box* box, obx_id id, const void* data, size_t size
 obx_err obx_box_remove(OBX_box* box, obx_id id);
 
 /// Remove all objects and set the out_count the the number of removed objects.
-/// You can pass nullptr as out_count in case you're not interested in the number of the removed objects.
+/// You can pass nullptr as out_count in case you're not interested in the number of removed objects.
 obx_err obx_box_remove_all(OBX_box* box, uint64_t* out_count);
 
 /// Checks whether there are any objects for this entity and updates the out_is_empty accordingly
@@ -451,7 +451,7 @@ OBX_id_array* obx_box_bulk_ids_for_put(OBX_box* box, uint64_t count);
 obx_err obx_box_bulk_put(OBX_box* box, const OBX_bytes_array* objects, const obx_id ids[], const bool is_update[]);
 
 /// Remove all given objects from  the database in a single transaction.
-/// If must_exist == true and any of the objects is not found, this function fails without and no objects are removed.
+/// If must_exist == true and any of the objects is not found, this function fails and no objects are removed.
 obx_err obx_box_bulk_remove(OBX_box* box, const OBX_id_array* ids, bool must_exist);
 
 /// Insert a standalone relation entry between two objects.

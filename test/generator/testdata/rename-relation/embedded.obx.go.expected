@@ -75,23 +75,18 @@ func (taskRelEmbedded_EntityInfo) SetId(object interface{}, id uint64) {
 }
 
 // PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
-func (taskRelEmbedded_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}, id uint64) error {
+func (taskRelEmbedded_EntityInfo) PutRelated(ob *objectbox.ObjectBox, object interface{}, id uint64) error {
 	if rel := object.(*TaskRelEmbedded).Group; rel != nil {
-		rId, err := GroupBinding.GetId(rel)
-		if err != nil {
+		if rId, err := GroupBinding.GetId(rel); err != nil {
 			return err
 		} else if rId == 0 {
-			if err := txn.RunWithCursor(GroupBinding.Id, func(targetCursor *objectbox.Cursor) error {
-				_, err := targetCursor.Put(rel) // NOTE Put/PutAsync() has a side-effect of setting the rel.ID
-				return err
-			}); err != nil {
+			// NOTE Put/PutAsync() has a side-effect of setting the rel.ID
+			if _, err := BoxForGroup(ob).Put(rel); err != nil {
 				return err
 			}
 		}
 	}
-	if err := txn.RunWithCursor(TaskRelEmbeddedBinding.Id, func(cursor *objectbox.Cursor) error {
-		return cursor.RelationReplace(3, GroupBinding.Id, id, object, object.(*TaskRelEmbedded).GroupsNew)
-	}); err != nil {
+	if err := BoxForTaskRelEmbedded(ob).RelationReplace(TaskRelEmbedded_.GroupsNew, id, object, object.(*TaskRelEmbedded).GroupsNew); err != nil {
 		return err
 	}
 	return nil
@@ -118,7 +113,7 @@ func (taskRelEmbedded_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.B
 }
 
 // Load is called by ObjectBox to load an object from a FlatBuffer
-func (taskRelEmbedded_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) (interface{}, error) {
+func (taskRelEmbedded_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{}, error) {
 	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
@@ -127,31 +122,20 @@ func (taskRelEmbedded_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte)
 
 	var relGroup *Group
 	if rId := table.GetUint64Slot(6, 0); rId > 0 {
-		if err := txn.RunWithCursor(GroupBinding.Id, func(targetCursor *objectbox.Cursor) error {
-			if relObject, err := targetCursor.Get(rId); err != nil {
-				return err
-			} else if relObj, ok := relObject.(*Group); ok {
-				relGroup = relObj
-			} else {
-				var relObj = relObject.(Group)
-				relGroup = &relObj
-			}
-			return nil
-		}); err != nil {
+		if rObject, err := BoxForGroup(ob).Get(rId); err != nil {
 			return nil, err
+		} else {
+			relGroup = rObject
 		}
 	}
 
 	var relGroupsNew []*Group
-	if err := txn.RunWithCursor(TaskRelEmbeddedBinding.Id, func(cursor *objectbox.Cursor) error {
-		if rSlice, err := cursor.RelationGetAll(3, GroupBinding.Id, id); err != nil {
-			return err
-		} else {
-			relGroupsNew = rSlice.([]*Group)
-			return nil
-		}
-	}); err != nil {
+	if rIds, err := BoxForTaskRelEmbedded(ob).RelationIds(TaskRelEmbedded_.GroupsNew, id); err != nil {
 		return nil, err
+	} else if rSlice, err := BoxForGroup(ob).GetMany(rIds...); err != nil {
+		return nil, err
+	} else {
+		relGroupsNew = rSlice
 	}
 
 	return &TaskRelEmbedded{
@@ -241,7 +225,17 @@ func (box *TaskRelEmbeddedBox) Get(id uint64) (*TaskRelEmbedded, error) {
 	return object.(*TaskRelEmbedded), nil
 }
 
-// Get reads all stored objects
+// GetMany reads multiple objects at once.
+// If any of the objects doesn't exist, its position in the return slice is nil
+func (box *TaskRelEmbeddedBox) GetMany(ids ...uint64) ([]*TaskRelEmbedded, error) {
+	objects, err := box.Box.GetMany(ids...)
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*TaskRelEmbedded), nil
+}
+
+// GetAll reads all stored objects
 func (box *TaskRelEmbeddedBox) GetAll() ([]*TaskRelEmbedded, error) {
 	objects, err := box.Box.GetAll()
 	if err != nil {

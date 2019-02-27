@@ -89,9 +89,9 @@ type ObjectBinding interface {
 	AddToModel(model *Model)
 	GetId(object interface{}) (id uint64, err error)
 	SetId(object interface{}, id uint64)
-	PutRelated(txn *Transaction, object interface{}, id uint64) error
+	PutRelated(ob *ObjectBox, object interface{}, id uint64) error
 	Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) error
-	Load(txn *Transaction, bytes []byte) (interface{}, error)
+	Load(ob *ObjectBox, bytes []byte) (interface{}, error)
 	MakeSlice(capacity int) interface{}
 	AppendToSlice(slice interface{}, object interface{}) (sliceNew interface{})
 	GeneratorVersion() int

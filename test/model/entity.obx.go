@@ -269,54 +269,41 @@ func (entity_EntityInfo) SetId(object interface{}, id uint64) {
 }
 
 // PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
-func (entity_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}, id uint64) error {
+func (entity_EntityInfo) PutRelated(ob *objectbox.ObjectBox, object interface{}, id uint64) error {
 	if rel := &object.(*Entity).Related; rel != nil {
-		rId, err := TestEntityRelatedBinding.GetId(rel)
-		if err != nil {
+		if rId, err := TestEntityRelatedBinding.GetId(rel); err != nil {
 			return err
 		} else if rId == 0 {
-			if err := txn.RunWithCursor(TestEntityRelatedBinding.Id, func(targetCursor *objectbox.Cursor) error {
-				_, err := targetCursor.Put(rel) // NOTE Put/PutAsync() has a side-effect of setting the rel.ID
-				return err
-			}); err != nil {
+			// NOTE Put/PutAsync() has a side-effect of setting the rel.ID
+			if _, err := BoxForTestEntityRelated(ob).Put(rel); err != nil {
 				return err
 			}
 		}
 	}
 	if rel := object.(*Entity).RelatedPtr; rel != nil {
-		rId, err := TestEntityRelatedBinding.GetId(rel)
-		if err != nil {
+		if rId, err := TestEntityRelatedBinding.GetId(rel); err != nil {
 			return err
 		} else if rId == 0 {
-			if err := txn.RunWithCursor(TestEntityRelatedBinding.Id, func(targetCursor *objectbox.Cursor) error {
-				_, err := targetCursor.Put(rel) // NOTE Put/PutAsync() has a side-effect of setting the rel.ID
-				return err
-			}); err != nil {
+			// NOTE Put/PutAsync() has a side-effect of setting the rel.ID
+			if _, err := BoxForTestEntityRelated(ob).Put(rel); err != nil {
 				return err
 			}
 		}
 	}
 	if rel := object.(*Entity).RelatedPtr2; rel != nil {
-		rId, err := TestEntityRelatedBinding.GetId(rel)
-		if err != nil {
+		if rId, err := TestEntityRelatedBinding.GetId(rel); err != nil {
 			return err
 		} else if rId == 0 {
-			if err := txn.RunWithCursor(TestEntityRelatedBinding.Id, func(targetCursor *objectbox.Cursor) error {
-				_, err := targetCursor.Put(rel) // NOTE Put/PutAsync() has a side-effect of setting the rel.ID
-				return err
-			}); err != nil {
+			// NOTE Put/PutAsync() has a side-effect of setting the rel.ID
+			if _, err := BoxForTestEntityRelated(ob).Put(rel); err != nil {
 				return err
 			}
 		}
 	}
-	if err := txn.RunWithCursor(EntityBinding.Id, func(cursor *objectbox.Cursor) error {
-		return cursor.RelationReplace(4, EntityByValueBinding.Id, id, object, object.(*Entity).RelatedSlice)
-	}); err != nil {
+	if err := BoxForEntity(ob).RelationReplace(Entity_.RelatedSlice, id, object, object.(*Entity).RelatedSlice); err != nil {
 		return err
 	}
-	if err := txn.RunWithCursor(EntityBinding.Id, func(cursor *objectbox.Cursor) error {
-		return cursor.RelationReplace(5, TestEntityRelatedBinding.Id, id, object, object.(*Entity).RelatedPtrSlice)
-	}); err != nil {
+	if err := BoxForEntity(ob).RelationReplace(Entity_.RelatedPtrSlice, id, object, object.(*Entity).RelatedPtrSlice); err != nil {
 		return err
 	}
 	return nil
@@ -387,7 +374,7 @@ func (entity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, i
 }
 
 // Load is called by ObjectBox to load an object from a FlatBuffer
-func (entity_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) (interface{}, error) {
+func (entity_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{}, error) {
 	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
@@ -396,18 +383,10 @@ func (entity_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) (interfa
 
 	var relRelated *TestEntityRelated
 	if rId := table.GetUint64Slot(46, 0); rId > 0 {
-		if err := txn.RunWithCursor(TestEntityRelatedBinding.Id, func(targetCursor *objectbox.Cursor) error {
-			if relObject, err := targetCursor.Get(rId); err != nil {
-				return err
-			} else if relObj, ok := relObject.(*TestEntityRelated); ok {
-				relRelated = relObj
-			} else {
-				var relObj = relObject.(TestEntityRelated)
-				relRelated = &relObj
-			}
-			return nil
-		}); err != nil {
+		if rObject, err := BoxForTestEntityRelated(ob).Get(rId); err != nil {
 			return nil, err
+		} else {
+			relRelated = rObject
 		}
 	} else {
 		relRelated = &TestEntityRelated{}
@@ -415,60 +394,38 @@ func (entity_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) (interfa
 
 	var relRelatedPtr *TestEntityRelated
 	if rId := table.GetUint64Slot(48, 0); rId > 0 {
-		if err := txn.RunWithCursor(TestEntityRelatedBinding.Id, func(targetCursor *objectbox.Cursor) error {
-			if relObject, err := targetCursor.Get(rId); err != nil {
-				return err
-			} else if relObj, ok := relObject.(*TestEntityRelated); ok {
-				relRelatedPtr = relObj
-			} else {
-				var relObj = relObject.(TestEntityRelated)
-				relRelatedPtr = &relObj
-			}
-			return nil
-		}); err != nil {
+		if rObject, err := BoxForTestEntityRelated(ob).Get(rId); err != nil {
 			return nil, err
+		} else {
+			relRelatedPtr = rObject
 		}
 	}
 
 	var relRelatedPtr2 *TestEntityRelated
 	if rId := table.GetUint64Slot(50, 0); rId > 0 {
-		if err := txn.RunWithCursor(TestEntityRelatedBinding.Id, func(targetCursor *objectbox.Cursor) error {
-			if relObject, err := targetCursor.Get(rId); err != nil {
-				return err
-			} else if relObj, ok := relObject.(*TestEntityRelated); ok {
-				relRelatedPtr2 = relObj
-			} else {
-				var relObj = relObject.(TestEntityRelated)
-				relRelatedPtr2 = &relObj
-			}
-			return nil
-		}); err != nil {
+		if rObject, err := BoxForTestEntityRelated(ob).Get(rId); err != nil {
 			return nil, err
+		} else {
+			relRelatedPtr2 = rObject
 		}
 	}
 
 	var relRelatedSlice []EntityByValue
-	if err := txn.RunWithCursor(EntityBinding.Id, func(cursor *objectbox.Cursor) error {
-		if rSlice, err := cursor.RelationGetAll(4, EntityByValueBinding.Id, id); err != nil {
-			return err
-		} else {
-			relRelatedSlice = rSlice.([]EntityByValue)
-			return nil
-		}
-	}); err != nil {
+	if rIds, err := BoxForEntity(ob).RelationIds(Entity_.RelatedSlice, id); err != nil {
 		return nil, err
+	} else if rSlice, err := BoxForEntityByValue(ob).GetMany(rIds...); err != nil {
+		return nil, err
+	} else {
+		relRelatedSlice = rSlice
 	}
 
 	var relRelatedPtrSlice []*TestEntityRelated
-	if err := txn.RunWithCursor(EntityBinding.Id, func(cursor *objectbox.Cursor) error {
-		if rSlice, err := cursor.RelationGetAll(5, TestEntityRelatedBinding.Id, id); err != nil {
-			return err
-		} else {
-			relRelatedPtrSlice = rSlice.([]*TestEntityRelated)
-			return nil
-		}
-	}); err != nil {
+	if rIds, err := BoxForEntity(ob).RelationIds(Entity_.RelatedPtrSlice, id); err != nil {
 		return nil, err
+	} else if rSlice, err := BoxForTestEntityRelated(ob).GetMany(rIds...); err != nil {
+		return nil, err
+	} else {
+		relRelatedPtrSlice = rSlice
 	}
 
 	return &Entity{
@@ -579,7 +536,17 @@ func (box *EntityBox) Get(id uint64) (*Entity, error) {
 	return object.(*Entity), nil
 }
 
-// Get reads all stored objects
+// GetMany reads multiple objects at once.
+// If any of the objects doesn't exist, its position in the return slice is nil
+func (box *EntityBox) GetMany(ids ...uint64) ([]*Entity, error) {
+	objects, err := box.Box.GetMany(ids...)
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*Entity), nil
+}
+
+// GetAll reads all stored objects
 func (box *EntityBox) GetAll() ([]*Entity, error) {
 	objects, err := box.Box.GetAll()
 	if err != nil {
@@ -690,7 +657,7 @@ func (testStringIdEntity_EntityInfo) SetId(object interface{}, id uint64) {
 }
 
 // PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
-func (testStringIdEntity_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}, id uint64) error {
+func (testStringIdEntity_EntityInfo) PutRelated(ob *objectbox.ObjectBox, object interface{}, id uint64) error {
 	return nil
 }
 
@@ -704,7 +671,7 @@ func (testStringIdEntity_EntityInfo) Flatten(object interface{}, fbb *flatbuffer
 }
 
 // Load is called by ObjectBox to load an object from a FlatBuffer
-func (testStringIdEntity_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) (interface{}, error) {
+func (testStringIdEntity_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{}, error) {
 	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
@@ -794,7 +761,17 @@ func (box *TestStringIdEntityBox) Get(id uint64) (*TestStringIdEntity, error) {
 	return object.(*TestStringIdEntity), nil
 }
 
-// Get reads all stored objects
+// GetMany reads multiple objects at once.
+// If any of the objects doesn't exist, its position in the return slice is nil
+func (box *TestStringIdEntityBox) GetMany(ids ...uint64) ([]*TestStringIdEntity, error) {
+	objects, err := box.Box.GetMany(ids...)
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*TestStringIdEntity), nil
+}
+
+// GetAll reads all stored objects
 func (box *TestStringIdEntityBox) GetAll() ([]*TestStringIdEntity, error) {
 	objects, err := box.Box.GetAll()
 	if err != nil {
@@ -921,7 +898,7 @@ func (testEntityInline_EntityInfo) SetId(object interface{}, id uint64) {
 }
 
 // PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
-func (testEntityInline_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}, id uint64) error {
+func (testEntityInline_EntityInfo) PutRelated(ob *objectbox.ObjectBox, object interface{}, id uint64) error {
 	return nil
 }
 
@@ -938,7 +915,7 @@ func (testEntityInline_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.
 }
 
 // Load is called by ObjectBox to load an object from a FlatBuffer
-func (testEntityInline_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) (interface{}, error) {
+func (testEntityInline_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{}, error) {
 	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
@@ -1034,7 +1011,17 @@ func (box *TestEntityInlineBox) Get(id uint64) (*TestEntityInline, error) {
 	return object.(*TestEntityInline), nil
 }
 
-// Get reads all stored objects
+// GetMany reads multiple objects at once.
+// If any of the objects doesn't exist, its position in the return slice is nil
+func (box *TestEntityInlineBox) GetMany(ids ...uint64) ([]*TestEntityInline, error) {
+	objects, err := box.Box.GetMany(ids...)
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*TestEntityInline), nil
+}
+
+// GetAll reads all stored objects
 func (box *TestEntityInlineBox) GetAll() ([]*TestEntityInline, error) {
 	objects, err := box.Box.GetAll()
 	if err != nil {
@@ -1171,23 +1158,18 @@ func (testEntityRelated_EntityInfo) SetId(object interface{}, id uint64) {
 }
 
 // PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
-func (testEntityRelated_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}, id uint64) error {
+func (testEntityRelated_EntityInfo) PutRelated(ob *objectbox.ObjectBox, object interface{}, id uint64) error {
 	if rel := object.(*TestEntityRelated).Next; rel != nil {
-		rId, err := EntityByValueBinding.GetId(rel)
-		if err != nil {
+		if rId, err := EntityByValueBinding.GetId(rel); err != nil {
 			return err
 		} else if rId == 0 {
-			if err := txn.RunWithCursor(EntityByValueBinding.Id, func(targetCursor *objectbox.Cursor) error {
-				_, err := targetCursor.Put(rel) // NOTE Put/PutAsync() has a side-effect of setting the rel.ID
-				return err
-			}); err != nil {
+			// NOTE Put/PutAsync() has a side-effect of setting the rel.ID
+			if _, err := BoxForEntityByValue(ob).Put(rel); err != nil {
 				return err
 			}
 		}
 	}
-	if err := txn.RunWithCursor(TestEntityRelatedBinding.Id, func(cursor *objectbox.Cursor) error {
-		return cursor.RelationReplace(6, EntityByValueBinding.Id, id, object, object.(*TestEntityRelated).NextSlice)
-	}); err != nil {
+	if err := BoxForTestEntityRelated(ob).RelationReplace(TestEntityRelated_.NextSlice, id, object, object.(*TestEntityRelated).NextSlice); err != nil {
 		return err
 	}
 	return nil
@@ -1216,7 +1198,7 @@ func (testEntityRelated_EntityInfo) Flatten(object interface{}, fbb *flatbuffers
 }
 
 // Load is called by ObjectBox to load an object from a FlatBuffer
-func (testEntityRelated_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) (interface{}, error) {
+func (testEntityRelated_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{}, error) {
 	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
@@ -1225,31 +1207,20 @@ func (testEntityRelated_EntityInfo) Load(txn *objectbox.Transaction, bytes []byt
 
 	var relNext *EntityByValue
 	if rId := table.GetUint64Slot(8, 0); rId > 0 {
-		if err := txn.RunWithCursor(EntityByValueBinding.Id, func(targetCursor *objectbox.Cursor) error {
-			if relObject, err := targetCursor.Get(rId); err != nil {
-				return err
-			} else if relObj, ok := relObject.(*EntityByValue); ok {
-				relNext = relObj
-			} else {
-				var relObj = relObject.(EntityByValue)
-				relNext = &relObj
-			}
-			return nil
-		}); err != nil {
+		if rObject, err := BoxForEntityByValue(ob).Get(rId); err != nil {
 			return nil, err
+		} else {
+			relNext = rObject
 		}
 	}
 
 	var relNextSlice []EntityByValue
-	if err := txn.RunWithCursor(TestEntityRelatedBinding.Id, func(cursor *objectbox.Cursor) error {
-		if rSlice, err := cursor.RelationGetAll(6, EntityByValueBinding.Id, id); err != nil {
-			return err
-		} else {
-			relNextSlice = rSlice.([]EntityByValue)
-			return nil
-		}
-	}); err != nil {
+	if rIds, err := BoxForTestEntityRelated(ob).RelationIds(TestEntityRelated_.NextSlice, id); err != nil {
 		return nil, err
+	} else if rSlice, err := BoxForEntityByValue(ob).GetMany(rIds...); err != nil {
+		return nil, err
+	} else {
+		relNextSlice = rSlice
 	}
 
 	return &TestEntityRelated{
@@ -1338,7 +1309,17 @@ func (box *TestEntityRelatedBox) Get(id uint64) (*TestEntityRelated, error) {
 	return object.(*TestEntityRelated), nil
 }
 
-// Get reads all stored objects
+// GetMany reads multiple objects at once.
+// If any of the objects doesn't exist, its position in the return slice is nil
+func (box *TestEntityRelatedBox) GetMany(ids ...uint64) ([]*TestEntityRelated, error) {
+	objects, err := box.Box.GetMany(ids...)
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*TestEntityRelated), nil
+}
+
+// GetAll reads all stored objects
 func (box *TestEntityRelatedBox) GetAll() ([]*TestEntityRelated, error) {
 	objects, err := box.Box.GetAll()
 	if err != nil {

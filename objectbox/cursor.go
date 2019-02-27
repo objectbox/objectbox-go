@@ -58,7 +58,7 @@ func (cursor *Cursor) Get(id uint64) (object interface{}, err error) {
 	if rc == 0 {
 		var bytes []byte
 		cVoidPtrToByteSlice(dataPtr, int(dataSize), &bytes)
-		return cursor.entity.binding.Load(cursor.txn, bytes)
+		return cursor.entity.binding.Load(cursor.txn.objectBox, bytes)
 	} else if rc == C.OBX_NOT_FOUND {
 		return nil, nil
 	} else {
@@ -90,7 +90,7 @@ func (cursor *Cursor) getAllSequential() (slice interface{}, err error) {
 	var rc C.obx_err
 	for rc = C.obx_cursor_first(cursor.cursor, &dataPtr, &dataSize); rc == 0; rc = C.obx_cursor_next(cursor.cursor, &dataPtr, &dataSize) {
 		cVoidPtrToByteSlice(dataPtr, int(dataSize), &bytes)
-		if object, err := binding.Load(cursor.txn, bytes); err != nil {
+		if object, err := binding.Load(cursor.txn.objectBox, bytes); err != nil {
 			return nil, err
 		} else {
 			slice = binding.AppendToSlice(slice, object)
@@ -159,7 +159,7 @@ func (cursor *Cursor) Put(object interface{}) (id uint64, err error) {
 	}
 
 	if cursor.entity.hasRelations {
-		if err = binding.PutRelated(cursor.txn, object, id); err != nil {
+		if err = binding.PutRelated(cursor.txn.objectBox, object, id); err != nil {
 			return 0, err
 		}
 	}
@@ -232,7 +232,7 @@ func (cursor *Cursor) bytesArrayToObjects(bytesArray *bytesArray) (slice interfa
 	var binding = cursor.entity.binding
 	slice = binding.MakeSlice(len(bytesArray.array))
 	for _, bytesData := range bytesArray.array {
-		if object, err := binding.Load(cursor.txn, bytesData); err != nil {
+		if object, err := binding.Load(cursor.txn.objectBox, bytesData); err != nil {
 			return nil, err
 		} else {
 			slice = binding.AppendToSlice(slice, object)

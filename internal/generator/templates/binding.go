@@ -159,28 +159,22 @@ func ({{$entityNameCamel}}_EntityInfo) SetId(object interface{}, id uint64) {
 }
 
 // PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
-func ({{$entityNameCamel}}_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}, id uint64) error {
+func ({{$entityNameCamel}}_EntityInfo) PutRelated(ob *objectbox.ObjectBox, object interface{}, id uint64) error {
 	{{- block "put-relations" $entity}}
-	{{- /* TODO ideally we should be using BoxForTarget() with a manually assigned txn */}}
 	{{- range $field := .Fields}}
 		{{- if $field.SimpleRelation}}
 			if rel := {{if not $field.IsPointer}}&{{end}}object.(*{{$field.Entity.Name}}).{{$field.Name}}; rel != nil {
-				rId, err := {{$field.SimpleRelation.Target.Name}}Binding.GetId(rel)
-				if err != nil {
+				if rId, err := {{$field.SimpleRelation.Target.Name}}Binding.GetId(rel); err != nil {
 					return err
 				} else if rId == 0 {
-					if err := txn.RunWithCursor({{$field.SimpleRelation.Target.Name}}Binding.Id, func(targetCursor *objectbox.Cursor) error {
-						_, err := targetCursor.Put(rel) // NOTE Put/PutAsync() has a side-effect of setting the rel.ID
-						return err
-					}); err != nil {
+					// NOTE Put/PutAsync() has a side-effect of setting the rel.ID
+					if _, err := BoxFor{{$field.SimpleRelation.Target.Name}}(ob).Put(rel); err != nil {
 						return err
 					}
 				}
 			}
 		{{- else if $field.StandaloneRelation}}
-			if err := txn.RunWithCursor({{$field.Entity.Name}}Binding.Id, func(cursor *objectbox.Cursor) error {
-				return cursor.RelationReplace({{$field.StandaloneRelation.Id}}, {{$field.StandaloneRelation.Target.Name}}Binding.Id, id, object, object.(*{{$field.Entity.Name}}).{{$field.Name}})
-			}); err != nil {
+			if err := BoxFor{{$field.Entity.Name}}(ob).RelationReplace({{.Entity.Name}}_.{{$field.Name}}, id, object, object.(*{{$field.Entity.Name}}).{{$field.Name}}); err != nil {
 				return err
 			}
 		{{- else}}{{/* recursively visit fields in embedded structs */}}{{template "put-relations" $field}}
@@ -209,7 +203,6 @@ func ({{$entityNameCamel}}_EntityInfo) Flatten(object interface{}, fbb *flatbuff
 	{{- end}}{{end}}
 
 	{{- block "store-relations" $entity}}
-	{{- /* store relations, TODO ideally we should be using BoxForTarget() with a manually assigned txn */}}
 	{{- range $field := .Fields}}
 		{{if $field.SimpleRelation}}
 			var rId{{$field.Property.Name}} uint64
@@ -242,7 +235,7 @@ func ({{$entityNameCamel}}_EntityInfo) Flatten(object interface{}, fbb *flatbuff
 }
 
 // Load is called by ObjectBox to load an object from a FlatBuffer 
-func ({{$entityNameCamel}}_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) (interface{}, error) {
+func ({{$entityNameCamel}}_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{}, error) {
 	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
@@ -250,23 +243,14 @@ func ({{$entityNameCamel}}_EntityInfo) Load(txn *objectbox.Transaction, bytes []
 	var id = table.Get{{$entity.IdProperty.GoType | StringTitle}}Slot({{$entity.IdProperty.FbvTableOffset}}, 0)
 	
 	{{- block "load-relations" $entity}}
-	{{- /* TODO ideally we should be using BoxForTarget() with a manually assigned txn */}}
 	{{- range $field := .Fields}}
 		{{if $field.SimpleRelation -}}
 			var rel{{$field.Name}} *{{$field.Type}}
 			if rId := {{template "property-getter" $field.Property}}; rId > 0 {
-				if err := txn.RunWithCursor({{$field.SimpleRelation.Target.Name}}Binding.Id, func(targetCursor *objectbox.Cursor) error {
-					if relObject, err := targetCursor.Get(rId); err != nil {
-						return err 
-					} else if relObj, ok := relObject.(*{{$field.Type}}); ok {
-						rel{{$field.Name}} = relObj
-					} else {
-						var relObj = relObject.({{$field.Type}})
-						rel{{$field.Name}} = &relObj
-					}
-					return nil
-				}); err != nil {
-					return nil, err
+				if rObject, err := BoxFor{{$field.SimpleRelation.Target.Name}}(ob).Get(rId); err != nil {
+					return nil, err 
+				} else {
+					rel{{$field.Name}} = rObject
 				}
 			{{if not $field.IsPointer -}} 
 			} else {
@@ -275,15 +259,12 @@ func ({{$entityNameCamel}}_EntityInfo) Load(txn *objectbox.Transaction, bytes []
 			}
 		{{else if $field.StandaloneRelation -}}
 			var rel{{$field.Name}} {{$field.Type}} 
-			if err := txn.RunWithCursor({{$field.Entity.Name}}Binding.Id, func(cursor *objectbox.Cursor) error {
-				if rSlice, err := cursor.RelationGetAll({{$field.StandaloneRelation.Id}}, {{$field.StandaloneRelation.Target.Name}}Binding.Id, id); err != nil {
-					return err
-				} else {
-					rel{{$field.Name}} = {{if $field.IsPointer}}&{{end}}rSlice.({{$field.Type}})
-					return nil
-				}
-			}); err != nil {
+			if rIds, err := BoxFor{{$field.Entity.Name}}(ob).RelationIds({{.Entity.Name}}_.{{$field.Name}}, id); err != nil {
 				return nil, err
+			} else if rSlice, err := BoxFor{{$field.StandaloneRelation.Target.Name}}(ob).GetMany(rIds...); err != nil {
+				return nil, err
+			} else {
+				rel{{$field.Name}} = rSlice
 			}
 			
 		{{else}}{{/* recursively visit fields in embedded structs */}}{{template "load-relations" $field}}
@@ -386,7 +367,17 @@ func (box *{{$entity.Name}}Box) Get(id uint64) (*{{$entity.Name}}, error) {
 	return object.(*{{$entity.Name}}), nil
 }
 
-// Get reads all stored objects
+// GetMany reads multiple objects at once.
+// If any of the objects doesn't exist, its position in the return slice is {{if $.Options.ByValue}}an empty object{{else}}nil{{end}}
+func (box *{{$entity.Name}}Box) GetMany(ids ...uint64) ([]{{if not $.Options.ByValue}}*{{end}}{{$entity.Name}}, error) {
+	objects, err := box.Box.GetMany(ids...)
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]{{if not $.Options.ByValue}}*{{end}}{{$entity.Name}}), nil
+}
+
+// GetAll reads all stored objects
 func (box *{{$entity.Name}}Box) GetAll() ([]{{if not $.Options.ByValue}}*{{end}}{{$entity.Name}}, error) {
 	objects, err := box.Box.GetAll()
 	if err != nil {

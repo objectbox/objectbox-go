@@ -214,7 +214,7 @@ func (query *Query) findSequential(cursor *Cursor) (slice interface{}, err error
 		return C.obx_query_visit(query.cQuery, cursor.cursor, C.data_visitor, visitorArg, C.uint64_t(query.offset), C.uint64_t(query.limit))
 	}
 
-	return readUsingVisitor(query.entity.binding, defaultSliceCapacity, cCall)
+	return readUsingVisitor(query.objectBox, query.entity.binding, defaultSliceCapacity, cCall)
 }
 
 func (query *Query) checkEntityId(entityId TypeId) error {

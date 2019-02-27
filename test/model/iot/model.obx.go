@@ -91,7 +91,7 @@ func (event_EntityInfo) SetId(object interface{}, id uint64) {
 }
 
 // PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
-func (event_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}, id uint64) error {
+func (event_EntityInfo) PutRelated(ob *objectbox.ObjectBox, object interface{}, id uint64) error {
 	return nil
 }
 
@@ -113,7 +113,7 @@ func (event_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id
 }
 
 // Load is called by ObjectBox to load an object from a FlatBuffer
-func (event_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) (interface{}, error) {
+func (event_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{}, error) {
 	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
@@ -207,7 +207,17 @@ func (box *EventBox) Get(id uint64) (*Event, error) {
 	return object.(*Event), nil
 }
 
-// Get reads all stored objects
+// GetMany reads multiple objects at once.
+// If any of the objects doesn't exist, its position in the return slice is nil
+func (box *EventBox) GetMany(ids ...uint64) ([]*Event, error) {
+	objects, err := box.Box.GetMany(ids...)
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*Event), nil
+}
+
+// GetAll reads all stored objects
 func (box *EventBox) GetAll() ([]*Event, error) {
 	objects, err := box.Box.GetAll()
 	if err != nil {
@@ -385,7 +395,7 @@ func (reading_EntityInfo) SetId(object interface{}, id uint64) {
 }
 
 // PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
-func (reading_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}, id uint64) error {
+func (reading_EntityInfo) PutRelated(ob *objectbox.ObjectBox, object interface{}, id uint64) error {
 	return nil
 }
 
@@ -412,7 +422,7 @@ func (reading_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, 
 }
 
 // Load is called by ObjectBox to load an object from a FlatBuffer
-func (reading_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) (interface{}, error) {
+func (reading_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{}, error) {
 	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
@@ -510,7 +520,17 @@ func (box *ReadingBox) Get(id uint64) (*Reading, error) {
 	return object.(*Reading), nil
 }
 
-// Get reads all stored objects
+// GetMany reads multiple objects at once.
+// If any of the objects doesn't exist, its position in the return slice is nil
+func (box *ReadingBox) GetMany(ids ...uint64) ([]*Reading, error) {
+	objects, err := box.Box.GetMany(ids...)
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*Reading), nil
+}
+
+// GetAll reads all stored objects
 func (box *ReadingBox) GetAll() ([]*Reading, error) {
 	objects, err := box.Box.GetAll()
 	if err != nil {

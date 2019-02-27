@@ -210,36 +210,11 @@ func (query *Query) find(cursor *Cursor) (slice interface{}, err error) {
 }
 
 func (query *Query) findSequential(cursor *Cursor) (slice interface{}, err error) {
-	if query.cQuery == nil {
-		return 0, query.errorClosed()
+	var cCall = func(visitorArg unsafe.Pointer) C.obx_err {
+		return C.obx_query_visit(query.cQuery, cursor.cursor, C.data_visitor, visitorArg, C.uint64_t(query.offset), C.uint64_t(query.limit))
 	}
-	var binding = cursor.entity.binding
 
-	var visitorId uint32
-	visitorId, err = dataVisitorRegister(func(bytes []byte) bool {
-		if object, err2 := binding.Load(cursor.txn, bytes); err2 != nil {
-			err = err2
-			return false
-		} else {
-			slice = binding.AppendToSlice(slice, object)
-		}
-		return true
-	})
-	if err != nil {
-		return nil, err
-	}
-	defer dataVisitorUnregister(visitorId)
-
-	slice = binding.MakeSlice(defaultSliceCapacity)
-	rc := C.obx_query_visit(query.cQuery, cursor.cursor, C.data_visitor, unsafe.Pointer(&visitorId), C.uint64_t(query.offset), C.uint64_t(query.limit))
-	if rc != 0 {
-		return nil, createError()
-	} else if err != nil {
-		// err might be set by the visitor callback above
-		return nil, err
-	} else {
-		return slice, nil
-	}
+	return runDataVisitor(query.entity.binding, defaultSliceCapacity, cCall)
 }
 
 func (query *Query) checkEntityId(entityId TypeId) error {

@@ -41,7 +41,7 @@ extern "C" {
 // Note that you should use methods with prefix obx_version_ to check when linking against the dynamic library
 #define OBX_VERSION_MAJOR 0
 #define OBX_VERSION_MINOR 5
-#define OBX_VERSION_PATCH 0  // values >= 100 are reserved for dev releases leading to the next minor/major increase
+#define OBX_VERSION_PATCH 101  // values >= 100 are reserved for dev releases leading to the next minor/major increase
 
 /// Returns the version of the library as ints. Pointers may be null
 void obx_version(int* major, int* minor, int* patch);
@@ -274,7 +274,7 @@ typedef enum {
 } OBXDebugFlags;
 
 typedef struct OBX_bytes {
-    void* data;
+    const void* data;
     size_t size;
 } OBX_bytes;
 
@@ -341,7 +341,7 @@ obx_id obx_cursor_id_for_put(OBX_cursor* cursor, obx_id id_or_zero);
 obx_err obx_cursor_put(OBX_cursor* cursor, obx_id id, const void* data, size_t size, bool checkForPreviousValue);
 
 /// Prefer obx_cursor_put (non-padded) if possible, as this does a memcpy if the size is not dividable by 4.
-obx_err obx_cursor_put_padded(OBX_cursor* cursor, uint64_t id, const void* data, size_t size, bool checkForPreviousValue);
+obx_err obx_cursor_put_padded(OBX_cursor* cursor, obx_id id, const void* data, size_t size, bool checkForPreviousValue);
 
 obx_err obx_cursor_get(OBX_cursor* cursor, obx_id id, void** data, size_t* size);
 
@@ -393,10 +393,81 @@ OBX_box* obx_box_create(OBX_store* store, obx_schema_id entity_id);
 
 obx_err obx_box_close(OBX_box* box);
 
+/// Checks whether a given object exists in the box
+obx_err obx_box_contains(OBX_box* box, obx_id id, bool* out_contains);
+
+/// Read a single object
+obx_err obx_box_get(OBX_box* box, obx_id id, void** data, size_t* size);
+
+/// Read all objects
+OBX_bytes_array* obx_box_get_all(OBX_box* box);
+
+/// Read all objects in a single transaction.
+/// Calls the visitor() on each object, passing visitor_arg, object data & size as arguments.
+/// The given visitor must return true to keep receiving results, false to cancel.
+obx_err obx_box_visit(OBX_box* box, obx_data_visitor* visitor, void* visitor_arg);
+
+/// Reserve an ID for insertion
 obx_id obx_box_id_for_put(OBX_box* box, obx_id id_or_zero);
 
-obx_err obx_box_put_async(OBX_box* box, obx_id id, const void* data, size_t size, bool checkForPreviousValue,
-                          uint64_t timeoutMillis);
+/// Put object synchronously (in a single write transaction)
+/// ATTENTION: ensure that the given value memory is allocated to the next 4 bytes boundary.
+/// ObjectBox needs to store bytes with sizes dividable by 4 for internal reasons.
+obx_err obx_box_put(OBX_box* box, obx_id id, const void* data, size_t size, bool is_update);
+
+/// Put object asynchronously
+obx_err obx_box_put_async(OBX_box* box, obx_id id, const void* data, size_t size, bool is_update, uint64_t timeout_ms);
+
+/// Remove a single object
+/// will return OBX_NOT_FOUND if an object with the given ID doesn't exist
+obx_err obx_box_remove(OBX_box* box, obx_id id);
+
+/// Remove all objects and set the out_count the the number of removed objects.
+/// You can pass nullptr as out_count in case you're not interested in the number of the removed objects.
+obx_err obx_box_remove_all(OBX_box* box, uint64_t* out_count);
+
+/// Checks whether there are any objects for this entity and updates the out_is_empty accordingly
+obx_err obx_box_is_empty(OBX_box* box, bool* out_is_empty);
+
+/// Count the number of objects in the box, up to the given maximum.
+/// You can pass limit=0 to count all objects without any limitation.
+obx_err obx_box_count(OBX_box* box, uint64_t limit, uint64_t* out_count);
+
+/// Read given objects from the database in a single transaction.
+/// The output array has exactly the same size as the input, each index corresponding to the input ID at that index.
+/// If an object is not found, the output bytes data at its index is NULL and the size is 0.
+OBX_bytes_array* obx_box_bulk_get(OBX_box* box, const OBX_id_array* ids);
+
+/// Read given objects from the database in a single transaction.
+/// Call the visitor() on each object, passing visitor_arg, object data & size as arguments.
+/// The given visitor must return true to keep receiving results, false to cancel.
+/// If an object is not found, the visitor() is still called, passing NULL as data and a 0 as size.
+obx_err obx_box_bulk_visit(OBX_box* box, const OBX_id_array* ids, obx_data_visitor* visitor, void* visitor_arg);
+
+/// Reserve the given number of IDs for insertion
+OBX_id_array* obx_box_bulk_ids_for_put(OBX_box* box, uint64_t count);
+
+/// Put all given objects in the database in a single transaction
+obx_err obx_box_bulk_put(OBX_box* box, const OBX_bytes_array* objects, const obx_id ids[], const bool is_update[]);
+
+/// Remove all given objects from  the database in a single transaction.
+/// If must_exist == true and any of the objects is not found, this function fails without and no objects are removed.
+obx_err obx_box_bulk_remove(OBX_box* box, const OBX_id_array* ids, bool must_exist);
+
+/// Insert a standalone relation entry between two objects.
+/// @param relation_id must be a standalone relation ID with source entity belonging to this box
+/// @param source_id identifies an object from this box
+/// @param target_id identifies an object from the target box (as per the relation definition)
+obx_err obx_box_rel_put(OBX_box* box, obx_schema_id relation_id, obx_id source_id, obx_id target_id);
+
+/// Remove a standalone relation entry between two objects.
+/// See obx_box_rel_put() for parameters documentation.
+obx_err obx_box_rel_remove(OBX_box* box, obx_schema_id relation_id, obx_id source_id, obx_id target_id);
+
+/// Fetch IDs of all target objects related to the given source object.
+/// See obx_box_rel_put() for parameters documentation.
+/// @returns all target object IDs related to the given source object ID
+OBX_id_array* obx_box_rel_targets_ids(OBX_box* box, obx_schema_id relation_id, obx_id source_id);
 
 //----------------------------------------------
 // Query Builder
@@ -562,11 +633,24 @@ obx_err obx_query_double_params_alias(OBX_query* query, const char* alias, doubl
 obx_err obx_query_bytes_param_alias(OBX_query* query, const char* alias, const void* value, size_t size);
 
 //----------------------------------------------
-// Freeing bytes/ids/arrays
+// Utilities for bytes/ids/arrays
 //----------------------------------------------
 void obx_bytes_free(OBX_bytes* bytes);
-void obx_bytes_array_free(OBX_bytes_array* bytes_array);
-void obx_id_array_free(OBX_id_array* id_array);
+
+/// Allocates a bytes array struct of the given size, ready for the data to be pushed
+OBX_bytes_array* obx_bytes_array_create(size_t count);
+
+/// Sets the given data as the index in the bytes array. The data is not copied, just referenced through the pointer
+obx_err obx_bytes_array_set(OBX_bytes_array* array, size_t index, const void* data, size_t size);
+
+/// Frees the bytes array struct
+void obx_bytes_array_free(OBX_bytes_array* array);
+
+/// Creates an ID array struct, copying the given IDs as the contents
+OBX_id_array* obx_id_array_create(const obx_id ids[], size_t count);
+
+/// Frees the id array struct
+void obx_id_array_free(OBX_id_array* array);
 
 #ifdef __cplusplus
 }

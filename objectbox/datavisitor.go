@@ -109,3 +109,32 @@ func dataVisitorDispatch(id C.uint, ptr unsafe.Pointer, size C.size_t) C.bool {
 	var fn = dataVisitorLookup(uint32(id))
 	return C.bool(fn(bytes))
 }
+
+// this is a utility function to fetch objects using an obx_data_visitor
+func runDataVisitor(binding ObjectBinding, expectedCount int, cCall func(visitorArg unsafe.Pointer) C.obx_err) (slice interface{}, err error) {
+	var visitorId uint32
+	visitorId, err = dataVisitorRegister(func(bytes []byte) bool {
+		if object, err2 := binding.Load(todoTemporaryTxn, bytes); err2 != nil {
+			err = err2
+			return false
+		} else {
+			slice = binding.AppendToSlice(slice, object)
+		}
+		return true
+	})
+	if err != nil {
+		return nil, err
+	}
+	defer dataVisitorUnregister(visitorId)
+
+	slice = binding.MakeSlice(expectedCount)
+	rc := cCall(unsafe.Pointer(&visitorId))
+	if rc != 0 {
+		return nil, createError()
+	} else if err != nil {
+		// err might be set by the visitor callback above
+		return nil, err
+	} else {
+		return slice, nil
+	}
+}

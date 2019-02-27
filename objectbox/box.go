@@ -20,11 +20,11 @@ package objectbox
 #cgo LDFLAGS: -lobjectbox
 #include <stdlib.h>
 #include "objectbox.h"
+#include "datavisitor.h"
 */
 import "C"
 
 import (
-	"errors"
 	"fmt"
 	"reflect"
 	"sync/atomic"
@@ -32,6 +32,10 @@ import (
 
 	"github.com/google/flatbuffers/go"
 )
+
+// TODO remove this temporary transaction variable from the methods that use it
+// transaction is handled by Box implicitly
+var todoTemporaryTxn = &Transaction{}
 
 // Box provides CRUD access to objects of a common type
 type Box struct {
@@ -97,6 +101,96 @@ func (box *Box) idForPut(idCandidate uint64) (id uint64, err error) {
 	return
 }
 
+func (box *Box) idsForPut(count int) ([]uint64, error) {
+	if count == 0 {
+		return nil, nil
+	}
+
+	cIdsArray := C.obx_box_bulk_ids_for_put(box.box, C.uint64_t(count))
+	if cIdsArray == nil {
+		return nil, createError()
+	}
+
+	idsArray := cIdsArrayToGo(cIdsArray)
+	defer idsArray.free()
+
+	if len(idsArray.ids) != count {
+		return nil, fmt.Errorf("invalid number of new IDs reserved: got %v instead of required %v",
+			len(idsArray.ids), count)
+	}
+
+	return idsArray.ids, nil
+}
+
+func (box *Box) put(object interface{}, async bool, timeoutMs uint) (id uint64, err error) {
+	idFromObject, err := box.entity.binding.GetId(object)
+	if err != nil {
+		return 0, err
+	}
+
+	// TODO in case of an error later during insert, this ID is not recovered (reused in the future)...
+	//  we need to either move idForPut to C-api (preferrable) or use a transaction
+	if id, err = box.idForPut(idFromObject); err != nil {
+		return 0, err
+	}
+
+	if box.entity.hasRelations {
+		err = box.entity.binding.PutRelated(todoTemporaryTxn, object, id)
+		if err != nil {
+			return 0, err
+		}
+	}
+
+	err = box.withObjectBytes(object, id, func(bytes []byte) error {
+		var rc C.obx_err
+		if async {
+			box.entity.markOutOfSync()
+			rc = C.obx_box_put_async(box.box, C.obx_id(id), unsafe.Pointer(&bytes[0]), C.size_t(len(bytes)),
+				C.bool(idFromObject != 0), C.uint64_t(timeoutMs))
+		} else {
+			rc = C.obx_box_put(box.box, C.obx_id(id), unsafe.Pointer(&bytes[0]), C.size_t(len(bytes)),
+				C.bool(idFromObject != 0))
+		}
+
+		if rc != 0 {
+			return createError()
+		}
+		return nil
+	})
+
+	if err != nil {
+		return 0, err
+	}
+
+	// update the id on the object
+	if idFromObject != id {
+		box.entity.binding.SetId(object, id)
+	}
+
+	return id, nil
+}
+
+func (box *Box) withObjectBytes(object interface{}, id uint64, fn func([]byte) error) error {
+	var fbb *flatbuffers.Builder
+	if atomic.CompareAndSwapUint32(&box.fbbInUseAtomic, 0, 1) {
+		defer func() {
+			atomic.StoreUint32(&box.fbbInUseAtomic, 0)
+			fbb.Reset()
+		}()
+		fbb = box.fbb
+	} else {
+		fbb = flatbuffers.NewBuilder(256)
+	}
+
+	if err := box.entity.binding.Flatten(object, fbb, id); err != nil {
+		return err
+	}
+
+	fbb.Finish(fbb.EndObject())
+
+	return fn(fbb.FinishedBytes())
+}
+
 // PutAsync asynchronously inserts/updates a single object.
 // When inserting, the ID property on the passed object will be assigned the new ID as well.
 //
@@ -117,87 +211,19 @@ func (box *Box) idForPut(idCandidate uint64) (id uint64, err error) {
 // Note that this method does not give you hard durability guarantees like the synchronous Put provides.
 // There is a small time window in which the data may not have been committed durably yet.
 func (box *Box) PutAsync(object interface{}) (id uint64, err error) {
-	return box.PutAsyncWithTimeout(object, box.objectBox.options.putAsyncTimeout)
+	return box.put(object, true, box.objectBox.options.putAsyncTimeout)
 }
 
 // Same as PutAsync but with a custom enqueue timeout
 func (box *Box) PutAsyncWithTimeout(object interface{}, timeoutMs uint) (id uint64, err error) {
-	idFromObject, err := box.entity.binding.GetId(object)
-	if err != nil {
-		return 0, err
-	}
-
-	if box.entity.hasRelations {
-		return 0, errors.New("PutAsync is currently not supported on entities that have relations")
-	}
-
-	if id, err = box.idForPut(idFromObject); err != nil {
-		return 0, err
-	}
-
-	// TODO put related entities and this one within a single transaction
-	//if box.entity.hasRelations {
-	//	err = box.objectBox.runInTxn(false, func(txn *Transaction) error {
-	//		return box.entity.binding.PutRelated(txn, object, id)
-	//	})
-	//	if err != nil {
-	//		return 0, err
-	//	}
-	//}
-
-	var fbb *flatbuffers.Builder
-	if atomic.CompareAndSwapUint32(&box.fbbInUseAtomic, 0, 1) {
-		defer atomic.StoreUint32(&box.fbbInUseAtomic, 0)
-		fbb = box.fbb
-	} else {
-		fbb = flatbuffers.NewBuilder(256)
-	}
-
-	if err = box.entity.binding.Flatten(object, fbb, id); err != nil {
-		return 0, err
-	}
-
-	checkForPreviousValue := idFromObject != 0
-	if err = box.finishFbbAndPutAsync(fbb, id, checkForPreviousValue, timeoutMs); err != nil {
-		return 0, err
-	}
-
-	// update the id on the object
-	if idFromObject != id {
-		box.entity.binding.SetId(object, id)
-	}
-
-	return id, nil
-}
-
-func (box *Box) finishFbbAndPutAsync(fbb *flatbuffers.Builder, id uint64, checkForPreviousObject bool, timeoutMs uint) (err error) {
-	fbb.Finish(fbb.EndObject())
-	bytes := fbb.FinishedBytes()
-
-	box.entity.markOutOfSync()
-
-	rc := C.obx_box_put_async(box.box,
-		C.obx_id(id), unsafe.Pointer(&bytes[0]), C.size_t(len(bytes)), C.bool(checkForPreviousObject), C.uint64_t(timeoutMs))
-	if rc != 0 {
-		err = createError()
-	}
-
-	// Reset to have a clear state for the next caller
-	fbb.Reset()
-
-	return
+	return box.put(object, true, timeoutMs)
 }
 
 // Put synchronously inserts/updates a single object.
 // In case the ID is not specified, it would be assigned automatically (auto-increment).
 // When inserting, the ID property on the passed object will be assigned the new ID as well.
 func (box *Box) Put(object interface{}) (id uint64, err error) {
-	err = box.objectBox.runWithCursor(box.entity, false, func(cursor *Cursor) error {
-		var errInner error
-		id, errInner = cursor.Put(object)
-		return errInner
-	})
-	return
+	return box.put(object, false, 0)
 }
 
 // PutAll inserts multiple objects in single transaction.
@@ -210,28 +236,78 @@ func (box *Box) Put(object interface{}) (id uint64, err error) {
 // even though the transaction has been rolled back and the objects are not stored under those IDs.
 //
 // Note: The slice may be empty or even nil; in both cases, an empty IDs slice and no error is returned.
-func (box *Box) PutAll(slice interface{}) (ids []uint64, err error) {
-	if slice == nil {
-		return []uint64{}, nil
-	}
+func (box *Box) PutAll(objects interface{}) (ids []uint64, err error) {
+	var binding = box.entity.binding
+	var slice = reflect.ValueOf(objects)
+	var count = slice.Len()
 
-	sliceValue := reflect.ValueOf(slice)
-	count := sliceValue.Len()
+	// a little optimization for the edge case
 	if count == 0 {
 		return []uint64{}, nil
 	}
-	err = box.objectBox.runWithCursor(box.entity, false, func(cursor *Cursor) error {
-		ids = make([]uint64, count)
-		for i := 0; i < count; i++ {
-			id, errPut := cursor.Put(sliceValue.Index(i).Interface())
-			if errPut != nil {
-				// Note that objects that have been put before already have an ID assigned; similar to when an TX fails
-				return errPut
-			}
+
+	// find out ids of all the objects & whether they're new objects or updates
+	ids = make([]uint64, count)
+	var isUpdate = make([]bool, count)
+
+	// indexes of new objects (zero IDs) in the `ids` slice
+	var indexesNewObjects = make([]int, 0)
+
+	for i := 0; i < count; i++ {
+		var object = slice.Index(i).Interface()
+		if id, err := binding.GetId(object); err != nil {
+			return nil, err
+		} else if id > 0 {
 			ids[i] = id
+			isUpdate[i] = true
+		} else {
+			indexesNewObjects = append(indexesNewObjects, i)
 		}
-		return nil
-	})
+	}
+
+	// if there are any new objects, reserve IDs for them
+	// TODO in case of an error later during insert, this ID is not recovered (reused in the future)...
+	//  we need to either move idForPut to C-api (preferrable) or use a transaction
+	if newIds, err := box.idsForPut(len(indexesNewObjects)); err != nil {
+		return nil, err
+	} else {
+		for i, id := range newIds {
+			ids[indexesNewObjects[i]] = id
+		}
+	}
+
+	// flatten all the objects
+	var allBytes = make([][]byte, count)
+	for i := 0; i < count; i++ {
+		var object = slice.Index(i).Interface()
+		err = box.withObjectBytes(object, ids[i], func(bytes []byte) error {
+			allBytes[i] = make([]byte, len(bytes))
+			copy(allBytes[i], bytes)
+			return nil
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// create a C representation of the objects array
+	bytesArray, err := goBytesArrayToC(allBytes)
+	if err != nil {
+		return nil, err
+	} else {
+		defer bytesArray.free()
+	}
+
+	var rc = C.obx_box_bulk_put(box.box, bytesArray.cBytesArray, goUint64ArrayToCObxId(ids), goBoolArrayToC(isUpdate))
+	if rc != 0 {
+		return nil, createError()
+	}
+
+	// restore update IDs on the new objects
+	for index := range indexesNewObjects {
+		binding.SetId(slice.Index(index).Interface(), ids[index])
+	}
+
 	return
 }
 
@@ -286,25 +362,60 @@ func (box *Box) IsEmpty() (result bool, err error) {
 // Returns nil in case the object with the given ID doesn't exist.
 // The cast is done automatically when using the generated BoxFor* code
 func (box *Box) Get(id uint64) (object interface{}, err error) {
-	err = box.objectBox.runWithCursor(box.entity, true, func(cursor *Cursor) error {
-		var errInner error
-		object, errInner = cursor.Get(id)
-		return errInner
-	})
-	return
+	var data *C.void
+	var dataSize C.size_t
+	var dataPtr = unsafe.Pointer(data)
+
+	// TODO use runInTxn so that the related entities are fetched within the same transaction in binding.Load()
+	var rc = C.obx_box_get(box.box, C.obx_id(id), &dataPtr, &dataSize)
+	if rc == 0 {
+		var bytes []byte
+		cVoidPtrToByteSlice(dataPtr, int(dataSize), &bytes)
+		return box.entity.binding.Load(todoTemporaryTxn, bytes)
+	} else if rc == C.OBX_NOT_FOUND {
+		return nil, nil
+	} else {
+		return nil, createError()
+	}
 }
 
-// Get reads a all stored objects
+// GetAll reads all stored objects
 //
 // Returns a slice of objects that should be cast to the appropriate type.
 // The cast is done automatically when using the generated BoxFor* code
 func (box *Box) GetAll() (slice interface{}, err error) {
-	err = box.objectBox.runWithCursor(box.entity, true, func(cursor *Cursor) error {
-		var errInner error
-		slice, errInner = cursor.GetAll()
-		return errInner
-	})
-	return
+	if supportsBytesArray {
+		cBytesArray := C.obx_box_get_all(box.box)
+		if cBytesArray == nil {
+			return nil, createError()
+		}
+		bytesArray := cBytesArrayToGo(cBytesArray)
+		defer bytesArray.free()
+		return box.bytesArrayToObjects(bytesArray)
+	} else {
+		return box.getAllSequential()
+	}
+}
+
+func (box *Box) getAllSequential() (slice interface{}, err error) {
+	var cCall = func(visitorArg unsafe.Pointer) C.obx_err {
+		return C.obx_box_visit(box.box, C.data_visitor, visitorArg)
+	}
+
+	return runDataVisitor(box.entity.binding, defaultSliceCapacity, cCall)
+}
+
+func (box *Box) bytesArrayToObjects(bytesArray *bytesArray) (slice interface{}, err error) {
+	var binding = box.entity.binding
+	slice = binding.MakeSlice(len(bytesArray.BytesArray))
+	for _, bytesData := range bytesArray.BytesArray {
+		if object, err := binding.Load(todoTemporaryTxn, bytesData); err != nil {
+			return nil, err
+		} else {
+			slice = binding.AppendToSlice(slice, object)
+		}
+	}
+	return slice, nil
 }
 
 // Contains checks whether an object with the given ID is stored.

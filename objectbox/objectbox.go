@@ -62,7 +62,6 @@ type options struct {
 }
 
 type txnFun func(transaction *Transaction) error
-type cursorFun func(cursor *Cursor) error
 
 // constant during runtime so no need to call this each time it's necessary
 var supportsBytesArray = bool(C.obx_supports_bytes_array())
@@ -157,16 +156,6 @@ func (ob ObjectBox) getEntityByName(typeName string) *entity {
 		panic("Configuration error; no entity registered for type name " + typeName)
 	}
 	return entity
-}
-
-func (ob *ObjectBox) runWithCursor(e *entity, readOnly bool, cursorFun cursorFun) error {
-	if ob.options.alwaysAwaitAsync {
-		e.awaitAsyncCompletion()
-	}
-
-	return ob.runInTxn(readOnly, func(txn *Transaction) error {
-		return txn.runWithCursor(e, cursorFun)
-	})
 }
 
 // SetDebugFlags configures debug logging of the ObjectBox core.

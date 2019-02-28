@@ -47,6 +47,8 @@ type Box struct {
 	fbbInUseAtomic uint32
 }
 
+const defaultSliceCapacity = 16
+
 // close fully closes the Box connection and free's resources
 func (box *Box) close() error {
 	return cMaybeErr(func() C.obx_err { return C.obx_box_close(box.box) })

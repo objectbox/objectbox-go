@@ -56,7 +56,6 @@ type ObjectBox struct {
 
 type options struct {
 	putAsyncTimeout  uint
-	alwaysAwaitAsync bool
 }
 
 type txnFun func(transaction *Transaction) error

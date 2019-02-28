@@ -16,11 +16,6 @@
 
 package objectbox
 
-import (
-	"sync"
-	"sync/atomic"
-)
-
 // this is used publicly in the model/bindings
 type Entity struct {
 	Id TypeId
@@ -36,30 +31,4 @@ type entity struct {
 
 	// whether this entity has any relations (standalone or property-rels) - configured during model creation
 	hasRelations bool
-
-	// whether there was an asynchronous operation recently
-	isOutOfSync uint32
-
-	// locked when currently waiting for async completion
-	mutex sync.Mutex
-}
-
-func (e *entity) markOutOfSync() {
-	atomic.StoreUint32(&e.isOutOfSync, aTrue)
-}
-
-func (e *entity) awaitAsyncCompletion() {
-	// if this entity is currently in-sync, no need to do anything
-	if aTrue != atomic.LoadUint32(&e.isOutOfSync) {
-		return
-	}
-
-	e.mutex.Lock()
-	defer e.mutex.Unlock()
-
-	// check again after getting the mutex, it might have been cleared in the meantime
-	if aTrue == atomic.LoadUint32(&e.isOutOfSync) {
-		e.objectBox.AwaitAsyncCompletion()
-		atomic.StoreUint32(&e.isOutOfSync, aFalse)
-	}
 }

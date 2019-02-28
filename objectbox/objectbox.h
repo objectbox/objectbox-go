@@ -263,6 +263,9 @@ typedef struct OBX_store_options {
 
     /// Use zero for default value
     unsigned int maxReaders;
+
+    /// Wait for asyncPut to complete before accessing data from a synchronous operation (get, put, delete, query, ...)
+    bool alwaysAwaitAsync;
 } OBX_store_options;
 
 typedef enum {

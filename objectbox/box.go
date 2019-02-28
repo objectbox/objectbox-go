@@ -131,7 +131,6 @@ func (box *Box) put(object interface{}, async bool, timeoutMs uint) (id uint64, 
 	err = box.withObjectBytes(object, id, func(bytes []byte) error {
 		return cMaybeErr(func() C.obx_err {
 			if async {
-				box.entity.markOutOfSync()
 				return C.obx_box_put_async(box.box, C.obx_id(id), unsafe.Pointer(&bytes[0]), C.size_t(len(bytes)),
 					C.bool(idFromObject != 0), C.uint64_t(timeoutMs))
 			} else {

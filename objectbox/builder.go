@@ -34,10 +34,13 @@ type Builder struct {
 	model *Model
 	Error error
 
+	// these options are used when creating the underlying store using the C-api calls
 	name        string
 	maxSizeInKb uint64
 	maxReaders  uint
+	alwaysAwaitAsync bool
 
+	// these options are passed-through to the created ObjectBox struct
 	options
 }
 
@@ -61,7 +64,6 @@ func NewBuilder() *Builder {
 		options: options{
 			// defaults
 			putAsyncTimeout:  10000, // 10s
-			alwaysAwaitAsync: false,
 		},
 	}
 }
@@ -146,6 +148,7 @@ func (builder *Builder) BuildOrError() (*ObjectBox, error) {
 
 	cOptions.maxReaders = C.uint(builder.maxReaders)            // Zero is the default on both sides
 	cOptions.maxDbSizeInKByte = C.uint64_t(builder.maxSizeInKb) // Zero is the default on both sides
+	cOptions.alwaysAwaitAsync = C.bool(builder.alwaysAwaitAsync)
 
 	cStore := C.obx_store_open(builder.model.model, &cOptions)
 	if cStore == nil {

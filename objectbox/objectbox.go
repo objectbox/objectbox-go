@@ -28,8 +28,6 @@ import (
 	"runtime"
 	"strconv"
 	"sync"
-
-	"github.com/google/flatbuffers/go"
 )
 
 //noinspection GoUnusedConst
@@ -196,7 +194,6 @@ func (ob *ObjectBox) box(typeId TypeId) (*Box, error) {
 	box = &Box{
 		objectBox: ob,
 		box:       cbox,
-		fbb:       flatbuffers.NewBuilder(512),
 		entity:    entity,
 	}
 	ob.boxes[typeId] = box

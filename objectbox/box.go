@@ -28,7 +28,6 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
-	"sync/atomic"
 	"unsafe"
 
 	"github.com/google/flatbuffers/go"
@@ -39,12 +38,6 @@ type Box struct {
 	objectBox *ObjectBox
 	box       *C.OBX_box
 	entity    *entity
-
-	// Must be used in combination with fbbInUseAtomic
-	fbb *flatbuffers.Builder
-
-	// Values 0 (fbb available) or 1 (fbb in use); use only with CompareAndSwapInt32
-	fbbInUseAtomic uint32
 }
 
 const defaultSliceCapacity = 16
@@ -161,22 +154,22 @@ func (box *Box) put(object interface{}, async bool, timeoutMs uint) (id uint64, 
 }
 
 func (box *Box) withObjectBytes(object interface{}, id uint64, fn func([]byte) error) error {
-	var fbb *flatbuffers.Builder
-	if atomic.CompareAndSwapUint32(&box.fbbInUseAtomic, 0, 1) {
-		defer atomic.StoreUint32(&box.fbbInUseAtomic, 0)
-		fbb = box.fbb
-	} else {
-		fbb = flatbuffers.NewBuilder(256)
-	}
+	var fbb = fbbPool.Get().(*flatbuffers.Builder)
+	fbb.Reset()
 
 	if err := box.entity.binding.Flatten(object, fbb, id); err != nil {
+		// put the fbb back to the pool for the others to use; don't use defer, it's slower
+		fbbPool.Put(fbb)
 		return err
 	}
 
 	fbb.Finish(fbb.EndObject())
 
 	var result = fn(fbb.FinishedBytes())
-	fbb.Reset()
+
+	// put the fbb back to the pool for the others to use; don't use defer, it's slower
+	fbbPool.Put(fbb)
+
 	return result
 }
 

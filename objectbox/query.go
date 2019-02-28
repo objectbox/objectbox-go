@@ -39,6 +39,7 @@ import (
 type Query struct {
 	entity          *entity
 	objectBox       *ObjectBox
+	box             *Box
 	cQuery          *C.OBX_query
 	closeMutex      sync.Mutex
 	offset          uint64
@@ -80,12 +81,26 @@ func (query *Query) errorClosed() error {
 
 // Find returns all objects matching the query
 func (query *Query) Find() (objects interface{}, err error) {
-	err = query.objectBox.runWithCursor(query.entity, true, func(cursor *Cursor) error {
-		var errInner error
-		objects, errInner = query.find(cursor)
-		return errInner
-	})
-	return
+	if query.cQuery == nil {
+		return 0, query.errorClosed()
+	}
+
+	if supportsBytesArray {
+		data, err := cGetBytesArray(func() *C.OBX_bytes_array {
+			return C.obx_query_box_find(query.cQuery, query.box.box, C.uint64_t(query.offset), C.uint64_t(query.limit))
+		})
+		if err != nil {
+			return nil, err
+		}
+		return query.box.bytesArrayToObjects(data)
+
+	} else {
+		var cCall = func(visitorArg unsafe.Pointer) C.obx_err {
+			return C.obx_query_box_visit(query.cQuery, query.box.box, C.data_visitor, visitorArg,
+				C.uint64_t(query.offset), C.uint64_t(query.limit))
+		}
+		return readUsingVisitor(query.objectBox, query.entity.binding, defaultSliceCapacity, cCall)
+	}
 }
 
 // Offset defines the index of the first object to process (how many objects to skip)
@@ -101,30 +116,32 @@ func (query *Query) Limit(limit uint64) *Query {
 }
 
 // FindIds returns IDs of all objects matching the query
-func (query *Query) FindIds() (ids []uint64, err error) {
-	err = query.objectBox.runWithCursor(query.entity, true, func(cursor *Cursor) error {
-		var errInner error
-		ids, errInner = query.findIds(cursor)
-		return errInner
-	})
+func (query *Query) FindIds() ([]uint64, error) {
+	if query.cQuery == nil {
+		return nil, query.errorClosed()
+	}
 
-	return
+	return cGetIds(func() *C.OBX_id_array {
+		return C.obx_query_box_find_ids(query.cQuery, query.box.box, C.uint64_t(query.offset), C.uint64_t(query.limit))
+	})
 }
 
 // Count returns the number of objects matching the query
-func (query *Query) Count() (count uint64, err error) {
+func (query *Query) Count() (uint64, error) {
 	// doesn't support offset/limit at this point
 	if query.offset != 0 || query.limit != 0 {
 		return 0, fmt.Errorf("limit/offset are not supported by Count at this moment")
 	}
 
-	err = query.objectBox.runWithCursor(query.entity, true, func(cursor *Cursor) error {
-		var errInner error
-		count, errInner = query.count(cursor)
-		return errInner
-	})
+	if query.cQuery == nil {
+		return 0, query.errorClosed()
+	}
 
-	return
+	var cResult C.uint64_t
+	if err := cMaybeErr(func() C.obx_err { return C.obx_query_box_count(query.cQuery, query.box.box, &cResult) }); err != nil {
+		return 0, err
+	}
+	return uint64(cResult), nil
 }
 
 // Remove permanently deletes all objects matching the query from the database
@@ -134,13 +151,15 @@ func (query *Query) Remove() (count uint64, err error) {
 		return 0, fmt.Errorf("limit/offset are not supported by Remove at this moment")
 	}
 
-	err = query.objectBox.runWithCursor(query.entity, false, func(cursor *Cursor) error {
-		var errInner error
-		count, errInner = query.remove(cursor)
-		return errInner
-	})
+	if query.cQuery == nil {
+		return 0, query.errorClosed()
+	}
 
-	return
+	var cResult C.uint64_t
+	if err := cMaybeErr(func() C.obx_err { return C.obx_query_box_remove(query.cQuery, query.box.box, &cResult) }); err != nil {
+		return 0, err
+	}
+	return uint64(cResult), nil
 }
 
 // DescribeParams returns a string representation of the query conditions
@@ -152,69 +171,6 @@ func (query *Query) DescribeParams() (string, error) {
 	cResult := C.obx_query_describe_params(query.cQuery)
 
 	return C.GoString(cResult), nil
-}
-
-func (query *Query) count(cursor *Cursor) (uint64, error) {
-	if query.cQuery == nil {
-		return 0, query.errorClosed()
-	}
-	var cCount C.uint64_t
-	rc := C.obx_query_count(query.cQuery, cursor.cursor, &cCount)
-	if rc != 0 {
-		return 0, createError()
-	}
-	return uint64(cCount), nil
-}
-
-func (query *Query) remove(cursor *Cursor) (uint64, error) {
-	if query.cQuery == nil {
-		return 0, query.errorClosed()
-	}
-	var cCount C.uint64_t
-	rc := C.obx_query_remove(query.cQuery, cursor.cursor, &cCount)
-	if rc != 0 {
-		return 0, createError()
-	}
-	return uint64(cCount), nil
-}
-
-func (query *Query) findIds(cursor *Cursor) (ids []uint64, err error) {
-	if query.cQuery == nil {
-		return nil, query.errorClosed()
-	}
-	cIdsArray := C.obx_query_find_ids(query.cQuery, cursor.cursor, C.uint64_t(query.offset), C.uint64_t(query.limit))
-	if cIdsArray == nil {
-		return nil, createError()
-	}
-
-	idsArray := cIdsArrayToGo(cIdsArray)
-	defer idsArray.free()
-
-	return idsArray.ids, nil
-}
-
-func (query *Query) find(cursor *Cursor) (slice interface{}, err error) {
-	if query.cQuery == nil {
-		return 0, query.errorClosed()
-	}
-
-	if supportsBytesArray {
-		cBytesArray := C.obx_query_find(query.cQuery, cursor.cursor, C.uint64_t(query.offset), C.uint64_t(query.limit))
-		if cBytesArray == nil {
-			return nil, createError()
-		}
-		return cursor.cBytesArrayToObjects(cBytesArray)
-	} else {
-		return query.findSequential(cursor)
-	}
-}
-
-func (query *Query) findSequential(cursor *Cursor) (slice interface{}, err error) {
-	var cCall = func(visitorArg unsafe.Pointer) C.obx_err {
-		return C.obx_query_visit(query.cQuery, cursor.cursor, C.data_visitor, visitorArg, C.uint64_t(query.offset), C.uint64_t(query.limit))
-	}
-
-	return readUsingVisitor(query.objectBox, query.entity.binding, defaultSliceCapacity, cCall)
 }
 
 func (query *Query) checkEntityId(entityId TypeId) error {

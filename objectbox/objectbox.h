@@ -423,7 +423,7 @@ obx_err obx_box_put_async(OBX_box* box, obx_id id, const void* data, size_t size
 obx_err obx_box_remove(OBX_box* box, obx_id id);
 
 /// Remove all objects and set the out_count the the number of removed objects.
-/// You can pass nullptr as out_count in case you're not interested in the number of removed objects.
+/// You can pass nullptr as out_count in case you're not interested in the number of the removed objects.
 obx_err obx_box_remove_all(OBX_box* box, uint64_t* out_count);
 
 /// Checks whether there are any objects for this entity and updates the out_is_empty accordingly
@@ -593,8 +593,24 @@ OBX_bytes_array* obx_query_find(OBX_query* query, OBX_cursor* cursor, uint64_t o
 OBX_id_array* obx_query_find_ids(OBX_query* query, OBX_cursor* cursor, uint64_t offset, uint64_t limit);
 obx_err obx_query_count(OBX_query* query, OBX_cursor* cursor, uint64_t* count);
 
-/// Removes (deletes!) all matching entities.
+/// Removes (deletes!) all matching objects.
 obx_err obx_query_remove(OBX_query* query, OBX_cursor* cursor, uint64_t* count);
+
+/// Walks over matching objects using the given data visitor
+obx_err obx_query_box_visit(OBX_query* query, OBX_box* box, obx_data_visitor* visitor, void* visitor_arg,
+                        uint64_t offset, uint64_t limit);
+
+/// Returns data of all matching objects
+OBX_bytes_array* obx_query_box_find(OBX_query* query, OBX_box* box, uint64_t offset, uint64_t limit);
+
+/// Returns IDs of all matching objects
+OBX_id_array* obx_query_box_find_ids(OBX_query* query, OBX_box* box, uint64_t offset, uint64_t limit);
+
+/// Returns the number of matching objects
+obx_err obx_query_box_count(OBX_query* query, OBX_box* box, uint64_t* count);
+
+/// Removes all matching objects from the database & returns the number of deleted objects
+obx_err obx_query_box_remove(OBX_query* query, OBX_box* box, uint64_t* count);
 
 /// the resulting char* is valid until another call on to_string is made on the same query or until the query is freed
 const char* obx_query_describe(OBX_query* query);

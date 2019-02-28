@@ -108,7 +108,7 @@ func (qb *QueryBuilder) setError(err error) {
 	}
 }
 
-func (qb *QueryBuilder) Build() (*Query, error) {
+func (qb *QueryBuilder) Build(box *Box) (*Query, error) {
 	qb.checkForCError() // TODO why is this called here? It could lead to incorrect error messages in a parallel app
 	if qb.Err != nil {
 		return nil, qb.Err
@@ -125,6 +125,7 @@ func (qb *QueryBuilder) Build() (*Query, error) {
 	query := &Query{
 		objectBox: qb.objectBox,
 		cQuery:    cQuery,
+		box:       box,
 		entity:    qb.objectBox.getEntityById(qb.typeId),
 	}
 	query.installFinalizer()

@@ -80,7 +80,7 @@ func (box *Box) QueryOrError(conditions ...Condition) (query *Query, err error) 
 		return nil, err
 	}
 
-	query, err = builder.Build()
+	query, err = builder.Build(box)
 
 	return // NOTE result might be overwritten by the deferred "closer" function
 }

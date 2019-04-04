@@ -20,7 +20,6 @@ package objectbox
 #cgo LDFLAGS: -lobjectbox
 #include <stdlib.h>
 #include "objectbox.h"
-#include "datavisitor.h"
 */
 import "C"
 import (
@@ -231,7 +230,7 @@ func (query *Query) findSequential(cursor *Cursor) (slice interface{}, err error
 	defer dataVisitorUnregister(visitorId)
 
 	slice = binding.MakeSlice(defaultSliceCapacity)
-	rc := C.obx_query_visit(query.cQuery, cursor.cursor, C.data_visitor, unsafe.Pointer(&visitorId), C.uint64_t(query.offset), C.uint64_t(query.limit))
+	rc := C.obx_query_visit(query.cQuery, cursor.cursor, dataVisitor, unsafe.Pointer(&visitorId), C.uint64_t(query.offset), C.uint64_t(query.limit))
 	if rc != 0 {
 		return nil, createError()
 	} else if err != nil {

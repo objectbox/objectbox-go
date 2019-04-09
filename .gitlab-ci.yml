@@ -1,5 +1,4 @@
 variables:
-  # Please edit to your GitLab project
   REPO_NAME: github.com/objectbox/objectbox-go
 
 .test:linux:
@@ -31,3 +30,8 @@ test:linux:ARMv7hf:
   before_script:
     - 'cd /usr/local/lib && { curl -o libobjectbox.so -H "PRIVATE-TOKEN: $CI_API_TOKEN" "${OBXLIB_URL_LinuxARMv7hf}" ; ldconfig ; cd - ; }'
 
+test:mac:x64:
+  extends: .test:linux
+  tags: [x64, mac]
+  before_script:
+    - 'curl -o /usr/local/lib/libobjectbox.dylib -H "PRIVATE-TOKEN: $CI_API_TOKEN" "$OBXLIB_URL_Mac64"'

@@ -23,8 +23,8 @@ import (
 
 type Entity struct {
 	Id             IdUid                 `json:"id"`
-	Name           string                `json:"name"`
 	LastPropertyId IdUid                 `json:"lastPropertyId"`
+	Name           string                `json:"name"`
 	Properties     []*Property           `json:"properties"`
 	Relations      []*StandaloneRelation `json:"relations,omitempty"`
 
@@ -66,24 +66,24 @@ func (entity *Entity) Validate() (err error) {
 			if property.entity == nil {
 				property.entity = entity
 			} else if property.entity != entity {
-				return fmt.Errorf("property %s %s has incorrect parent entity reference",
+				return fmt.Errorf("relation %s %s has incorrect parent entity reference",
 					property.Name, property.Id)
 			}
 
 			if lastId == property.Id.getIdSafe() {
 				if lastUid != property.Id.getUidSafe() {
-					return fmt.Errorf("lastPropertyId %s doesn't match property %s %s",
+					return fmt.Errorf("lastPropertyId %s doesn't match relation %s %s",
 						entity.LastPropertyId, property.Name, property.Id)
 				}
 				found = true
 			} else if lastId < property.Id.getIdSafe() {
-				return fmt.Errorf("lastPropertyId %s is lower than property %s %s",
+				return fmt.Errorf("lastPropertyId %s is lower than relation %s %s",
 					entity.LastPropertyId, property.Name, property.Id)
 			}
 		}
 
 		if !found && !searchSliceUid(entity.model.RetiredPropertyUids, lastUid) {
-			return fmt.Errorf("lastPropertyId %s doesn't match any property", entity.LastPropertyId)
+			return fmt.Errorf("lastPropertyId %s doesn't match any relation", entity.LastPropertyId)
 		}
 	}
 
@@ -94,7 +94,20 @@ func (entity *Entity) Validate() (err error) {
 	for _, property := range entity.Properties {
 		err = property.Validate()
 		if err != nil {
-			return fmt.Errorf("property %s %s is invalid: %s", entity.Name, string(entity.Id), err)
+			return fmt.Errorf("property %s %s is invalid: %s", property.Name, string(property.Id), err)
+		}
+	}
+
+	for _, relation := range entity.Relations {
+		if relation.entity == nil {
+			relation.entity = entity
+		} else if relation.entity != entity {
+			return fmt.Errorf("relation %s %s has incorrect parent model reference", relation.Name, relation.Id)
+		}
+
+		err = relation.Validate()
+		if err != nil {
+			return fmt.Errorf("relation %s %s is invalid: %s", relation.Name, string(relation.Id), err)
 		}
 	}
 
@@ -195,7 +208,7 @@ func (entity *Entity) CreateRelation() (*StandaloneRelation, error) {
 	if id, err := entity.model.createRelationId(); err != nil {
 		return nil, err
 	} else {
-		var relation = CreateStandaloneRelation(id)
+		var relation = CreateStandaloneRelation(entity, id)
 		entity.Relations = append(entity.Relations, relation)
 		return relation, nil
 	}

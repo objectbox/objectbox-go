@@ -622,6 +622,7 @@ func testQueries(t *testing.T, env *model.TestEnv, options queryTestOptions, tes
 			baseCount = uint64(options.baseCount) * 5 // TestEnv::Populate() currently inserts 5 relations for each main entity
 		} else {
 			assert.Failf(t, "Query is not supported by the test executor: %v", tc.q)
+			return
 		}
 
 		// run query-setup function, if defined

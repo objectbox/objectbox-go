@@ -41,6 +41,7 @@ func (relation RelationToOne) propertyId() TypeId {
 	return relation.Property.Id
 }
 
+// Link creates a connection and takes inner conditions to evaluate on the linked entity.
 func (relation *RelationToOne) Link(conditions ...Condition) Condition {
 	return &conditionRelationOneToMany{relation, conditions}
 }
@@ -105,6 +106,7 @@ type RelationToMany struct {
 	Target *Entity
 }
 
+// Link creates a connection and takes inner conditions to evaluate on the linked entity.
 func (relation *RelationToMany) Link(conditions ...Condition) Condition {
 	return &conditionRelationManyToMany{relation, conditions}
 }

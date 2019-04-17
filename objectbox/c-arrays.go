@@ -129,25 +129,22 @@ func goStringArrayToC(values []string) *stringArray {
 func goInt64ArrayToC(values []int64) *C.int64_t {
 	if len(values) > 0 {
 		return (*C.int64_t)(unsafe.Pointer(&values[0]))
-	} else {
-		return nil
 	}
+	return nil
 }
 
 func goInt32ArrayToC(values []int32) *C.int32_t {
 	if len(values) > 0 {
 		return (*C.int32_t)(unsafe.Pointer(&values[0]))
-	} else {
-		return nil
 	}
+	return nil
 }
 
 func cBytesPtr(value []byte) unsafe.Pointer {
 	if len(value) >= 1 {
 		return unsafe.Pointer(&value[0])
-	} else {
-		return nil
 	}
+	return nil
 }
 
 // Maps a C void* to the given byte-slice. The void* is not garbage collected and must be managed outside.

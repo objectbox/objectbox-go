@@ -56,7 +56,7 @@ func (box *Box) close() (err error) {
 	return
 }
 
-// Creates a query with the given conditions. Use generated properties to create conditions.
+// Query creates a query with the given conditions. Use generated properties to create conditions.
 // Keep the Query object if you intend to execute it multiple times.
 // Note: this function panics if you try to create illegal queries; e.g. use properties of an alien type.
 // This is typically a programming error. Use QueryOrError instead if you want the explicit error check.
@@ -68,7 +68,7 @@ func (box *Box) Query(conditions ...Condition) *Query {
 	return query
 }
 
-// Like Query() but with error handling; e.g. when you build conditions dynamically that may fail.
+// QueryOrError is like Query() but with error handling; e.g. when you build conditions dynamically that may fail.
 func (box *Box) QueryOrError(conditions ...Condition) (query *Query, err error) {
 	builder := newQueryBuilder(box.objectBox, box.entity.id)
 
@@ -120,7 +120,7 @@ func (box *Box) PutAsync(object interface{}) (id uint64, err error) {
 	return box.PutAsyncWithTimeout(object, box.objectBox.options.putAsyncTimeout)
 }
 
-// Same as PutAsync but with a custom enqueue timeout
+// PutAsyncWithTimeout is same as PutAsync but with a custom enqueue timeout
 func (box *Box) PutAsyncWithTimeout(object interface{}, timeoutMs uint) (id uint64, err error) {
 	idFromObject, err := box.entity.binding.GetId(object)
 	if err != nil {
@@ -284,7 +284,7 @@ func (box *Box) IsEmpty() (result bool, err error) {
 //
 // Returns an interface that should be cast to the appropriate type.
 // Returns nil in case the object with the given ID doesn't exist.
-// The cast is done automatically when using the generated BoxFor* code
+// The cast is done automatically when using the generated BoxFor* code.
 func (box *Box) Get(id uint64) (object interface{}, err error) {
 	err = box.objectBox.runWithCursor(box.entity, true, func(cursor *Cursor) error {
 		var errInner error
@@ -294,10 +294,10 @@ func (box *Box) Get(id uint64) (object interface{}, err error) {
 	return
 }
 
-// Get reads a all stored objects
+// GetAll reads all stored objects.
 //
 // Returns a slice of objects that should be cast to the appropriate type.
-// The cast is done automatically when using the generated BoxFor* code
+// The cast is done automatically when using the generated BoxFor* code.
 func (box *Box) GetAll() (slice interface{}, err error) {
 	err = box.objectBox.runWithCursor(box.entity, true, func(cursor *Cursor) error {
 		var errInner error

@@ -35,11 +35,11 @@ import (
 
 //noinspection GoUnusedConst
 const (
-	DebugFlags_LOG_TRANSACTIONS_READ  = 1
-	DebugFlags_LOG_TRANSACTIONS_WRITE = 2
-	DebugFlags_LOG_QUERIES            = 4
-	DebugFlags_LOG_QUERY_PARAMETERS   = 8
-	DebugFlags_LOG_ASYNC_QUEUE        = 16
+	DebugflagsLogTransactionsRead  = 1
+	DebugflagsLogTransactionsWrite = 2
+	DebugflagsLogQueries           = 4
+	DebugflagsLogQueryParameters   = 8
+	DebugflagsLogAsyncQueue        = 16
 )
 
 // atomic boolean true & false
@@ -171,7 +171,7 @@ func (ob *ObjectBox) runWithCursor(e *entity, readOnly bool, cursorFun cursorFun
 }
 
 // SetDebugFlags configures debug logging of the ObjectBox core.
-// See DebugFlags_* constants
+// See DebugFlags* constants
 func (ob *ObjectBox) SetDebugFlags(flags uint) error {
 	rc := C.obx_store_debug_flags(ob.store, C.OBXDebugFlags(flags))
 	if rc != 0 {
@@ -180,7 +180,7 @@ func (ob *ObjectBox) SetDebugFlags(flags uint) error {
 	return nil
 }
 
-// panics on error (in case entity with the given ID doesn't exist)
+// InternalBox returns an Entity Box or panics on error (in case entity with the given ID doesn't exist)
 func (ob *ObjectBox) InternalBox(typeId TypeId) *Box {
 	box, err := ob.box(typeId)
 	if err != nil {
@@ -227,7 +227,6 @@ func createError() error {
 	msg := C.obx_last_error_message()
 	if msg == nil {
 		return errors.New("no error info available; please report")
-	} else {
-		return errors.New(C.GoString(msg))
 	}
+	return errors.New(C.GoString(msg))
 }

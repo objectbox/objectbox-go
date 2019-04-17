@@ -184,8 +184,6 @@ func (model *Model) Entity(name string, id TypeId, uid uint64) {
 		name: name,
 		id:   id,
 	}
-
-	return
 }
 
 // TODO each Entity-related method (e.g. Property, Relation,...) should check whether currentEntity is not nil
@@ -204,7 +202,6 @@ func (model *Model) Relation(relationId TypeId, relationUid uint64, targetEntity
 	}
 
 	model.currentEntity.hasRelations = true
-	return
 }
 
 func (model *Model) EntityLastPropertyId(id TypeId, uid uint64) {
@@ -215,7 +212,6 @@ func (model *Model) EntityLastPropertyId(id TypeId, uid uint64) {
 	if rc != 0 {
 		model.Error = createError()
 	}
-	return
 }
 
 func (model *Model) Property(name string, propertyType int, id TypeId, uid uint64) {
@@ -229,7 +225,6 @@ func (model *Model) Property(name string, propertyType int, id TypeId, uid uint6
 	if rc != 0 {
 		model.Error = createError()
 	}
-	return
 }
 
 func (model *Model) PropertyFlags(propertyFlags int) {
@@ -240,7 +235,6 @@ func (model *Model) PropertyFlags(propertyFlags int) {
 	if rc != 0 {
 		model.Error = createError()
 	}
-	return
 }
 
 func (model *Model) PropertyIndex(id TypeId, uid uint64) {
@@ -251,7 +245,6 @@ func (model *Model) PropertyIndex(id TypeId, uid uint64) {
 	if rc != 0 {
 		model.Error = createError()
 	}
-	return
 }
 
 func (model *Model) PropertyRelation(targetEntityName string, indexId TypeId, indexUid uint64) {
@@ -266,7 +259,6 @@ func (model *Model) PropertyRelation(targetEntityName string, indexId TypeId, in
 	}
 
 	model.currentEntity.hasRelations = true
-	return
 }
 
 func (model *Model) RegisterBinding(binding ObjectBinding) {

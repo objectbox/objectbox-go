@@ -73,9 +73,8 @@ func (cursor *Cursor) GetAll() (slice interface{}, err error) {
 			return nil, createError()
 		}
 		return cursor.cBytesArrayToObjects(cBytesArray)
-	} else {
-		return cursor.getAllSequential()
 	}
+	return cursor.getAllSequential()
 }
 
 func (cursor *Cursor) getAllSequential() (slice interface{}, err error) {
@@ -338,12 +337,11 @@ func (cursor *Cursor) RelationGetAll(relationId TypeId, targetEntityId TypeId, s
 		}
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
-	} else {
-		return slice, nil
 	}
+
+	return slice, nil
 }
 
 func (cursor *Cursor) RelationPut(relationId TypeId, sourceId, targetId uint64) error {

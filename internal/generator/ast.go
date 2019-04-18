@@ -115,7 +115,9 @@ func (f *file) getType(expr ast.Expr) (types.Type, error) {
 		var conf = types.Config{
 			IgnoreFuncBodies:         true,
 			DisableUnusedImportCheck: true,
-			Importer:                 importer.ForCompiler(f.fileset, "source", nil),
+			// TODO switch to the new method (available since Go 1.12)
+			//  Importer:                 importer.ForCompiler(f.fileset, "source", nil),
+			Importer:                 importer.For("source", nil),
 		}
 		if _, err := conf.Check(f.dir, f.fileset, f.files, f.info); err != nil {
 			return nil, fmt.Errorf("error running type-check: %s", err)

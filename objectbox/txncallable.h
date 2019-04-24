@@ -14,15 +14,8 @@
  * limitations under the License.
  */
 
-package objectbox
+// this file is included from different parts of the program that need to reference C.txn_callable_read|write
+#include "objectbox.h"
 
-import (
-	flatbuffers "github.com/google/flatbuffers/go"
-	"sync"
-)
-
-var fbbPool = sync.Pool{
-	New: func() interface{} {
-		return flatbuffers.NewBuilder(256)
-	},
-}
+obx_txn_callable_read*  txn_callable_read;
+obx_txn_callable_write* txn_callable_write;

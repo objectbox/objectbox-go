@@ -16,7 +16,7 @@
 
 #include "_cgo_export.h"
 
-// implements data visitor forwarding, it's called from ObjectBox C-api (passed to it ac C.data_visitor
+// implements data visitor forwarding, it's called from ObjectBox C-api (passed to it as C.data_visitor defined bellow)
 // it's necessary to keep in the separate file to avoid "multiple-definitions" error
 bool data_visitor_(void* arg, const void* data, size_t size) {
     // forward the call to the Go function, which finds the correct Go callback and calls it

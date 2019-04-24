@@ -103,7 +103,6 @@ func (box *Box) idsForPut(count int) ([]uint64, error) {
 }
 
 func (box *Box) put(object interface{}, async bool, timeoutMs uint) (id uint64, err error) {
-
 	idFromObject, err := box.entity.binding.GetId(object)
 	if err != nil {
 		return 0, err
@@ -119,28 +118,13 @@ func (box *Box) put(object interface{}, async bool, timeoutMs uint) (id uint64, 
 		return 0, err
 	}
 
-	//log.Printf("Put %v: %v, new=%v", box.entity.name, id, idFromObject==0)
-
+	// for entities with relations, execute all Put/PutRelated inside a single transaction
 	if box.entity.hasRelations {
-		if err := box.entity.binding.PutRelated(box.objectBox, object, id); err != nil {
-			return 0, err
-		}
-	}
-
-	err = box.withObjectBytes(object, id, func(bytes []byte) error {
-		return cMaybeErr(func() C.obx_err {
-			if async {
-				return C.obx_box_put_async(box.box, C.obx_id(id), unsafe.Pointer(&bytes[0]), C.size_t(len(bytes)),
-					C.bool(idFromObject != 0), C.uint64_t(timeoutMs))
-			} else {
-				return C.obx_box_put(box.box, C.obx_id(id), unsafe.Pointer(&bytes[0]), C.size_t(len(bytes)),
-					C.bool(idFromObject != 0))
-			}
+		err = box.objectBox.Update(func() error {
+			return box.putOne(id, idFromObject != 0, object, async, timeoutMs)
 		})
-	})
-
-	if err != nil {
-		return 0, err
+	} else {
+		err = box.putOne(id, idFromObject != 0, object, async, timeoutMs)
 	}
 
 	// update the id on the object
@@ -149,6 +133,26 @@ func (box *Box) put(object interface{}, async bool, timeoutMs uint) (id uint64, 
 	}
 
 	return id, nil
+}
+
+func (box *Box) putOne(id uint64, isUpdate bool, object interface{}, async bool, timeoutMs uint) error {
+	if box.entity.hasRelations {
+		if err := box.entity.binding.PutRelated(box.objectBox, object, id); err != nil {
+			return err
+		}
+	}
+
+	return box.withObjectBytes(object, id, func(bytes []byte) error {
+		return cMaybeErr(func() C.obx_err {
+			if async {
+				return C.obx_box_put_async(box.box, C.obx_id(id), unsafe.Pointer(&bytes[0]), C.size_t(len(bytes)),
+					C.bool(isUpdate), C.uint64_t(timeoutMs))
+			} else {
+				return C.obx_box_put(box.box, C.obx_id(id), unsafe.Pointer(&bytes[0]), C.size_t(len(bytes)),
+					C.bool(isUpdate))
+			}
+		})
+	})
 }
 
 func (box *Box) withObjectBytes(object interface{}, id uint64, fn func([]byte) error) error {
@@ -249,7 +253,7 @@ func (box *Box) PutAll(objects interface{}) (ids []uint64, err error) {
 
 	// if there are any new objects, reserve IDs for them
 	// TODO in case of an error later during insert, this ID is not recovered (reused in the future)...
-	//  we need to either move idForPut to C-api (preferrable) or use a transaction
+	//  we need to either move idForPut to C-api (preferrable) or use a transaction (would that actually help?)
 	if newIds, err := box.idsForPut(len(indexesNewObjects)); err != nil {
 		return nil, err
 	} else {
@@ -258,49 +262,58 @@ func (box *Box) PutAll(objects interface{}) (ids []uint64, err error) {
 		}
 	}
 
-	//log.Printf("PutAll %v: %v", box.entity.name, ids)
+	// Execute all operations inside a single transaction - for performance and consistency
+	err = box.objectBox.Update(func() error {
+		// flatten all the objects
+		var allBytes = make([][]byte, count)
+		for i := 0; i < count; i++ {
+			var object = slice.Index(i).Interface()
 
-	// flatten all the objects
-	var allBytes = make([][]byte, count)
-	for i := 0; i < count; i++ {
-		var object = slice.Index(i).Interface()
+			// put related entities for the single object
+			if box.entity.hasRelations {
+				if err := box.entity.binding.PutRelated(box.objectBox, object, ids[i]); err != nil {
+					return err
+				}
+			}
 
-		if box.entity.hasRelations {
-			if err := box.entity.binding.PutRelated(box.objectBox, object, ids[i]); err != nil {
-				return nil, err
+			// flatten a single object
+			err = box.withObjectBytes(object, ids[i], func(bytes []byte) error {
+				allBytes[i] = make([]byte, len(bytes))
+				copy(allBytes[i], bytes)
+				return nil
+			})
+			if err != nil {
+				return err
 			}
 		}
 
-		err = box.withObjectBytes(object, ids[i], func(bytes []byte) error {
-			allBytes[i] = make([]byte, len(bytes))
-			copy(allBytes[i], bytes)
-			return nil
+		// create a C representation of the objects array
+		bytesArray, err := goBytesArrayToC(allBytes)
+		if err != nil {
+			return err
+		} else {
+			defer bytesArray.free()
+		}
+
+		err = cMaybeErr(func() C.obx_err {
+			return C.obx_box_put_array(box.box, bytesArray.cBytesArray, goUint64ArrayToCObxId(ids), goBoolArrayToC(isUpdate))
 		})
 		if err != nil {
-			return nil, err
+			return err
 		}
-	}
 
-	// create a C representation of the objects array
-	bytesArray, err := goBytesArrayToC(allBytes)
+		// set IDs on the new objects
+		for index := range indexesNewObjects {
+			binding.SetId(slice.Index(index).Interface(), ids[index])
+		}
+
+		return nil
+	})
+
 	if err != nil {
 		return nil, err
-	} else {
-		defer bytesArray.free()
 	}
-
-	if err := cMaybeErr(func() C.obx_err {
-		return C.obx_box_put_array(box.box, bytesArray.cBytesArray, goUint64ArrayToCObxId(ids), goBoolArrayToC(isUpdate))
-	}); err != nil {
-		return nil, err
-	}
-
-	// restore update IDs on the new objects
-	for index := range indexesNewObjects {
-		binding.SetId(slice.Index(index).Interface(), ids[index])
-	}
-
-	return
+	return ids, nil
 }
 
 // Remove deletes a single object

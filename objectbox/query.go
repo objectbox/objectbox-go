@@ -95,7 +95,7 @@ func (query *Query) Find() (objects interface{}, err error) {
 
 	} else {
 		var cCall = func(visitorArg unsafe.Pointer) C.obx_err {
-			return C.obx_query_box_visit(query.cQuery, query.box.box, C.data_visitor, visitorArg,
+			return C.obx_query_box_visit(query.cQuery, query.box.box, dataVisitor, visitorArg,
 				C.uint64_t(query.offset), C.uint64_t(query.limit))
 		}
 		return readUsingVisitor(query.objectBox, query.entity.binding, defaultSliceCapacity, cCall)

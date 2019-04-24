@@ -31,9 +31,7 @@ Code example:
 */
 
 /*
-#include <stdbool.h>
-#include <stdint.h>
-#include "txncallable.h"
+#include "objectbox.h"
 
 // this is a Go function defined bellow and called from C
 extern bool txnCallableDispatch(uint32_t id, OBX_txn* txn);
@@ -42,10 +40,13 @@ import "C"
 import (
 	"fmt"
 	"sync"
+	"unsafe"
 )
 
 type txnCallable = func(tx *Transaction) bool
 
+var txnCallableRead = (*C.obx_txn_callable_read)(unsafe.Pointer(C.txnCallableDispatch))
+var txnCallableWrite = (*C.obx_txn_callable_write)(unsafe.Pointer(C.txnCallableDispatch))
 var txnCallableId uint32
 var txnCallableMutex sync.Mutex
 var txnCallables = make(map[uint32]txnCallable)
@@ -81,12 +82,4 @@ func txnCallableUnregister(id uint32) {
 	defer txnCallableMutex.Unlock()
 
 	delete(txnCallables, id)
-}
-
-//export txnCallableDispatch
-// txnCallableDispatch is called from C.txn_callable_read|write
-func txnCallableDispatch(id C.uint, cTx *C.OBX_txn) C.bool {
-	var fn = txnCallableLookup(uint32(id))
-	var tx = &Transaction{txn: cTx}
-	return C.bool(fn(tx))
 }

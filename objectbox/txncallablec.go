@@ -16,15 +16,21 @@
 
 package objectbox
 
+// This file implements externs defined in txncallable.go.
+// It needs to be separate or it would cause duplicate symbol errors during linking.
+// See https://golang.org/cmd/cgo/#hdr-C_references_to_Go for more details.
+
 /*
-#cgo LDFLAGS: -lobjectbox
-#include <stdlib.h>
+#include <stdbool.h>
+#include <stdint.h>
 #include "objectbox.h"
 */
 import "C"
 
-// Internal: won't be publicly exposed in a future version!
-type Transaction struct {
-	txn       *C.OBX_txn
-	objectBox *ObjectBox
+//export txnCallableDispatch
+// txnCallableDispatch is called from C.txn_callable_read|write
+func txnCallableDispatch(id C.uint, cTx *C.OBX_txn) C.bool {
+	var fn = txnCallableLookup(uint32(id))
+	var tx = &Transaction{txn: cTx}
+	return C.bool(fn(tx))
 }

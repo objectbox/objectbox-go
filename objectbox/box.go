@@ -20,7 +20,6 @@ package objectbox
 #cgo LDFLAGS: -lobjectbox
 #include <stdlib.h>
 #include "objectbox.h"
-#include "datavisitor.h"
 */
 import "C"
 
@@ -384,7 +383,7 @@ func (box *Box) GetMany(ids ...uint64) (slice interface{}, err error) {
 
 	} else {
 		var cCall = func(visitorArg unsafe.Pointer) C.obx_err {
-			return C.obx_box_visit_ids(box.box, cIds.cArray, C.data_visitor, visitorArg)
+			return C.obx_box_visit_ids(box.box, cIds.cArray, dataVisitor, visitorArg)
 		}
 		return readUsingVisitor(box.objectBox, box.entity.binding, defaultSliceCapacity, cCall)
 	}
@@ -404,7 +403,7 @@ func (box *Box) GetAll() (slice interface{}, err error) {
 
 	} else {
 		var cCall = func(visitorArg unsafe.Pointer) C.obx_err {
-			return C.obx_box_visit(box.box, C.data_visitor, visitorArg)
+			return C.obx_box_visit(box.box, dataVisitor, visitorArg)
 		}
 		return readUsingVisitor(box.objectBox, box.entity.binding, defaultSliceCapacity, cCall)
 	}

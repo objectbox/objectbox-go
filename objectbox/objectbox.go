@@ -20,7 +20,6 @@ package objectbox
 #cgo LDFLAGS: -lobjectbox
 #include <stdlib.h>
 #include "objectbox.h"
-#include "txncallable.h"
 */
 import "C"
 
@@ -30,8 +29,6 @@ import (
 	"strconv"
 	"sync"
 	"unsafe"
-
-	"github.com/google/flatbuffers/go"
 )
 
 //noinspection GoUnusedConst
@@ -59,7 +56,7 @@ type ObjectBox struct {
 }
 
 type options struct {
-	putAsyncTimeout  uint
+	putAsyncTimeout uint
 }
 
 type txnFun func(transaction *Transaction) error
@@ -154,9 +151,9 @@ func (ob *ObjectBox) runInTxn(readOnly bool, fnWithTxn txnFun, fnNoTxn func() er
 
 	var rc C.obx_err
 	if readOnly {
-		rc = C.obx_store_exec_read(ob.store, C.txn_callable_read, unsafe.Pointer(&visitorId))
+		rc = C.obx_store_exec_read(ob.store, txnCallableRead, unsafe.Pointer(&visitorId))
 	} else {
-		rc = C.obx_store_exec_write(ob.store, C.txn_callable_write, unsafe.Pointer(&visitorId))
+		rc = C.obx_store_exec_write(ob.store, txnCallableWrite, unsafe.Pointer(&visitorId))
 	}
 
 	// handle errors in order of their priorities
@@ -189,16 +186,6 @@ func (ob ObjectBox) getEntityByName(typeName string) *entity {
 		panic("Configuration error; no entity registered for type name " + typeName)
 	}
 	return entity
-}
-
-func (ob *ObjectBox) runWithCursor(e *entity, readOnly bool, cursorFun cursorFun) error {
-	if ob.options.alwaysAwaitAsync {
-		e.awaitAsyncCompletion()
-	}
-
-	return ob.runInTxn(readOnly, func(txn *Transaction) error {
-		return txn.runWithCursor(e, cursorFun)
-	}, nil)
 }
 
 // SetDebugFlags configures debug logging of the ObjectBox core.

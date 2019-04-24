@@ -37,7 +37,7 @@ func TestVersion(t *testing.T) {
 }
 
 func TestVersionLabel(t *testing.T) {
-	var version = objectbox.Version{1, 2, 3, "beta"}
+	var version = objectbox.Version{Major: 1, Minor: 2, Patch: 3, Label: "beta"}
 	assert.Eq(t, version.String(), "1.2.3-beta")
 	version.Label = ""
 	assert.Eq(t, version.String(), "1.2.3")

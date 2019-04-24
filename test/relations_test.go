@@ -96,6 +96,7 @@ func TestRelationsInsert(t *testing.T) {
 		assert.NoErr(t, relBox.Remove(object.RelatedPtr))
 		assert.NoErr(t, relValueBox.Remove(&object.RelatedSlice[0]))
 		objectRead, err = env.Box.Get(id)
+		assert.NoErr(t, err)
 
 		fmt.Println(rels[0])
 		assert.Eq(t, uint64(0), objectRead.Related.Id)

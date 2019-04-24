@@ -209,7 +209,7 @@ func TestBoxEmpty(t *testing.T) {
 	assert.NoErr(t, err)
 	assert.Eq(t, false, isEmpty)
 
-	env.Box.RemoveAll()
+	assert.NoErr(t, env.Box.RemoveAll())
 
 	isEmpty, err = env.Box.IsEmpty()
 	assert.NoErr(t, err)

@@ -25,7 +25,7 @@ function postBuild {
     echo "******** Collecting artifacts ********"
 
     echo "The $buildDir contains the following files: "
-    ls $buildDir -l
+    ls -l $buildDir
 }
 
 function test {

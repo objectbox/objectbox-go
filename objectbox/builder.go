@@ -44,6 +44,7 @@ type Builder struct {
 	options
 }
 
+// NewBuilder creates a new ObjectBox instance builder object
 func NewBuilder() *Builder {
 	// these constants are based on the objectbox.h file, not on the loaded library
 	var obxMinVersion = Version{C.OBX_VERSION_MAJOR, C.OBX_VERSION_MINOR, C.OBX_VERSION_PATCH, ""}
@@ -80,19 +81,21 @@ func (builder *Builder) MaxSizeInKb(maxSizeInKb uint64) *Builder {
 	return builder
 }
 
-// Maximum (concurrent) readers (default: 126). Increase only if you are getting errors (highly concurrent scenarios).
+// MaxReaders defines maximum concurrent readers (default: 126).
+// Increase only if you are getting errors (highly concurrent scenarios).
 func (builder *Builder) MaxReaders(maxReaders uint) *Builder {
 	builder.maxReaders = maxReaders
 	return builder
 }
 
-// Configures PutAsync enqueue timeout (default is 10 seconds). See Box.PutAsync method doc for more information.
+// PutAsyncTimeout configures PutAsync enqueue timeout (default is 10 seconds).
+// See Box.PutAsync method doc for more information.
 func (builder *Builder) PutAsyncTimeout(milliseconds uint) *Builder {
 	builder.putAsyncTimeout = milliseconds
 	return builder
 }
 
-// Enables automatic waiting for async operations between executing a synchronous one.
+// AlwaysAwaitAsync enables automatic waiting for async operations between executing a synchronous one.
 // This can be replaced if you're using PutAsync in many places and need to make sure the operation has finished
 // before your data you read/query/delete,... is executed. Calls ObjectBox.AwaitAsyncCompletion() internally.
 func (builder *Builder) AlwaysAwaitAsync(value bool) *Builder {
@@ -128,7 +131,7 @@ func (builder *Builder) Build() (*ObjectBox, error) {
 	return objectBox, nil
 }
 
-// Build validates the configuration and tries to init the ObjectBox.
+// BuildOrError validates the configuration and tries to init the ObjectBox.
 func (builder *Builder) BuildOrError() (*ObjectBox, error) {
 	if builder.Error != nil {
 		return nil, builder.Error

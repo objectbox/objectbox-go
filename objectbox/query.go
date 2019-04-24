@@ -20,7 +20,6 @@ package objectbox
 #cgo LDFLAGS: -lobjectbox
 #include <stdlib.h>
 #include "objectbox.h"
-#include "datavisitor.h"
 */
 import "C"
 import (
@@ -226,19 +225,18 @@ func (query *Query) SetStringParamsIn(property Property, values ...string) error
 		return err
 	}
 
-	var rc = 0
 	if len(values) == 0 {
 		return fmt.Errorf("no values given")
-
-	} else {
-		cStringArray := goStringArrayToC(values)
-		defer cStringArray.free()
-		rc = int(C.obx_query_string_params_in(query.cQuery, C.obx_schema_id(property.entityId()), C.obx_schema_id(property.propertyId()), cStringArray.cArray, C.int(cStringArray.size)))
 	}
 
+	cStringArray := goStringArrayToC(values)
+	defer cStringArray.free()
+
+	var rc = int(C.obx_query_string_params_in(query.cQuery, C.obx_schema_id(property.entityId()), C.obx_schema_id(property.propertyId()), cStringArray.cArray, C.int(cStringArray.size)))
 	if rc != 0 {
 		return createError()
 	}
+
 	return nil
 }
 
@@ -272,17 +270,15 @@ func (query *Query) SetInt64ParamsIn(property Property, values ...int64) error {
 		return err
 	}
 
-	var rc = 0
 	if len(values) == 0 {
 		return fmt.Errorf("no values given")
-
-	} else {
-		rc = int(C.obx_query_int64_params_in(query.cQuery, C.obx_schema_id(property.entityId()), C.obx_schema_id(property.propertyId()), (*C.int64_t)(unsafe.Pointer(&values[0])), C.int(len(values))))
 	}
 
+	var rc = int(C.obx_query_int64_params_in(query.cQuery, C.obx_schema_id(property.entityId()), C.obx_schema_id(property.propertyId()), (*C.int64_t)(unsafe.Pointer(&values[0])), C.int(len(values))))
 	if rc != 0 {
 		return createError()
 	}
+
 	return nil
 }
 
@@ -291,17 +287,15 @@ func (query *Query) SetInt32ParamsIn(property Property, values ...int32) error {
 		return err
 	}
 
-	var rc = 0
 	if len(values) == 0 {
 		return fmt.Errorf("no values given")
-
-	} else {
-		rc = int(C.obx_query_int32_params_in(query.cQuery, C.obx_schema_id(property.entityId()), C.obx_schema_id(property.propertyId()), (*C.int32_t)(unsafe.Pointer(&values[0])), C.int(len(values))))
 	}
 
+	var rc = int(C.obx_query_int32_params_in(query.cQuery, C.obx_schema_id(property.entityId()), C.obx_schema_id(property.propertyId()), (*C.int32_t)(unsafe.Pointer(&values[0])), C.int(len(values))))
 	if rc != 0 {
 		return createError()
 	}
+
 	return nil
 }
 

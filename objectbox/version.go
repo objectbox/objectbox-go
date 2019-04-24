@@ -24,7 +24,7 @@ package objectbox
 import "C"
 import "fmt"
 
-// If you depend on a certain version of ObjectBox, you can check using this struct.
+// Version represents a semantic-version If you depend on a certain version of ObjectBox, you can check using this struct.
 // See also VersionGo() and VersionLib().
 type Version struct {
 	Major int
@@ -41,12 +41,12 @@ func (v Version) String() string {
 	return versionString
 }
 
-// ObjectBox Version Go
+// VersionGo returns the Version of the ObjectBox-Go binding
 func VersionGo() Version {
-	return Version{0, 9, 0, "rc"}
+	return Version{0, 9, 0, ""}
 }
 
-// Version of the dynamic linked ObjectBox library
+// VersionLib returns the Version of the dynamic linked ObjectBox library
 func VersionLib() Version {
 	var major C.int
 	var minor C.int
@@ -55,7 +55,7 @@ func VersionLib() Version {
 	return Version{int(major), int(minor), int(patch), ""}
 }
 
-// A printable version string
+// VersionInfo returns a printable version string
 func VersionInfo() string {
 	return "ObjectBox Go version " + VersionGo().String() + " using dynamic library version " + VersionLib().String()
 }

@@ -102,12 +102,6 @@ func (qb *QueryBuilder) Close() error {
 	return nil
 }
 
-func (qb *QueryBuilder) setError(err error) {
-	if qb.Err == nil {
-		qb.Err = err
-	}
-}
-
 func (qb *QueryBuilder) Build(box *Box) (*Query, error) {
 	qb.checkForCError() // TODO why is this called here? It could lead to incorrect error messages in a parallel app
 	if qb.Err != nil {
@@ -218,7 +212,7 @@ func (qb *QueryBuilder) checkForCError() {
 		if errCode != 0 {
 			msg := C.obx_qb_error_message(qb.cqb)
 			if msg == nil {
-				qb.Err = errors.New(fmt.Sprintf("Could not create query builder (code %v)", int(errCode)))
+				qb.Err = fmt.Errorf("could not create query builder (code %v)", int(errCode))
 			} else {
 				qb.Err = errors.New(C.GoString(msg))
 			}

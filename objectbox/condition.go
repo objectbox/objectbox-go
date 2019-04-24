@@ -16,6 +16,7 @@
 
 package objectbox
 
+// Condition is used by Query to limit object selection
 type Condition interface {
 	applyTo(qb *QueryBuilder, isRoot bool) (ConditionId, error)
 }
@@ -62,6 +63,7 @@ func (condition *conditionCombination) applyTo(qb *QueryBuilder, isRoot bool) (C
 	}
 }
 
+// Any provides a way to combine multiple query conditions (equivalent to OR logical operator)
 func Any(conditions ...Condition) Condition {
 	return &conditionCombination{
 		or:         true,
@@ -69,6 +71,7 @@ func Any(conditions ...Condition) Condition {
 	}
 }
 
+// All provides a way to combine multiple query conditions (equivalent to AND logical operator)
 func All(conditions ...Condition) Condition {
 	return &conditionCombination{
 		conditions: conditions,

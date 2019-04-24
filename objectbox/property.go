@@ -927,9 +927,8 @@ func (property PropertyBool) Equals(value bool) Condition {
 		func(qb *QueryBuilder) (ConditionId, error) {
 			if value {
 				return qb.IntEqual(property.BaseProperty, 1)
-			} else {
-				return qb.IntEqual(property.BaseProperty, 0)
 			}
+			return qb.IntEqual(property.BaseProperty, 0)
 		},
 	}
 }

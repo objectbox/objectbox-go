@@ -20,11 +20,10 @@ package objectbox
 This file implements obx_data_visitor forwarding to Go callbacks
 
 Overview:
-	* register a dataVisitor callback
-	* pass the registered callback Id together with a generic C.data_visitor to the C.obx_* function
-	* when ObjectBox calls the C.data_visitor, the call is forwarded to Go dataVisitorDispatch
-	* dataVisitorDispatch finds the callback registered under that ID and calls it
-	* after there can be no more callbacks, the visitor must be unregistered
+	* Register a dataVisitor callback, getting a visitor ID.
+	* Pass the registered visitor ID together with a generic dataVisitor (C.dataVisitorDispatch) to a C.obx_* function.
+	* When ObjectBox calls dataVisitorDispatch, it finds the callback registered under that ID and calls it.
+	* After there can be no more callbacks, the visitor must be unregistered.
 
 Code example:
 	var visitorId uint32
@@ -41,16 +40,14 @@ Code example:
 	// don't forget to unregister the visitor after it's no longer going to be called or you would fill the queue up quickly
 	defer dataVisitorUnregister(visitorId)
 
-	rc := C.obx_query_visit(cQuery, cCursor, C.data_visitor, unsafe.Pointer(&visitorId), C.uint64_t(offset), C.uint64_t(limit))
+	rc := C.obx_query_visit(cQuery, cCursor, dataVisitor, unsafe.Pointer(&visitorId), C.uint64_t(offset), C.uint64_t(limit))
 */
 
 /*
-#include <stdbool.h>
-#include <stdint.h>
-#include "datavisitor.h"
+#include "objectbox.h"
 
-// this is a Go function defined bellow and called from C
-extern bool dataVisitorDispatch(uint32_t id, void* data, size_t size);
+// this implements the obx_data_visitor forwarding, it's called from ObjectBox C-api (see `dataVisitor` go var)
+extern bool dataVisitorDispatch(void* visitorId, void* data, size_t size);
 */
 import "C"
 import (
@@ -61,6 +58,7 @@ import (
 
 type dataVisitorCallback = func([]byte) bool
 
+var dataVisitor = (*C.obx_data_visitor)(unsafe.Pointer(C.dataVisitorDispatch))
 var dataVisitorId uint32
 var dataVisitorMutex sync.Mutex
 var dataVisitorCallbacks = make(map[uint32]dataVisitorCallback)
@@ -96,18 +94,6 @@ func dataVisitorUnregister(id uint32) {
 	defer dataVisitorMutex.Unlock()
 
 	delete(dataVisitorCallbacks, id)
-}
-
-//export dataVisitorDispatch
-// dataVisitorDispatch is called from C.data_visitor_
-// NOTE: don't change ptr contents, it's `const void*` in C but go doesn't support const pointers
-func dataVisitorDispatch(id C.uint, ptr unsafe.Pointer, size C.size_t) C.bool {
-	// create an empty byte slice and map the C data to it, no copy required
-	var bytes []byte
-	cVoidPtrToByteSlice(ptr, int(size), &bytes)
-
-	var fn = dataVisitorLookup(uint32(id))
-	return C.bool(fn(bytes))
 }
 
 // this is a utility function to fetch objects using an obx_data_visitor

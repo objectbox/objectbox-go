@@ -28,3 +28,28 @@ type Transaction struct {
 	txn       *C.OBX_txn
 	objectBox *ObjectBox
 }
+
+func (txn *Transaction) Close() error {
+	rc := C.obx_txn_close(txn.txn)
+	txn.txn = nil
+	if rc != 0 {
+		return createError()
+	}
+	return nil
+}
+
+func (txn *Transaction) Abort() error {
+	rc := C.obx_txn_abort(txn.txn)
+	if rc != 0 {
+		return createError()
+	}
+	return nil
+}
+
+func (txn *Transaction) Commit() error {
+	rc := C.obx_txn_commit(txn.txn)
+	if rc != 0 {
+		return createError()
+	}
+	return nil
+}

@@ -28,7 +28,6 @@ import (
 	"runtime"
 	"strconv"
 	"sync"
-	"unsafe"
 )
 
 //noinspection GoUnusedConst
@@ -59,7 +58,7 @@ type options struct {
 	putAsyncTimeout uint
 }
 
-type txnFun func(transaction *Transaction) error
+type txnFun func() error
 
 // constant during runtime so no need to call this each time it's necessary
 var supportsBytesArray = bool(C.obx_supports_bytes_array())
@@ -86,7 +85,7 @@ func (ob *ObjectBox) Close() {
 // Note, you must not launch Go routines inside this function - the call must be sequential.
 // The error returned by your callback is passed-through as the output error
 func (ob *ObjectBox) View(fn func() error) error {
-	return ob.runInTxn(true, nil, fn)
+	return ob.runInTxn(true, fn)
 }
 
 // Update executes the given function inside a write transaction.
@@ -94,7 +93,7 @@ func (ob *ObjectBox) View(fn func() error) error {
 // The error returned by your callback is passed-through as the output error.
 // If the resulting error is not nil, the transaction is aborted (rolled-back)
 func (ob *ObjectBox) Update(fn func() error) error {
-	return ob.runInTxn(false, nil, fn)
+	return ob.runInTxn(false, fn)
 }
 
 func (ob *ObjectBox) beginTxn() (*Transaction, error) {
@@ -113,61 +112,36 @@ func (ob *ObjectBox) beginTxnRead() (*Transaction, error) {
 	return &Transaction{ctxn, ob}, nil
 }
 
-// runInTxn executes one of the given function inside a transaction
-// if the function returns an error, the transaction is rolled-back
-func (ob *ObjectBox) runInTxn(readOnly bool, fnWithTxn txnFun, fnNoTxn func() error) error {
+func (ob *ObjectBox) runInTxn(readOnly bool, txnFun txnFun) (err error) {
 	runtime.LockOSThread()
-	defer runtime.UnlockOSThread()
-
-	var visitorId uint32
-	var err error
-	var pnc interface{}
-
-	visitorId, err = txnCallableRegister(func(tx *Transaction) (result bool) {
-		// this function must not panic or the call to C would not return and the transaction wouldn't finish
-		defer func() {
-			pnc = recover()
-			if pnc != nil {
-				fmt.Printf("panic during transaction callback: %v", pnc)
-				err = fmt.Errorf("%v", pnc)
-				result = false
-			}
-		}()
-
-		if fnWithTxn != nil {
-			if tx.objectBox == nil {
-				tx.objectBox = ob
-			}
-			err = fnWithTxn(tx)
-		} else {
-			err = fnNoTxn()
-		}
-		return err == nil
-	})
-	if err != nil {
-		return err
-	}
-	defer txnCallableUnregister(visitorId)
-
-	var rc C.obx_err
+	var txn *Transaction
 	if readOnly {
-		rc = C.obx_store_exec_read(ob.store, txnCallableRead, unsafe.Pointer(&visitorId))
+		txn, err = ob.beginTxnRead()
 	} else {
-		rc = C.obx_store_exec_write(ob.store, txnCallableWrite, unsafe.Pointer(&visitorId))
+		txn, err = ob.beginTxn()
 	}
 
-	// handle errors in order of their priorities
-	if pnc != nil {
-		// propagate the panic
-		panic(pnc)
-	} else if err != nil {
-		// err set by the visitor callback above
+	if err != nil {
+		runtime.UnlockOSThread()
 		return err
-	} else if rc != 0 {
-		return createError()
-	} else {
-		return nil
 	}
+
+	// Defer to ensure a TX is ALWAYS closed, even in a panic
+	defer func() {
+		err2 := txn.Close()
+		if err == nil {
+			err = err2
+		}
+		runtime.UnlockOSThread()
+	}()
+
+	err = txnFun()
+
+	if !readOnly && err == nil {
+		err = txn.Commit()
+	}
+
+	return err
 }
 
 func (ob ObjectBox) getEntityById(typeId TypeId) *entity {

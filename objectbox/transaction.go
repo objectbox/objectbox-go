@@ -23,13 +23,12 @@ package objectbox
 */
 import "C"
 
-// Internal: won't be publicly exposed in a future version!
-type Transaction struct {
+type transaction struct {
 	txn       *C.OBX_txn
 	objectBox *ObjectBox
 }
 
-func (txn *Transaction) Close() error {
+func (txn *transaction) Close() error {
 	rc := C.obx_txn_close(txn.txn)
 	txn.txn = nil
 	if rc != 0 {
@@ -38,7 +37,7 @@ func (txn *Transaction) Close() error {
 	return nil
 }
 
-func (txn *Transaction) Abort() error {
+func (txn *transaction) Abort() error {
 	rc := C.obx_txn_abort(txn.txn)
 	if rc != 0 {
 		return createError()
@@ -46,7 +45,7 @@ func (txn *Transaction) Abort() error {
 	return nil
 }
 
-func (txn *Transaction) Commit() error {
+func (txn *transaction) Commit() error {
 	rc := C.obx_txn_commit(txn.txn)
 	if rc != 0 {
 		return createError()

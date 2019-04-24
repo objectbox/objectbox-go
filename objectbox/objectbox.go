@@ -96,25 +96,25 @@ func (ob *ObjectBox) Update(fn func() error) error {
 	return ob.runInTxn(false, fn)
 }
 
-func (ob *ObjectBox) beginTxn() (*Transaction, error) {
+func (ob *ObjectBox) beginTxn() (*transaction, error) {
 	var ctxn = C.obx_txn_begin(ob.store)
 	if ctxn == nil {
 		return nil, createError()
 	}
-	return &Transaction{ctxn, ob}, nil
+	return &transaction{ctxn, ob}, nil
 }
 
-func (ob *ObjectBox) beginTxnRead() (*Transaction, error) {
+func (ob *ObjectBox) beginTxnRead() (*transaction, error) {
 	var ctxn = C.obx_txn_begin_read(ob.store)
 	if ctxn == nil {
 		return nil, createError()
 	}
-	return &Transaction{ctxn, ob}, nil
+	return &transaction{ctxn, ob}, nil
 }
 
 func (ob *ObjectBox) runInTxn(readOnly bool, txnFun txnFun) (err error) {
 	runtime.LockOSThread()
-	var txn *Transaction
+	var txn *transaction
 	if readOnly {
 		txn, err = ob.beginTxnRead()
 	} else {

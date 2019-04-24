@@ -127,6 +127,10 @@ func (box *Box) put(object interface{}, async bool, timeoutMs uint) (id uint64, 
 		err = box.putOne(id, idFromObject != 0, object, async, timeoutMs)
 	}
 
+	if err != nil {
+		return 0, err
+	}
+
 	// update the id on the object
 	if idFromObject != id {
 		box.entity.binding.SetId(object, id)
@@ -365,17 +369,24 @@ func (box *Box) Get(id uint64) (object interface{}, err error) {
 	var dataSize C.size_t
 	var dataPtr = unsafe.Pointer(data)
 
-	// TODO use runInTxn so that the related entities are fetched within the same transaction in binding.Load()
-	var rc = C.obx_box_get(box.box, C.obx_id(id), &dataPtr, &dataSize)
-	if rc == 0 {
-		var bytes []byte
-		cVoidPtrToByteSlice(dataPtr, int(dataSize), &bytes)
-		return box.entity.binding.Load(box.objectBox, bytes)
-	} else if rc == C.OBX_NOT_FOUND {
-		return nil, nil
-	} else {
-		return nil, createError()
-	}
+	err = box.objectBox.View(func() error {
+		var rc = C.obx_box_get(box.box, C.obx_id(id), &dataPtr, &dataSize)
+		if rc == 0 {
+			var bytes []byte
+			cVoidPtrToByteSlice(dataPtr, int(dataSize), &bytes)
+			object, err = box.entity.binding.Load(box.objectBox, bytes)
+			return err
+		} else if rc == C.OBX_NOT_FOUND {
+			object = nil
+			return nil
+		} else {
+			object = nil
+			return createError()
+		}
+
+	})
+
+	return object, err
 }
 
 // GetMany reads multiple objects at once.
@@ -388,17 +399,13 @@ func (box *Box) GetMany(ids ...uint64) (slice interface{}, err error) {
 	if cIds, err := goIdsArrayToC(ids); err != nil {
 		return nil, err
 	} else if supportsBytesArray {
-		data, err := cGetBytesArray(func() *C.OBX_bytes_array { return C.obx_box_get_ids(box.box, cIds.cArray) })
-		if err != nil {
-			return nil, err
-		}
-		return box.bytesArrayToObjects(data)
+		return box.readManyObjects(func() *C.OBX_bytes_array { return C.obx_box_get_ids(box.box, cIds.cArray) })
 
 	} else {
 		var cCall = func(visitorArg unsafe.Pointer) C.obx_err {
 			return C.obx_box_visit_ids(box.box, cIds.cArray, dataVisitor, visitorArg)
 		}
-		return readUsingVisitor(box.objectBox, box.entity.binding, defaultSliceCapacity, cCall)
+		return box.readUsingVisitor(cCall)
 	}
 }
 
@@ -408,31 +415,74 @@ func (box *Box) GetMany(ids ...uint64) (slice interface{}, err error) {
 // The cast is done automatically when using the generated BoxFor* code.
 func (box *Box) GetAll() (slice interface{}, err error) {
 	if supportsBytesArray {
-		data, err := cGetBytesArray(func() *C.OBX_bytes_array { return C.obx_box_get_all(box.box) })
-		if err != nil {
-			return nil, err
-		}
-		return box.bytesArrayToObjects(data)
+		return box.readManyObjects(func() *C.OBX_bytes_array { return C.obx_box_get_all(box.box) })
 
 	} else {
 		var cCall = func(visitorArg unsafe.Pointer) C.obx_err {
 			return C.obx_box_visit(box.box, dataVisitor, visitorArg)
 		}
-		return readUsingVisitor(box.objectBox, box.entity.binding, defaultSliceCapacity, cCall)
+		return box.readUsingVisitor(cCall)
 	}
 }
 
-func (box *Box) bytesArrayToObjects(bytesArray [][]byte) (slice interface{}, err error) {
+func (box *Box) readManyObjects(cCall func() *C.OBX_bytes_array) (slice interface{}, err error) {
+	err = box.objectBox.View(func() error {
+		bytesArray, err := cGetBytesArray(cCall)
+		if err != nil {
+			return err
+		}
+
+		var binding = box.entity.binding
+		slice = binding.MakeSlice(len(bytesArray))
+		for _, bytesData := range bytesArray {
+			if object, err := binding.Load(box.objectBox, bytesData); err != nil {
+				return err
+			} else {
+				slice = binding.AppendToSlice(slice, object)
+			}
+		}
+		return nil
+	})
+
+	if err != nil {
+		slice = nil
+	}
+
+	return slice, err
+}
+
+// this is a utility function to fetch objects using an obx_data_visitor
+func (box *Box) readUsingVisitor(cCall func(visitorArg unsafe.Pointer) C.obx_err) (slice interface{}, err error) {
 	var binding = box.entity.binding
-	slice = binding.MakeSlice(len(bytesArray))
-	for _, bytesData := range bytesArray {
-		if object, err := binding.Load(box.objectBox, bytesData); err != nil {
-			return nil, err
+	var visitorId uint32
+	visitorId, err = dataVisitorRegister(func(bytes []byte) bool {
+		if object, err2 := binding.Load(box.objectBox, bytes); err2 != nil {
+			err = err2
+			return false
 		} else {
 			slice = binding.AppendToSlice(slice, object)
 		}
+		return true
+	})
+	if err != nil {
+		return nil, err
 	}
-	return slice, nil
+	defer dataVisitorUnregister(visitorId)
+
+	slice = binding.MakeSlice(defaultSliceCapacity)
+
+	// use another `error` variable as `err` may be set by the visitor callback above
+	var err2 = box.objectBox.View(func() error {
+		return cMaybeErr(func() C.obx_err { return cCall(unsafe.Pointer(&visitorId)) })
+	})
+
+	if err2 != nil {
+		return nil, err2
+	} else if err != nil {
+		return nil, err
+	} else {
+		return slice, nil
+	}
 }
 
 // Contains checks whether an object with the given ID is stored.
@@ -454,9 +504,7 @@ func (box *Box) RelationIds(relation *RelationToMany, sourceId uint64) ([]uint64
 // RelationReplace replaces all targets for a given source in a standalone many-to-many relation
 // It also inserts new related objects (with a 0 ID).
 func (box *Box) RelationReplace(relation *RelationToMany, sourceId uint64, sourceObject interface{},
-	targetObjects interface{}) (err error) {
-
-	// TODO this whole func needs to be executed in a single transaction because it calls to the c-box multiple times
+	targetObjects interface{}) error {
 
 	// get id from the object, if inserting, it would be 0 even if the argument id is already non-zero
 	// this saves us an unnecessary request to RelationIds for new objects (there can't be any relations yet)
@@ -465,71 +513,70 @@ func (box *Box) RelationReplace(relation *RelationToMany, sourceId uint64, sourc
 		return err
 	}
 
-	// make a map of related target entity IDs, marking those that were originally related but should be removed
-	var idsToRemove = make(map[uint64]bool)
-
-	if objId != 0 {
-		if oldRelIds, err := box.RelationIds(relation, sourceId); err != nil {
-			return err
-		} else {
-			for _, rId := range oldRelIds {
-				idsToRemove[rId] = true
-			}
-		}
-	}
-
 	sliceValue := reflect.ValueOf(targetObjects)
 	count := sliceValue.Len()
 
-	if count > 0 {
-		var targetBox = box.objectBox.InternalBox(relation.Target.Id)
+	// make a map of related target entity IDs, marking those that were originally related but should be removed
+	var idsToRemove = make(map[uint64]bool)
 
-		// walk over the current related objects, mark those that still exist, add the new ones
-		for i := 0; i < count; i++ {
-			var reflObj = sliceValue.Index(i)
-			var rel interface{}
-			if reflObj.Kind() == reflect.Ptr {
-				rel = reflObj.Interface()
-			} else {
-				rel = reflObj.Addr().Interface()
-			}
-
-			rId, err := targetBox.entity.binding.GetId(rel)
-			if err != nil {
+	return box.objectBox.Update(func() error {
+		if objId != 0 {
+			if oldRelIds, err := box.RelationIds(relation, sourceId); err != nil {
 				return err
-			} else if rId == 0 {
-				if rId, err = targetBox.Put(rel); err != nil {
-					return err
-				}
-			}
-
-			if idsToRemove[rId] {
-				// old relation that still exists, keep it
-				delete(idsToRemove, rId)
 			} else {
-				// new relation, add it
-				if err := box.RelationPut(relation, sourceId, rId); err != nil {
-					return err
+				for _, rId := range oldRelIds {
+					idsToRemove[rId] = true
 				}
 			}
 		}
-	}
 
-	// remove those that were not found in the rSlice but were originally related to this entity
-	for rId := range idsToRemove {
-		if err := box.RelationRemove(relation, sourceId, rId); err != nil {
-			return err
+		if count > 0 {
+			var targetBox = box.objectBox.InternalBox(relation.Target.Id)
+
+			// walk over the current related objects, mark those that still exist, add the new ones
+			for i := 0; i < count; i++ {
+				var reflObj = sliceValue.Index(i)
+				var rel interface{}
+				if reflObj.Kind() == reflect.Ptr {
+					rel = reflObj.Interface()
+				} else {
+					rel = reflObj.Addr().Interface()
+				}
+
+				rId, err := targetBox.entity.binding.GetId(rel)
+				if err != nil {
+					return err
+				} else if rId == 0 {
+					if rId, err = targetBox.Put(rel); err != nil {
+						return err
+					}
+				}
+
+				if idsToRemove[rId] {
+					// old relation that still exists, keep it
+					delete(idsToRemove, rId)
+				} else {
+					// new relation, add it
+					if err := box.RelationPut(relation, sourceId, rId); err != nil {
+						return err
+					}
+				}
+			}
 		}
-	}
 
-	return nil
+		// remove those that were not found in the rSlice but were originally related to this entity
+		for rId := range idsToRemove {
+			if err := box.RelationRemove(relation, sourceId, rId); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
 }
 
 // RelationPut creates a relation between the given source & target objects
 func (box *Box) RelationPut(relation *RelationToMany, sourceId, targetId uint64) error {
-	//log.Printf("RelationPut %v: %v (%s) -> %v (%s)", relation.Id,
-	//	sourceId, box.objectBox.getEntityById(relation.Source.Id).name,
-	//	targetId, box.objectBox.getEntityById(relation.Target.Id).name)
 	return cMaybeErr(func() C.obx_err {
 		return C.obx_box_rel_put(box.box, C.obx_schema_id(relation.Id), C.obx_id(sourceId), C.obx_id(targetId))
 	})

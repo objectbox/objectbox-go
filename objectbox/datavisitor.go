@@ -96,31 +96,3 @@ func dataVisitorUnregister(id uint32) {
 	delete(dataVisitorCallbacks, id)
 }
 
-// this is a utility function to fetch objects using an obx_data_visitor
-func readUsingVisitor(ob *ObjectBox, binding ObjectBinding, expectedCount int, cCall func(visitorArg unsafe.Pointer) C.obx_err) (slice interface{}, err error) {
-	var visitorId uint32
-	visitorId, err = dataVisitorRegister(func(bytes []byte) bool {
-		if object, err2 := binding.Load(ob, bytes); err2 != nil {
-			err = err2
-			return false
-		} else {
-			slice = binding.AppendToSlice(slice, object)
-		}
-		return true
-	})
-	if err != nil {
-		return nil, err
-	}
-	defer dataVisitorUnregister(visitorId)
-
-	slice = binding.MakeSlice(expectedCount)
-	rc := cCall(unsafe.Pointer(&visitorId))
-	if rc != 0 {
-		return nil, createError()
-	} else if err != nil {
-		// err might be set by the visitor callback above
-		return nil, err
-	} else {
-		return slice, nil
-	}
-}

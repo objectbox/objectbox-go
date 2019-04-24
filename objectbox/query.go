@@ -85,20 +85,17 @@ func (query *Query) Find() (objects interface{}, err error) {
 	}
 
 	if supportsBytesArray {
-		data, err := cGetBytesArray(func() *C.OBX_bytes_array {
+		var cCall = func() *C.OBX_bytes_array {
 			return C.obx_query_box_find(query.cQuery, query.box.box, C.uint64_t(query.offset), C.uint64_t(query.limit))
-		})
-		if err != nil {
-			return nil, err
 		}
-		return query.box.bytesArrayToObjects(data)
+		return query.box.readManyObjects(cCall)
 
 	} else {
 		var cCall = func(visitorArg unsafe.Pointer) C.obx_err {
 			return C.obx_query_box_visit(query.cQuery, query.box.box, dataVisitor, visitorArg,
 				C.uint64_t(query.offset), C.uint64_t(query.limit))
 		}
-		return readUsingVisitor(query.objectBox, query.entity.binding, defaultSliceCapacity, cCall)
+		return query.box.readUsingVisitor(cCall)
 	}
 }
 

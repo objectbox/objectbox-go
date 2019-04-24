@@ -148,7 +148,7 @@ func (builder *Builder) BuildOrError() (*ObjectBox, error) {
 
 	cOptions.maxReaders = C.uint(builder.maxReaders)            // Zero is the default on both sides
 	cOptions.maxDbSizeInKByte = C.uint64_t(builder.maxSizeInKb) // Zero is the default on both sides
-	cOptions.alwaysAwaitAsync = C.bool(builder.alwaysAwaitAsync)
+	//TODO cOptions.alwaysAwaitAsync = C.bool(builder.alwaysAwaitAsync)
 
 	cStore := C.obx_store_open(builder.model.model, &cOptions)
 	if cStore == nil {

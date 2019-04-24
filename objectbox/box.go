@@ -93,7 +93,7 @@ func (box *Box) idsForPut(count int) ([]uint64, error) {
 		return nil, nil
 	}
 
-	ids, err := cGetIds(func() *C.OBX_id_array { return C.obx_box_bulk_ids_for_put(box.box, C.uint64_t(count)) })
+	ids, err := cGetIds(func() *C.OBX_id_array { return C.obx_box_ids_for_put(box.box, C.uint64_t(count)) })
 	if err != nil {
 		return nil, err
 	} else if len(ids) != count {
@@ -291,7 +291,7 @@ func (box *Box) PutAll(objects interface{}) (ids []uint64, err error) {
 	}
 
 	if err := cMaybeErr(func() C.obx_err {
-		return C.obx_box_bulk_put(box.box, bytesArray.cBytesArray, goUint64ArrayToCObxId(ids), goBoolArrayToC(isUpdate))
+		return C.obx_box_put_array(box.box, bytesArray.cBytesArray, goUint64ArrayToCObxId(ids), goBoolArrayToC(isUpdate))
 	}); err != nil {
 		return nil, err
 	}
@@ -376,7 +376,7 @@ func (box *Box) GetMany(ids ...uint64) (slice interface{}, err error) {
 	if cIds, err := goIdsArrayToC(ids); err != nil {
 		return nil, err
 	} else if supportsBytesArray {
-		data, err := cGetBytesArray(func() *C.OBX_bytes_array { return C.obx_box_bulk_get(box.box, cIds.cArray) })
+		data, err := cGetBytesArray(func() *C.OBX_bytes_array { return C.obx_box_get_ids(box.box, cIds.cArray) })
 		if err != nil {
 			return nil, err
 		}
@@ -384,7 +384,7 @@ func (box *Box) GetMany(ids ...uint64) (slice interface{}, err error) {
 
 	} else {
 		var cCall = func(visitorArg unsafe.Pointer) C.obx_err {
-			return C.obx_box_bulk_visit(box.box, cIds.cArray, C.data_visitor, visitorArg)
+			return C.obx_box_visit_ids(box.box, cIds.cArray, C.data_visitor, visitorArg)
 		}
 		return readUsingVisitor(box.objectBox, box.entity.binding, defaultSliceCapacity, cCall)
 	}

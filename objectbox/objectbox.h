@@ -132,6 +132,22 @@ typedef int obx_err;
 /// @param size specifies the length of the read data
 typedef bool obx_data_visitor(void* arg, const void* data, size_t size);
 
+struct OBX_txn;
+typedef struct OBX_txn OBX_txn;
+
+/// The function to run inside a read transaction
+/// @param arg is a pass-through argument passed to the called API
+/// @param txn is a read-only transaction
+/// @return 0 on success, user-defined error code on failure - passed-through/forwarded by obx_store_exec_read()
+typedef int obx_txn_callable_read(void* arg, OBX_txn* txn);
+
+/// The function to run inside a write transaction
+/// @param arg is a pass-through argument passed to the called API
+/// @param txn is a transaction - do not commit or abort it manually
+/// @return 0 on success, user-defined error code on failure - passed-through/forwarded by obx_store_exec_write().
+///  If the returned code is 0, the transaction is committed, otherwise it's aborted.
+typedef int obx_txn_callable_write(void* arg, OBX_txn* txn);
+
 //----------------------------------------------
 // Error info
 //----------------------------------------------
@@ -263,9 +279,6 @@ typedef struct OBX_store_options {
 
     /// Use zero for default value
     unsigned int maxReaders;
-
-    /// Wait for asyncPut to complete before accessing data from a synchronous operation (get, put, delete, query, ...)
-    bool alwaysAwaitAsync;
 } OBX_store_options;
 
 typedef enum {
@@ -306,6 +319,16 @@ obx_err obx_store_debug_flags(OBX_store* store, OBXDebugFlags flags);
 
 obx_err obx_store_close(OBX_store* store);
 
+/// Execute the passed function inside a read transaction.
+/// The int return code returned by callable is forwarded as a result of this function if there is no execution error.
+/// @deprecated API TBD; ReentrantTx might enable a simpler API
+obx_err obx_store_exec_read(OBX_store* store, obx_txn_callable_read* callable, void* callable_arg);
+
+/// Execute the passed function inside a write transaction
+/// The int return code returned by callable is forwarded as a result of this function if there is no execution error.
+/// @deprecated API TBD; ReentrantTx might enable a simpler API
+obx_err obx_store_exec_write(OBX_store* store, obx_txn_callable_write* callable, void* callable_arg);
+
 //----------------------------------------------
 // Transaction
 //----------------------------------------------
@@ -344,7 +367,8 @@ obx_id obx_cursor_id_for_put(OBX_cursor* cursor, obx_id id_or_zero);
 obx_err obx_cursor_put(OBX_cursor* cursor, obx_id id, const void* data, size_t size, bool checkForPreviousValue);
 
 /// Prefer obx_cursor_put (non-padded) if possible, as this does a memcpy if the size is not dividable by 4.
-obx_err obx_cursor_put_padded(OBX_cursor* cursor, obx_id id, const void* data, size_t size, bool checkForPreviousValue);
+obx_err obx_cursor_put_padded(OBX_cursor* cursor, obx_id id, const void* data, size_t size,
+                              bool checkForPreviousValue);
 
 obx_err obx_cursor_get(OBX_cursor* cursor, obx_id id, void** data, size_t* size);
 
@@ -439,23 +463,23 @@ obx_err obx_box_count(OBX_box* box, uint64_t limit, uint64_t* out_count);
 /// Read given objects from the database in a single transaction.
 /// The output array has exactly the same size as the input, each index corresponding to the input ID at that index.
 /// If an object is not found, the output bytes data at its index is NULL and the size is 0.
-OBX_bytes_array* obx_box_bulk_get(OBX_box* box, const OBX_id_array* ids);
+OBX_bytes_array* obx_box_get_ids(OBX_box* box, const OBX_id_array* ids);
 
 /// Read given objects from the database in a single transaction.
 /// Call the visitor() on each object, passing visitor_arg, object data & size as arguments.
 /// The given visitor must return true to keep receiving results, false to cancel.
 /// If an object is not found, the visitor() is still called, passing NULL as data and a 0 as size.
-obx_err obx_box_bulk_visit(OBX_box* box, const OBX_id_array* ids, obx_data_visitor* visitor, void* visitor_arg);
+obx_err obx_box_visit_ids(OBX_box* box, const OBX_id_array* ids, obx_data_visitor* visitor, void* visitor_arg);
 
 /// Reserve the given number of IDs for insertion
-OBX_id_array* obx_box_bulk_ids_for_put(OBX_box* box, uint64_t count);
+OBX_id_array* obx_box_ids_for_put(OBX_box* box, uint64_t count);
 
 /// Put all given objects in the database in a single transaction
-obx_err obx_box_bulk_put(OBX_box* box, const OBX_bytes_array* objects, const obx_id ids[], const bool is_update[]);
+obx_err obx_box_put_array(OBX_box* box, const OBX_bytes_array* objects, const obx_id* ids, const bool* is_update);
 
 /// Remove all given objects from  the database in a single transaction.
 /// If must_exist == true and any of the objects is not found, this function fails and no objects are removed.
-obx_err obx_box_bulk_remove(OBX_box* box, const OBX_id_array* ids, bool must_exist);
+obx_err obx_box_remove_ids(OBX_box* box, const OBX_id_array* ids, bool must_exist);
 
 /// Insert a standalone relation entry between two objects.
 /// @param relation_id must be a standalone relation ID with source entity belonging to this box

@@ -50,7 +50,7 @@ type ObjectBox struct {
 	entitiesById   map[TypeId]*entity
 	entitiesByName map[string]*entity
 	boxes          map[TypeId]*Box
-	boxesMutex     *sync.Mutex
+	boxesMutex     sync.Mutex
 	options        options
 }
 
@@ -70,15 +70,6 @@ func (ob *ObjectBox) Close() {
 	if storeToClose != nil {
 		C.obx_store_close(storeToClose)
 	}
-
-	ob.boxesMutex.Lock()
-	defer ob.boxesMutex.Unlock()
-	for _, box := range ob.boxes {
-		if err := box.close(); err != nil {
-			fmt.Println(err)
-		}
-	}
-	ob.boxes = nil
 }
 
 // View executes the given function inside a read transaction.
@@ -192,14 +183,14 @@ func (ob *ObjectBox) box(typeId TypeId) (*Box, error) {
 	}
 
 	entity := ob.getEntityById(typeId)
-	cbox := C.obx_box_create(ob.store, C.obx_schema_id(typeId))
+	cbox := C.obx_store_box(ob.store, C.obx_schema_id(typeId))
 	if cbox == nil {
 		return nil, createError()
 	}
 
 	box = &Box{
 		objectBox: ob,
-		box:       cbox,
+		cBox:      cbox,
 		entity:    entity,
 	}
 	ob.boxes[typeId] = box
@@ -208,7 +199,7 @@ func (ob *ObjectBox) box(typeId TypeId) (*Box, error) {
 
 // AwaitAsyncCompletion blocks until all PutAsync insert have been processed
 func (ob *ObjectBox) AwaitAsyncCompletion() *ObjectBox {
-	if C.obx_store_await_async_completion(ob.store) != 0 {
+	if C.obx_store_await_async_completion(ob.store) != true {
 		fmt.Println(createError())
 	}
 	return ob

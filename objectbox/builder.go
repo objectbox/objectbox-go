@@ -25,7 +25,6 @@ import "C"
 
 import (
 	"fmt"
-	"sync"
 	"unsafe"
 )
 
@@ -163,7 +162,6 @@ func (builder *Builder) BuildOrError() (*ObjectBox, error) {
 		entitiesById:   builder.model.entitiesById,
 		entitiesByName: builder.model.entitiesByName,
 		boxes:          make(map[TypeId]*Box, len(builder.model.entitiesById)),
-		boxesMutex:     &sync.Mutex{},
 		options:        builder.options,
 	}
 

@@ -100,7 +100,7 @@ func (box *Box) idsForPut(count int) (firstId uint64, err error) {
 	return uint64(cFirstID), nil
 }
 
-func (box *Box) put(object interface{}, async bool, timeoutMs uint) (id uint64, err error) {
+func (box *Box) put(object interface{}, async bool, timeoutMs uint, alreadyInTx bool) (id uint64, err error) {
 	idFromObject, err := box.entity.binding.GetId(object)
 	if err != nil {
 		return 0, err
@@ -110,14 +110,12 @@ func (box *Box) put(object interface{}, async bool, timeoutMs uint) (id uint64, 
 		return 0, errors.New("PutAsync is currently not supported on entities that have relations")
 	}
 
-	// TODO in case of an error later during insert, this ID is not recovered (reused in the future)...
-	//  we need to either move idForPut to C-api (preferrable) or use a transaction
 	if id, err = box.idForPut(idFromObject); err != nil {
 		return 0, err
 	}
 
 	// for entities with relations, execute all Put/PutRelated inside a single transaction
-	if box.entity.hasRelations {
+	if box.entity.hasRelations && !alreadyInTx {
 		err = box.objectBox.Update(func() error {
 			return box.putOne(id, idFromObject != 0, object, async, timeoutMs)
 		})
@@ -213,22 +211,22 @@ func (box *Box) withObjectBytes(object interface{}, id uint64, fn func([]byte) e
 // Note that this method does not give you hard durability guarantees like the synchronous Put provides.
 // There is a small time window in which the data may not have been committed durably yet.
 func (box *Box) PutAsync(object interface{}) (id uint64, err error) {
-	return box.put(object, true, box.objectBox.options.putAsyncTimeout)
+	return box.put(object, true, box.objectBox.options.putAsyncTimeout, false)
 }
 
 // PutAsyncWithTimeout is same as PutAsync but with a custom enqueue timeout
 func (box *Box) PutAsyncWithTimeout(object interface{}, timeoutMs uint) (id uint64, err error) {
-	return box.put(object, true, timeoutMs)
+	return box.put(object, true, timeoutMs, false)
 }
 
 // Put synchronously inserts/updates a single object.
 // In case the ID is not specified, it would be assigned automatically (auto-increment).
 // When inserting, the ID property on the passed object will be assigned the new ID as well.
 func (box *Box) Put(object interface{}) (id uint64, err error) {
-	return box.put(object, false, 0)
+	return box.put(object, false, 0, false)
 }
 
-// PutAll inserts multiple objects in single transaction.
+// PutAll inserts multiple objects in a single transaction.
 // The given argument must be a slice of the object type this Box represents (pointers to objects).
 // In case IDs are not set on the objects, they would be assigned automatically (auto-increment).
 //
@@ -239,9 +237,6 @@ func (box *Box) Put(object interface{}) (id uint64, err error) {
 //
 // Note: The slice may be empty or even nil; in both cases, an empty IDs slice and no error is returned.
 func (box *Box) PutAll(objects interface{}) (ids []uint64, err error) {
-	// TODO we need a sequential version as well, starting a transaction and calling multiple puts()
-
-	var binding = box.entity.binding
 	var slice = reflect.ValueOf(objects)
 	var count = slice.Len()
 
@@ -250,90 +245,133 @@ func (box *Box) PutAll(objects interface{}) (ids []uint64, err error) {
 		return []uint64{}, nil
 	}
 
-	// find out ids of all the objects & whether they're new objects or updates
+	// prepare the result, filled in bellow
 	ids = make([]uint64, count)
 
-	// indexes of new objects (zero IDs) in the `ids` slice
-	var indexesNewObjects = make([]int, 0)
-
-	// by default we go with the most efficient way, see the override bellow
-	var putMode = cPutModePutIdGuaranteedToBeNew
-
-	for i := 0; i < count; i++ {
-		var object = slice.Index(i).Interface()
-		if id, err := binding.GetId(object); err != nil {
-			return nil, err
-		} else if id > 0 {
-			ids[i] = id
-			putMode = cPutModePut
-		} else {
-			indexesNewObjects = append(indexesNewObjects, i)
-		}
-	}
-
-	// if there are any new objects, reserve IDs for them
-	// TODO in case of an error later during insert, this ID is not recovered (reused in the future)...
-	//  we need to either move idForPut to C-api (preferrable) or use a transaction (would that actually help?)
-	if firstNewId, err := box.idsForPut(len(indexesNewObjects)); err != nil {
-		return nil, err
-	} else {
-		for i := 0; i < len(indexesNewObjects); i++ {
-			ids[indexesNewObjects[i]] = firstNewId + uint64(i)
-		}
-	}
-
-	// Execute all operations inside a single transaction - for performance and consistency
+	// Execute everything in a single single transaction - for performance and consistency.
+	// This is necessary even if count < chunkSize because of relations (PutRelated)
 	err = box.objectBox.Update(func() error {
-		// flatten all the objects
-		var allBytes = make([][]byte, count)
-		for i := 0; i < count; i++ {
-			var object = slice.Index(i).Interface()
+		if supportsBytesArray {
+			// Process the data in chunks so that we don't consume too much memory.
+			const chunkSize = 10000 // 10k is the limit currently enforced by obx_box_ids_for_put, maybe make configurable
 
-			// put related entities for the single object
-			if box.entity.hasRelations {
-				if err := box.entity.binding.PutRelated(box.objectBox, object, ids[i]); err != nil {
+			var chunks = count/chunkSize
+			if count % chunkSize != 0 {
+				chunks = chunks + 1
+			}
+
+			for c := 0; c < chunks; c++ {
+				var start = c * chunkSize
+				var end = start + chunkSize
+				if end > count {
+					end = count
+				}
+
+				if err := box.putManyObjects(slice, ids, start, end); err != nil {
 					return err
 				}
 			}
-
-			// flatten a single object
-			err = box.withObjectBytes(object, ids[i], func(bytes []byte) error {
-				allBytes[i] = make([]byte, len(bytes))
-				copy(allBytes[i], bytes)
-				return nil
-			})
-			if err != nil {
-				return err
-			}
-		}
-
-		// create a C representation of the objects array
-		bytesArray, err := goBytesArrayToC(allBytes)
-		if err != nil {
-			return err
 		} else {
-			defer bytesArray.free()
-		}
-
-		err = cMaybeErr(func() C.obx_err {
-			return C.obx_box_put_many(box.cBox, bytesArray.cBytesArray, goUint64ArrayToCObxId(ids), C.OBXPutMode(putMode))
-		})
-		if err != nil {
-			return err
-		}
-
-		// set IDs on the new objects
-		for index := range indexesNewObjects {
-			binding.SetId(slice.Index(index).Interface(), ids[index])
+			for i := 0; i < count; i++ {
+				id, err := box.put(slice.Index(i).Interface(), false, 0, true)
+				if err != nil {
+					return err
+				}
+				ids[i] = id
+			}
 		}
 
 		return nil
 	})
 
 	if err != nil {
-		return nil, err
+		ids = nil
 	}
-	return ids, nil
+
+	return ids, err
+}
+
+// putManyObjects inserts a subset of objects, setting their IDs as an outArgument.
+// Requires to be called inside a write transaction, i.e. from the ObjectBox.Update() callback
+func (box *Box) putManyObjects(objects reflect.Value, outIds []uint64, start, end int) error {
+	var binding = box.entity.binding
+	var count = end - start
+
+	// indexes of new objects (zero IDs) in the `outIds` slice
+	var indexesNewObjects = make([]int, 0)
+
+	// by default we go with the most efficient way, see the override bellow
+	var putMode = cPutModePutIdGuaranteedToBeNew
+
+	// find out outIds of all the objects & whether they're new objects or updates
+	for i := 0; i < count; i++ {
+		var key = start + i
+		var object = objects.Index(key).Interface()
+		if id, err := binding.GetId(object); err != nil {
+			return err
+		} else if id > 0 {
+			outIds[key] = id
+			putMode = cPutModePut
+		} else {
+			indexesNewObjects = append(indexesNewObjects, key)
+		}
+	}
+
+	// if there are any new objects, reserve IDs for them
+	if firstNewId, err := box.idsForPut(len(indexesNewObjects)); err != nil {
+		return err
+	} else {
+		for i := 0; i < len(indexesNewObjects); i++ {
+			outIds[indexesNewObjects[i]] = firstNewId + uint64(i)
+		}
+	}
+
+	// flatten all the objects
+	var objectsBytes = make([][]byte, count)
+	for i := 0; i < count; i++ {
+		var key = start + i
+		var object = objects.Index(key).Interface()
+
+		// put related entities for the single object
+		if box.entity.hasRelations {
+			if err := binding.PutRelated(box.objectBox, object, outIds[key]); err != nil {
+				return err
+			}
+		}
+
+		// flatten each object to bytes, already with the new ID (if it's an insert)
+		if err := box.withObjectBytes(object, outIds[key], func(bytes []byte) error {
+			objectsBytes[i] = make([]byte, len(bytes))
+			copy(objectsBytes[i], bytes)
+			return nil
+		}); err != nil {
+			return err
+		}
+	}
+
+	// create a C representation of the objects array
+	bytesArray, err := goBytesArrayToC(objectsBytes)
+	if err != nil {
+		return err
+	} else {
+		defer bytesArray.free()
+	}
+
+	// only IDs of objects processed in this batch
+	idsArray := goUint64ArrayToCObxId(outIds[start:end])
+
+	if err := cMaybeErr(func() C.obx_err {
+		return C.obx_box_put_many(box.cBox, bytesArray.cBytesArray, idsArray, C.OBXPutMode(putMode))
+	}); err != nil {
+		return err
+	}
+
+	// set IDs on the new objects
+	for _, index := range indexesNewObjects {
+		binding.SetId(objects.Index(index).Interface(), outIds[index])
+	}
+
+	return nil
 }
 
 // Remove deletes a single object

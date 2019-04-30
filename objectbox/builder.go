@@ -37,7 +37,6 @@ type Builder struct {
 	name        string
 	maxSizeInKb uint64
 	maxReaders  uint
-	alwaysAwaitAsync bool
 
 	// these options are passed-through to the created ObjectBox struct
 	options
@@ -94,14 +93,6 @@ func (builder *Builder) PutAsyncTimeout(milliseconds uint) *Builder {
 	return builder
 }
 
-// AlwaysAwaitAsync enables automatic waiting for async operations between executing a synchronous one.
-// This can be replaced if you're using PutAsync in many places and need to make sure the operation has finished
-// before your data you read/query/delete,... is executed. Calls ObjectBox.AwaitAsyncCompletion() internally.
-func (builder *Builder) AlwaysAwaitAsync(value bool) *Builder {
-	builder.alwaysAwaitAsync = value
-	return builder
-}
-
 // Model specifies schema for the database.
 //
 // Pass the result of the generated function ObjectBoxModel as an argument: Model(ObjectBoxModel())
@@ -150,7 +141,6 @@ func (builder *Builder) BuildOrError() (*ObjectBox, error) {
 
 	cOptions.maxReaders = C.uint(builder.maxReaders)            // Zero is the default on both sides
 	cOptions.maxDbSizeInKByte = C.uint64_t(builder.maxSizeInKb) // Zero is the default on both sides
-	//TODO cOptions.alwaysAwaitAsync = C.bool(builder.alwaysAwaitAsync)
 
 	cStore := C.obx_store_open(builder.model.model, &cOptions)
 	if cStore == nil {

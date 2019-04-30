@@ -30,13 +30,28 @@ import (
 	"sync"
 )
 
-//noinspection GoUnusedConst
 const (
 	DebugflagsLogTransactionsRead  = 1
 	DebugflagsLogTransactionsWrite = 2
 	DebugflagsLogQueries           = 4
 	DebugflagsLogQueryParameters   = 8
 	DebugflagsLogAsyncQueue        = 16
+)
+
+const (
+	// Standard put ("insert or update")
+	cPutModePut = 1
+
+	// Put succeeds only if the entity does not exist yet.
+	cPutModeInsert = 2
+
+	// Put succeeds only if the entity already exist.
+	cPutModeUpdate = 3
+
+	// Not used yet (does not make sense for asnyc puts)
+	// The given ID (non-zero) is guaranteed to be new; don't use unless you know exactly what you are doing!
+	// This is primarily used internally. Wrong usage leads to inconsistent data (e.g. index data not updated)!
+	cPutModePutIdGuaranteedToBeNew = 4
 )
 
 // atomic boolean true & false
@@ -183,7 +198,7 @@ func (ob *ObjectBox) box(typeId TypeId) (*Box, error) {
 	}
 
 	entity := ob.getEntityById(typeId)
-	cbox := C.obx_store_box(ob.store, C.obx_schema_id(typeId))
+	cbox := C.obx_box(ob.store, C.obx_schema_id(typeId))
 	if cbox == nil {
 		return nil, createError()
 	}

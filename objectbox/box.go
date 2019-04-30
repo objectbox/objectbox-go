@@ -39,7 +39,6 @@ type Box struct {
 	entity    *entity
 	mutex     sync.Mutex
 	cBox      *C.OBX_box
-	cAsync    *C.OBX_async
 }
 
 const defaultSliceCapacity = 16
@@ -77,28 +76,6 @@ func (box *Box) QueryOrError(conditions ...Condition) (query *Query, err error) 
 	return // NOTE result might be overwritten by the deferred "closer" function
 }
 
-func (box *Box) async() (*C.OBX_async, error) {
-	var err error
-
-	if box.cAsync == nil {
-		box.mutex.Lock()
-		defer box.mutex.Unlock()
-
-		if box.cAsync == nil {
-			err = cMaybeErr(func() C.obx_err {
-				box.cAsync = C.obx_box_async(box.cBox)
-				if box.cAsync == nil {
-					return -1
-				} else {
-					return 0
-				}
-			})
-		}
-	}
-
-	return box.cAsync, err
-}
-
 func (box *Box) idForPut(idCandidate uint64) (id uint64, err error) {
 	id = uint64(C.obx_box_id_for_put(box.cBox, C.obx_id(idCandidate)))
 	if id == 0 {
@@ -107,19 +84,20 @@ func (box *Box) idForPut(idCandidate uint64) (id uint64, err error) {
 	return
 }
 
-func (box *Box) idsForPut(count int) ([]uint64, error) {
+func (box *Box) idsForPut(count int) (firstId uint64, err error) {
 	if count == 0 {
-		return nil, nil
+		return 0, nil
 	}
 
-	ids, err := cGetIds(func() *C.OBX_id_array { return C.obx_box_ids_for_put(box.cBox, C.uint64_t(count)) })
-	if err != nil {
-		return nil, err
-	} else if len(ids) != count {
-		return nil, fmt.Errorf("invalid number of new IDs reserved: got %v instead of required %v", len(ids), count)
-	} else {
-		return ids, nil
+	var cFirstID C.obx_id
+	if err := cMaybeErr(func() C.obx_err {
+		return C.obx_box_ids_for_put(box.cBox, C.uint64_t(count), &cFirstID)
+
+	}); err != nil {
+		return 0, err
 	}
+
+	return uint64(cFirstID), nil
 }
 
 func (box *Box) put(object interface{}, async bool, timeoutMs uint) (id uint64, err error) {
@@ -166,23 +144,30 @@ func (box *Box) putOne(id uint64, isUpdate bool, object interface{}, async bool,
 		}
 	}
 
+	// TODO move putAsync to AsyncBox
 	var cAsync *C.OBX_async
 	if async {
-		var err error
-		cAsync, err = box.async()
-		if err != nil {
+		if err := cMaybeErr(func() C.obx_err {
+			cAsync = C.obx_async_create(box.cBox, C.uint64_t(timeoutMs))
+			if cAsync == nil {
+				return -1
+			} else {
+				return 0
+			}
+		}); err != nil {
 			return err
 		}
+
+		defer C.obx_async_close(cAsync)
 	}
 
 	return box.withObjectBytes(object, id, func(bytes []byte) error {
 		return cMaybeErr(func() C.obx_err {
 			if async {
-				// TODO timeout
 				return C.obx_async_put(cAsync, C.obx_id(id), unsafe.Pointer(&bytes[0]), C.size_t(len(bytes)))
 			} else {
 				return C.obx_box_put(box.cBox, C.obx_id(id), unsafe.Pointer(&bytes[0]), C.size_t(len(bytes)),
-					C.bool(isUpdate))
+					C.OBXPutMode(cPutModePut))
 			}
 		})
 	})
@@ -267,10 +252,12 @@ func (box *Box) PutAll(objects interface{}) (ids []uint64, err error) {
 
 	// find out ids of all the objects & whether they're new objects or updates
 	ids = make([]uint64, count)
-	var isUpdate = make([]bool, count)
 
 	// indexes of new objects (zero IDs) in the `ids` slice
 	var indexesNewObjects = make([]int, 0)
+
+	// by default we go with the most efficient way, see the override bellow
+	var putMode = cPutModePutIdGuaranteedToBeNew
 
 	for i := 0; i < count; i++ {
 		var object = slice.Index(i).Interface()
@@ -278,7 +265,7 @@ func (box *Box) PutAll(objects interface{}) (ids []uint64, err error) {
 			return nil, err
 		} else if id > 0 {
 			ids[i] = id
-			isUpdate[i] = true
+			putMode = cPutModePut
 		} else {
 			indexesNewObjects = append(indexesNewObjects, i)
 		}
@@ -287,11 +274,11 @@ func (box *Box) PutAll(objects interface{}) (ids []uint64, err error) {
 	// if there are any new objects, reserve IDs for them
 	// TODO in case of an error later during insert, this ID is not recovered (reused in the future)...
 	//  we need to either move idForPut to C-api (preferrable) or use a transaction (would that actually help?)
-	if newIds, err := box.idsForPut(len(indexesNewObjects)); err != nil {
+	if firstNewId, err := box.idsForPut(len(indexesNewObjects)); err != nil {
 		return nil, err
 	} else {
-		for i, id := range newIds {
-			ids[indexesNewObjects[i]] = id
+		for i := 0; i < len(indexesNewObjects); i++ {
+			ids[indexesNewObjects[i]] = firstNewId + uint64(i)
 		}
 	}
 
@@ -329,7 +316,7 @@ func (box *Box) PutAll(objects interface{}) (ids []uint64, err error) {
 		}
 
 		err = cMaybeErr(func() C.obx_err {
-			return C.obx_box_put_array(box.cBox, bytesArray.cBytesArray, goUint64ArrayToCObxId(ids), goBoolArrayToC(isUpdate))
+			return C.obx_box_put_many(box.cBox, bytesArray.cBytesArray, goUint64ArrayToCObxId(ids), C.OBXPutMode(putMode))
 		})
 		if err != nil {
 			return err
@@ -428,11 +415,11 @@ func (box *Box) GetMany(ids ...uint64) (slice interface{}, err error) {
 	if cIds, err := goIdsArrayToC(ids); err != nil {
 		return nil, err
 	} else if supportsBytesArray {
-		return box.readManyObjects(func() *C.OBX_bytes_array { return C.obx_box_get_ids(box.cBox, cIds.cArray) })
+		return box.readManyObjects(func() *C.OBX_bytes_array { return C.obx_box_get_many(box.cBox, cIds.cArray) })
 
 	} else {
 		var cCall = func(visitorArg unsafe.Pointer) C.obx_err {
-			return C.obx_box_visit_ids(box.cBox, cIds.cArray, dataVisitor, visitorArg)
+			return C.obx_box_visit_many(box.cBox, cIds.cArray, dataVisitor, visitorArg)
 		}
 		return box.readUsingVisitor(cCall)
 	}
@@ -448,7 +435,7 @@ func (box *Box) GetAll() (slice interface{}, err error) {
 
 	} else {
 		var cCall = func(visitorArg unsafe.Pointer) C.obx_err {
-			return C.obx_box_visit(box.cBox, dataVisitor, visitorArg)
+			return C.obx_box_visit_all(box.cBox, dataVisitor, visitorArg)
 		}
 		return box.readUsingVisitor(cCall)
 	}

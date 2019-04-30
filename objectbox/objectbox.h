@@ -273,9 +273,6 @@ typedef enum {
     OBXDebugFlags_LOG_ASYNC_QUEUE = 16,
 } OBXDebugFlags;
 
-struct OBX_box;
-typedef struct OBX_box OBX_box;
-
 typedef struct OBX_bytes {
     const void* data;
     size_t size;
@@ -297,20 +294,16 @@ OBX_store* obx_store_open_bytes(const void* model_bytes, size_t model_size, cons
 /// Note: the model is freed by calling this method
 OBX_store* obx_store_open(OBX_model* model, const OBX_store_options* options);
 
-/// Get's access to to the box for the given entity. A box may be used across threads.
-/// Boxes are managed by the store so there's no need to close/free them manually.
-OBX_box* obx_store_box(OBX_store* store, obx_schema_id entity_id);
-
 obx_schema_id obx_store_entity_id(OBX_store* store, const char* entity_name);
 
 obx_schema_id obx_store_entity_property_id(OBX_store* store, obx_schema_id entity_id, const char* property_name);
 
-/// Awaits that all (including future) async submissions get completed (the async queue got idle for a moment).
+/// Awaits for all (including future) async submissions to be completed (the async queue becomes idle for a moment).
 /// @returns true if all submissions were completed or async processing was not started; false if shutting down
 /// @returns false if shutting down or an error occurred
 bool obx_store_await_async_completion(OBX_store* store);
 
-/// Awaits for previously submitted async operations to get completed (the async queue does not have to get idle).
+/// Awaits for previously submitted async operations to be completed (the async queue does not have to become idle).
 /// @returns true if all submissions were completed or async processing was not started
 /// @returns false if shutting down or an error occurred
 bool obx_store_await_async_submitted(OBX_store* store);
@@ -423,32 +416,68 @@ OBX_id_array* obx_cursor_rel_ids(OBX_cursor* cursor, obx_schema_id relation_id, 
 // Box
 //----------------------------------------------
 
+struct OBX_box;
+typedef struct OBX_box OBX_box;
+
+/// Get's access to to the box for the given entity. A box may be used across threads.
+/// Boxes are managed by the store so there's no need to close/free them manually.
+OBX_box* obx_box(OBX_store* store, obx_schema_id entity_id);
 
 /// Checks whether a given object exists in the box
 obx_err obx_box_contains(OBX_box* box, obx_id id, bool* out_contains);
 
+/// Checks whether a given object exists in the box
+obx_err obx_box_contains_many(OBX_box* box, const OBX_id_array* ids, bool* out_contains);
+
 /// Read a single object
 obx_err obx_box_get(OBX_box* box, obx_id id, void** data, size_t* size);
+
+/// Read given objects from the database in a single transaction.
+/// The output array has exactly the same size as the input, each index corresponding to the input ID at that index.
+/// If an object is not found, the output bytes data at its index is NULL and the size is 0.
+OBX_bytes_array* obx_box_get_many(OBX_box* box, const OBX_id_array* ids);
 
 /// Read all objects
 OBX_bytes_array* obx_box_get_all(OBX_box* box);
 
+/// Read given objects from the database in a single transaction.
+/// Call the visitor() on each object, passing visitor_arg, object data & size as arguments.
+/// The given visitor must return true to keep receiving results, false to cancel.
+/// If an object is not found, the visitor() is still called, passing NULL as data and a 0 as size.
+obx_err obx_box_visit_many(OBX_box* box, const OBX_id_array* ids, obx_data_visitor* visitor, void* visitor_arg);
+
 /// Read all objects in a single transaction.
 /// Calls the visitor() on each object, passing visitor_arg, object data & size as arguments.
 /// The given visitor must return true to keep receiving results, false to cancel.
-obx_err obx_box_visit(OBX_box* box, obx_data_visitor* visitor, void* visitor_arg);
+obx_err obx_box_visit_all(OBX_box* box, obx_data_visitor* visitor, void* visitor_arg);
 
 /// Reserve an ID for insertion
 obx_id obx_box_id_for_put(OBX_box* box, obx_id id_or_zero);
 
+/// Reserve the given number of IDs for insertion.
+/// @param count number of IDs to reserve, max 10000
+/// @param out_first_id the first ID of the sequence as
+/// @returns an error in case the required number of IDs could not be reserved.
+obx_err obx_box_ids_for_put(OBX_box* box, uint64_t count, obx_id* out_first_id);
+
 /// Put object synchronously (in a single write transaction)
 /// ATTENTION: ensure that the given value memory is allocated to the next 4 bytes boundary.
 /// ObjectBox needs to store bytes with sizes dividable by 4 for internal reasons.
-obx_err obx_box_put(OBX_box* box, obx_id id, const void* data, size_t size, bool is_update);
+obx_err obx_box_put(OBX_box* box, obx_id id, const void* data, size_t size, OBXPutMode mode);
+
+/// Put all given objects in the database in a single transaction
+obx_err obx_box_put_many(OBX_box* box, const OBX_bytes_array* objects, const obx_id* ids, OBXPutMode mode);
 
 /// Remove a single object
 /// will return OBX_NOT_FOUND if an object with the given ID doesn't exist
 obx_err obx_box_remove(OBX_box* box, obx_id id);
+
+/// Remove all given objects from the database in a single transaction.
+/// Note that this method will not fail if the object is not found (e.g. already removed).
+/// In case you need to strictly check whether all of the objects exist before removing them,
+///  execute obx_box_contains_ids() and obx_box_remove_ids() inside a single write transaction.
+/// You can pass nullptr as out_count in case you're not interested in the number of the removed objects.
+obx_err obx_box_remove_many(OBX_box* box, const OBX_id_array* ids, uint64_t* out_count);
 
 /// Remove all objects and set the out_count the the number of removed objects.
 /// You can pass nullptr as out_count in case you're not interested in the number of the removed objects.
@@ -460,28 +489,6 @@ obx_err obx_box_is_empty(OBX_box* box, bool* out_is_empty);
 /// Count the number of objects in the box, up to the given maximum.
 /// You can pass limit=0 to count all objects without any limitation.
 obx_err obx_box_count(OBX_box* box, uint64_t limit, uint64_t* out_count);
-
-/// Read given objects from the database in a single transaction.
-/// The output array has exactly the same size as the input, each index corresponding to the input ID at that index.
-/// If an object is not found, the output bytes data at its index is NULL and the size is 0.
-OBX_bytes_array* obx_box_get_ids(OBX_box* box, const OBX_id_array* ids);
-
-/// Read given objects from the database in a single transaction.
-/// Call the visitor() on each object, passing visitor_arg, object data & size as arguments.
-/// The given visitor must return true to keep receiving results, false to cancel.
-/// If an object is not found, the visitor() is still called, passing NULL as data and a 0 as size.
-obx_err obx_box_visit_ids(OBX_box* box, const OBX_id_array* ids, obx_data_visitor* visitor, void* visitor_arg);
-
-/// Reserve the given number of IDs for insertion
-OBX_id_array* obx_box_ids_for_put(OBX_box* box, uint64_t count);
-
-/// Put all given objects in the database in a single transaction
-// TODO once PutMode is merged, we should use it here instead of the flag
-obx_err obx_box_put_array(OBX_box* box, const OBX_bytes_array* objects, const obx_id* ids, const bool* is_update);
-
-/// Remove all given objects from  the database in a single transaction.
-/// If must_exist == true and any of the objects is not found, this function fails and no objects are removed.
-obx_err obx_box_remove_ids(OBX_box* box, const OBX_id_array* ids, bool must_exist);
 
 /// Insert a standalone relation entry between two objects.
 /// @param relation_id must be a standalone relation ID with source entity belonging to this box
@@ -503,12 +510,12 @@ OBX_id_array* obx_box_rel_targets_ids(OBX_box* box, obx_schema_id relation_id, o
 struct OBX_async;
 typedef struct OBX_async OBX_async;
 
-/// Note: DO NOT close this OBX_async; it's lifetime is tied to the OBX_box instance.
-OBX_async* obx_box_async(OBX_box* box);
-
 //----------------------------------------------
 // Async
 //----------------------------------------------
+
+/// Note: DO NOT close this OBX_async; its lifetime is tied to the OBX_box instance.
+OBX_async* obx_async(OBX_box* box);
 
 /// Puts asynchronously using the given mode.
 obx_err obx_async_put_mode(OBX_async* async, obx_id id, const void* data, size_t size, OBXPutMode mode);
@@ -523,13 +530,13 @@ obx_err obx_async_insert(OBX_async* async, obx_id id, const void* data, size_t s
 obx_err obx_async_update(OBX_async* async, obx_id id, const void* data, size_t size);
 
 /// Reserves an ID, which is returned immediately for future reference, and puts asynchronously.
-/// Note: of course, it can NOT guarantee that the entity will actually be put successfully in the DB.
-/// @param data (in&out) the given bytes are mutated to update the contained ID data.
+/// Note: of course, it can NOT be guaranteed that the entity will actually be put successfully in the DB.
+/// @param data the given bytes are mutated to update the contained ID data.
 obx_id obx_async_id_put(OBX_async* async, void* data, size_t size);
 
 /// Reserves an ID, which is returned immediately for future reference, and inserts asynchronously.
-/// Note: of course, it can NOT guarantee that the entity will actually be inserted successfully in the DB.
-/// @param data (in&out) the given bytes are mutated to update the contained ID data.
+/// Note: of course, it can NOT be guaranteed that the entity will actually be inserted successfully in the DB.
+/// @param data the given bytes are mutated to update the contained ID data.
 obx_id obx_async_id_insert(OBX_async* async, void* data, size_t size);
 
 /// Removes asynchronously.

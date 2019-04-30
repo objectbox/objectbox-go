@@ -175,14 +175,6 @@ func goUint64ArrayToCObxId(values []uint64) *C.obx_id {
 	}
 }
 
-func goBoolArrayToC(values []bool) *C.bool {
-	if len(values) > 0 {
-		return (*C.bool)(unsafe.Pointer(&values[0]))
-	} else {
-		return nil
-	}
-}
-
 func cBytesPtr(value []byte) unsafe.Pointer {
 	if len(value) >= 1 {
 		return unsafe.Pointer(&value[0])

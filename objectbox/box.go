@@ -117,10 +117,10 @@ func (box *Box) put(object interface{}, async bool, timeoutMs uint, alreadyInTx 
 	// for entities with relations, execute all Put/PutRelated inside a single transaction
 	if box.entity.hasRelations && !alreadyInTx {
 		err = box.objectBox.Update(func() error {
-			return box.putOne(id, idFromObject != 0, object, async, timeoutMs)
+			return box.putOne(id, object, async, timeoutMs)
 		})
 	} else {
-		err = box.putOne(id, idFromObject != 0, object, async, timeoutMs)
+		err = box.putOne(id, object, async, timeoutMs)
 	}
 
 	if err != nil {
@@ -135,7 +135,7 @@ func (box *Box) put(object interface{}, async bool, timeoutMs uint, alreadyInTx 
 	return id, nil
 }
 
-func (box *Box) putOne(id uint64, isUpdate bool, object interface{}, async bool, timeoutMs uint) error {
+func (box *Box) putOne(id uint64, object interface{}, async bool, timeoutMs uint) error {
 	if box.entity.hasRelations {
 		if err := box.entity.binding.PutRelated(box.objectBox, object, id); err != nil {
 			return err
@@ -175,20 +175,17 @@ func (box *Box) withObjectBytes(object interface{}, id uint64, fn func([]byte) e
 	var fbb = fbbPool.Get().(*flatbuffers.Builder)
 	fbb.Reset()
 
-	if err := box.entity.binding.Flatten(object, fbb, id); err != nil {
-		// put the fbb back to the pool for the others to use; don't use defer, it's slower
-		fbbPool.Put(fbb)
-		return err
+	err := box.entity.binding.Flatten(object, fbb, id)
+
+	if err == nil {
+		fbb.Finish(fbb.EndObject())
+		err = fn(fbb.FinishedBytes())
 	}
-
-	fbb.Finish(fbb.EndObject())
-
-	var result = fn(fbb.FinishedBytes())
 
 	// put the fbb back to the pool for the others to use; don't use defer, it's slower
 	fbbPool.Put(fbb)
 
-	return result
+	return err
 }
 
 // PutAsync asynchronously inserts/updates a single object.
@@ -454,7 +451,6 @@ func (box *Box) GetMany(ids ...uint64) (slice interface{}, err error) {
 		return nil, err
 	} else if supportsBytesArray {
 		return box.readManyObjects(func() *C.OBX_bytes_array { return C.obx_box_get_many(box.cBox, cIds.cArray) })
-
 	} else {
 		var cCall = func(visitorArg unsafe.Pointer) C.obx_err {
 			return C.obx_box_visit_many(box.cBox, cIds.cArray, dataVisitor, visitorArg)
@@ -638,9 +634,6 @@ func (box *Box) RelationPut(relation *RelationToMany, sourceId, targetId uint64)
 
 // RelationRemove removes a relation between the given source & target objects
 func (box *Box) RelationRemove(relation *RelationToMany, sourceId, targetId uint64) error {
-	//log.Printf("RelationRemove %v: %v (%s) -> %v (%s)", relation.Id,
-	//	sourceId, box.objectBox.getEntityById(relation.Source.Id).name,
-	//	targetId, box.objectBox.getEntityById(relation.Target.Id).name)
 	return cMaybeErr(func() C.obx_err {
 		return C.obx_box_rel_remove(box.cBox, C.obx_schema_id(relation.Id), C.obx_id(sourceId), C.obx_id(targetId))
 	})

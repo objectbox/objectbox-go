@@ -32,9 +32,7 @@ func TestTransactionMassiveInsert(t *testing.T) {
 
 	assert.NoErr(t, box.RemoveAll())
 
-	// TODO increase this after we switch to the c-api box interface,
-	//  current implementation still creates transaction for each Put()
-	var insert = uint64(10000)
+	var insert = uint64(1000000)
 
 	err := ob.Update(func() error {
 		for i := insert; i > 0; i-- {

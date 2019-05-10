@@ -30,14 +30,12 @@ To get started with ObjectBox you can get the repository code as usual with go g
 and install the two prerequisites - pre-compiled library and a bindings generator.
 
 ```bash
-go get github.com/objectbox/objectbox-go/...
-go get github.com/google/flatbuffers/go
-go install github.com/objectbox/objectbox-go/cmd/objectbox-gogen/
-
 mkdir objectboxlib && cd objectboxlib
 curl https://raw.githubusercontent.com/objectbox/objectbox-c/master/download.sh > download.sh
 bash download.sh
 
+go get github.com/objectbox/objectbox-go/...
+go install github.com/objectbox/objectbox-go/cmd/objectbox-gogen/
 ```
 
 See [installation docs](https://golang.objectbox.io/install) for more details and further instructions.
@@ -82,7 +80,7 @@ When you want to update, please re-run the entire installation process to ensure
 
 * ObjectBox itself (objectbox/objectbox-go)
 * Dependencies (flatbuffers)
-* libobjectbox
+* ObjectBox library (libobjectbox.so|dylib; objectbox.dll)
 * ObjectBox code generator
 
 This is important as diverging versions of any component might result in errors.

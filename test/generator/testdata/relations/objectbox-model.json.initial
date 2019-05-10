@@ -27,5 +27,6 @@
   "retiredEntityUids": [],
   "retiredIndexUids": [],
   "retiredPropertyUids": [],
-  "retiredRelationUids": []
+  "retiredRelationUids": [],
+  "version": 1
 }

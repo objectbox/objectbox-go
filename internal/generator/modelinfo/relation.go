@@ -16,38 +16,54 @@
 
 package modelinfo
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
 
-type Relation struct {
-	Id   IdUid  `json:"id"`
-	Name string `json:"name"`
+type StandaloneRelation struct {
+	Id       IdUid   `json:"id"`
+	Name     string  `json:"name"`
+	Target   *Entity `json:"-"`
+	TargetId IdUid   `json:"targetId"`
+
+	entity *Entity
+}
+
+func CreateStandaloneRelation(entity *Entity, id IdUid) *StandaloneRelation {
+	return &StandaloneRelation{entity: entity, Id: id}
 }
 
 // performs initial validation of loaded data so that it doesn't have to be checked in each function
-func (relation *Relation) Validate() error {
+func (relation *StandaloneRelation) Validate() error {
 	if err := relation.Id.Validate(); err != nil {
 		return err
 	}
 
 	if len(relation.Name) == 0 {
-		return fmt.Errorf("name is undefined")
+		return errors.New("name is undefined")
+	}
+
+	if len(relation.TargetId) > 0 {
+		if err := relation.TargetId.Validate(); err != nil {
+			return err
+		}
+
+		for _, entity := range relation.entity.model.Entities {
+			if entity.Id == relation.TargetId {
+				relation.Target = entity
+			}
+		}
+
+		if relation.Target == nil {
+			return fmt.Errorf("target entity ID %s not found", string(relation.TargetId))
+		}
 	}
 
 	return nil
 }
 
-type StandaloneRelation struct {
-	Relation
-	Target *Entity `json:"-"`
-}
-
-func CreateStandaloneRelation(id IdUid) *StandaloneRelation {
-	return &StandaloneRelation{
-		Relation: Relation{Id: id},
-	}
-}
-
-// performs initial validation of loaded data so that it doesn't have to be checked in each function
-func (relation *StandaloneRelation) Validate() error {
-	return relation.Relation.Validate()
+func (relation *StandaloneRelation) SetTarget(entity *Entity) {
+	relation.Target = entity
+	relation.TargetId = entity.Id
 }

@@ -1,144 +1,177 @@
 {
-  "comment": [
-    "KEEP THIS FILE! Check it into a version control system (VCS) like git.",
-    "ObjectBox manages crucial IDs for your object model. See docs for details.",
-    "If you have VCS merge conflicts, you must resolve them according to ObjectBox docs."
-  ],
+  "_note1": "KEEP THIS FILE! Check it into a version control system (VCS) like git.",
+  "_note2": "ObjectBox manages crucial IDs for your object model. See docs for details.",
+  "_note3": "If you have VCS merge conflicts, you must resolve them according to ObjectBox docs.",
   "entities": [
     {
       "id": "1:8717895732742165505",
-      "name": "A",
       "lastPropertyId": "2:6050128673802995827",
+      "name": "A",
       "properties": [
         {
           "id": "1:2259404117704393152",
-          "name": "Id"
+          "name": "Id",
+          "type": 6,
+          "flags": 8193
         },
         {
           "id": "2:6050128673802995827",
-          "name": "Name"
+          "name": "Name",
+          "type": 9
         }
       ]
     },
     {
       "id": "2:501233450539197794",
-      "name": "B",
       "lastPropertyId": "4:8274930044578894929",
+      "name": "B",
       "properties": [
         {
           "id": "1:3390393562759376202",
-          "name": "Text"
+          "name": "Text",
+          "type": 9
         },
         {
           "id": "2:2669985732393126063",
-          "name": "Id"
+          "name": "Id",
+          "type": 6,
+          "flags": 8193
         },
         {
           "id": "3:1774932891286980153",
           "name": "Value",
-          "indexId": "1:6044372234677422456"
+          "indexId": "1:6044372234677422456",
+          "type": 8,
+          "flags": 32
         },
         {
           "id": "4:8274930044578894929",
-          "name": "Name"
+          "name": "Name",
+          "type": 9
         }
       ]
     },
     {
       "id": "3:1543572285742637646",
-      "name": "C",
       "lastPropertyId": "3:7837839688282259259",
+      "name": "C",
       "properties": [
         {
           "id": "1:2661732831099943416",
-          "name": "int64"
+          "name": "int64",
+          "type": 6
         },
         {
           "id": "2:8325060299420976708",
-          "name": "val"
+          "name": "val",
+          "type": 6,
+          "flags": 8192
         },
         {
           "id": "3:7837839688282259259",
-          "name": "Id"
+          "name": "Id",
+          "type": 6,
+          "flags": 8193
         }
       ]
     },
     {
       "id": "4:2518412263346885298",
-      "name": "D",
       "lastPropertyId": "2:2339563716805116249",
+      "name": "D",
       "properties": [
         {
           "id": "1:5617773211005988520",
-          "name": "Id"
+          "name": "Id",
+          "type": 6,
+          "flags": 8193
         },
         {
           "id": "2:2339563716805116249",
-          "name": "Value"
+          "name": "Value",
+          "type": 8
         }
       ]
     },
     {
       "id": "5:7144924247938981575",
-      "name": "E",
       "lastPropertyId": "4:3287288577352441706",
+      "name": "E",
       "properties": [
         {
           "id": "1:161231572858529631",
-          "name": "Location"
+          "name": "Location",
+          "type": 9
         },
         {
           "id": "2:7259475919510918339",
-          "name": "id"
+          "name": "id",
+          "type": 6,
+          "flags": 8193
         },
         {
           "id": "3:7373105480197164748",
-          "name": "ForeignAlias"
+          "name": "ForeignAlias",
+          "type": 9
         },
         {
           "id": "4:3287288577352441706",
-          "name": "ForeignNamed"
+          "name": "ForeignNamed",
+          "type": 9
         }
       ]
     },
     {
       "id": "6:3930927879439176946",
-      "name": "F",
       "lastPropertyId": "8:959367522974354090",
+      "name": "F",
       "properties": [
         {
           "id": "1:4706154865122290029",
-          "name": "id"
+          "name": "id",
+          "type": 6,
+          "flags": 8193
         },
         {
           "id": "2:2217592893536642650",
-          "name": "Combined_Text"
+          "name": "Combined_Text",
+          "type": 9
         },
         {
           "id": "3:1929546706668609706",
-          "name": "Combined_Id"
+          "name": "Combined_Id",
+          "type": 6,
+          "flags": 8192
         },
         {
           "id": "4:6392442863481646880",
           "name": "Combined_Value",
-          "indexId": "2:3706853784096366226"
+          "indexId": "2:3706853784096366226",
+          "type": 8,
+          "flags": 32
         },
         {
           "id": "5:2627038740284806767",
-          "name": "BytesValue_Value"
+          "name": "BytesValue_Value",
+          "type": 23
         },
         {
           "id": "6:6303220950515014660",
-          "name": "More_Text"
+          "name": "More_Text",
+          "type": 9
         },
         {
           "id": "7:4035568504096476779",
-          "name": "More_Id"
+          "name": "More_Id",
+          "type": 6,
+          "flags": 8192
         },
         {
           "id": "8:959367522974354090",
           "name": "More_Value",
-          "indexId": "3:2914295034816259174"
+          "indexId": "3:2914295034816259174",
+          "type": 8,
+          "flags": 32
         }
       ]
     }
@@ -146,8 +179,11 @@
   "lastEntityId": "6:3930927879439176946",
   "lastIndexId": "3:2914295034816259174",
   "lastRelationId": "",
+  "modelVersion": 5,
+  "modelVersionParserMinimum": 5,
   "retiredEntityUids": [],
   "retiredIndexUids": [],
   "retiredPropertyUids": [],
-  "retiredRelationUids": []
+  "retiredRelationUids": [],
+  "version": 1
 }

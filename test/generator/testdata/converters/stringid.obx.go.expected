@@ -41,8 +41,8 @@ func (stringIdEntity_EntityInfo) GeneratorVersion() int {
 // AddToModel is called by ObjectBox during model build
 func (stringIdEntity_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("StringIdEntity", 2, 6050128673802995827)
-	model.Property("Id", objectbox.PropertyType_Long, 1, 501233450539197794)
-	model.PropertyFlags(objectbox.PropertyFlags_ID | objectbox.PropertyFlags_UNSIGNED)
+	model.Property("Id", 6, 1, 501233450539197794)
+	model.PropertyFlags(8193)
 	model.EntityLastPropertyId(1, 501233450539197794)
 }
 

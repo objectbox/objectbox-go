@@ -1,34 +1,38 @@
 {
-  "comment": [
-    "KEEP THIS FILE! Check it into a version control system (VCS) like git.",
-    "ObjectBox manages crucial IDs for your object model. See docs for details.",
-    "If you have VCS merge conflicts, you must resolve them according to ObjectBox docs."
-  ],
+  "_note1": "KEEP THIS FILE! Check it into a version control system (VCS) like git.",
+  "_note2": "ObjectBox manages crucial IDs for your object model. See docs for details.",
+  "_note3": "If you have VCS merge conflicts, you must resolve them according to ObjectBox docs.",
   "entities": [
     {
       "id": "1:1737161401460991620",
-      "name": "Entity",
       "lastPropertyId": "5:8933082277725371577",
+      "name": "Entity",
       "properties": [
         {
           "id": "1:7373286741377356014",
-          "name": "Id"
+          "name": "Id",
+          "type": 6,
+          "flags": 8193
         },
         {
           "id": "2:4837914178321008766",
-          "name": "Int32"
+          "name": "Int32",
+          "type": 5
         },
         {
           "id": "3:3841825182616422591",
-          "name": "Int64"
+          "name": "Int64",
+          "type": 6
         },
         {
           "id": "4:6473251296493454829",
-          "name": "String"
+          "name": "String",
+          "type": 9
         },
         {
           "id": "5:8933082277725371577",
-          "name": "Float64"
+          "name": "Float64",
+          "type": 8
         }
       ]
     }
@@ -36,8 +40,11 @@
   "lastEntityId": "1:1737161401460991620",
   "lastIndexId": "",
   "lastRelationId": "",
+  "modelVersion": 5,
+  "modelVersionParserMinimum": 5,
   "retiredEntityUids": [],
   "retiredIndexUids": [],
   "retiredPropertyUids": [],
-  "retiredRelationUids": null
+  "retiredRelationUids": null,
+  "version": 1
 }

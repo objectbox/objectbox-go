@@ -62,11 +62,11 @@ func (task_EntityInfo) GeneratorVersion() int {
 // AddToModel is called by ObjectBox during model build
 func (task_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("Task", 1, 1306759095002958910)
-	model.Property("Id", objectbox.PropertyType_Long, 1, 2193439623591184445)
-	model.PropertyFlags(objectbox.PropertyFlags_UNSIGNED | objectbox.PropertyFlags_ID)
-	model.Property("Text", objectbox.PropertyType_String, 2, 6177929178231325611)
-	model.Property("DateCreated", objectbox.PropertyType_Long, 3, 9141374017424160113)
-	model.Property("DateFinished", objectbox.PropertyType_Long, 4, 8083684673086871702)
+	model.Property("Id", 6, 1, 2193439623591184445)
+	model.PropertyFlags(8193)
+	model.Property("Text", 9, 2, 6177929178231325611)
+	model.Property("DateCreated", 6, 3, 9141374017424160113)
+	model.Property("DateFinished", 6, 4, 8083684673086871702)
 	model.EntityLastPropertyId(4, 8083684673086871702)
 }
 

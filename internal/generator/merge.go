@@ -198,6 +198,15 @@ func mergeModelProperty(bindingProperty *Property, modelProperty *modelinfo.Prop
 		}
 	}
 
+	if bindingProperty.Relation != nil {
+		modelProperty.RelationTarget = bindingProperty.Relation.Target.Name
+	} else {
+		modelProperty.RelationTarget = ""
+	}
+
+	modelProperty.Type = bindingProperty.ObType
+	modelProperty.Flags = bindingProperty.ObFlagsCombined()
+
 	return nil
 }
 
@@ -255,8 +264,7 @@ func mergeModelRelation(bindingRelation *StandaloneRelation, modelRelation *mode
 	} else if bindingRelation.Target.Id, bindingRelation.Target.Uid, err = targetEntity.Id.Get(); err != nil {
 		return err
 	} else {
-		// store this info in the model = necessary for cycle checks
-		modelRelation.Target = targetEntity
+		modelRelation.SetTarget(targetEntity)
 	}
 
 	return nil

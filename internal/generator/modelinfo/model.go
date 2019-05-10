@@ -26,18 +26,30 @@ import (
 type Id = uint32
 type Uid = uint64
 
+const (
+	ModelVersion = 5
+
+	// modelVersion supported by this parser & generator
+	minModelVersion = 4
+	maxModelVersion = ModelVersion
+)
+
 type ModelInfo struct {
-	Comment        []string  `json:"comment"`
-	Entities       []*Entity `json:"entities"`
-	LastEntityId   IdUid     `json:"lastEntityId"`
-	LastIndexId    IdUid     `json:"lastIndexId"`
-	LastRelationId IdUid     `json:"lastRelationId"`
-	//ModelVersion        int
-	//Version             int
-	RetiredEntityUids   []Uid `json:"retiredEntityUids"`
-	RetiredIndexUids    []Uid `json:"retiredIndexUids"`
-	RetiredPropertyUids []Uid `json:"retiredPropertyUids"`
-	RetiredRelationUids []Uid `json:"retiredRelationUids"`
+	// NOTE don't change order of these json exported properties because it will change users' model.json files
+	Note1                string    `json:"_note1"`
+	Note2                string    `json:"_note2"`
+	Note3                string    `json:"_note3"`
+	Entities             []*Entity `json:"entities"`
+	LastEntityId         IdUid     `json:"lastEntityId"`
+	LastIndexId          IdUid     `json:"lastIndexId"`
+	LastRelationId       IdUid     `json:"lastRelationId"`
+	ModelVersion         int       `json:"modelVersion"`
+	MinimumParserVersion int       `json:"modelVersionParserMinimum"`
+	RetiredEntityUids    []Uid     `json:"retiredEntityUids"`
+	RetiredIndexUids     []Uid     `json:"retiredIndexUids"`
+	RetiredPropertyUids  []Uid     `json:"retiredPropertyUids"`
+	RetiredRelationUids  []Uid     `json:"retiredRelationUids"`
+	Version              int       `json:"version"` // user specified version
 
 	file *os.File // file handle, locked while the model is open
 
@@ -45,23 +57,47 @@ type ModelInfo struct {
 	Package string `json:"-"`
 }
 
+var defaultModel = ModelInfo{
+	Note1:                "KEEP THIS FILE! Check it into a version control system (VCS) like git.",
+	Note2:                "ObjectBox manages crucial IDs for your object model. See docs for details.",
+	Note3:                "If you have VCS merge conflicts, you must resolve them according to ObjectBox docs.",
+	Entities:             make([]*Entity, 0),
+	RetiredEntityUids:    make([]Uid, 0),
+	RetiredIndexUids:     make([]Uid, 0),
+	RetiredPropertyUids:  make([]Uid, 0),
+	RetiredRelationUids:  make([]Uid, 0),
+	ModelVersion:         maxModelVersion,
+	MinimumParserVersion: maxModelVersion,
+	Version:              1,
+}
+
 func createModelInfo() *ModelInfo {
-	return &ModelInfo{
-		Comment: []string{
-			"KEEP THIS FILE! Check it into a version control system (VCS) like git.",
-			"ObjectBox manages crucial IDs for your object model. See docs for details.",
-			"If you have VCS merge conflicts, you must resolve them according to ObjectBox docs.",
-		},
-		Entities:            make([]*Entity, 0),
-		RetiredEntityUids:   make([]Uid, 0),
-		RetiredIndexUids:    make([]Uid, 0),
-		RetiredPropertyUids: make([]Uid, 0),
-		RetiredRelationUids: make([]Uid, 0),
-	}
+	var model = defaultModel
+	return &model
+}
+
+func (model *ModelInfo) fillMissing() {
+	// just replace comments with the latest ones
+	model.Note1 = defaultModel.Note1
+	model.Note2 = defaultModel.Note2
+	model.Note3 = defaultModel.Note3
 }
 
 // performs initial validation of loaded data so that it doesn't have to be checked in each function
 func (model *ModelInfo) Validate() (err error) {
+	if model.ModelVersion < minModelVersion {
+		return fmt.Errorf("the loaded model is too old - version %d while the minimum supported is %d - "+
+			" consider upgrading with an older generator or manually.", model.ModelVersion, minModelVersion)
+	}
+
+	if model.ModelVersion > maxModelVersion {
+		if model.MinimumParserVersion == 0 || model.MinimumParserVersion > ModelVersion {
+			return fmt.Errorf("the loaded model has been created with a newer generator version %d "+
+				" while the maximimum supported version is %d. Please upgrade your toolchain/generator",
+				model.ModelVersion, maxModelVersion)
+		}
+	}
+
 	if model.Entities == nil {
 		return fmt.Errorf("entities are not defined or not an array")
 	}
@@ -112,6 +148,43 @@ func (model *ModelInfo) Validate() (err error) {
 		}
 	}
 
+	if len(model.LastRelationId) > 0 || model.hasRelations() {
+		if err = model.LastRelationId.Validate(); err != nil {
+			return fmt.Errorf("lastRelationId: %s", err)
+		}
+
+		// find the last relation ID among entities' relations
+		var lastId = model.LastRelationId.getIdSafe()
+		var lastUid = model.LastRelationId.getUidSafe()
+		var found = false
+
+		for _, entity := range model.Entities {
+			for _, relation := range entity.Relations {
+				if relation.entity == nil {
+					relation.entity = entity
+				} else if relation.entity != entity {
+					return fmt.Errorf("relation %s %s has incorrect parent entity reference",
+						relation.Name, relation.Id)
+				}
+
+				if lastId == relation.Id.getIdSafe() {
+					if lastUid != relation.Id.getUidSafe() {
+						return fmt.Errorf("lastRelationId %s doesn't match relation %s %s",
+							model.LastRelationId, relation.Name, relation.Id)
+					}
+					found = true
+				} else if lastId < relation.Id.getIdSafe() {
+					return fmt.Errorf("lastRelationId %s is lower than relation %s %s",
+						model.LastRelationId, relation.Name, relation.Id)
+				}
+			}
+		}
+
+		if !found && !searchSliceUid(model.RetiredRelationUids, lastUid) {
+			return fmt.Errorf("lastRelationId %s doesn't match any relation", model.LastRelationId)
+		}
+	}
+
 	if model.RetiredEntityUids == nil {
 		return fmt.Errorf("retiredEntityUids are not defined or not an array")
 	}
@@ -125,6 +198,15 @@ func (model *ModelInfo) Validate() (err error) {
 	}
 
 	return nil
+}
+
+func (model *ModelInfo) hasRelations() bool {
+	for _, entity := range model.Entities {
+		if len(entity.Relations) > 0 {
+			return true
+		}
+	}
+	return false
 }
 
 func (model *ModelInfo) FindEntityByUid(uid Uid) (*Entity, error) {

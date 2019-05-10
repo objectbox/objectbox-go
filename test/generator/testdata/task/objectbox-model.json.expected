@@ -1,118 +1,148 @@
 {
-  "comment": [
-    "KEEP THIS FILE! Check it into a version control system (VCS) like git.",
-    "ObjectBox manages crucial IDs for your object model. See docs for details.",
-    "If you have VCS merge conflicts, you must resolve them according to ObjectBox docs."
-  ],
+  "_note1": "KEEP THIS FILE! Check it into a version control system (VCS) like git.",
+  "_note2": "ObjectBox manages crucial IDs for your object model. See docs for details.",
+  "_note3": "If you have VCS merge conflicts, you must resolve them according to ObjectBox docs.",
   "entities": [
     {
       "id": "1:8717895732742165505",
-      "name": "Task",
       "lastPropertyId": "5:6044372234677422456",
+      "name": "Task",
       "properties": [
         {
           "id": "1:6050128673802995827",
-          "name": "Id"
+          "name": "Id",
+          "type": 6,
+          "flags": 8193
         },
         {
           "id": "2:501233450539197794",
           "name": "Uid",
-          "indexId": "1:3390393562759376202"
+          "indexId": "1:3390393562759376202",
+          "type": 9,
+          "flags": 32
         },
         {
           "id": "3:2669985732393126063",
-          "name": "Text"
+          "name": "Text",
+          "type": 9
         },
         {
           "id": "4:1774932891286980153",
-          "name": "Date"
+          "name": "Date",
+          "type": 10,
+          "flags": 8192
         },
         {
           "id": "5:6044372234677422456",
           "name": "GroupId",
-          "indexId": "2:8274930044578894929"
+          "indexId": "2:8274930044578894929",
+          "type": 11,
+          "flags": 8192,
+          "relationTarget": "Group"
         }
       ]
     },
     {
       "id": "2:2259404117704393152",
-      "name": "Group",
       "lastPropertyId": "1:1543572285742637646",
+      "name": "Group",
       "properties": [
         {
           "id": "1:1543572285742637646",
-          "name": "Id"
+          "name": "Id",
+          "type": 6,
+          "flags": 8193
         }
       ]
     },
     {
       "id": "3:2661732831099943416",
-      "name": "TaskByValue",
       "lastPropertyId": "2:2518412263346885298",
+      "name": "TaskByValue",
       "properties": [
         {
           "id": "1:7837839688282259259",
-          "name": "Id"
+          "name": "Id",
+          "type": 6,
+          "flags": 8193
         },
         {
           "id": "2:2518412263346885298",
-          "name": "Name"
+          "name": "Name",
+          "type": 9
         }
       ]
     },
     {
       "id": "4:8325060299420976708",
-      "name": "TaskStringByValue",
       "lastPropertyId": "2:2339563716805116249",
+      "name": "TaskStringByValue",
       "properties": [
         {
           "id": "1:5617773211005988520",
-          "name": "Id"
+          "name": "Id",
+          "type": 6,
+          "flags": 8193
         },
         {
           "id": "2:2339563716805116249",
-          "name": "Name"
+          "name": "Name",
+          "type": 9
         }
       ]
     },
     {
       "id": "5:7144924247938981575",
-      "name": "TaskIndexed",
       "lastPropertyId": "7:6303220950515014660",
+      "name": "TaskIndexed",
       "properties": [
         {
           "id": "1:161231572858529631",
-          "name": "Id"
+          "name": "Id",
+          "type": 6,
+          "flags": 8193
         },
         {
           "id": "2:7259475919510918339",
           "name": "Uid",
-          "indexId": "3:7373105480197164748"
+          "indexId": "3:7373105480197164748",
+          "type": 9,
+          "flags": 32
         },
         {
           "id": "3:3287288577352441706",
           "name": "Name",
-          "indexId": "4:3930927879439176946"
+          "indexId": "4:3930927879439176946",
+          "type": 9,
+          "flags": 2048
         },
         {
           "id": "4:4706154865122290029",
           "name": "Priority",
-          "indexId": "5:2217592893536642650"
+          "indexId": "5:2217592893536642650",
+          "type": 6,
+          "flags": 8
         },
         {
           "id": "5:1929546706668609706",
           "name": "Group",
-          "indexId": "6:6392442863481646880"
+          "indexId": "6:6392442863481646880",
+          "type": 9,
+          "flags": 8
         },
         {
           "id": "6:3706853784096366226",
           "name": "Place",
-          "indexId": "7:2627038740284806767"
+          "indexId": "7:2627038740284806767",
+          "type": 9,
+          "flags": 2048
         },
         {
           "id": "7:6303220950515014660",
           "name": "Source",
-          "indexId": "8:4035568504096476779"
+          "indexId": "8:4035568504096476779",
+          "type": 9,
+          "flags": 4096
         }
       ]
     }
@@ -120,8 +150,11 @@
   "lastEntityId": "5:7144924247938981575",
   "lastIndexId": "8:4035568504096476779",
   "lastRelationId": "",
+  "modelVersion": 5,
+  "modelVersionParserMinimum": 5,
   "retiredEntityUids": [],
   "retiredIndexUids": [],
   "retiredPropertyUids": [],
-  "retiredRelationUids": []
+  "retiredRelationUids": [],
+  "version": 1
 }

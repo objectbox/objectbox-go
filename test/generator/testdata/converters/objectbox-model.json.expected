@@ -1,44 +1,49 @@
 {
-  "comment": [
-    "KEEP THIS FILE! Check it into a version control system (VCS) like git.",
-    "ObjectBox manages crucial IDs for your object model. See docs for details.",
-    "If you have VCS merge conflicts, you must resolve them according to ObjectBox docs."
-  ],
+  "_note1": "KEEP THIS FILE! Check it into a version control system (VCS) like git.",
+  "_note2": "ObjectBox manages crucial IDs for your object model. See docs for details.",
+  "_note3": "If you have VCS merge conflicts, you must resolve them according to ObjectBox docs.",
   "entities": [
     {
       "id": "1:8717895732742165505",
-      "name": "RuneIdEntity",
       "lastPropertyId": "1:2259404117704393152",
+      "name": "RuneIdEntity",
       "properties": [
         {
           "id": "1:2259404117704393152",
-          "name": "Id"
+          "name": "Id",
+          "type": 6,
+          "flags": 8193
         }
       ]
     },
     {
       "id": "2:6050128673802995827",
-      "name": "StringIdEntity",
       "lastPropertyId": "1:501233450539197794",
+      "name": "StringIdEntity",
       "properties": [
         {
           "id": "1:501233450539197794",
-          "name": "Id"
+          "name": "Id",
+          "type": 6,
+          "flags": 8193
         }
       ]
     },
     {
       "id": "3:3390393562759376202",
-      "name": "TimeEntity",
       "lastPropertyId": "2:1774932891286980153",
+      "name": "TimeEntity",
       "properties": [
         {
           "id": "1:2669985732393126063",
-          "name": "Id"
+          "name": "Id",
+          "type": 6,
+          "flags": 8193
         },
         {
           "id": "2:1774932891286980153",
-          "name": "Time"
+          "name": "Time",
+          "type": 10
         }
       ]
     }
@@ -46,8 +51,11 @@
   "lastEntityId": "3:3390393562759376202",
   "lastIndexId": "",
   "lastRelationId": "",
+  "modelVersion": 5,
+  "modelVersionParserMinimum": 5,
   "retiredEntityUids": [],
   "retiredIndexUids": [],
   "retiredPropertyUids": [],
-  "retiredRelationUids": []
+  "retiredRelationUids": [],
+  "version": 1
 }

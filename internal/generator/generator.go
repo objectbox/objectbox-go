@@ -72,6 +72,10 @@ func Process(sourceFile string, options Options) error {
 		return fmt.Errorf("invalid ModelInfo loaded: %s", err)
 	}
 
+	// if the model is valid, upgrade it to the latest version
+	modelInfo.MinimumParserVersion = modelinfo.ModelVersion
+	modelInfo.ModelVersion = modelinfo.ModelVersion
+
 	if err = createBinding(sourceFile, modelInfo, options); err != nil {
 		return err
 	}

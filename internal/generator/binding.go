@@ -754,7 +754,7 @@ func (property *Property) setBasicType(baseType string) error {
 
 	if property.Annotations["date"] != nil {
 		if property.ObType != PropertyTypeLong {
-			return fmt.Errorf("invalid underlying type (%s) for date field", property.ObType)
+			return fmt.Errorf("invalid underlying type (PropertyType %v) for date field; expecting long", property.ObType)
 		} else {
 			property.ObType = PropertyTypeDate
 		}
@@ -762,7 +762,7 @@ func (property *Property) setBasicType(baseType string) error {
 
 	if property.Annotations["link"] != nil {
 		if property.ObType != PropertyTypeLong {
-			return fmt.Errorf("invalid underlying type (%s) for relation field", property.ObType)
+			return fmt.Errorf("invalid underlying type (PropertyType %v) for relation field; expecting long", property.ObType)
 		} else {
 			property.ObType = PropertyTypeRelation
 		}

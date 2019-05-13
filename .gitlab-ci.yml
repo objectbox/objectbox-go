@@ -32,6 +32,6 @@ test:linux:ARMv7hf:
 
 test:mac:x64:
   extends: .test:linux
-  tags: [x64, mac]
+  tags: [x64, mac, go]
   before_script:
     - 'curl -o /usr/local/lib/libobjectbox.dylib -H "PRIVATE-TOKEN: $CI_API_TOKEN" "$OBXLIB_URL_Mac64"'

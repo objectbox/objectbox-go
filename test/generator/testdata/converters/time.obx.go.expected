@@ -90,7 +90,7 @@ func (timeEntity_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interf
 
 	return &TimeEntity{
 		Id:   id,
-		Time: timeInt64ToEntityProperty(table.GetInt64Slot(6, 0)),
+		Time: timeInt64ToEntityProperty(fbutils.GetInt64Slot(table, 6)),
 	}, nil
 }
 

@@ -129,8 +129,8 @@ func (task_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{},
 		Id:      id,
 		Uid:     fbutils.GetStringSlot(table, 6),
 		Text:    fbutils.GetStringSlot(table, 8),
-		Date:    table.GetUint64Slot(10, 0),
-		GroupId: table.GetUint64Slot(12, 0),
+		Date:    fbutils.GetUint64Slot(table, 10),
+		GroupId: fbutils.GetUint64Slot(table, 12),
 	}, nil
 }
 

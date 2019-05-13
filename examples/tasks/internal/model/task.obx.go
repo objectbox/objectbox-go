@@ -110,8 +110,8 @@ func (task_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{},
 	return &Task{
 		Id:           id,
 		Text:         fbutils.GetStringSlot(table, 6),
-		DateCreated:  table.GetInt64Slot(8, 0),
-		DateFinished: table.GetInt64Slot(10, 0),
+		DateCreated:  fbutils.GetInt64Slot(table, 8),
+		DateFinished: fbutils.GetInt64Slot(table, 10),
 	}, nil
 }
 

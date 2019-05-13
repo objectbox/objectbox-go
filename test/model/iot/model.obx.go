@@ -124,7 +124,7 @@ func (event_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{}
 		Id:      id,
 		Uid:     fbutils.GetStringSlot(table, 10),
 		Device:  fbutils.GetStringSlot(table, 6),
-		Date:    table.GetInt64Slot(8, 0),
+		Date:    fbutils.GetInt64Slot(table, 8),
 		Picture: fbutils.GetByteVectorSlot(table, 12),
 	}, nil
 }
@@ -431,14 +431,14 @@ func (reading_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface
 
 	return &Reading{
 		Id:              id,
-		Date:            table.GetInt64Slot(6, 0),
-		EventId:         table.GetUint64Slot(8, 0),
+		Date:            fbutils.GetInt64Slot(table, 6),
+		EventId:         fbutils.GetUint64Slot(table, 8),
 		ValueName:       fbutils.GetStringSlot(table, 10),
 		ValueString:     fbutils.GetStringSlot(table, 12),
-		ValueInteger:    table.GetInt64Slot(14, 0),
-		ValueFloating:   table.GetFloat64Slot(16, 0),
-		ValueInt32:      table.GetInt32Slot(18, 0),
-		ValueFloating32: table.GetFloat32Slot(20, 0),
+		ValueInteger:    fbutils.GetInt64Slot(table, 14),
+		ValueFloating:   fbutils.GetFloat64Slot(table, 16),
+		ValueInt32:      fbutils.GetInt32Slot(table, 18),
+		ValueFloating32: fbutils.GetFloat32Slot(table, 20),
 	}, nil
 }
 

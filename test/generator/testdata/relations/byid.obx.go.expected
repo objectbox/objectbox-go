@@ -95,7 +95,7 @@ func (taskRelId_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interfa
 
 	return &TaskRelId{
 		Id:    id,
-		Group: table.GetUint64Slot(6, 0),
+		Group: fbutils.GetUint64Slot(table, 6),
 	}, nil
 }
 

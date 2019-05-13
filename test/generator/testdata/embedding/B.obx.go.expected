@@ -118,7 +118,7 @@ func (b_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{}, er
 				Id: id,
 			},
 			Float64Value: Float64Value{
-				Value: table.GetFloat64Slot(8, 0),
+				Value: fbutils.GetFloat64Slot(table, 8),
 			},
 		},
 		Name: fbutils.GetStringSlot(table, 10),

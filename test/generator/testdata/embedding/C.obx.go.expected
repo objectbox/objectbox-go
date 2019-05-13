@@ -99,8 +99,8 @@ func (c_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{}, er
 	var id = table.GetUint64Slot(8, 0)
 
 	return &C{
-		int64: table.GetInt64Slot(4, 0),
-		val:   val(table.GetUint64Slot(6, 0)),
+		int64: fbutils.GetInt64Slot(table, 4),
+		val:   val(fbutils.GetUint64Slot(table, 6)),
 		Id: Id{
 			Id: id,
 		},

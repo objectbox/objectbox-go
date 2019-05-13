@@ -91,7 +91,7 @@ func (d_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{}, er
 	return &D{
 		IdAndFloat64Value: &IdAndFloat64Value{
 			Id:    id,
-			Value: table.GetFloat64Slot(6, 0),
+			Value: fbutils.GetFloat64Slot(table, 6),
 		},
 	}, nil
 }

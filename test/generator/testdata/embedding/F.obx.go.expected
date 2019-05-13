@@ -157,10 +157,10 @@ func (f_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{}, er
 			Text:  fbutils.GetStringSlot(table, 6),
 			Empty: Empty{},
 			Id: Id{
-				Id: table.GetUint64Slot(8, 0),
+				Id: fbutils.GetUint64Slot(table, 8),
 			},
 			Float64Value: Float64Value{
-				Value: table.GetFloat64Slot(10, 0),
+				Value: fbutils.GetFloat64Slot(table, 10),
 			},
 		},
 		BytesValue: BytesValue{
@@ -170,10 +170,10 @@ func (f_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{}, er
 			Text:  fbutils.GetStringSlot(table, 14),
 			Empty: Empty{},
 			Id: Id{
-				Id: table.GetUint64Slot(16, 0),
+				Id: fbutils.GetUint64Slot(table, 16),
 			},
 			Float64Value: Float64Value{
-				Value: table.GetFloat64Slot(18, 0),
+				Value: fbutils.GetFloat64Slot(table, 18),
 			},
 		},
 	}, nil

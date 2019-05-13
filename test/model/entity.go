@@ -56,6 +56,25 @@ type Entity struct {
 	// many-to-many relations
 	RelatedSlice    []EntityByValue
 	RelatedPtrSlice []*TestEntityRelated
+
+	IntPtr          *int
+	Int8Ptr         *int8
+	Int16Ptr        *int16
+	Int32Ptr        *int32
+	Int64Ptr        *int64
+	UintPtr         *uint
+	Uint8Ptr        *uint8
+	Uint16Ptr       *uint16
+	Uint32Ptr       *uint32
+	Uint64Ptr       *uint64
+	BoolPtr         *bool
+	StringPtr       *string
+	//StringVectorPtr *[]string
+	BytePtr         *byte
+	//ByteVectorPtr   *[]byte
+	RunePtr         *rune
+	Float32Ptr      *float32
+	Float64Ptr      *float64
 }
 
 type TestStringIdEntity struct {
@@ -74,6 +93,6 @@ type TestEntityRelated struct {
 	Name string
 
 	// have another level of relations
-	Next *EntityByValue `link`
+	Next      *EntityByValue `link`
 	NextSlice []EntityByValue
 }

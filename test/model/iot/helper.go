@@ -67,7 +67,7 @@ func PutReadings(ob *objectbox.ObjectBox, count int) []*Reading {
 	// TODO TX
 	readings := make([]*Reading, 0, count)
 	for i := 1; i <= count; i++ {
-		reading := PutReading(ob, "reading"+strconv.Itoa(i), "string"+strconv.Itoa(i), int64(10000+i), float64(10000+i), int32(10000+i), float32(10000 + i))
+		reading := PutReading(ob, "reading"+strconv.Itoa(i), "string"+strconv.Itoa(i), int64(10000+i), float64(10000+i), int32(10000+i), float32(10000+i))
 		readings = append(readings, reading)
 	}
 	return readings

@@ -155,15 +155,15 @@ func entity47(coef int64, options *TestEnvOptions) *Entity {
 	if options != nil && options.PopulateRelations {
 		object.Related = TestEntityRelated{Name: "rel-" + String}
 		object.RelatedPtr = &TestEntityRelated{
-			Name: "relPtr-" + String,
-			Next: &EntityByValue{Text:"RelatedPtr-Next-"+String},
-			NextSlice: []EntityByValue{{Text:"RelatedPtr-NextSlice-"+String}},
+			Name:      "relPtr-" + String,
+			Next:      &EntityByValue{Text: "RelatedPtr-Next-" + String},
+			NextSlice: []EntityByValue{{Text: "RelatedPtr-NextSlice-" + String}},
 		}
 		object.RelatedSlice = []EntityByValue{{Text: "relByValue-" + String}}
 		object.RelatedPtrSlice = []*TestEntityRelated{{
-			Name: "relPtr-" + String,
-			Next: &EntityByValue{Text:"RelatedPtrSlice-Next-"+String},
-			NextSlice: []EntityByValue{{Text:"RelatedPtrSlice-NextSlice-"+String}},
+			Name:      "relPtr-" + String,
+			Next:      &EntityByValue{Text: "RelatedPtrSlice-Next-" + String},
+			NextSlice: []EntityByValue{{Text: "RelatedPtrSlice-NextSlice-" + String}},
 		}}
 	} else {
 		object.Related.NextSlice = []EntityByValue{}

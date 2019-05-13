@@ -19,10 +19,10 @@ package iot
 //go:generate objectbox-gogen
 
 type Event struct {
-	Id     uint64 `objectbox:"id"`
-	Uid    string `objectbox:"unique"`
-	Device string
-	Date   int64 `objectbox:"date"`
+	Id      uint64 `objectbox:"id"`
+	Uid     string `objectbox:"unique"`
+	Device  string
+	Date    int64 `objectbox:"date"`
 	Picture []byte
 }
 

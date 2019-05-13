@@ -34,9 +34,9 @@ type Builder struct {
 	Error error
 
 	// these options are used when creating the underlying store using the C-api calls
-	name        string
-	maxSizeInKb uint64
-	maxReaders  uint
+	directory   *string
+	maxSizeInKb *uint64
+	maxReaders  *uint
 
 	// these options are passed-through to the created ObjectBox struct
 	options
@@ -56,7 +56,7 @@ func NewBuilder() *Builder {
 	//	} else {
 	//		version = C.GoString(msg)
 	//	}
-	//	panic("Minimum libobjectbox version " + expectedVersion.String() + " required, but found " + version + ".\n" +
+	//	panic("Minimum libobjectbox version " + expectedVersion.String() + " required, but found " + version + "\n" +
 	//		"Please run install.sh for a full upgrade\n" +
 	//		"Or check https://github.com/objectbox/objectbox-c for info about the required library.")
 	//}
@@ -80,21 +80,21 @@ func NewBuilder() *Builder {
 }
 
 // Directory configures the path where the database is stored
-func (builder *Builder) Directory(name string) *Builder {
-	builder.name = name
+func (builder *Builder) Directory(path string) *Builder {
+	builder.directory = &path
 	return builder
 }
 
 // MaxSizeInKb defines maximum size the database can take on disk (default: 1 GByte).
 func (builder *Builder) MaxSizeInKb(maxSizeInKb uint64) *Builder {
-	builder.maxSizeInKb = maxSizeInKb
+	builder.maxSizeInKb = &maxSizeInKb
 	return builder
 }
 
 // MaxReaders defines maximum concurrent readers (default: 126).
 // Increase only if you are getting errors (highly concurrent scenarios).
 func (builder *Builder) MaxReaders(maxReaders uint) *Builder {
-	builder.maxReaders = maxReaders
+	builder.maxReaders = &maxReaders
 	return builder
 }
 
@@ -143,21 +143,35 @@ func (builder *Builder) BuildOrError() (*ObjectBox, error) {
 		return nil, fmt.Errorf("model is not defined")
 	}
 
-	cOptions := C.struct_OBX_store_options{}
-
-	if builder.name != "" {
-		cname := C.CString(builder.name)
-		defer C.free(unsafe.Pointer(cname))
-		cOptions.directory = cname
+	cOptions := C.obx_opt()
+	if cOptions == nil {
+		return nil, createError()
 	}
 
-	cOptions.maxReaders = C.uint(builder.maxReaders)            // Zero is the default on both sides
-	cOptions.maxDbSizeInKByte = C.uint64_t(builder.maxSizeInKb) // Zero is the default on both sides
+	if builder.directory != nil {
+		cDir := C.CString(*builder.directory)
+		defer C.free(unsafe.Pointer(cDir))
+		if 0 != C.obx_opt_directory(cOptions, cDir) {
+			C.obx_opt_free(cOptions)
+			return nil, createError()
+		}
+	}
 
-	cStore := C.obx_store_open(builder.model.model, &cOptions)
+	if builder.maxSizeInKb != nil {
+		C.obx_opt_max_db_size_in_kb(cOptions, C.size_t(*builder.maxSizeInKb))
+	}
+
+	if builder.maxReaders != nil {
+		C.obx_opt_max_readers(cOptions, C.int(*builder.maxReaders))
+	}
+
+	C.obx_opt_model(cOptions, builder.model.cModel)
+
+	cStore := C.obx_store_open(cOptions)
 	if cStore == nil {
 		return nil, createError()
 	}
+	cOptions = nil // consumed by obx_store_open()
 
 	ob := &ObjectBox{
 		store:          cStore,

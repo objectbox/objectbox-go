@@ -41,7 +41,7 @@ extern "C" {
 // Note that you should use methods with prefix obx_version_ to check when linking against the dynamic library
 #define OBX_VERSION_MAJOR 0
 #define OBX_VERSION_MINOR 5
-#define OBX_VERSION_PATCH 103  // values >= 100 are reserved for dev releases leading to the next minor/major increase
+#define OBX_VERSION_PATCH 104  // values >= 100 are reserved for dev releases leading to the next minor/major increase
 
 /// Returns the version of the library as ints. Pointers may be null
 void obx_version(int* major, int* minor, int* patch);
@@ -110,6 +110,9 @@ bool obx_supports_bytes_array(void);
 // Inconsistencies detected
 #define OBX_ERROR_SCHEMA 10501
 #define OBX_ERROR_FILE_CORRUPT 10502
+
+/// A requested schema object (e.g. entity or property) was not found in the schema
+#define OBX_ERROR_SCHEMA_OBJECT_NOT_FOUND 10503
 
 //----------------------------------------------
 // Common types
@@ -251,19 +254,8 @@ obx_err obx_model_entity_last_property_id(OBX_model* model, obx_schema_id proper
 struct OBX_store;
 typedef struct OBX_store OBX_store;
 
-typedef struct OBX_store_options {
-    /// Use NULL for default value ("objectbox")
-    const char* directory;
-
-    /// Use zero for default value
-    uint64_t maxDbSizeInKByte;
-
-    /// Use zero for default value
-    unsigned int fileMode;
-
-    /// Use zero for default value
-    unsigned int maxReaders;
-} OBX_store_options;
+struct OBX_store_options;
+typedef struct OBX_store_options OBX_store_options;
 
 typedef enum {
     OBXDebugFlags_LOG_TRANSACTIONS_READ = 1,
@@ -288,11 +280,39 @@ typedef struct OBX_id_array {
     size_t count;
 } OBX_id_array;
 
-// TODO remove (put model into options)
-OBX_store* obx_store_open_bytes(const void* model_bytes, size_t model_size, const OBX_store_options* options);
+/// Create a default set of store options
+/// @returns NULL on failure, a default set of options on success
+OBX_store_options* obx_opt();
 
-/// Note: the model is freed by calling this method
-OBX_store* obx_store_open(OBX_model* model, const OBX_store_options* options);
+/// Set the store directory on the options. The default is "objectbox".
+obx_err obx_opt_directory(OBX_store_options* opt, const char* dir);
+
+/// Set the maximum db size on the options. The default is 1Gb
+void obx_opt_max_db_size_in_kb(OBX_store_options* opt, size_t size_in_kb);
+
+/// Set the file mode on the options. The default is 0755 (unix-style)
+void obx_opt_file_mode(OBX_store_options* opt, int file_mode);
+
+/// Set the maximum number of readers on the options.
+void obx_opt_max_readers(OBX_store_options* opt, int max_readers);
+
+/// Set the model on the options. The default is no model
+/// NOTE: the model is always freed by this function, including when an error occurs
+obx_err obx_opt_model(OBX_store_options* opt, OBX_model* model);
+
+/// Set the model on the options copying the given bytes. The default is no model.
+obx_err obx_opt_model_bytes(OBX_store_options* opt, const void* bytes, size_t size);
+
+/// Like obx_opt_model_bytes BUT WITHOUT copying the given bytes.
+/// Thus, you must keep the bytes available until the store was created.
+obx_err obx_opt_model_bytes_direct(OBX_store_options* opt, const void* bytes, size_t size);
+
+/// Free the options
+/// Note: Only free *unused* options, obx_store_open frees the options internally
+void obx_opt_free(OBX_store_options* opt);
+
+/// Note: the options are always freed by this function, including when an error occurs
+OBX_store* obx_store_open(OBX_store_options* opt);
 
 obx_schema_id obx_store_entity_id(OBX_store* store, const char* entity_name);
 

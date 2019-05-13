@@ -111,10 +111,10 @@ func cIdsArrayToGo(cArray *C.OBX_id_array) []uint64 {
 	var size = uint(cArray.count)
 	var ids = make([]uint64, size)
 	if size > 0 {
-		var cArrayStart = uintptr(unsafe.Pointer(cArray.ids))
+		var cArrayStart = unsafe.Pointer(cArray.ids)
 		var cIdSize = unsafe.Sizeof(*cArray.ids)
 		for i := uint(0); i < size; i++ {
-			ids[i] = *(*uint64)(unsafe.Pointer(cArrayStart + uintptr(i)*cIdSize))
+			ids[i] = *(*uint64)(unsafe.Pointer(uintptr(cArrayStart) + uintptr(i)*cIdSize))
 		}
 	}
 	return ids

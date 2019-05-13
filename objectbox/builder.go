@@ -45,24 +45,36 @@ type Builder struct {
 // NewBuilder creates a new ObjectBox instance builder object
 func NewBuilder() *Builder {
 	// these constants are based on the objectbox.h file, not on the loaded library
-	var obxMinVersion = Version{C.OBX_VERSION_MAJOR, C.OBX_VERSION_MINOR, C.OBX_VERSION_PATCH, ""}
+	var expectedVersion = Version{C.OBX_VERSION_MAJOR, C.OBX_VERSION_MINOR, C.OBX_VERSION_PATCH, ""}
 
-	if !C.obx_version_is_at_least(C.int(obxMinVersion.Major), C.int(obxMinVersion.Minor), C.int(obxMinVersion.Patch)) {
-		var version string
-		msg := C.obx_version_string()
-		if msg == nil {
-			version = "unknown"
-		} else {
-			version = C.GoString(msg)
-		}
-		panic("Minimum libobjectbox version " + obxMinVersion.String() + " required, but found " + version + ":\n." +
-			">>> Please run install.sh for a full upgrade <<<\n" +
+	// NOTE, this is currently not used as the C-API currently still breaks compatibility before v1.0.
+	//if !C.obx_version_is_at_least(C.int(expectedVersion.Major), C.int(expectedVersion.Minor), C.int(expectedVersion.Patch)) {
+	//	var version string
+	//	msg := C.obx_version_string()
+	//	if msg == nil {
+	//		version = "unknown"
+	//	} else {
+	//		version = C.GoString(msg)
+	//	}
+	//	panic("Minimum libobjectbox version " + expectedVersion.String() + " required, but found " + version + ".\n" +
+	//		"Please run install.sh for a full upgrade\n" +
+	//		"Or check https://github.com/objectbox/objectbox-c for info about the required library.")
+	//}
+
+	// Therefore, we're checking the exact version match
+	var version = VersionLib()
+	// patch version can be higher but only if it's not a "dev" version (100+)
+	var patchMatches = version.Patch >= expectedVersion.Patch && (version.Patch < 100 || version.Patch == expectedVersion.Patch)
+	if version.Major != expectedVersion.Major || version.Minor != expectedVersion.Minor || !patchMatches {
+		panic("libobjectbox version " + expectedVersion.String() + " required, but found " + version.String() + ".\n" +
+			"Please run install.sh for a full upgrade.\n" +
 			"Or check https://github.com/objectbox/objectbox-c for info about the required library.")
 	}
+
 	return &Builder{
 		options: options{
 			// defaults
-			putAsyncTimeout:  10000, // 10s
+			putAsyncTimeout: 10000, // 10s
 		},
 	}
 }

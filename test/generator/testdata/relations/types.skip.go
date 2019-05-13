@@ -1,6 +1,6 @@
 package object
 
 type WithGroup struct {
-	Group  *Group `link`
+	Group  *Group `objectbox:"link"`
 	Groups []*Group
 }

@@ -23,6 +23,7 @@ import (
 	"go/types"
 	"log"
 	"path"
+	"reflect"
 	"strconv"
 	"strings"
 
@@ -208,7 +209,7 @@ func (binding *Binding) createEntityFromAst(strct *ast.StructType, name string, 
 
 	if entity.Annotations["uid"] != nil {
 		if len(entity.Annotations["uid"].Value) == 0 {
-			// in case the user doesn't provide `uid` value, it's considered in-process of setting up UID
+			// in case the user doesn't provide `objectbox:"uid"` value, it's considered in-process of setting up UID
 			// this flag is handled by the merge mechanism and prints the UID of the already existing entity
 			entity.uidRequest = true
 		} else if uid, err := strconv.ParseUint(entity.Annotations["uid"].Value, 10, 64); err != nil {
@@ -239,14 +240,15 @@ func (binding *Binding) createEntityFromAst(strct *ast.StructType, name string, 
 				} else {
 					// fail in case multiple fields match this condition
 					return fmt.Errorf(
-						"id field is missing or multiple fields match the automatic detection condition on entity %s - annotate a field with `id` tag", entity.Name)
+						"id field is missing or multiple fields match the automatic detection condition on "+
+							"entity %s - annotate a field with `objectbox:\"id\"` tag", entity.Name)
 				}
 			}
 		}
 
 		if entity.IdProperty == nil {
-			return fmt.Errorf("id field is missing on entity %s - either annotate a field with `id` tag "+
-				"or use an uint64 field named 'Id/id/ID'", entity.Name)
+			return fmt.Errorf("id field is missing on entity %s - either annotate a field with `objectbox:\"id\"` "+
+				"tag or use an uint64 field named 'Id/id/ID'", entity.Name)
 		}
 	}
 
@@ -371,11 +373,11 @@ func (entity *Entity) addFields(fields fieldList, fieldPath, prefix string) ([]*
 			entity.IdProperty = property
 		}
 
-		if property.Annotations["nameindb"] != nil {
-			if len(property.Annotations["nameindb"].Value) == 0 {
-				return nil, propertyError(fmt.Errorf("nameInDb annotation value must not be empty"), property)
+		if property.Annotations["name"] != nil {
+			if len(property.Annotations["name"].Value) == 0 {
+				return nil, propertyError(fmt.Errorf("name annotation value must not be empty - it's the field name in DB"), property)
 			} else {
-				property.ObName = property.Annotations["nameindb"].Value
+				property.ObName = property.Annotations["name"].Value
 			}
 		} else {
 			property.ObName = property.Name
@@ -625,7 +627,7 @@ func (property *Property) setRelation(target string, manyToMany bool) error {
 
 	if len(property.Annotations["link"].Value) == 0 {
 		// set the relation target to the type of the target entity
-		// TODO this doesn't respect nameInDb on the entity (but we don't support that at the moment)
+		// TODO this doesn't respect `objectbox:"name:entity"` on the entity (but we don't support that at the moment)
 		property.Annotations["link"].Value = target
 	} else if property.Annotations["link"].Value != target {
 		return fmt.Errorf("relation target mismatch, expected %s, got %s", target, property.Annotations["link"].Value)
@@ -647,7 +649,7 @@ func (property *Property) setRelation(target string, manyToMany bool) error {
 func (property *Property) handleUid() error {
 	if property.Annotations["uid"] != nil {
 		if len(property.Annotations["uid"].Value) == 0 {
-			// in case the user doesn't provide `uid` value, it's considered in-process of setting up UID
+			// in case the user doesn't provide `objectbox:"uid"` value, it's considered in-process of setting up UID
 			// this flag is handled by the merge mechanism and prints the UID of the already existing property
 			property.uidRequest = true
 		} else if uid, err := strconv.ParseUint(property.Annotations["uid"].Value, 10, 64); err != nil {
@@ -668,29 +670,30 @@ func parseAnnotations(tags string, annotations *map[string]*Annotation) error {
 		return nil
 	}
 
+	// if it's a top-level call, i.e. tags is something like `objectbox:"tag1 tag2:value2" irrelevant:"value"`
+	var tag = reflect.StructTag(tags)
+	if contents, found := tag.Lookup("objectbox"); found {
+		tags = contents
+	} else if contents, found := tag.Lookup("ObjectBox"); found {
+		tags = contents
+	} else {
+		return nil
+	}
+
 	// tags are space separated
 	for _, tag := range strings.Split(tags, " ") {
 		if len(tag) > 0 {
 			var name string
 			var value = &Annotation{}
 
-			// if it contains a colon, it's a key:"value" pair
+			// if it contains a colon, it's a key:value pair
 			if i := strings.IndexRune(tag, ':'); i >= 0 {
 				name = tag[0:i]
-				tag = tag[i+1:]
-
-				if len(tag) > 1 && tag[0] == tag[len(tag)-1] && tag[0] == '"' {
-					value.Value = strings.TrimSpace(tag[1 : len(tag)-1])
-				} else {
-					return fmt.Errorf("invalid annotation value %s for %s, expecting `name:\"value\"` format",
-						tag, name)
-				}
+				value.Value = tag[i+1:]
 			} else {
 				// otherwise there's no value
 				name = tag
 			}
-
-			name = strings.ToLower(name)
 
 			if (*annotations)[name] != nil {
 				return fmt.Errorf("duplicate annotation %s", name)

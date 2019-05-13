@@ -7,7 +7,7 @@ import (
 )
 
 type BaseWithDate struct {
-	Date int64 `date`
+	Date int64 `objectbox:"date"`
 }
 
 type BaseWithValue struct {

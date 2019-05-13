@@ -2,5 +2,5 @@ package object
 
 type TaskRelEmbedded struct {
 	Id        uint64
-	WithGroup `inline`
+	WithGroup `objectbox:"inline"`
 }

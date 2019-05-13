@@ -1,6 +1,6 @@
 package object
 
 type A struct {
-	Id   `inline`
+	Id   `objectbox:"inline"`
 	Name string
 }

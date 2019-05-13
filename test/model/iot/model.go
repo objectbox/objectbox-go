@@ -19,19 +19,19 @@ package iot
 //go:generate objectbox-gogen
 
 type Event struct {
-	Id     uint64 `id`
-	Uid    string `unique`
+	Id     uint64 `objectbox:"id"`
+	Uid    string `objectbox:"unique"`
 	Device string
-	Date   int64 `date`
+	Date   int64 `objectbox:"date"`
 	Picture []byte
 }
 
 type Reading struct {
-	Id   uint64 `id`
-	Date int64  `date`
+	Id   uint64 `objectbox:"id"`
+	Date int64  `objectbox:"date"`
 
 	/// to-one relation
-	EventId uint64 `link:"Event"`
+	EventId uint64 `objectbox:"link:Event"`
 
 	ValueName string
 

@@ -1,6 +1,6 @@
 package object
 
 type A struct {
-	Id uint64 `id`
-	//Removed string `index`
+	Id uint64 `objectbox:"id"`
+	//Removed string `objectbox:"index"`
 }

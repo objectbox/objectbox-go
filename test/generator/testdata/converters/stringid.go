@@ -1,5 +1,5 @@
 package object
 
 type StringIdEntity struct {
-	Id string `id`
+	Id string `objectbox:"id"`
 }

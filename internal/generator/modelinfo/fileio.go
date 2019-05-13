@@ -80,9 +80,17 @@ func loadModelFromJsonFile(path string) (model *ModelInfo, err error) {
 	if err != nil {
 		defer model.Close()
 		return nil, fmt.Errorf("can't read file %s: %s", path, err)
-	} else {
-		return model, nil
 	}
+
+	// until objectbox-go 0.9 we didn't have model version in the file but it was basically version 4; recognize this
+	if model.ModelVersion == 0 && model.MinimumParserVersion == 0 && len(model.Note1) == 0 {
+		model.ModelVersion = 4
+		model.MinimumParserVersion = 4
+	}
+
+	model.fillMissing()
+
+	return model, nil
 }
 
 func createModelJsonFile(path string) (model *ModelInfo, err error) {

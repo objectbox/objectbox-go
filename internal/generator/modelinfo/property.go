@@ -19,9 +19,12 @@ package modelinfo
 import "fmt"
 
 type Property struct {
-	Id      IdUid  `json:"id"`
-	Name    string `json:"name"`
-	IndexId *IdUid `json:"indexId,omitempty"`
+	Id             IdUid  `json:"id"`
+	Name           string `json:"name"`
+	IndexId        *IdUid `json:"indexId,omitempty"`
+	Type           int    `json:"type"`
+	Flags          int    `json:"flags,omitempty"`
+	RelationTarget string `json:"relationTarget,omitempty"`
 
 	entity *Entity
 }
@@ -52,6 +55,12 @@ func (property *Property) Validate() error {
 	if len(property.Name) == 0 {
 		return fmt.Errorf("name is undefined")
 	}
+
+	// NOTE type can't be validated because entities are update one-by-one and so
+	// on the second one, validate() during load would failonly check this
+	//if property.Type == 0 {
+	//	return fmt.Errorf("type is undefined")
+	//}
 
 	return nil
 }

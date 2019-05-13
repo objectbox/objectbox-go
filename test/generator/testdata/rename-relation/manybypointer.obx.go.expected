@@ -47,8 +47,8 @@ func (taskRelManyPtr_EntityInfo) GeneratorVersion() int {
 // AddToModel is called by ObjectBox during model build
 func (taskRelManyPtr_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("TaskRelManyPtr", 6, 7373105480197164748)
-	model.Property("Id", objectbox.PropertyType_Long, 1, 3287288577352441706)
-	model.PropertyFlags(objectbox.PropertyFlags_UNSIGNED | objectbox.PropertyFlags_ID)
+	model.Property("Id", 6, 1, 3287288577352441706)
+	model.PropertyFlags(8193)
 	model.EntityLastPropertyId(1, 3287288577352441706)
 	model.Relation(1, 3930927879439176946, GroupBinding.Id, GroupBinding.Uid)
 }

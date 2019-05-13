@@ -1,194 +1,246 @@
 {
-  "comment": [
-    "KEEP THIS FILE! Check it into a version control system (VCS) like git.",
-    "ObjectBox manages crucial IDs for your object model. See docs for details.",
-    "If you have VCS merge conflicts, you must resolve them according to ObjectBox docs."
-  ],
+  "_note1": "KEEP THIS FILE! Check it into a version control system (VCS) like git.",
+  "_note2": "ObjectBox manages crucial IDs for your object model. See docs for details.",
+  "_note3": "If you have VCS merge conflicts, you must resolve them according to ObjectBox docs.",
   "entities": [
     {
       "id": "1:3022148985475790732",
-      "name": "Entity",
       "lastPropertyId": "24:7776035803207726954",
+      "name": "Entity",
       "properties": [
         {
           "id": "1:1213346202559552829",
-          "name": "Id"
+          "name": "Id",
+          "type": 6,
+          "flags": 8193
         },
         {
           "id": "2:6609825840127351046",
-          "name": "Int"
+          "name": "Int",
+          "type": 6
         },
         {
           "id": "3:741904540265547276",
-          "name": "Int8"
+          "name": "Int8",
+          "type": 2
         },
         {
           "id": "4:2102961483425256790",
-          "name": "Int16"
+          "name": "Int16",
+          "type": 3
         },
         {
           "id": "5:5086065890743931723",
-          "name": "Int32"
+          "name": "Int32",
+          "type": 5
         },
         {
           "id": "6:7993850425898343586",
-          "name": "Int64"
+          "name": "Int64",
+          "type": 6
         },
         {
           "id": "7:993618338451248101",
-          "name": "Uint"
+          "name": "Uint",
+          "type": 6,
+          "flags": 8192
         },
         {
           "id": "8:8794162191867215541",
-          "name": "Uint8"
+          "name": "Uint8",
+          "type": 2,
+          "flags": 8192
         },
         {
           "id": "9:8820932096807845950",
-          "name": "Uint16"
+          "name": "Uint16",
+          "type": 3,
+          "flags": 8192
         },
         {
           "id": "10:6060435196424462358",
-          "name": "Uint32"
+          "name": "Uint32",
+          "type": 5,
+          "flags": 8192
         },
         {
           "id": "11:6159011311237949479",
-          "name": "Uint64"
+          "name": "Uint64",
+          "type": 6,
+          "flags": 8192
         },
         {
           "id": "12:13717766026420552",
-          "name": "Bool"
+          "name": "Bool",
+          "type": 1
         },
         {
           "id": "13:3525810560076343996",
-          "name": "String"
+          "name": "String",
+          "type": 9
         },
         {
           "id": "14:4035373893984224671",
-          "name": "Byte"
+          "name": "Byte",
+          "type": 2
         },
         {
           "id": "15:1294888641203478533",
-          "name": "ByteVector"
+          "name": "ByteVector",
+          "type": 23
         },
         {
           "id": "16:445652208596094853",
-          "name": "Rune"
+          "name": "Rune",
+          "type": 5
         },
         {
           "id": "17:2321055489159952634",
-          "name": "Float32"
+          "name": "Float32",
+          "type": 7
         },
         {
           "id": "18:681625187526498317",
-          "name": "Float64"
+          "name": "Float64",
+          "type": 8
         },
         {
           "id": "19:2927532418453906842",
-          "name": "Date"
+          "name": "Date",
+          "type": 10
         },
         {
           "id": "20:2323084480359838337",
-          "name": "Complex128"
+          "name": "Complex128",
+          "type": 23
         },
         {
           "id": "21:3893192683529392073",
-          "name": "StringVector"
+          "name": "StringVector",
+          "type": 30
         },
         {
           "id": "22:6981354105569415135",
           "name": "Related",
-          "indexId": "1:7297830522090799401"
+          "indexId": "1:7297830522090799401",
+          "type": 11,
+          "flags": 8192,
+          "relationTarget": "TestEntityRelated"
         },
         {
           "id": "23:2938782103279095882",
           "name": "RelatedPtr",
-          "indexId": "2:1636618737379039866"
+          "indexId": "2:1636618737379039866",
+          "type": 11,
+          "flags": 8192,
+          "relationTarget": "TestEntityRelated"
         },
         {
           "id": "24:7776035803207726954",
           "name": "RelatedPtr2",
-          "indexId": "3:6077259218141868916"
+          "indexId": "3:6077259218141868916",
+          "type": 11,
+          "flags": 8192,
+          "relationTarget": "TestEntityRelated"
         }
       ],
       "relations": [
         {
           "id": "4:5379891792880176678",
-          "name": "RelatedSlice"
+          "name": "RelatedSlice",
+          "targetId": "3:2793387980842421409"
         },
         {
           "id": "5:1694321226239708534",
-          "name": "RelatedPtrSlice"
+          "name": "RelatedPtrSlice",
+          "targetId": "5:145948658381494339"
         }
       ]
     },
     {
       "id": "2:5412225159475839048",
-      "name": "TestStringIdEntity",
       "lastPropertyId": "1:4639124040173808562",
+      "name": "TestStringIdEntity",
       "properties": [
         {
           "id": "1:4639124040173808562",
-          "name": "Id"
+          "name": "Id",
+          "type": 6,
+          "flags": 8193
         }
       ]
     },
     {
       "id": "3:2793387980842421409",
-      "name": "EntityByValue",
       "lastPropertyId": "2:6704507893545428268",
+      "name": "EntityByValue",
       "properties": [
         {
           "id": "1:8853550994304785841",
-          "name": "Id"
+          "name": "Id",
+          "type": 6,
+          "flags": 8193
         },
         {
           "id": "2:6704507893545428268",
-          "name": "Text"
+          "name": "Text",
+          "type": 9
         }
       ]
     },
     {
       "id": "4:7566870022778519807",
-      "name": "TestEntityInline",
       "lastPropertyId": "3:5298431058949014957",
+      "name": "TestEntityInline",
       "properties": [
         {
           "id": "1:6052475349651303914",
-          "name": "Date"
+          "name": "Date",
+          "type": 10
         },
         {
           "id": "2:7019205901062172310",
-          "name": "Value"
+          "name": "Value",
+          "type": 8
         },
         {
           "id": "3:5298431058949014957",
-          "name": "Id"
+          "name": "Id",
+          "type": 6,
+          "flags": 8193
         }
       ]
     },
     {
       "id": "5:145948658381494339",
-      "name": "TestEntityRelated",
       "lastPropertyId": "3:3103593908461833729",
+      "name": "TestEntityRelated",
       "properties": [
         {
           "id": "1:710127486443861244",
-          "name": "Id"
+          "name": "Id",
+          "type": 6,
+          "flags": 8193
         },
         {
           "id": "2:1781092268467778149",
-          "name": "Name"
+          "name": "Name",
+          "type": 9
         },
         {
           "id": "3:3103593908461833729",
           "name": "Next",
-          "indexId": "4:3414034888235702623"
+          "indexId": "4:3414034888235702623",
+          "type": 11,
+          "flags": 8192,
+          "relationTarget": "EntityByValue"
         }
       ],
       "relations": [
         {
           "id": "6:3119566795324383223",
-          "name": "NextSlice"
+          "name": "NextSlice",
+          "targetId": "3:2793387980842421409"
         }
       ]
     }
@@ -196,6 +248,8 @@
   "lastEntityId": "5:145948658381494339",
   "lastIndexId": "4:3414034888235702623",
   "lastRelationId": "6:3119566795324383223",
+  "modelVersion": 5,
+  "modelVersionParserMinimum": 5,
   "retiredEntityUids": [],
   "retiredIndexUids": [],
   "retiredPropertyUids": [],
@@ -203,5 +257,6 @@
     1741387849434222945,
     3069800080112765817,
     99179225746609767
-  ]
+  ],
+  "version": 1
 }

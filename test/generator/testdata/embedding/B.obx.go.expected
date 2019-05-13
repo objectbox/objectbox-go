@@ -62,13 +62,13 @@ func (b_EntityInfo) GeneratorVersion() int {
 // AddToModel is called by ObjectBox during model build
 func (b_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("B", 2, 501233450539197794)
-	model.Property("Text", objectbox.PropertyType_String, 1, 3390393562759376202)
-	model.Property("Id", objectbox.PropertyType_Long, 2, 2669985732393126063)
-	model.PropertyFlags(objectbox.PropertyFlags_UNSIGNED | objectbox.PropertyFlags_ID)
-	model.Property("Value", objectbox.PropertyType_Double, 3, 1774932891286980153)
-	model.PropertyFlags(objectbox.PropertyFlags_UNIQUE)
+	model.Property("Text", 9, 1, 3390393562759376202)
+	model.Property("Id", 6, 2, 2669985732393126063)
+	model.PropertyFlags(8193)
+	model.Property("Value", 8, 3, 1774932891286980153)
+	model.PropertyFlags(32)
 	model.PropertyIndex(1, 6044372234677422456)
-	model.Property("Name", objectbox.PropertyType_String, 4, 8274930044578894929)
+	model.Property("Name", 9, 4, 8274930044578894929)
 	model.EntityLastPropertyId(4, 8274930044578894929)
 }
 

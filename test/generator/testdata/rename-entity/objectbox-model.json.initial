@@ -21,5 +21,6 @@
   "lastIndexId": "",
   "retiredEntityUids": [],
   "retiredIndexUids": [],
-  "retiredPropertyUids": []
+  "retiredPropertyUids": [],
+  "version": 1
 }

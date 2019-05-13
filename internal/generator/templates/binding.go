@@ -31,7 +31,7 @@ var BindingTemplate = template.Must(template.New("binding").Funcs(funcMap).Parse
     	{{- else if eq .GoType "int"}} int(table.GetUint64Slot({{.FbvTableOffset}}, 0))
     	{{- else if eq .GoType "uint"}} uint(table.GetUint64Slot({{.FbvTableOffset}}, 0))
 		{{- else if eq .GoType "rune"}} rune(table.GetInt32Slot({{.FbvTableOffset}}, 0))
-		{{- else if eq .FbType "UOffsetT"}} fbutils.Get{{.ObType}}Slot(table, {{.FbvTableOffset}})
+		{{- else if eq .FbType "UOffsetT"}} fbutils.Get{{.ObTypeString}}Slot(table, {{.FbvTableOffset}})
     	{{- else}} table.Get{{.GoType | StringTitle}}Slot({{.FbvTableOffset}}, 0)
     	{{- end}}
 	{{- if or .Converter .CastOnWrite}}){{end}}
@@ -110,12 +110,9 @@ func ({{$entityNameCamel}}_EntityInfo) GeneratorVersion() int {
 func ({{$entityNameCamel}}_EntityInfo) AddToModel(model *objectbox.Model) {
     model.Entity("{{$entity.Name}}", {{$entity.Id}}, {{$entity.Uid}})
     {{range $property := $entity.Properties -}}
-    model.Property("{{$property.ObName}}", objectbox.PropertyType_{{$property.ObType}}, {{$property.Id}}, {{$property.Uid}})
+    model.Property("{{$property.ObName}}", {{$property.ObType}}, {{$property.Id}}, {{$property.Uid}})
     {{if len $property.ObFlags -}}
-        model.PropertyFlags(
-        {{- range $key, $flag := $property.ObFlags -}}
-            {{if gt $key 0}} | {{end}}objectbox.PropertyFlags_{{$flag}}
-        {{- end}})
+        model.PropertyFlags({{$property.ObFlagsCombined}})
     {{end -}}
 	{{if $property.Relation}}model.PropertyRelation("{{$property.Relation.Target.Name}}", {{$property.Index.Id}}, {{$property.Index.Uid}})
 	{{else if $property.Index}}model.PropertyIndex({{$property.Index.Id}}, {{$property.Index.Uid}})
@@ -199,7 +196,7 @@ func ({{$entityNameCamel}}_EntityInfo) Flatten(object interface{}, fbb *flatbuff
 	{{- end -}}
 
     {{- range $property := $entity.Properties}}{{if eq $property.FbType "UOffsetT"}}
-    var offset{{$property.Name}} = fbutils.Create{{$property.ObType}}Offset(fbb, {{template "property-converter-encode" $property}})
+    var offset{{$property.Name}} = fbutils.Create{{$property.ObTypeString}}Offset(fbb, {{template "property-converter-encode" $property}})
 	{{- end}}{{end}}
 
 	{{- block "store-relations" $entity}}

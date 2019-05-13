@@ -48,9 +48,9 @@ func (timeEntity_EntityInfo) GeneratorVersion() int {
 // AddToModel is called by ObjectBox during model build
 func (timeEntity_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("TimeEntity", 3, 3390393562759376202)
-	model.Property("Id", objectbox.PropertyType_Long, 1, 2669985732393126063)
-	model.PropertyFlags(objectbox.PropertyFlags_UNSIGNED | objectbox.PropertyFlags_ID)
-	model.Property("Time", objectbox.PropertyType_Date, 2, 1774932891286980153)
+	model.Property("Id", 6, 1, 2669985732393126063)
+	model.PropertyFlags(8193)
+	model.Property("Time", 10, 2, 1774932891286980153)
 	model.EntityLastPropertyId(2, 1774932891286980153)
 }
 

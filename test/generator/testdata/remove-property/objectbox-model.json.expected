@@ -1,48 +1,54 @@
 {
-  "comment": [
-    "KEEP THIS FILE! Check it into a version control system (VCS) like git.",
-    "ObjectBox manages crucial IDs for your object model. See docs for details.",
-    "If you have VCS merge conflicts, you must resolve them according to ObjectBox docs."
-  ],
+  "_note1": "KEEP THIS FILE! Check it into a version control system (VCS) like git.",
+  "_note2": "ObjectBox manages crucial IDs for your object model. See docs for details.",
+  "_note3": "If you have VCS merge conflicts, you must resolve them according to ObjectBox docs.",
   "entities": [
     {
       "id": "1:8717895732742165505",
-      "name": "A",
       "lastPropertyId": "2:6050128673802995827",
+      "name": "A",
       "properties": [
         {
           "id": "1:2259404117704393152",
-          "name": "Id"
+          "name": "Id",
+          "type": 6,
+          "flags": 8193
         }
       ]
     },
     {
       "id": "2:501233450539197794",
-      "name": "B",
       "lastPropertyId": "3:1774932891286980153",
+      "name": "B",
       "properties": [
         {
           "id": "1:3390393562759376202",
-          "name": "Id"
+          "name": "Id",
+          "type": 6,
+          "flags": 8193
         },
         {
           "id": "3:1774932891286980153",
-          "name": "New"
+          "name": "New",
+          "type": 6
         }
       ]
     },
     {
       "id": "3:6044372234677422456",
-      "name": "C",
       "lastPropertyId": "3:2661732831099943416",
+      "name": "C",
       "properties": [
         {
           "id": "1:8274930044578894929",
-          "name": "Id"
+          "name": "Id",
+          "type": 6,
+          "flags": 8193
         },
         {
           "id": "3:2661732831099943416",
-          "name": "New"
+          "name": "New",
+          "type": 6
         }
       ]
     }
@@ -50,6 +56,8 @@
   "lastEntityId": "3:6044372234677422456",
   "lastIndexId": "",
   "lastRelationId": "",
+  "modelVersion": 5,
+  "modelVersionParserMinimum": 5,
   "retiredEntityUids": [],
   "retiredIndexUids": [],
   "retiredPropertyUids": [
@@ -57,5 +65,6 @@
     6050128673802995827,
     2669985732393126063
   ],
-  "retiredRelationUids": null
+  "retiredRelationUids": null,
+  "version": 1
 }

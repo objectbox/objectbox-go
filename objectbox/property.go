@@ -29,6 +29,22 @@ func (property BaseProperty) entityId() TypeId {
 	return property.Entity.Id
 }
 
+func (property BaseProperty) IsNil() Condition {
+	return &conditionClosure{
+		func(qb *QueryBuilder) (ConditionId, error) {
+			return qb.IsNil(&property)
+		},
+	}
+}
+
+func (property BaseProperty) IsNotNil() Condition {
+	return &conditionClosure{
+		func(qb *QueryBuilder) (ConditionId, error) {
+			return qb.IsNotNil(&property)
+		},
+	}
+}
+
 // TODO consider not using closures but defining conditions for each operation
 // test performance to make an informed decision as that approach requires much more code and is not so clean
 

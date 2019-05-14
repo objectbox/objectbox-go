@@ -69,9 +69,9 @@ type Entity struct {
 	Uint64Ptr       *uint64
 	BoolPtr         *bool
 	StringPtr       *string
-	//StringVectorPtr *[]string
+	StringVectorPtr *[]string
 	BytePtr         *byte
-	//ByteVectorPtr   *[]byte
+	ByteVectorPtr   *[]byte
 	RunePtr         *rune
 	Float32Ptr      *float32
 	Float64Ptr      *float64

@@ -5,7 +5,7 @@
   "entities": [
     {
       "id": "1:3022148985475790732",
-      "lastPropertyId": "42:9203830121246076395",
+      "lastPropertyId": "44:6100401720382402484",
       "name": "Entity",
       "properties": [
         {
@@ -227,6 +227,16 @@
           "id": "42:9203830121246076395",
           "name": "Float64Ptr",
           "type": 8
+        },
+        {
+          "id": "43:4222000762705400780",
+          "name": "StringVectorPtr",
+          "type": 30
+        },
+        {
+          "id": "44:6100401720382402484",
+          "name": "ByteVectorPtr",
+          "type": 23
         }
       ],
       "relations": [

@@ -103,8 +103,7 @@ func (expr astTypeExpr) IsNamed() bool {
 	if t, err := expr.source.getType(expr.Expr); err != nil {
 		panic(err)
 	} else {
-		_, isBasic := t.(*types.Basic)
-		return !isBasic
+		return typesTypeErrorful{Type: t}.IsNamed()
 	}
 }
 
@@ -178,8 +177,8 @@ func (typ typesTypeErrorful) String() string {
 }
 
 func (typ typesTypeErrorful) IsNamed() bool {
-	_, isBasic := typ.Type.(*types.Basic)
-	return !isBasic
+	_, isNamed := typ.Type.(*types.Named)
+	return isNamed
 }
 
 func (typ typesTypeErrorful) UnderlyingOrError() (types.Type, error) {

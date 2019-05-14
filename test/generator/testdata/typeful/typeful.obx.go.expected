@@ -18,7 +18,7 @@ var TypefulBinding = typeful_EntityInfo{
 	Entity: objectbox.Entity{
 		Id: 3,
 	},
-	Uid: 2627038740284806767,
+	Uid: 4035568504096476779,
 }
 
 // Typeful_ contains type-based Property helpers to facilitate some common operations such as Queries.
@@ -173,34 +173,34 @@ func (typeful_EntityInfo) GeneratorVersion() int {
 
 // AddToModel is called by ObjectBox during model build
 func (typeful_EntityInfo) AddToModel(model *objectbox.Model) {
-	model.Entity("Typeful", 3, 2627038740284806767)
-	model.Property("Id", 6, 1, 6303220950515014660)
+	model.Entity("Typeful", 3, 4035568504096476779)
+	model.Property("Id", 6, 1, 959367522974354090)
 	model.PropertyFlags(8193)
-	model.Property("Int", 6, 2, 4035568504096476779)
-	model.Property("Int8", 2, 3, 959367522974354090)
-	model.Property("Int16", 3, 4, 2914295034816259174)
-	model.Property("Int32", 5, 5, 1395437218309923052)
-	model.Property("Int64", 6, 6, 6745438398739480977)
-	model.Property("Uint", 6, 7, 2897681629866238117)
+	model.Property("Int", 6, 2, 2914295034816259174)
+	model.Property("Int8", 2, 3, 1395437218309923052)
+	model.Property("Int16", 3, 4, 6745438398739480977)
+	model.Property("Int32", 5, 5, 2897681629866238117)
+	model.Property("Int64", 6, 6, 3398579248012586914)
+	model.Property("Uint", 6, 7, 5974317550424871033)
 	model.PropertyFlags(8192)
-	model.Property("Uint8", 2, 8, 3398579248012586914)
+	model.Property("Uint8", 2, 8, 3317123977833389635)
 	model.PropertyFlags(8192)
-	model.Property("Uint16", 3, 9, 5974317550424871033)
+	model.Property("Uint16", 3, 9, 5001958211167890979)
 	model.PropertyFlags(8192)
-	model.Property("Uint32", 5, 10, 3317123977833389635)
+	model.Property("Uint32", 5, 10, 167566062957544642)
 	model.PropertyFlags(8192)
-	model.Property("Uint64", 6, 11, 5001958211167890979)
+	model.Property("Uint64", 6, 11, 4778690082005258714)
 	model.PropertyFlags(8192)
-	model.Property("Bool", 1, 12, 167566062957544642)
-	model.Property("String", 9, 13, 4778690082005258714)
-	model.Property("StringVector", 30, 14, 1059542851699319360)
-	model.Property("Byte", 2, 15, 6972732843819909978)
-	model.Property("ByteVector", 23, 16, 5558237345453186302)
-	model.Property("Rune", 5, 17, 7845762441295307478)
-	model.Property("Float32", 7, 18, 771642788862502430)
-	model.Property("Float64", 8, 19, 8514850266767180993)
-	model.Property("Date", 10, 20, 8683452355129068124)
-	model.EntityLastPropertyId(20, 8683452355129068124)
+	model.Property("Bool", 1, 12, 1059542851699319360)
+	model.Property("String", 9, 13, 6972732843819909978)
+	model.Property("StringVector", 30, 14, 5558237345453186302)
+	model.Property("Byte", 2, 15, 7845762441295307478)
+	model.Property("ByteVector", 23, 16, 771642788862502430)
+	model.Property("Rune", 5, 17, 8514850266767180993)
+	model.Property("Float32", 7, 18, 8683452355129068124)
+	model.Property("Float64", 8, 19, 4345851588384648695)
+	model.Property("Date", 10, 20, 7699391924090763411)
+	model.EntityLastPropertyId(20, 7699391924090763411)
 }
 
 // GetId is called by ObjectBox during Put operations to check for existing ID on an object

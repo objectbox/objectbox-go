@@ -16,9 +16,9 @@ type Nillable struct {
 	Uint64       *uint64
 	Bool         *bool
 	String       *string
-	//StringVector *[]string
+	StringVector *[]string
 	Byte         *byte
-	//ByteVector   *[]byte
+	ByteVector   *[]byte
 	Rune         *rune
 	Float32      *float32
 	Float64      *float64

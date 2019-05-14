@@ -23,24 +23,26 @@ var NillableBinding = nillable_EntityInfo{
 
 // Nillable_ contains type-based Property helpers to facilitate some common operations such as Queries.
 var Nillable_ = struct {
-	Id      *objectbox.PropertyUint64
-	Int     *objectbox.PropertyInt
-	Int8    *objectbox.PropertyInt8
-	Int16   *objectbox.PropertyInt16
-	Int32   *objectbox.PropertyInt32
-	Int64   *objectbox.PropertyInt64
-	Uint    *objectbox.PropertyUint
-	Uint8   *objectbox.PropertyUint8
-	Uint16  *objectbox.PropertyUint16
-	Uint32  *objectbox.PropertyUint32
-	Uint64  *objectbox.PropertyUint64
-	Bool    *objectbox.PropertyBool
-	String  *objectbox.PropertyString
-	Byte    *objectbox.PropertyByte
-	Rune    *objectbox.PropertyRune
-	Float32 *objectbox.PropertyFloat32
-	Float64 *objectbox.PropertyFloat64
-	Date    *objectbox.PropertyInt64
+	Id           *objectbox.PropertyUint64
+	Int          *objectbox.PropertyInt
+	Int8         *objectbox.PropertyInt8
+	Int16        *objectbox.PropertyInt16
+	Int32        *objectbox.PropertyInt32
+	Int64        *objectbox.PropertyInt64
+	Uint         *objectbox.PropertyUint
+	Uint8        *objectbox.PropertyUint8
+	Uint16       *objectbox.PropertyUint16
+	Uint32       *objectbox.PropertyUint32
+	Uint64       *objectbox.PropertyUint64
+	Bool         *objectbox.PropertyBool
+	String       *objectbox.PropertyString
+	StringVector *objectbox.PropertyStringVector
+	Byte         *objectbox.PropertyByte
+	ByteVector   *objectbox.PropertyByteVector
+	Rune         *objectbox.PropertyRune
+	Float32      *objectbox.PropertyFloat32
+	Float64      *objectbox.PropertyFloat64
+	Date         *objectbox.PropertyInt64
 }{
 	Id: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
@@ -120,33 +122,45 @@ var Nillable_ = struct {
 			Entity: &NillableBinding.Entity,
 		},
 	},
-	Byte: &objectbox.PropertyByte{
+	StringVector: &objectbox.PropertyStringVector{
 		BaseProperty: &objectbox.BaseProperty{
 			Id:     14,
 			Entity: &NillableBinding.Entity,
 		},
 	},
-	Rune: &objectbox.PropertyRune{
+	Byte: &objectbox.PropertyByte{
 		BaseProperty: &objectbox.BaseProperty{
 			Id:     15,
 			Entity: &NillableBinding.Entity,
 		},
 	},
-	Float32: &objectbox.PropertyFloat32{
+	ByteVector: &objectbox.PropertyByteVector{
 		BaseProperty: &objectbox.BaseProperty{
 			Id:     16,
 			Entity: &NillableBinding.Entity,
 		},
 	},
-	Float64: &objectbox.PropertyFloat64{
+	Rune: &objectbox.PropertyRune{
 		BaseProperty: &objectbox.BaseProperty{
 			Id:     17,
 			Entity: &NillableBinding.Entity,
 		},
 	},
-	Date: &objectbox.PropertyInt64{
+	Float32: &objectbox.PropertyFloat32{
 		BaseProperty: &objectbox.BaseProperty{
 			Id:     18,
+			Entity: &NillableBinding.Entity,
+		},
+	},
+	Float64: &objectbox.PropertyFloat64{
+		BaseProperty: &objectbox.BaseProperty{
+			Id:     19,
+			Entity: &NillableBinding.Entity,
+		},
+	},
+	Date: &objectbox.PropertyInt64{
+		BaseProperty: &objectbox.BaseProperty{
+			Id:     20,
 			Entity: &NillableBinding.Entity,
 		},
 	},
@@ -179,12 +193,14 @@ func (nillable_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.PropertyFlags(8192)
 	model.Property("Bool", 1, 12, 3287288577352441706)
 	model.Property("String", 9, 13, 3930927879439176946)
-	model.Property("Byte", 2, 14, 4706154865122290029)
-	model.Property("Rune", 5, 15, 2217592893536642650)
-	model.Property("Float32", 7, 16, 1929546706668609706)
-	model.Property("Float64", 8, 17, 6392442863481646880)
-	model.Property("Date", 10, 18, 3706853784096366226)
-	model.EntityLastPropertyId(18, 3706853784096366226)
+	model.Property("StringVector", 30, 14, 4706154865122290029)
+	model.Property("Byte", 2, 15, 2217592893536642650)
+	model.Property("ByteVector", 23, 16, 1929546706668609706)
+	model.Property("Rune", 5, 17, 6392442863481646880)
+	model.Property("Float32", 7, 18, 3706853784096366226)
+	model.Property("Float64", 8, 19, 2627038740284806767)
+	model.Property("Date", 10, 20, 6303220950515014660)
+	model.EntityLastPropertyId(20, 6303220950515014660)
 }
 
 // GetId is called by ObjectBox during Put operations to check for existing ID on an object
@@ -209,9 +225,17 @@ func (nillable_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder,
 	if obj.String != nil {
 		offsetString = fbutils.CreateStringOffset(fbb, *obj.String)
 	}
+	var offsetStringVector flatbuffers.UOffsetT
+	if obj.StringVector != nil {
+		offsetStringVector = fbutils.CreateStringVectorOffset(fbb, *obj.StringVector)
+	}
+	var offsetByteVector flatbuffers.UOffsetT
+	if obj.ByteVector != nil {
+		offsetByteVector = fbutils.CreateByteVectorOffset(fbb, *obj.ByteVector)
+	}
 
 	// build the FlatBuffers object
-	fbb.StartObject(18)
+	fbb.StartObject(20)
 	fbutils.SetUint64Slot(fbb, 0, id)
 	if obj.Int != nil {
 		fbutils.SetInt64Slot(fbb, 1, int64(*obj.Int))
@@ -249,20 +273,26 @@ func (nillable_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder,
 	if obj.String != nil {
 		fbutils.SetUOffsetTSlot(fbb, 12, offsetString)
 	}
+	if obj.StringVector != nil {
+		fbutils.SetUOffsetTSlot(fbb, 13, offsetStringVector)
+	}
 	if obj.Byte != nil {
-		fbutils.SetByteSlot(fbb, 13, *obj.Byte)
+		fbutils.SetByteSlot(fbb, 14, *obj.Byte)
+	}
+	if obj.ByteVector != nil {
+		fbutils.SetUOffsetTSlot(fbb, 15, offsetByteVector)
 	}
 	if obj.Rune != nil {
-		fbutils.SetInt32Slot(fbb, 14, *obj.Rune)
+		fbutils.SetInt32Slot(fbb, 16, *obj.Rune)
 	}
 	if obj.Float32 != nil {
-		fbutils.SetFloat32Slot(fbb, 15, *obj.Float32)
+		fbutils.SetFloat32Slot(fbb, 17, *obj.Float32)
 	}
 	if obj.Float64 != nil {
-		fbutils.SetFloat64Slot(fbb, 16, *obj.Float64)
+		fbutils.SetFloat64Slot(fbb, 18, *obj.Float64)
 	}
 	if obj.Date != nil {
-		fbutils.SetInt64Slot(fbb, 17, *obj.Date)
+		fbutils.SetInt64Slot(fbb, 19, *obj.Date)
 	}
 	return nil
 }
@@ -276,24 +306,26 @@ func (nillable_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) (inter
 	var id = table.GetUint64Slot(4, 0)
 
 	return &Nillable{
-		Id:      id,
-		Int:     fbutils.GetIntPtrSlot(table, 6),
-		Int8:    fbutils.GetInt8PtrSlot(table, 8),
-		Int16:   fbutils.GetInt16PtrSlot(table, 10),
-		Int32:   fbutils.GetInt32PtrSlot(table, 12),
-		Int64:   fbutils.GetInt64PtrSlot(table, 14),
-		Uint:    fbutils.GetUintPtrSlot(table, 16),
-		Uint8:   fbutils.GetUint8PtrSlot(table, 18),
-		Uint16:  fbutils.GetUint16PtrSlot(table, 20),
-		Uint32:  fbutils.GetUint32PtrSlot(table, 22),
-		Uint64:  fbutils.GetUint64PtrSlot(table, 24),
-		Bool:    fbutils.GetBoolPtrSlot(table, 26),
-		String:  fbutils.GetStringPtrSlot(table, 28),
-		Byte:    fbutils.GetBytePtrSlot(table, 30),
-		Rune:    fbutils.GetRunePtrSlot(table, 32),
-		Float32: fbutils.GetFloat32PtrSlot(table, 34),
-		Float64: fbutils.GetFloat64PtrSlot(table, 36),
-		Date:    fbutils.GetInt64PtrSlot(table, 38),
+		Id:           id,
+		Int:          fbutils.GetIntPtrSlot(table, 6),
+		Int8:         fbutils.GetInt8PtrSlot(table, 8),
+		Int16:        fbutils.GetInt16PtrSlot(table, 10),
+		Int32:        fbutils.GetInt32PtrSlot(table, 12),
+		Int64:        fbutils.GetInt64PtrSlot(table, 14),
+		Uint:         fbutils.GetUintPtrSlot(table, 16),
+		Uint8:        fbutils.GetUint8PtrSlot(table, 18),
+		Uint16:       fbutils.GetUint16PtrSlot(table, 20),
+		Uint32:       fbutils.GetUint32PtrSlot(table, 22),
+		Uint64:       fbutils.GetUint64PtrSlot(table, 24),
+		Bool:         fbutils.GetBoolPtrSlot(table, 26),
+		String:       fbutils.GetStringPtrSlot(table, 28),
+		StringVector: fbutils.GetStringVectorPtrSlot(table, 30),
+		Byte:         fbutils.GetBytePtrSlot(table, 32),
+		ByteVector:   fbutils.GetByteVectorPtrSlot(table, 34),
+		Rune:         fbutils.GetRunePtrSlot(table, 36),
+		Float32:      fbutils.GetFloat32PtrSlot(table, 38),
+		Float64:      fbutils.GetFloat64PtrSlot(table, 40),
+		Date:         fbutils.GetInt64PtrSlot(table, 42),
 	}, nil
 }
 

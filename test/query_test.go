@@ -543,11 +543,9 @@ func TestQueryUint(t *testing.T) {
 	env := model.NewTestEnv(t)
 	defer env.Close()
 
-	env.Box.Put(&model.Entity{})
-
 	const MaxInt = int(^uint(0) >> 1)
 
-	var e = model.Entity47()
+	var e = &model.Entity{}
 	e.Uint = uint(MaxInt) + 10          // > int max
 	e.Uint64 = 9223372036854775807 + 10 // > int64 max
 	e.Uint32 = 2147483647 + 10          // > int32 max

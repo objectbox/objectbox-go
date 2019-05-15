@@ -131,20 +131,11 @@ func (taskRelEmbedded_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (i
 		}
 	}
 
-	var relGroups []*Group
-	if rIds, err := BoxForTaskRelEmbedded(ob).RelationIds(TaskRelEmbedded_.Groups, id); err != nil {
-		return nil, err
-	} else if rSlice, err := BoxForGroup(ob).GetMany(rIds...); err != nil {
-		return nil, err
-	} else {
-		relGroups = rSlice
-	}
-
 	return &TaskRelEmbedded{
 		Id: id,
 		WithGroup: WithGroup{
 			Group:  relGroup,
-			Groups: relGroups,
+			Groups: nil, // see box.GetRelated()
 		},
 	}, nil
 }
@@ -244,6 +235,46 @@ func (box *TaskRelEmbeddedBox) GetAll() ([]*TaskRelEmbedded, error) {
 		return nil, err
 	}
 	return objects.([]*TaskRelEmbedded), nil
+}
+
+// GetRelated reads related (to-many) objects and sets the appropriate properties of the object.
+// If no properties are given, it will load all to-many relations.
+func (box *TaskRelEmbeddedBox) GetRelated(object *TaskRelEmbedded, properties ...*objectbox.RelationToMany) error {
+	var id = object.Id
+
+	if properties == nil {
+		properties = []*objectbox.RelationToMany{
+			TaskRelEmbedded_.Groups,
+		}
+	}
+
+	for _, property := range properties {
+		rIds, err := box.RelationIds(property, id)
+		if err != nil {
+			return err
+		}
+
+		if property == TaskRelEmbedded_.Groups {
+			if rSlice, err := BoxForGroup(box.ObjectBox).GetMany(rIds...); err != nil {
+				return err
+			} else {
+				object.Groups = rSlice
+			}
+		}
+	}
+
+	return nil
+}
+
+// GetRelatedForEach calls GetRelated() on each of the objects in the given slice.
+// See GetRelated() for more details.
+func (box *TaskRelEmbeddedBox) GetRelatedForEach(objects []*TaskRelEmbedded, properties ...*objectbox.RelationToMany) error {
+	for key := range objects {
+		if err := box.GetRelated(objects[key]); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // Remove deletes a single object

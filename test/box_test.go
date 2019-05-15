@@ -268,6 +268,8 @@ func TestBoxPutData(t *testing.T) {
 
 	read, err := env.Box.Get(id)
 	assert.NoErr(t, err)
+	assert.NoErr(t, env.Box.GetRelated(read))
+	assert.NoErr(t, model.BoxForTestEntityRelated(env.ObjectBox).GetRelated(&read.Related))
 	assert.Eq(t, inserted, read)
 }
 
@@ -275,7 +277,7 @@ func TestBoxPutAndGetStringVectorsEmptyAndNil(t *testing.T) {
 	env := model.NewTestEnv(t)
 	defer env.Close()
 
-	var inserted = model.Entity47()
+	var inserted = &model.Entity{}
 
 	// test empty vectors
 	inserted.StringVector = []string{}

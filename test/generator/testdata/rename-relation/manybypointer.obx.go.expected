@@ -88,18 +88,10 @@ func (taskRelManyPtr_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (in
 	}
 	var id = table.GetUint64Slot(4, 0)
 
-	var relGroupsNew []*Group
-	if rIds, err := BoxForTaskRelManyPtr(ob).RelationIds(TaskRelManyPtr_.GroupsNew, id); err != nil {
-		return nil, err
-	} else if rSlice, err := BoxForGroup(ob).GetMany(rIds...); err != nil {
-		return nil, err
-	} else {
-		relGroupsNew = rSlice
-	}
-
 	return &TaskRelManyPtr{
 		Id:        id,
-		GroupsNew: relGroupsNew,
+		GroupsNew: nil, // see box.GetRelated()
+
 	}, nil
 }
 
@@ -198,6 +190,46 @@ func (box *TaskRelManyPtrBox) GetAll() ([]*TaskRelManyPtr, error) {
 		return nil, err
 	}
 	return objects.([]*TaskRelManyPtr), nil
+}
+
+// GetRelated reads related (to-many) objects and sets the appropriate properties of the object.
+// If no properties are given, it will load all to-many relations.
+func (box *TaskRelManyPtrBox) GetRelated(object *TaskRelManyPtr, properties ...*objectbox.RelationToMany) error {
+	var id = object.Id
+
+	if properties == nil {
+		properties = []*objectbox.RelationToMany{
+			TaskRelManyPtr_.GroupsNew,
+		}
+	}
+
+	for _, property := range properties {
+		rIds, err := box.RelationIds(property, id)
+		if err != nil {
+			return err
+		}
+
+		if property == TaskRelManyPtr_.GroupsNew {
+			if rSlice, err := BoxForGroup(box.ObjectBox).GetMany(rIds...); err != nil {
+				return err
+			} else {
+				object.GroupsNew = rSlice
+			}
+		}
+	}
+
+	return nil
+}
+
+// GetRelatedForEach calls GetRelated() on each of the objects in the given slice.
+// See GetRelated() for more details.
+func (box *TaskRelManyPtrBox) GetRelatedForEach(objects []*TaskRelManyPtr, properties ...*objectbox.RelationToMany) error {
+	for key := range objects {
+		if err := box.GetRelated(objects[key]); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // Remove deletes a single object

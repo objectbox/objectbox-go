@@ -193,7 +193,7 @@ func (ob *ObjectBox) box(typeId TypeId) (*Box, error) {
 	entity := ob.getEntityById(typeId)
 
 	box = &Box{
-		objectBox: ob,
+		ObjectBox: ob,
 		entity:    entity,
 	}
 

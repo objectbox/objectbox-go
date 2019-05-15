@@ -930,6 +930,16 @@ func (entity *Entity) HasRelations() bool {
 	return false
 }
 
+func (entity *Entity) HasStandaloneRelations() bool {
+	for _, field := range entity.Fields {
+		if field.HasStandaloneRelations() {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (field *Field) HasRelations() bool {
 	if field.StandaloneRelation != nil || field.SimpleRelation != nil {
 		return true
@@ -937,6 +947,20 @@ func (field *Field) HasRelations() bool {
 
 	for _, inner := range field.Fields {
 		if inner.HasRelations() {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (field *Field) HasStandaloneRelations() bool {
+	if field.StandaloneRelation != nil {
+		return true
+	}
+
+	for _, inner := range field.Fields {
+		if inner.HasStandaloneRelations() {
 			return true
 		}
 	}

@@ -257,15 +257,7 @@ func ({{$entityNameCamel}}_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byt
 			{{end -}}
 			}
 		{{else if $field.StandaloneRelation -}}
-			var rel{{$field.Name}} {{$field.Type}} 
-			if rIds, err := BoxFor{{$field.Entity.Name}}(ob).RelationIds({{.Entity.Name}}_.{{$field.Name}}, id); err != nil {
-				return nil, err
-			} else if rSlice, err := BoxFor{{$field.StandaloneRelation.Target.Name}}(ob).GetMany(rIds...); err != nil {
-				return nil, err
-			} else {
-				rel{{$field.Name}} = rSlice
-			}
-			
+			{{/* standalone (many-to-many) relations are not loaded eagerly */}}
 		{{else}}{{/* recursively visit fields in embedded structs */}}{{template "load-relations" $field}}
 		{{- end}}
 	{{end}}{{end}}
@@ -274,15 +266,15 @@ func ({{$entityNameCamel}}_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byt
 	{{- block "fields-initializer" $entity}}
 		{{- range $field := .Fields}}
 			{{$field.Name}}: 
-				{{- if or $field.SimpleRelation}}{{if not $field.IsPointer}}*{{end}}rel{{$field.Name}}
-				{{- else if $field.StandaloneRelation}}rel{{$field.Name}}
+				{{- if $field.SimpleRelation}}{{if not $field.IsPointer}}*{{end}}rel{{$field.Name}},
+				{{- else if $field.StandaloneRelation}}nil, // see box.GetRelated()
         		{{- else if $field.IsId}}{{with $field.Property}}
 					{{- if .Converter}}{{.Converter}}ToEntityProperty(
 					{{- else if .CastOnWrite}}{{.CastOnWrite}}({{end -}}
 					id
-					{{- if or .Converter .CastOnWrite}}){{end}}{{end}}
-				{{- else if $field.Property}}{{template "property-getter" $field.Property}}
-				{{- else}}{{if $field.IsPointer}}&{{end}}{{$field.Type}}{ {{template "fields-initializer" $field}} }{{end}},
+					{{- if or .Converter .CastOnWrite}}){{end}}{{end}},
+				{{- else if $field.Property}}{{template "property-getter" $field.Property}},
+				{{- else}}{{if $field.IsPointer}}&{{end}}{{$field.Type}}{ {{template "fields-initializer" $field}} },{{end}}
 		{{- end}}
 	{{end}}
 	}, nil
@@ -384,6 +376,64 @@ func (box *{{$entity.Name}}Box) GetAll() ([]{{if not $.Options.ByValue}}*{{end}}
 	}
 	return objects.([]{{if not $.Options.ByValue}}*{{end}}{{$entity.Name}}), nil
 }
+
+{{if $entity.HasStandaloneRelations}}
+// GetRelated reads related (to-many) objects and sets the appropriate properties of the object.
+// If no properties are given, it will load all to-many relations.
+func (box *{{$entity.Name}}Box) GetRelated(object *{{$entity.Name}}, properties ...*objectbox.RelationToMany) error {
+	var id = {{if $entity.IdProperty.Converter}}{{$entity.IdProperty.Converter}}ToDatabaseValue({{end -}}
+					object.{{$entity.IdProperty.Path}}{{if $entity.IdProperty.Converter}}){{end}}
+
+	if properties == nil {
+		properties = []*objectbox.RelationToMany{
+		{{- block "get-related-proplist" $entity}}
+		{{- range $field := .Fields}}
+			{{- if $field.SimpleRelation -}}
+				{{/* already loaded eagerly in binding.Load() */}}
+			{{- else if $field.StandaloneRelation}}
+				{{.Entity.Name}}_.{{$field.Name}},
+			{{- else}}{{/* recursively visit fields in embedded structs */}}{{template "get-related-proplist" $field}}
+			{{- end}}
+		{{- end}}{{end}}
+		}
+	}
+
+	for _, property := range properties {
+		rIds, err := box.RelationIds(property, id)
+		if err != nil {
+			return err
+		}
+		{{block "get-related" $entity}}
+		{{- range $field := .Fields}}
+			{{if $field.SimpleRelation -}}
+				{{/* already loaded eagerly in binding.Load() */}}
+			{{- else if $field.StandaloneRelation}}
+				if property == {{.Entity.Name}}_.{{$field.Name}} {
+					if rSlice, err := BoxFor{{$field.StandaloneRelation.Target.Name}}(box.ObjectBox).GetMany(rIds...); err != nil {
+						return err
+					} else {
+						object.{{$field.Name}} = rSlice
+					}
+				}
+			{{- else}}{{/* recursively visit fields in embedded structs */}}{{template "get-related" $field}}
+			{{- end}}
+		{{- end}}{{end}}
+	}
+
+	return nil
+}
+
+// GetRelatedForEach calls GetRelated() on each of the objects in the given slice.
+// See GetRelated() for more details.
+func (box *{{$entity.Name}}Box) GetRelatedForEach(objects []*{{$entity.Name}}, properties ...*objectbox.RelationToMany) error {
+	for key := range objects {
+		if err := box.GetRelated(objects[key]); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+{{- end}}
 
 // Remove deletes a single object
 func (box *{{$entity.Name}}Box) Remove(object *{{$entity.Name}}) error {

@@ -113,7 +113,7 @@ go install github.com/objectbox/objectbox-go/cmd/objectbox-gogen/
 cd ../projects
 mkdir objectbox-go-test
 cd objectbox-go-test
-wget -q https://raw.githubusercontent.com/objectbox/objectbox-go/dev/examples/tutorial/main.go
+wget -q https://raw.githubusercontent.com/objectbox/objectbox-go/master/examples/tutorial/main.go
 objectbox-gogen -source main.go
 go build
 ./objectbox-go-test

@@ -55,7 +55,7 @@ type Entity struct {
 
 	// many-to-many relations
 	RelatedSlice    []EntityByValue
-	RelatedPtrSlice []*TestEntityRelated
+	RelatedPtrSlice []*TestEntityRelated `lazy`
 
 	IntPtr          *int
 	Int8Ptr         *int8

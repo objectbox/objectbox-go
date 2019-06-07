@@ -129,6 +129,7 @@ type Field struct {
 	Fields             []*Field  // inner fields, nil if it's a property
 	SimpleRelation     *Relation
 	StandaloneRelation *StandaloneRelation
+	IsLazyLoaded       bool
 }
 
 type Identifier struct {
@@ -281,7 +282,7 @@ func (binding *Binding) createEntityFromAst(strct *ast.StructType, name string, 
 	binding.Entities = append(binding.Entities, entity)
 
 	// fmt.Errorf is called in GetRelated()
-	if entity.HasStandaloneRelations() {
+	if entity.HasLazyLoadedRelations() {
 		binding.Imports["fmt"] = "fmt"
 	}
 	return nil
@@ -524,6 +525,10 @@ func (field *Field) processType(f field) (fields fieldList, err error) {
 
 		field.Entity.Relations[field.Name] = rel
 		field.StandaloneRelation = rel
+		if field.Property.Annotations["lazy"] != nil {
+			// relations only
+			field.IsLazyLoaded = true
+		}
 
 		// fill in the field information
 		field.fillInfo(f, typesTypeErrorful{elementType})
@@ -935,9 +940,9 @@ func (entity *Entity) HasRelations() bool {
 	return false
 }
 
-func (entity *Entity) HasStandaloneRelations() bool {
+func (entity *Entity) HasLazyLoadedRelations() bool {
 	for _, field := range entity.Fields {
-		if field.HasStandaloneRelations() {
+		if field.HasLazyLoadedRelations() {
 			return true
 		}
 	}
@@ -959,13 +964,13 @@ func (field *Field) HasRelations() bool {
 	return false
 }
 
-func (field *Field) HasStandaloneRelations() bool {
-	if field.StandaloneRelation != nil {
+func (field *Field) HasLazyLoadedRelations() bool {
+	if field.StandaloneRelation != nil && field.IsLazyLoaded {
 		return true
 	}
 
 	for _, inner := range field.Fields {
-		if inner.HasStandaloneRelations() {
+		if inner.HasLazyLoadedRelations() {
 			return true
 		}
 	}

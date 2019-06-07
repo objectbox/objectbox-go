@@ -268,8 +268,6 @@ func TestBoxPutData(t *testing.T) {
 
 	read, err := env.Box.Get(id)
 	assert.NoErr(t, err)
-	assert.NoErr(t, env.Box.GetRelated(read, model.TestEntityRelated_.NextSlice))
-	assert.NoErr(t, model.BoxForTestEntityRelated(env.ObjectBox).GetRelated(&read.Related))
 	assert.Eq(t, inserted, read)
 }
 
@@ -278,6 +276,10 @@ func TestBoxPutAndGetStringVectorsEmptyAndNil(t *testing.T) {
 	defer env.Close()
 
 	var inserted = &model.Entity{}
+
+	// not lazy-loaded so it will be an empty slice when read, not nil
+	inserted.RelatedSlice = []model.EntityByValue{}
+	inserted.Related.NextSlice = []model.EntityByValue{}
 
 	// test empty vectors
 	inserted.StringVector = []string{}

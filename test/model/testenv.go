@@ -176,7 +176,7 @@ func entity47(coef int64, options *TestEnvOptions) *Entity {
 	} else {
 		object.Related.NextSlice = []EntityByValue{}
 		object.RelatedSlice = []EntityByValue{}
-		object.RelatedPtrSlice = []*TestEntityRelated{}
+		object.RelatedPtrSlice = nil // lazy loaded so Get() would set nil here as well
 	}
 
 	return object

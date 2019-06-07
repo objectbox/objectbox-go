@@ -4,7 +4,6 @@
 package object
 
 import (
-	"fmt"
 	"github.com/google/flatbuffers/go"
 	"github.com/objectbox/objectbox-go/objectbox"
 	"github.com/objectbox/objectbox-go/objectbox/fbutils"
@@ -132,11 +131,20 @@ func (taskRelEmbedded_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (i
 		}
 	}
 
+	var relGroupsNew []*Group
+	if rIds, err := BoxForTaskRelEmbedded(ob).RelationIds(TaskRelEmbedded_.GroupsNew, id); err != nil {
+		return nil, err
+	} else if rSlice, err := BoxForGroup(ob).GetMany(rIds...); err != nil {
+		return nil, err
+	} else {
+		relGroupsNew = rSlice
+	}
+
 	return &TaskRelEmbedded{
 		Id: id,
 		WithGroup: WithGroup{
 			Group:     relGroup,
-			GroupsNew: nil, // see box.GetRelated()
+			GroupsNew: relGroupsNew,
 		},
 	}, nil
 }
@@ -236,46 +244,6 @@ func (box *TaskRelEmbeddedBox) GetAll() ([]*TaskRelEmbedded, error) {
 		return nil, err
 	}
 	return objects.([]*TaskRelEmbedded), nil
-}
-
-// GetRelated reads related (to-many) objects and sets the appropriate properties of the object.
-// If no properties are given, it will load all to-many relations.
-func (box *TaskRelEmbeddedBox) GetRelated(object *TaskRelEmbedded, properties ...*objectbox.RelationToMany) error {
-	var id = object.Id
-
-	if properties == nil {
-		properties = []*objectbox.RelationToMany{
-			TaskRelEmbedded_.GroupsNew,
-		}
-	}
-
-	for _, property := range properties {
-
-		if property == TaskRelEmbedded_.GroupsNew {
-			if rIds, err := box.RelationIds(property, id); err != nil {
-				return err
-			} else if rSlice, err := BoxForGroup(box.ObjectBox).GetMany(rIds...); err != nil {
-				return err
-			} else {
-				object.GroupsNew = rSlice
-			}
-		} else {
-			return fmt.Errorf("TaskRelEmbeddedBox::GetRelated() called for an invalid property %v - not a lazy-loaded related property of TaskRelEmbedded", property.Id)
-		}
-	}
-
-	return nil
-}
-
-// GetRelatedForEach calls GetRelated() on each of the objects in the given slice.
-// See GetRelated() for more details.
-func (box *TaskRelEmbeddedBox) GetRelatedForEach(objects []*TaskRelEmbedded, properties ...*objectbox.RelationToMany) error {
-	for key := range objects {
-		if err := box.GetRelated(objects[key]); err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 // Remove deletes a single object

@@ -69,9 +69,6 @@ func TestRelationsInsert(t *testing.T) {
 		rels, err := relBox.GetAll()
 		assert.NoErr(t, err)
 		assert.Eq(t, 3, len(rels))
-		assert.NoErr(t, relBox.GetRelated(rels[0]))
-		assert.NoErr(t, relBox.GetRelated(rels[1]))
-		assert.NoErr(t, relBox.GetRelated(rels[2]))
 		assert.Eq(t, *rels[0], object.Related)
 		assert.Eq(t, *rels[1], *object.RelatedPtr)
 		assert.Eq(t, *rels[1], *object.RelatedPtrSlice[0])
@@ -87,13 +84,10 @@ func TestRelationsInsert(t *testing.T) {
 		objectRead, err := env.Box.Get(id)
 		assert.NoErr(t, err)
 		assert.NoErr(t, env.Box.GetRelated(objectRead))
-		assert.NoErr(t, relBox.GetRelated(&objectRead.Related))
 		assert.Eq(t, object.Related, objectRead.Related)
-		assert.NoErr(t, relBox.GetRelated(objectRead.RelatedPtr))
 		assert.Eq(t, object.RelatedPtr, objectRead.RelatedPtr)
 		assert.Eq(t, object.RelatedPtr2, objectRead.RelatedPtr2) // this one is empty
 		assert.Eq(t, object.RelatedSlice, objectRead.RelatedSlice)
-		assert.NoErr(t, relBox.GetRelatedForEach(objectRead.RelatedPtrSlice))
 		assert.Eq(t, object.RelatedPtrSlice, objectRead.RelatedPtrSlice)
 
 		// remove one target of each relation, read the object and check everything looks as expected (relations are removed)
@@ -110,7 +104,6 @@ func TestRelationsInsert(t *testing.T) {
 		assert.Eq(t, 1, len(objectRead.RelatedSlice))
 		assert.Eq(t, relsV[1], objectRead.RelatedSlice[0])
 		assert.Eq(t, 1, len(objectRead.RelatedPtrSlice))
-		assert.NoErr(t, relBox.GetRelatedForEach(objectRead.RelatedPtrSlice))
 		assert.Eq(t, rels[2], objectRead.RelatedPtrSlice[0])
 
 		env.Close()

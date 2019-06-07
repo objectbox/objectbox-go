@@ -257,7 +257,16 @@ func ({{$entityNameCamel}}_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byt
 			{{end -}}
 			}
 		{{else if $field.StandaloneRelation -}}
-			{{/* standalone (many-to-many) relations are not loaded eagerly */}}
+			{{if not $field.IsLazyLoaded -}}
+			var rel{{$field.Name}} {{$field.Type}} 
+			if rIds, err := BoxFor{{$field.Entity.Name}}(ob).RelationIds({{.Entity.Name}}_.{{$field.Name}}, id); err != nil {
+				return nil, err
+			} else if rSlice, err := BoxFor{{$field.StandaloneRelation.Target.Name}}(ob).GetMany(rIds...); err != nil {
+				return nil, err
+			} else {
+				rel{{$field.Name}} = rSlice
+			}
+			{{- end -}} {{/* see GetRelated for lazy loaded relations */}}
 		{{else}}{{/* recursively visit fields in embedded structs */}}{{template "load-relations" $field}}
 		{{- end}}
 	{{end}}{{end}}
@@ -267,7 +276,7 @@ func ({{$entityNameCamel}}_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byt
 		{{- range $field := .Fields}}
 			{{$field.Name}}: 
 				{{- if $field.SimpleRelation}}{{if not $field.IsPointer}}*{{end}}rel{{$field.Name}},
-				{{- else if $field.StandaloneRelation}}nil, // see box.GetRelated()
+				{{- else if $field.StandaloneRelation}}{{if $field.IsLazyLoaded}}nil, // see box.GetRelated(){{else}}rel{{$field.Name}},{{end}}
         		{{- else if $field.IsId}}{{with $field.Property}}
 					{{- if .Converter}}{{.Converter}}ToEntityProperty(
 					{{- else if .CastOnWrite}}{{.CastOnWrite}}({{end -}}
@@ -377,7 +386,7 @@ func (box *{{$entity.Name}}Box) GetAll() ([]{{if not $.Options.ByValue}}*{{end}}
 	return objects.([]{{if not $.Options.ByValue}}*{{end}}{{$entity.Name}}), nil
 }
 
-{{if $entity.HasStandaloneRelations}}
+{{if $entity.HasLazyLoadedRelations}}
 // GetRelated reads related (to-many) objects and sets the appropriate properties of the object.
 // If no properties are given, it will load all to-many relations.
 func (box *{{$entity.Name}}Box) GetRelated(object *{{$entity.Name}}, properties ...*objectbox.RelationToMany) error {
@@ -391,7 +400,9 @@ func (box *{{$entity.Name}}Box) GetRelated(object *{{$entity.Name}}, properties 
 			{{- if $field.SimpleRelation -}}
 				{{/* already loaded eagerly in binding.Load() */}}
 			{{- else if $field.StandaloneRelation}}
+				{{- if $field.IsLazyLoaded -}}
 				{{.Entity.Name}}_.{{$field.Name}},
+				{{end}}
 			{{- else}}{{/* recursively visit fields in embedded structs */}}{{template "get-related-proplist" $field}}
 			{{- end}}
 		{{- end}}{{end}}
@@ -404,6 +415,7 @@ func (box *{{$entity.Name}}Box) GetRelated(object *{{$entity.Name}}, properties 
 			{{if $field.SimpleRelation -}}
 				{{/* already loaded eagerly in binding.Load() */}}
 			{{- else if $field.StandaloneRelation -}}
+				{{- if $field.IsLazyLoaded -}}
 				if property == {{.Entity.Name}}_.{{$field.Name}} {
 					if rIds, err := box.RelationIds(property, id); err != nil {
 						return err
@@ -413,6 +425,7 @@ func (box *{{$entity.Name}}Box) GetRelated(object *{{$entity.Name}}, properties 
 						object.{{$field.Name}} = rSlice
 					}
 				} else
+				{{- end -}}
 			{{else}}{{/* recursively visit fields in embedded structs */}}{{template "get-related" $field}}
 			{{end}}
 		{{end}}{{end}}

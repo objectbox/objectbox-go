@@ -630,6 +630,15 @@ func (entity_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{
 		}
 	}
 
+	var relRelatedSlice []EntityByValue
+	if rIds, err := BoxForEntity(ob).RelationIds(Entity_.RelatedSlice, id); err != nil {
+		return nil, err
+	} else if rSlice, err := BoxForEntityByValue(ob).GetMany(rIds...); err != nil {
+		return nil, err
+	} else {
+		relRelatedSlice = rSlice
+	}
+
 	return &Entity{
 		Id:              id,
 		Int:             fbutils.GetIntSlot(table, 6),
@@ -655,7 +664,7 @@ func (entity_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{
 		Related:         *relRelated,
 		RelatedPtr:      relRelatedPtr,
 		RelatedPtr2:     relRelatedPtr2,
-		RelatedSlice:    nil, // see box.GetRelated()
+		RelatedSlice:    relRelatedSlice,
 		RelatedPtrSlice: nil, // see box.GetRelated()
 		IntPtr:          fbutils.GetIntPtrSlot(table, 52),
 		Int8Ptr:         fbutils.GetInt8PtrSlot(table, 54),
@@ -781,23 +790,12 @@ func (box *EntityBox) GetRelated(object *Entity, properties ...*objectbox.Relati
 	var id = object.Id
 
 	if properties == nil {
-		properties = []*objectbox.RelationToMany{
-			Entity_.RelatedSlice,
-			Entity_.RelatedPtrSlice,
-		}
+		properties = []*objectbox.RelationToMany{Entity_.RelatedPtrSlice}
 	}
 
 	for _, property := range properties {
 
-		if property == Entity_.RelatedSlice {
-			if rIds, err := box.RelationIds(property, id); err != nil {
-				return err
-			} else if rSlice, err := BoxForEntityByValue(box.ObjectBox).GetMany(rIds...); err != nil {
-				return err
-			} else {
-				object.RelatedSlice = rSlice
-			}
-		} else if property == Entity_.RelatedPtrSlice {
+		if property == Entity_.RelatedPtrSlice {
 			if rIds, err := box.RelationIds(property, id); err != nil {
 				return err
 			} else if rSlice, err := BoxForTestEntityRelated(box.ObjectBox).GetMany(rIds...); err != nil {
@@ -1524,12 +1522,20 @@ func (testEntityRelated_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) 
 		}
 	}
 
+	var relNextSlice []EntityByValue
+	if rIds, err := BoxForTestEntityRelated(ob).RelationIds(TestEntityRelated_.NextSlice, id); err != nil {
+		return nil, err
+	} else if rSlice, err := BoxForEntityByValue(ob).GetMany(rIds...); err != nil {
+		return nil, err
+	} else {
+		relNextSlice = rSlice
+	}
+
 	return &TestEntityRelated{
 		Id:        id,
 		Name:      fbutils.GetStringSlot(table, 6),
 		Next:      relNext,
-		NextSlice: nil, // see box.GetRelated()
-
+		NextSlice: relNextSlice,
 	}, nil
 }
 
@@ -1628,46 +1634,6 @@ func (box *TestEntityRelatedBox) GetAll() ([]*TestEntityRelated, error) {
 		return nil, err
 	}
 	return objects.([]*TestEntityRelated), nil
-}
-
-// GetRelated reads related (to-many) objects and sets the appropriate properties of the object.
-// If no properties are given, it will load all to-many relations.
-func (box *TestEntityRelatedBox) GetRelated(object *TestEntityRelated, properties ...*objectbox.RelationToMany) error {
-	var id = object.Id
-
-	if properties == nil {
-		properties = []*objectbox.RelationToMany{
-			TestEntityRelated_.NextSlice,
-		}
-	}
-
-	for _, property := range properties {
-
-		if property == TestEntityRelated_.NextSlice {
-			if rIds, err := box.RelationIds(property, id); err != nil {
-				return err
-			} else if rSlice, err := BoxForEntityByValue(box.ObjectBox).GetMany(rIds...); err != nil {
-				return err
-			} else {
-				object.NextSlice = rSlice
-			}
-		} else {
-			return fmt.Errorf("TestEntityRelatedBox::GetRelated() called for an invalid property %v - not a lazy-loaded related property of TestEntityRelated", property.Id)
-		}
-	}
-
-	return nil
-}
-
-// GetRelatedForEach calls GetRelated() on each of the objects in the given slice.
-// See GetRelated() for more details.
-func (box *TestEntityRelatedBox) GetRelatedForEach(objects []*TestEntityRelated, properties ...*objectbox.RelationToMany) error {
-	for key := range objects {
-		if err := box.GetRelated(objects[key]); err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 // Remove deletes a single object

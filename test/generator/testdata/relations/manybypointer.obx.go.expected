@@ -199,9 +199,7 @@ func (box *TaskRelManyPtrBox) GetRelated(object *TaskRelManyPtr, properties ...*
 	var id = object.Id
 
 	if properties == nil {
-		properties = []*objectbox.RelationToMany{
-			TaskRelManyPtr_.Groups,
-		}
+		properties = []*objectbox.RelationToMany{TaskRelManyPtr_.Groups}
 	}
 
 	for _, property := range properties {

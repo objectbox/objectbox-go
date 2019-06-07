@@ -4,6 +4,7 @@
 package object
 
 import (
+	"fmt"
 	"github.com/google/flatbuffers/go"
 	"github.com/objectbox/objectbox-go/objectbox"
 	"github.com/objectbox/objectbox-go/objectbox/fbutils"
@@ -204,17 +205,17 @@ func (box *TaskRelManyPtrBox) GetRelated(object *TaskRelManyPtr, properties ...*
 	}
 
 	for _, property := range properties {
-		rIds, err := box.RelationIds(property, id)
-		if err != nil {
-			return err
-		}
 
 		if property == TaskRelManyPtr_.GroupsNew {
-			if rSlice, err := BoxForGroup(box.ObjectBox).GetMany(rIds...); err != nil {
+			if rIds, err := box.RelationIds(property, id); err != nil {
+				return err
+			} else if rSlice, err := BoxForGroup(box.ObjectBox).GetMany(rIds...); err != nil {
 				return err
 			} else {
 				object.GroupsNew = rSlice
 			}
+		} else {
+			return fmt.Errorf("TaskRelManyPtrBox::GetRelated() called for an invalid property %v - not a lazy-loaded related property of TaskRelManyPtr", property.Id)
 		}
 	}
 

@@ -4,6 +4,7 @@
 package model
 
 import (
+	"fmt"
 	"github.com/google/flatbuffers/go"
 	"github.com/objectbox/objectbox-go/objectbox"
 	"github.com/objectbox/objectbox-go/objectbox/fbutils"
@@ -787,25 +788,25 @@ func (box *EntityBox) GetRelated(object *Entity, properties ...*objectbox.Relati
 	}
 
 	for _, property := range properties {
-		rIds, err := box.RelationIds(property, id)
-		if err != nil {
-			return err
-		}
 
 		if property == Entity_.RelatedSlice {
-			if rSlice, err := BoxForEntityByValue(box.ObjectBox).GetMany(rIds...); err != nil {
+			if rIds, err := box.RelationIds(property, id); err != nil {
+				return err
+			} else if rSlice, err := BoxForEntityByValue(box.ObjectBox).GetMany(rIds...); err != nil {
 				return err
 			} else {
 				object.RelatedSlice = rSlice
 			}
-		}
-
-		if property == Entity_.RelatedPtrSlice {
-			if rSlice, err := BoxForTestEntityRelated(box.ObjectBox).GetMany(rIds...); err != nil {
+		} else if property == Entity_.RelatedPtrSlice {
+			if rIds, err := box.RelationIds(property, id); err != nil {
+				return err
+			} else if rSlice, err := BoxForTestEntityRelated(box.ObjectBox).GetMany(rIds...); err != nil {
 				return err
 			} else {
 				object.RelatedPtrSlice = rSlice
 			}
+		} else {
+			return fmt.Errorf("EntityBox::GetRelated() called for an invalid property %v - not a lazy-loaded related property of Entity", property.Id)
 		}
 	}
 
@@ -1641,17 +1642,17 @@ func (box *TestEntityRelatedBox) GetRelated(object *TestEntityRelated, propertie
 	}
 
 	for _, property := range properties {
-		rIds, err := box.RelationIds(property, id)
-		if err != nil {
-			return err
-		}
 
 		if property == TestEntityRelated_.NextSlice {
-			if rSlice, err := BoxForEntityByValue(box.ObjectBox).GetMany(rIds...); err != nil {
+			if rIds, err := box.RelationIds(property, id); err != nil {
+				return err
+			} else if rSlice, err := BoxForEntityByValue(box.ObjectBox).GetMany(rIds...); err != nil {
 				return err
 			} else {
 				object.NextSlice = rSlice
 			}
+		} else {
+			return fmt.Errorf("TestEntityRelatedBox::GetRelated() called for an invalid property %v - not a lazy-loaded related property of TestEntityRelated", property.Id)
 		}
 	}
 

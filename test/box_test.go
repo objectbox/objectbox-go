@@ -268,7 +268,7 @@ func TestBoxPutData(t *testing.T) {
 
 	read, err := env.Box.Get(id)
 	assert.NoErr(t, err)
-	assert.NoErr(t, env.Box.GetRelated(read))
+	assert.NoErr(t, env.Box.GetRelated(read, model.TestEntityRelated_.NextSlice))
 	assert.NoErr(t, model.BoxForTestEntityRelated(env.ObjectBox).GetRelated(&read.Related))
 	assert.Eq(t, inserted, read)
 }

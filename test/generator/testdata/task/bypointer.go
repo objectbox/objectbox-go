@@ -5,7 +5,7 @@ type Task struct {
 	Uid      string `objectbox:"unique"`
 	Text     string `objectbox:"name:text"`
 	Date     uint64 `objectbox:"date" json:"date"`
-	tempInfo string `objectbox:"transient"`
+	tempInfo string `objectbox:"-"`
 	GroupId  uint64 `objectbox:"link:Group"`
 }
 

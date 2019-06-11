@@ -303,8 +303,11 @@ func (entity *Entity) addFields(fields fieldList, fieldPath, prefix string) ([]*
 			}
 		}
 
-		// transient properties are not stored, thus no need to use it in the binding
-		if property.Annotations["transient"] != nil {
+		// skip fields with `objectbox:"-"` tag
+		if property.Annotations["-"] != nil {
+			if len(property.Annotations) != 1 || property.Annotations["-"].Value != "" {
+				return nil, propertyError(errors.New("to ignore the property, use only `objectbox:\"-\"` as a tag"), property)
+			}
 			continue
 		}
 

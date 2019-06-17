@@ -2,7 +2,7 @@ package object
 
 type Task struct {
 	Id       uint64 `objectbox:"id"`
-	Uid      string `objectbox:"unique"`
+	Uid      string `objectbox:"UNIQUE"` // let's verify it's case insensitive as well
 	Text     string `objectbox:"name:text"`
 	Date     uint64 `objectbox:"date" json:"date"`
 	tempInfo string `objectbox:"-"`

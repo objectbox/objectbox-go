@@ -698,6 +698,9 @@ func parseAnnotations(tags string, annotations *map[string]*Annotation) error {
 				name = tag
 			}
 
+			// names are case insensitive
+			name = strings.ToLower(name)
+
 			if (*annotations)[name] != nil {
 				return fmt.Errorf("duplicate annotation %s", name)
 			} else {

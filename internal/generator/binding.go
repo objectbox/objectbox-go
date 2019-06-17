@@ -33,6 +33,20 @@ import (
 type uid = uint64
 type id = uint32
 
+var supportedAnnotations = map[string]bool{
+	"-":         true,
+	"converter": true,
+	"date":      true,
+	"id":        true,
+	"index":     true,
+	"inline":    true,
+	"link":      true,
+	"name":      true,
+	"type":      true,
+	"uid":       true,
+	"unique":    true,
+}
+
 type Binding struct {
 	Package  *types.Package
 	Entities []*Entity
@@ -703,6 +717,8 @@ func parseAnnotations(tags string, annotations *map[string]*Annotation) error {
 
 			if (*annotations)[name] != nil {
 				return fmt.Errorf("duplicate annotation %s", name)
+			} else if !supportedAnnotations[name] {
+				return fmt.Errorf("unknown annotation %s", name)
 			} else {
 				(*annotations)[name] = value
 			}

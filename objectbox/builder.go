@@ -34,6 +34,7 @@ type Builder struct {
 	Error error
 
 	// these options are used when creating the underlying store using the C-api calls
+	// pointers are used to distinguish whether a value is present or not
 	directory   *string
 	maxSizeInKb *uint64
 	maxReaders  *uint

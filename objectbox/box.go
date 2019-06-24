@@ -27,7 +27,6 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
-	"sync"
 	"unsafe"
 
 	"github.com/google/flatbuffers/go"
@@ -37,7 +36,6 @@ import (
 type Box struct {
 	objectBox *ObjectBox
 	entity    *entity
-	mutex     sync.Mutex
 	cBox      *C.OBX_box
 }
 

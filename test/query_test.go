@@ -597,7 +597,7 @@ func testQueries(t *testing.T, env *model.TestEnv, options queryTestOptions, tes
 
 	for i, tc := range testCases {
 		// run each test-case in a new transaction, resetting the state at the end
-		_ = env.ObjectBox.Update(func() error {
+		_ = env.ObjectBox.RunInWriteTx(func() error {
 			executeTestCase(t, env, options, i, tc)
 			return errors.New("no-error, just abort transaction to reset the DB")
 		})

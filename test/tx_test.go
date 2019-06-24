@@ -34,7 +34,7 @@ func TestTransactionMassiveInsert(t *testing.T) {
 
 	var insert = uint64(1000000)
 
-	err := ob.Update(func() error {
+	err := ob.RunInWriteTx(func() error {
 		for i := insert; i > 0; i-- {
 			_, err := box.Put(&iot.Event{})
 			assert.NoErr(t, err)
@@ -69,7 +69,7 @@ func TestTransactionRollback(t *testing.T) {
 
 	// rolled-back Tx
 	var expected = errors.New("expected")
-	assert.Eq(t, expected, ob.Update(func() error {
+	assert.Eq(t, expected, ob.RunInWriteTx(func() error {
 		assert.NoErr(t, box.RemoveAll())
 		return expected
 	}))
@@ -79,7 +79,7 @@ func TestTransactionRollback(t *testing.T) {
 	assert.Eq(t, len(insert), int(count))
 
 	// successful tx
-	assert.NoErr(t, ob.Update(func() error {
+	assert.NoErr(t, ob.RunInWriteTx(func() error {
 		assert.NoErr(t, box.RemoveAll())
 		return nil
 	}))

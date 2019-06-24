@@ -114,7 +114,7 @@ func (box *Box) put(object interface{}, async bool, timeoutMs uint, alreadyInTx 
 
 	// for entities with relations, execute all Put/PutRelated inside a single transaction
 	if box.entity.hasRelations && !alreadyInTx {
-		err = box.objectBox.Update(func() error {
+		err = box.objectBox.RunInWriteTx(func() error {
 			return box.putOne(id, object, async, timeoutMs)
 		})
 	} else {
@@ -247,7 +247,7 @@ func (box *Box) PutAll(objects interface{}) (ids []uint64, err error) {
 
 	// Execute everything in a single single transaction - for performance and consistency.
 	// This is necessary even if count < chunkSize because of relations (PutRelated)
-	err = box.objectBox.Update(func() error {
+	err = box.objectBox.RunInWriteTx(func() error {
 		if supportsBytesArray {
 			// Process the data in chunks so that we don't consume too much memory.
 			const chunkSize = 10000 // 10k is the limit currently enforced by obx_box_ids_for_put, maybe make configurable
@@ -289,7 +289,7 @@ func (box *Box) PutAll(objects interface{}) (ids []uint64, err error) {
 }
 
 // putManyObjects inserts a subset of objects, setting their IDs as an outArgument.
-// Requires to be called inside a write transaction, i.e. from the ObjectBox.Update() callback
+// Requires to be called inside a write transaction, i.e. from the ObjectBox.RunInWriteTx() callback
 func (box *Box) putManyObjects(objects reflect.Value, outIds []uint64, start, end int) error {
 	var binding = box.entity.binding
 	var count = end - start
@@ -418,7 +418,7 @@ func (box *Box) IsEmpty() (bool, error) {
 func (box *Box) Get(id uint64) (object interface{}, err error) {
 	// we need a read-transaction to keep the data in dataPtr untouched (by concurrent write) until we can read it
 	// as well as making sure the relations read in binding.Load represent a consistent state
-	err = box.objectBox.View(func() error {
+	err = box.objectBox.RunInReadTx(func() error {
 		var data *C.void
 		var dataSize C.size_t
 		var dataPtr = unsafe.Pointer(data)
@@ -480,7 +480,7 @@ func (box *Box) GetAll() (slice interface{}, err error) {
 func (box *Box) readManyObjects(cCall func() *C.OBX_bytes_array) (slice interface{}, err error) {
 	// we need a read-transaction to keep the data in dataPtr untouched (by concurrent write) until we can read it
 	// as well as making sure the relations read in binding.Load represent a consistent state
-	err = box.objectBox.View(func() error {
+	err = box.objectBox.RunInReadTx(func() error {
 		bytesArray, err := cGetBytesArray(cCall)
 		if err != nil {
 			return err
@@ -528,7 +528,7 @@ func (box *Box) readUsingVisitor(cCall func(visitorArg unsafe.Pointer) C.obx_err
 	// we need a read-transaction to keep the data in dataPtr untouched (by concurrent write) until we can read it
 	// as well as making sure the relations read in binding.Load represent a consistent state
 	// use another `error` variable as `err` may be set by the visitor callback above
-	var err2 = box.objectBox.View(func() error {
+	var err2 = box.objectBox.RunInReadTx(func() error {
 		return cMaybeErr(func() C.obx_err { return cCall(unsafe.Pointer(&visitorId)) })
 	})
 
@@ -575,7 +575,7 @@ func (box *Box) RelationReplace(relation *RelationToMany, sourceId uint64, sourc
 	// make a map of related target entity IDs, marking those that were originally related but should be removed
 	var idsToRemove = make(map[uint64]bool)
 
-	return box.objectBox.Update(func() error {
+	return box.objectBox.RunInWriteTx(func() error {
 		if objId != 0 {
 			if oldRelIds, err := box.RelationIds(relation, sourceId); err != nil {
 				return err

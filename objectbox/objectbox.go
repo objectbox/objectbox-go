@@ -73,8 +73,6 @@ type options struct {
 	putAsyncTimeout uint
 }
 
-type txnFun func() error
-
 // constant during runtime so no need to call this each time it's necessary
 var supportsBytesArray = bool(C.obx_supports_bytes_array())
 
@@ -87,18 +85,18 @@ func (ob *ObjectBox) Close() {
 	}
 }
 
-// View executes the given function inside a read transaction.
+// RunInReadTx executes the given function inside a read transaction.
 // Note, you must not launch Go routines inside this function - the call must be sequential.
 // The error returned by your callback is passed-through as the output error
-func (ob *ObjectBox) View(fn func() error) error {
+func (ob *ObjectBox) RunInReadTx(fn func() error) error {
 	return ob.runInTxn(true, fn)
 }
 
-// Update executes the given function inside a write transaction.
+// RunInWriteTx executes the given function inside a write transaction.
 // Note, you must not launch Go routines inside this function - the call must be sequential.
 // The error returned by your callback is passed-through as the output error.
 // If the resulting error is not nil, the transaction is aborted (rolled-back)
-func (ob *ObjectBox) Update(fn func() error) error {
+func (ob *ObjectBox) RunInWriteTx(fn func() error) error {
 	return ob.runInTxn(false, fn)
 }
 
@@ -118,7 +116,7 @@ func (ob *ObjectBox) beginTxnRead() (*transaction, error) {
 	return &transaction{ctxn, ob}, nil
 }
 
-func (ob *ObjectBox) runInTxn(readOnly bool, txnFun txnFun) (err error) {
+func (ob *ObjectBox) runInTxn(readOnly bool, fn func() error) (err error) {
 	runtime.LockOSThread()
 	var txn *transaction
 	if readOnly {
@@ -141,7 +139,7 @@ func (ob *ObjectBox) runInTxn(readOnly bool, txnFun txnFun) (err error) {
 		runtime.UnlockOSThread()
 	}()
 
-	err = txnFun()
+	err = fn()
 
 	if !readOnly && err == nil {
 		err = txn.Commit()

@@ -416,11 +416,13 @@ func (box *Box) IsEmpty() (bool, error) {
 // Returns nil in case the object with the given ID doesn't exist.
 // The cast is done automatically when using the generated BoxFor* code.
 func (box *Box) Get(id uint64) (object interface{}, err error) {
-	var data *C.void
-	var dataSize C.size_t
-	var dataPtr = unsafe.Pointer(data)
-
+	// we need a read-transaction to keep the data in dataPtr untouched (by concurrent write) until we can read it
+	// as well as making sure the relations read in binding.Load represent a consistent state
 	err = box.objectBox.View(func() error {
+		var data *C.void
+		var dataSize C.size_t
+		var dataPtr = unsafe.Pointer(data)
+
 		var rc = C.obx_box_get(box.cBox, C.obx_id(id), &dataPtr, &dataSize)
 		if rc == 0 {
 			var bytes []byte
@@ -476,6 +478,8 @@ func (box *Box) GetAll() (slice interface{}, err error) {
 }
 
 func (box *Box) readManyObjects(cCall func() *C.OBX_bytes_array) (slice interface{}, err error) {
+	// we need a read-transaction to keep the data in dataPtr untouched (by concurrent write) until we can read it
+	// as well as making sure the relations read in binding.Load represent a consistent state
 	err = box.objectBox.View(func() error {
 		bytesArray, err := cGetBytesArray(cCall)
 		if err != nil {
@@ -521,6 +525,8 @@ func (box *Box) readUsingVisitor(cCall func(visitorArg unsafe.Pointer) C.obx_err
 
 	slice = binding.MakeSlice(defaultSliceCapacity)
 
+	// we need a read-transaction to keep the data in dataPtr untouched (by concurrent write) until we can read it
+	// as well as making sure the relations read in binding.Load represent a consistent state
 	// use another `error` variable as `err` may be set by the visitor callback above
 	var err2 = box.objectBox.View(func() error {
 		return cMaybeErr(func() C.obx_err { return cCall(unsafe.Pointer(&visitorId)) })

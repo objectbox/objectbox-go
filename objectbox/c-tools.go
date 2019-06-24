@@ -24,54 +24,52 @@ package objectbox
 import "C"
 import (
 	"errors"
-	"sync"
+	"runtime"
 )
 
-// provides wrappers for objectbox C-api calls, making sure the returned error belongs to this call
+// provides wrappers for objectbox C-api calls, making sure the returned error belongs to this call.
+// The c-api uses thread-local storage for the latest error so the we need to lock the current goroutine to a thread.
 // TODO migrate all native C.obx_* calls so that they use these wrappers
 
-// TODO instead of this mutex, we could make c-api block before an error is overwritten (so it has to be "acknowledged" first)
-var cCallMutex sync.Mutex
-
-func cMaybeErr(fn func() C.obx_err) error {
-	cCallMutex.Lock()
-	defer cCallMutex.Unlock()
+func cMaybeErr(fn func() C.obx_err) (err error) {
+	runtime.LockOSThread()
 
 	if rc := fn(); rc != 0 {
-		return createError()
+		err = createError()
+	}
+
+	runtime.UnlockOSThread()
+	return err
+}
+
+func cGetIds(fn func() *C.OBX_id_array) (ids []uint64, err error) {
+	runtime.LockOSThread()
+
+	var cArray = fn()
+	if cArray == nil {
+		err = createError()
 	} else {
-		return nil
+		ids = cIdsArrayToGo(cArray)
+		C.obx_id_array_free(cArray)
 	}
+
+	runtime.UnlockOSThread()
+	return ids, err
 }
 
-func cGetIds(fn func() *C.OBX_id_array) ([]uint64, error) {
-	cCallMutex.Lock()
-	defer cCallMutex.Unlock()
+func cGetBytesArray(fn func() *C.OBX_bytes_array) (array [][]byte, err error) {
+	runtime.LockOSThread()
 
 	var cArray = fn()
 	if cArray == nil {
-		return nil, createError()
+		err = createError()
+	} else {
+		array = cBytesArrayToGo(cArray)
+		C.obx_bytes_array_free(cArray)
 	}
 
-	ids := cIdsArrayToGo(cArray)
-	defer ids.free()
-
-	return ids.ids, nil
-}
-
-func cGetBytesArray(fn func() *C.OBX_bytes_array) ([][]byte, error) {
-	cCallMutex.Lock()
-	defer cCallMutex.Unlock()
-
-	var cArray = fn()
-	if cArray == nil {
-		return nil, createError()
-	}
-
-	bytes := cBytesArrayToGo(cArray)
-	defer bytes.free()
-
-	return bytes.array, nil
+	runtime.UnlockOSThread()
+	return array, err
 }
 
 func createError() error {

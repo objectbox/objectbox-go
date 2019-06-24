@@ -56,7 +56,7 @@ func (bytesArray *bytesArray) free() {
 	bytesArray.array = nil
 }
 
-func cBytesArrayToGo(cBytesArray *C.OBX_bytes_array) *bytesArray {
+func cBytesArrayToGo(cBytesArray *C.OBX_bytes_array) [][]byte {
 	size := int(cBytesArray.count)
 	plainBytesArray := make([][]byte, size)
 
@@ -74,7 +74,7 @@ func cBytesArrayToGo(cBytesArray *C.OBX_bytes_array) *bytesArray {
 		}
 	}
 
-	return &bytesArray{plainBytesArray, cBytesArray}
+	return plainBytesArray
 }
 
 func goBytesArrayToC(goArray [][]byte) (*bytesArray, error) {
@@ -108,7 +108,7 @@ func (array *idsArray) free() {
 	array.ids = nil
 }
 
-func cIdsArrayToGo(cArray *C.OBX_id_array) *idsArray {
+func cIdsArrayToGo(cArray *C.OBX_id_array) []uint64 {
 	var size = uint(cArray.count)
 	var ids = make([]uint64, size)
 	if size > 0 {
@@ -118,7 +118,7 @@ func cIdsArrayToGo(cArray *C.OBX_id_array) *idsArray {
 			ids[i] = *(*uint64)(unsafe.Pointer(cArrayStart + uintptr(i)*cIdSize))
 		}
 	}
-	return &idsArray{ids, cArray}
+	return ids
 }
 
 func goIdsArrayToC(ids []uint64) (*idsArray, error) {

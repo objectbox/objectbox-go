@@ -171,7 +171,6 @@ func (box *Box) putOne(id uint64, object interface{}, async bool, timeoutMs uint
 
 func (box *Box) withObjectBytes(object interface{}, id uint64, fn func([]byte) error) error {
 	var fbb = fbbPool.Get().(*flatbuffers.Builder)
-	fbb.Reset()
 
 	err := box.entity.binding.Flatten(object, fbb, id)
 
@@ -180,8 +179,11 @@ func (box *Box) withObjectBytes(object interface{}, id uint64, fn func([]byte) e
 		err = fn(fbb.FinishedBytes())
 	}
 
-	// put the fbb back to the pool for the others to use; don't use defer, it's slower
-	fbbPool.Put(fbb)
+	// put the fbb back to the pool for the others to use if it's reasonably small; don't use defer, it's slower
+	if cap(fbb.Bytes) < 1024 * 1024 {
+		fbb.Reset()
+		fbbPool.Put(fbb)
+	}
 
 	return err
 }

@@ -31,16 +31,33 @@ import (
 	"github.com/objectbox/objectbox-go/internal/generator"
 )
 
-// An ObjectBinding provides an interface for various object types to be included in the model
+// ObjectBinding provides an interface for various object types to be included in the model
 type ObjectBinding interface {
+	// AddToModel adds the entity information, including properties, indexes, etc., to the model during construction.
 	AddToModel(model *Model)
+
+	// GetId reads the ID field of the given object.
 	GetId(object interface{}) (id uint64, err error)
+
+	// SetId sets the ID field on the given object.
 	SetId(object interface{}, id uint64)
+
+	// PutRelated updates/inserts objects related to the given object, based on the available object data.
 	PutRelated(ob *ObjectBox, object interface{}, id uint64) error
+
+	// Flatten serializes the object to FlatBuffers. The given ID must be used instead of the object field.
 	Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) error
+
+	// Load constructs the object from serialized byte buffer. Also reads data for eagerly loaded related entities.
 	Load(ob *ObjectBox, bytes []byte) (interface{}, error)
+
+	// MakeSlice creates a slice of objects with the given capacity (0 length).
 	MakeSlice(capacity int) interface{}
+
+	// AppendToSlice adds the object at the end of the slice created by MakeSlice(). Returns the new slice.
 	AppendToSlice(slice interface{}, object interface{}) (sliceNew interface{})
+
+	// GeneratorVersion returns the version used to generate this binding - used to verify the compatibility.
 	GeneratorVersion() int
 }
 

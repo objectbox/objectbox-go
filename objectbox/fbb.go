@@ -17,7 +17,7 @@
 package objectbox
 
 import (
-	flatbuffers "github.com/google/flatbuffers/go"
+	"github.com/google/flatbuffers/go"
 	"sync"
 )
 

@@ -17,7 +17,6 @@
 package objectbox
 
 /*
-#cgo LDFLAGS: -lobjectbox
 #include <stdlib.h>
 #include "objectbox.h"
 

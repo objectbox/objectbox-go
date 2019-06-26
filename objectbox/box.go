@@ -133,7 +133,7 @@ func (box *Box) put(object interface{}, async bool, timeoutMs uint, alreadyInTx 
 }
 
 func (box *Box) putOne(id uint64, object interface{}, async bool, timeoutMs uint) error {
-	if box.entity.hasRelations {
+	if box.entity.hasRelations { // In that case, the caller already ensured to be inside a TX
 		if err := box.entity.binding.PutRelated(box.objectBox, object, id); err != nil {
 			return err
 		}
@@ -179,7 +179,7 @@ func (box *Box) withObjectBytes(object interface{}, id uint64, fn func([]byte) e
 	}
 
 	// put the fbb back to the pool for the others to use if it's reasonably small; don't use defer, it's slower
-	if cap(fbb.Bytes) < 1024 * 1024 {
+	if cap(fbb.Bytes) < 1024*1024 {
 		fbb.Reset()
 		fbbPool.Put(fbb)
 	}
@@ -251,8 +251,8 @@ func (box *Box) PutAll(objects interface{}) (ids []uint64, err error) {
 			// Process the data in chunks so that we don't consume too much memory.
 			const chunkSize = 10000 // 10k is the limit currently enforced by obx_box_ids_for_put, maybe make configurable
 
-			var chunks = count/chunkSize
-			if count % chunkSize != 0 {
+			var chunks = count / chunkSize
+			if count%chunkSize != 0 {
 				chunks = chunks + 1
 			}
 
@@ -288,7 +288,8 @@ func (box *Box) PutAll(objects interface{}) (ids []uint64, err error) {
 }
 
 // putManyObjects inserts a subset of objects, setting their IDs as an outArgument.
-// Requires to be called inside a write transaction, i.e. from the ObjectBox.RunInWriteTx() callback
+// Requires to be called inside a write transaction, i.e. from the ObjectBox.RunInWriteTx() callback.
+// The caller of this method (PutAll) already sliced up the data into chunks to mitigate memory consumption.
 func (box *Box) putManyObjects(objects reflect.Value, outIds []uint64, start, end int) error {
 	var binding = box.entity.binding
 	var count = end - start
@@ -296,20 +297,20 @@ func (box *Box) putManyObjects(objects reflect.Value, outIds []uint64, start, en
 	// indexes of new objects (zero IDs) in the `outIds` slice
 	var indexesNewObjects = make([]int, 0)
 
-	// by default we go with the most efficient way, see the override bellow
+	// by default we go with the most efficient way, see the override below
 	var putMode = cPutModePutIdGuaranteedToBeNew
 
 	// find out outIds of all the objects & whether they're new objects or updates
 	for i := 0; i < count; i++ {
-		var key = start + i
-		var object = objects.Index(key).Interface()
+		var index = start + i
+		var object = objects.Index(index).Interface()
 		if id, err := binding.GetId(object); err != nil {
 			return err
 		} else if id > 0 {
-			outIds[key] = id
+			outIds[index] = id
 			putMode = cPutModePut
 		} else {
-			indexesNewObjects = append(indexesNewObjects, key)
+			indexesNewObjects = append(indexesNewObjects, index)
 		}
 	}
 

@@ -87,7 +87,7 @@ func (box *Box) idsForPut(count int) (firstId uint64, err error) {
 	}
 
 	var cFirstID C.obx_id
-	if err := cMaybeErr(func() C.obx_err {
+	if err := cCall(func() C.obx_err {
 		return C.obx_box_ids_for_put(box.cBox, C.uint64_t(count), &cFirstID)
 
 	}); err != nil {
@@ -142,7 +142,7 @@ func (box *Box) putOne(id uint64, object interface{}, async bool, timeoutMs uint
 	// TODO move putAsync to AsyncBox
 	var cAsync *C.OBX_async
 	if async {
-		if err := cMaybeErr(func() C.obx_err {
+		if err := cCall(func() C.obx_err {
 			cAsync = C.obx_async_create(box.cBox, C.uint64_t(timeoutMs))
 			if cAsync == nil {
 				return -1
@@ -157,7 +157,7 @@ func (box *Box) putOne(id uint64, object interface{}, async bool, timeoutMs uint
 	}
 
 	return box.withObjectBytes(object, id, func(bytes []byte) error {
-		return cMaybeErr(func() C.obx_err {
+		return cCall(func() C.obx_err {
 			if async {
 				return C.obx_async_put(cAsync, C.obx_id(id), unsafe.Pointer(&bytes[0]), C.size_t(len(bytes)))
 			} else {
@@ -357,7 +357,7 @@ func (box *Box) putManyObjects(objects reflect.Value, outIds []uint64, start, en
 	// only IDs of objects processed in this batch
 	idsArray := goUint64ArrayToCObxId(outIds[start:end])
 
-	if err := cMaybeErr(func() C.obx_err {
+	if err := cCall(func() C.obx_err {
 		return C.obx_box_put_many(box.cBox, bytesArray.cBytesArray, idsArray, C.OBXPutMode(putMode))
 	}); err != nil {
 		return err
@@ -373,7 +373,7 @@ func (box *Box) putManyObjects(objects reflect.Value, outIds []uint64, start, en
 
 // Remove deletes a single object
 func (box *Box) Remove(id uint64) error {
-	return cMaybeErr(func() C.obx_err {
+	return cCall(func() C.obx_err {
 		return C.obx_box_remove(box.cBox, C.obx_id(id))
 	})
 }
@@ -381,7 +381,7 @@ func (box *Box) Remove(id uint64) error {
 // RemoveAll removes all stored objects.
 // This is much faster than removing objects one by one in a loop.
 func (box *Box) RemoveAll() error {
-	return cMaybeErr(func() C.obx_err {
+	return cCall(func() C.obx_err {
 		return C.obx_box_remove_all(box.cBox, nil)
 	})
 }
@@ -395,7 +395,7 @@ func (box *Box) Count() (uint64, error) {
 // passing limit=0 is the same as calling Count() - counts all objects without a limit
 func (box *Box) CountMax(limit uint64) (uint64, error) {
 	var cResult C.uint64_t
-	if err := cMaybeErr(func() C.obx_err { return C.obx_box_count(box.cBox, C.uint64_t(limit), &cResult) }); err != nil {
+	if err := cCall(func() C.obx_err { return C.obx_box_count(box.cBox, C.uint64_t(limit), &cResult) }); err != nil {
 		return 0, err
 	}
 	return uint64(cResult), nil
@@ -404,7 +404,7 @@ func (box *Box) CountMax(limit uint64) (uint64, error) {
 // IsEmpty checks whether the box contains any objects
 func (box *Box) IsEmpty() (bool, error) {
 	var cResult C.bool
-	if err := cMaybeErr(func() C.obx_err { return C.obx_box_is_empty(box.cBox, &cResult) }); err != nil {
+	if err := cCall(func() C.obx_err { return C.obx_box_is_empty(box.cBox, &cResult) }); err != nil {
 		return false, err
 	}
 	return bool(cResult), nil
@@ -454,10 +454,10 @@ func (box *Box) GetMany(ids ...uint64) (slice interface{}, err error) {
 	} else if supportsBytesArray {
 		return box.readManyObjects(func() *C.OBX_bytes_array { return C.obx_box_get_many(box.cBox, cIds.cArray) })
 	} else {
-		var cCall = func(visitorArg unsafe.Pointer) C.obx_err {
+		var cFn = func(visitorArg unsafe.Pointer) C.obx_err {
 			return C.obx_box_visit_many(box.cBox, cIds.cArray, dataVisitor, visitorArg)
 		}
-		return box.readUsingVisitor(cCall)
+		return box.readUsingVisitor(cFn)
 	}
 }
 
@@ -470,18 +470,18 @@ func (box *Box) GetAll() (slice interface{}, err error) {
 		return box.readManyObjects(func() *C.OBX_bytes_array { return C.obx_box_get_all(box.cBox) })
 
 	} else {
-		var cCall = func(visitorArg unsafe.Pointer) C.obx_err {
+		var cFn = func(visitorArg unsafe.Pointer) C.obx_err {
 			return C.obx_box_visit_all(box.cBox, dataVisitor, visitorArg)
 		}
-		return box.readUsingVisitor(cCall)
+		return box.readUsingVisitor(cFn)
 	}
 }
 
-func (box *Box) readManyObjects(cCall func() *C.OBX_bytes_array) (slice interface{}, err error) {
+func (box *Box) readManyObjects(cFn func() *C.OBX_bytes_array) (slice interface{}, err error) {
 	// we need a read-transaction to keep the data in dataPtr untouched (by concurrent write) until we can read it
 	// as well as making sure the relations read in binding.Load represent a consistent state
 	err = box.objectBox.RunInReadTx(func() error {
-		bytesArray, err := cGetBytesArray(cCall)
+		bytesArray, err := cGetBytesArray(cFn)
 		if err != nil {
 			return err
 		}
@@ -506,7 +506,7 @@ func (box *Box) readManyObjects(cCall func() *C.OBX_bytes_array) (slice interfac
 }
 
 // this is a utility function to fetch objects using an obx_data_visitor
-func (box *Box) readUsingVisitor(cCall func(visitorArg unsafe.Pointer) C.obx_err) (slice interface{}, err error) {
+func (box *Box) readUsingVisitor(cFn func(visitorArg unsafe.Pointer) C.obx_err) (slice interface{}, err error) {
 	var binding = box.entity.binding
 	var visitorId uint32
 	visitorId, err = dataVisitorRegister(func(bytes []byte) bool {
@@ -529,7 +529,7 @@ func (box *Box) readUsingVisitor(cCall func(visitorArg unsafe.Pointer) C.obx_err
 	// as well as making sure the relations read in binding.Load represent a consistent state
 	// use another `error` variable as `err` may be set by the visitor callback above
 	var err2 = box.objectBox.RunInReadTx(func() error {
-		return cMaybeErr(func() C.obx_err { return cCall(unsafe.Pointer(&visitorId)) })
+		return cCall(func() C.obx_err { return cFn(unsafe.Pointer(&visitorId)) })
 	})
 
 	if err2 != nil {
@@ -544,7 +544,7 @@ func (box *Box) readUsingVisitor(cCall func(visitorArg unsafe.Pointer) C.obx_err
 // Contains checks whether an object with the given ID is stored.
 func (box *Box) Contains(id uint64) (bool, error) {
 	var cResult C.bool
-	if err := cMaybeErr(func() C.obx_err { return C.obx_box_contains(box.cBox, C.obx_id(id), &cResult) }); err != nil {
+	if err := cCall(func() C.obx_err { return C.obx_box_contains(box.cBox, C.obx_id(id), &cResult) }); err != nil {
 		return false, err
 	}
 	return bool(cResult), nil
@@ -633,14 +633,14 @@ func (box *Box) RelationReplace(relation *RelationToMany, sourceId uint64, sourc
 
 // RelationPut creates a relation between the given source & target objects
 func (box *Box) RelationPut(relation *RelationToMany, sourceId, targetId uint64) error {
-	return cMaybeErr(func() C.obx_err {
+	return cCall(func() C.obx_err {
 		return C.obx_box_rel_put(box.cBox, C.obx_schema_id(relation.Id), C.obx_id(sourceId), C.obx_id(targetId))
 	})
 }
 
 // RelationRemove removes a relation between the given source & target objects
 func (box *Box) RelationRemove(relation *RelationToMany, sourceId, targetId uint64) error {
-	return cMaybeErr(func() C.obx_err {
+	return cCall(func() C.obx_err {
 		return C.obx_box_rel_remove(box.cBox, C.obx_schema_id(relation.Id), C.obx_id(sourceId), C.obx_id(targetId))
 	})
 }

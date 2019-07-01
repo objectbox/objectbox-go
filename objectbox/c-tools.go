@@ -30,7 +30,7 @@ import (
 // The c-api uses thread-local storage for the latest error so the we need to lock the current goroutine to a thread.
 // TODO migrate all native C.obx_* calls so that they use these wrappers
 
-func cMaybeErr(fn func() C.obx_err) (err error) {
+func cCall(fn func() C.obx_err) (err error) {
 	runtime.LockOSThread()
 
 	if rc := fn(); rc != 0 {

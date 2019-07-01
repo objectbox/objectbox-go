@@ -95,3 +95,4 @@ func dataVisitorUnregister(id uint32) {
 
 	delete(dataVisitorCallbacks, id)
 }
+

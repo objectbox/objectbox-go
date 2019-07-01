@@ -17,7 +17,6 @@
 package objectbox
 
 /*
-#cgo LDFLAGS: -lobjectbox
 #include <stdlib.h>
 #include "objectbox.h"
 
@@ -43,7 +42,7 @@ import (
 )
 
 type bytesArray struct {
-	BytesArray  [][]byte
+	array       [][]byte
 	cBytesArray *C.OBX_bytes_array
 }
 
@@ -53,10 +52,10 @@ func (bytesArray *bytesArray) free() {
 		bytesArray.cBytesArray = nil
 		C.obx_bytes_array_free(cBytesArray)
 	}
-	bytesArray.BytesArray = nil
+	bytesArray.array = nil
 }
 
-func cBytesArrayToGo(cBytesArray *C.OBX_bytes_array) *bytesArray {
+func cBytesArrayToGo(cBytesArray *C.OBX_bytes_array) [][]byte {
 	size := int(cBytesArray.count)
 	plainBytesArray := make([][]byte, size)
 
@@ -74,8 +73,26 @@ func cBytesArrayToGo(cBytesArray *C.OBX_bytes_array) *bytesArray {
 		}
 	}
 
-	return &bytesArray{plainBytesArray, cBytesArray}
+	return plainBytesArray
 }
+
+func goBytesArrayToC(goArray [][]byte) (*bytesArray, error) {
+	var cArray = C.obx_bytes_array_create(C.size_t(len(goArray)))
+	if cArray == nil {
+		return nil, createError()
+	}
+
+	for i, bytes := range goArray {
+		rc := C.obx_bytes_array_set(cArray, C.size_t(i), cBytesPtr(bytes), C.size_t(len(bytes)))
+		if rc != 0 {
+			C.obx_bytes_array_free(cArray)
+			return nil, createError()
+		}
+	}
+
+	return &bytesArray{goArray, cArray}, nil
+}
+
 
 type idsArray struct {
 	ids    []uint64
@@ -90,7 +107,7 @@ func (array *idsArray) free() {
 	array.ids = nil
 }
 
-func cIdsArrayToGo(cArray *C.OBX_id_array) *idsArray {
+func cIdsArrayToGo(cArray *C.OBX_id_array) []uint64 {
 	var size = uint(cArray.count)
 	var ids = make([]uint64, size)
 	if size > 0 {
@@ -100,7 +117,16 @@ func cIdsArrayToGo(cArray *C.OBX_id_array) *idsArray {
 			ids[i] = *(*uint64)(unsafe.Pointer(cArrayStart + uintptr(i)*cIdSize))
 		}
 	}
-	return &idsArray{ids, cArray}
+	return ids
+}
+
+func goIdsArrayToC(ids []uint64) (*idsArray, error) {
+	var cArray = C.obx_id_array_create(goUint64ArrayToCObxId(ids), C.size_t(len(ids)))
+	if cArray == nil {
+		return nil, createError()
+	}
+
+	return &idsArray{ids, cArray}, nil
 }
 
 type stringArray struct {
@@ -138,6 +164,14 @@ func goInt32ArrayToC(values []int32) *C.int32_t {
 		return (*C.int32_t)(unsafe.Pointer(&values[0]))
 	}
 	return nil
+}
+
+func goUint64ArrayToCObxId(values []uint64) *C.obx_id {
+	if len(values) > 0 {
+		return (*C.obx_id)(unsafe.Pointer(&values[0]))
+	} else {
+		return nil
+	}
 }
 
 func cBytesPtr(value []byte) unsafe.Pointer {

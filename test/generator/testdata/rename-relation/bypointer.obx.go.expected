@@ -68,16 +68,13 @@ func (taskRelPtr_EntityInfo) SetId(object interface{}, id uint64) {
 }
 
 // PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
-func (taskRelPtr_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}, id uint64) error {
+func (taskRelPtr_EntityInfo) PutRelated(ob *objectbox.ObjectBox, object interface{}, id uint64) error {
 	if rel := object.(*TaskRelPtr).GroupNew; rel != nil {
-		rId, err := GroupBinding.GetId(rel)
-		if err != nil {
+		if rId, err := GroupBinding.GetId(rel); err != nil {
 			return err
 		} else if rId == 0 {
-			if err := txn.RunWithCursor(GroupBinding.Id, func(targetCursor *objectbox.Cursor) error {
-				_, err := targetCursor.Put(rel) // NOTE Put/PutAsync() has a side-effect of setting the rel.ID
-				return err
-			}); err != nil {
+			// NOTE Put/PutAsync() has a side-effect of setting the rel.ID
+			if _, err := BoxForGroup(ob).Put(rel); err != nil {
 				return err
 			}
 		}
@@ -106,7 +103,7 @@ func (taskRelPtr_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builde
 }
 
 // Load is called by ObjectBox to load an object from a FlatBuffer
-func (taskRelPtr_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) (interface{}, error) {
+func (taskRelPtr_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{}, error) {
 	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
@@ -115,18 +112,10 @@ func (taskRelPtr_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) (int
 
 	var relGroupNew *Group
 	if rId := table.GetUint64Slot(6, 0); rId > 0 {
-		if err := txn.RunWithCursor(GroupBinding.Id, func(targetCursor *objectbox.Cursor) error {
-			if relObject, err := targetCursor.Get(rId); err != nil {
-				return err
-			} else if relObj, ok := relObject.(*Group); ok {
-				relGroupNew = relObj
-			} else {
-				var relObj = relObject.(Group)
-				relGroupNew = &relObj
-			}
-			return nil
-		}); err != nil {
+		if rObject, err := BoxForGroup(ob).Get(rId); err != nil {
 			return nil, err
+		} else {
+			relGroupNew = rObject
 		}
 	}
 
@@ -214,7 +203,17 @@ func (box *TaskRelPtrBox) Get(id uint64) (*TaskRelPtr, error) {
 	return object.(*TaskRelPtr), nil
 }
 
-// Get reads all stored objects
+// GetMany reads multiple objects at once.
+// If any of the objects doesn't exist, its position in the return slice is nil
+func (box *TaskRelPtrBox) GetMany(ids ...uint64) ([]*TaskRelPtr, error) {
+	objects, err := box.Box.GetMany(ids...)
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*TaskRelPtr), nil
+}
+
+// GetAll reads all stored objects
 func (box *TaskRelPtrBox) GetAll() ([]*TaskRelPtr, error) {
 	objects, err := box.Box.GetAll()
 	if err != nil {

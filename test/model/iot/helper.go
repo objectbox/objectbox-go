@@ -30,7 +30,7 @@ func LoadEmptyTestObjectBox() *objectbox.ObjectBox {
 	// remove database beforehand - only used in tests
 	os.RemoveAll(dbName)
 
-	objectBox, err := objectbox.NewBuilder().Directory(dbName).AlwaysAwaitAsync(true).Model(ObjectBoxModel()).Build()
+	objectBox, err := objectbox.NewBuilder().Directory(dbName).Model(ObjectBoxModel()).Build()
 	if err != nil {
 		panic(err)
 	}

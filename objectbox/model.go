@@ -17,7 +17,6 @@
 package objectbox
 
 /*
-#cgo LDFLAGS: -lobjectbox
 #include <stdlib.h>
 #include "objectbox.h"
 */
@@ -31,23 +30,40 @@ import (
 	"github.com/objectbox/objectbox-go/internal/generator"
 )
 
-// An ObjectBinding provides an interface for various object types to be included in the model
+// ObjectBinding provides an interface for various object types to be included in the model
 type ObjectBinding interface {
+	// AddToModel adds the entity information, including properties, indexes, etc., to the model during construction.
 	AddToModel(model *Model)
+
+	// GetId reads the ID field of the given object.
 	GetId(object interface{}) (id uint64, err error)
+
+	// SetId sets the ID field on the given object.
 	SetId(object interface{}, id uint64)
-	PutRelated(txn *Transaction, object interface{}, id uint64) error
+
+	// PutRelated updates/inserts objects related to the given object, based on the available object data.
+	PutRelated(ob *ObjectBox, object interface{}, id uint64) error
+
+	// Flatten serializes the object to FlatBuffers. The given ID must be used instead of the object field.
 	Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) error
-	Load(txn *Transaction, bytes []byte) (interface{}, error)
+
+	// Load constructs the object from serialized byte buffer. Also reads data for eagerly loaded related entities.
+	Load(ob *ObjectBox, bytes []byte) (interface{}, error)
+
+	// MakeSlice creates a slice of objects with the given capacity (0 length).
 	MakeSlice(capacity int) interface{}
+
+	// AppendToSlice adds the object at the end of the slice created by MakeSlice(). Returns the new slice.
 	AppendToSlice(slice interface{}, object interface{}) (sliceNew interface{})
+
+	// GeneratorVersion returns the version used to generate this binding - used to verify the compatibility.
 	GeneratorVersion() int
 }
 
 // Model is used by the generated code to represent information about the ObjectBox database schema
 type Model struct {
-	model *C.OBX_model
-	Error error
+	cModel *C.OBX_model
+	Error  error
 
 	currentEntity  *entity
 	entitiesById   map[TypeId]*entity
@@ -72,7 +88,7 @@ func NewModel() *Model {
 		err = createError()
 	}
 	return &Model{
-		model:          cModel,
+		cModel:         cModel,
 		Error:          err,
 		entitiesById:   make(map[TypeId]*entity),
 		entitiesByName: make(map[string]*entity),
@@ -93,7 +109,7 @@ func (model *Model) LastEntityId(id TypeId, uid uint64) {
 	}
 	model.lastEntityId = id
 	model.lastEntityUid = uid
-	C.obx_model_last_entity_id(model.model, C.obx_schema_id(id), C.obx_uid(uid))
+	C.obx_model_last_entity_id(model.cModel, C.obx_schema_id(id), C.obx_uid(uid))
 }
 
 func (model *Model) LastIndexId(id TypeId, uid uint64) {
@@ -102,7 +118,7 @@ func (model *Model) LastIndexId(id TypeId, uid uint64) {
 	}
 	model.lastIndexId = id
 	model.lastIndexUid = uid
-	C.obx_model_last_index_id(model.model, C.obx_schema_id(id), C.obx_uid(uid))
+	C.obx_model_last_index_id(model.cModel, C.obx_schema_id(id), C.obx_uid(uid))
 }
 
 func (model *Model) LastRelationId(id TypeId, uid uint64) {
@@ -111,7 +127,7 @@ func (model *Model) LastRelationId(id TypeId, uid uint64) {
 	}
 	model.lastRelationId = id
 	model.lastRelationUid = uid
-	C.obx_model_last_relation_id(model.model, C.obx_schema_id(id), C.obx_uid(uid))
+	C.obx_model_last_relation_id(model.cModel, C.obx_schema_id(id), C.obx_uid(uid))
 }
 
 func (model *Model) Entity(name string, id TypeId, uid uint64) {
@@ -121,7 +137,7 @@ func (model *Model) Entity(name string, id TypeId, uid uint64) {
 	cname := C.CString(name)
 	defer C.free(unsafe.Pointer(cname))
 
-	rc := C.obx_model_entity(model.model, cname, C.obx_schema_id(id), C.obx_uid(uid))
+	rc := C.obx_model_entity(model.cModel, cname, C.obx_schema_id(id), C.obx_uid(uid))
 	if rc != 0 {
 		model.Error = createError()
 		return
@@ -141,7 +157,7 @@ func (model *Model) Relation(relationId TypeId, relationUid uint64, targetEntity
 		return
 	}
 
-	rc := C.obx_model_relation(model.model, C.obx_schema_id(relationId), C.obx_uid(relationUid),
+	rc := C.obx_model_relation(model.cModel, C.obx_schema_id(relationId), C.obx_uid(relationUid),
 		C.obx_schema_id(targetEntityId), C.obx_uid(targetEntityUid))
 	if rc != 0 {
 		model.Error = createError()
@@ -155,7 +171,7 @@ func (model *Model) EntityLastPropertyId(id TypeId, uid uint64) {
 	if model.Error != nil {
 		return
 	}
-	rc := C.obx_model_entity_last_property_id(model.model, C.obx_schema_id(id), C.obx_uid(uid))
+	rc := C.obx_model_entity_last_property_id(model.cModel, C.obx_schema_id(id), C.obx_uid(uid))
 	if rc != 0 {
 		model.Error = createError()
 	}
@@ -168,7 +184,7 @@ func (model *Model) Property(name string, propertyType int, id TypeId, uid uint6
 	cname := C.CString(name)
 	defer C.free(unsafe.Pointer(cname))
 
-	rc := C.obx_model_property(model.model, cname, C.OBXPropertyType(propertyType), C.obx_schema_id(id), C.obx_uid(uid))
+	rc := C.obx_model_property(model.cModel, cname, C.OBXPropertyType(propertyType), C.obx_schema_id(id), C.obx_uid(uid))
 	if rc != 0 {
 		model.Error = createError()
 	}
@@ -178,7 +194,7 @@ func (model *Model) PropertyFlags(propertyFlags int) {
 	if model.Error != nil {
 		return
 	}
-	rc := C.obx_model_property_flags(model.model, C.OBXPropertyFlags(propertyFlags))
+	rc := C.obx_model_property_flags(model.cModel, C.OBXPropertyFlags(propertyFlags))
 	if rc != 0 {
 		model.Error = createError()
 	}
@@ -188,7 +204,7 @@ func (model *Model) PropertyIndex(id TypeId, uid uint64) {
 	if model.Error != nil {
 		return
 	}
-	rc := C.obx_model_property_index_id(model.model, C.obx_schema_id(id), C.obx_uid(uid))
+	rc := C.obx_model_property_index_id(model.cModel, C.obx_schema_id(id), C.obx_uid(uid))
 	if rc != 0 {
 		model.Error = createError()
 	}
@@ -200,7 +216,7 @@ func (model *Model) PropertyRelation(targetEntityName string, indexId TypeId, in
 	}
 	cname := C.CString(targetEntityName)
 	defer C.free(unsafe.Pointer(cname))
-	rc := C.obx_model_property_relation(model.model, cname, C.obx_schema_id(indexId), C.obx_uid(indexUid))
+	rc := C.obx_model_property_relation(model.cModel, cname, C.obx_schema_id(indexId), C.obx_uid(indexUid))
 	if rc != 0 {
 		model.Error = createError()
 	}

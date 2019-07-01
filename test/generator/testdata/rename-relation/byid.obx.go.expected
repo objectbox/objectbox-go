@@ -68,7 +68,7 @@ func (taskRelId_EntityInfo) SetId(object interface{}, id uint64) {
 }
 
 // PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
-func (taskRelId_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}, id uint64) error {
+func (taskRelId_EntityInfo) PutRelated(ob *objectbox.ObjectBox, object interface{}, id uint64) error {
 	return nil
 }
 
@@ -86,7 +86,7 @@ func (taskRelId_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder
 }
 
 // Load is called by ObjectBox to load an object from a FlatBuffer
-func (taskRelId_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) (interface{}, error) {
+func (taskRelId_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{}, error) {
 	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
@@ -177,7 +177,17 @@ func (box *TaskRelIdBox) Get(id uint64) (*TaskRelId, error) {
 	return object.(*TaskRelId), nil
 }
 
-// Get reads all stored objects
+// GetMany reads multiple objects at once.
+// If any of the objects doesn't exist, its position in the return slice is nil
+func (box *TaskRelIdBox) GetMany(ids ...uint64) ([]*TaskRelId, error) {
+	objects, err := box.Box.GetMany(ids...)
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*TaskRelId), nil
+}
+
+// GetAll reads all stored objects
 func (box *TaskRelIdBox) GetAll() ([]*TaskRelId, error) {
 	objects, err := box.Box.GetAll()
 	if err != nil {

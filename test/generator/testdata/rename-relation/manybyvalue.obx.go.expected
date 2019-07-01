@@ -64,10 +64,8 @@ func (taskRelManyValue_EntityInfo) SetId(object interface{}, id uint64) {
 }
 
 // PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
-func (taskRelManyValue_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}, id uint64) error {
-	if err := txn.RunWithCursor(TaskRelManyValueBinding.Id, func(cursor *objectbox.Cursor) error {
-		return cursor.RelationReplace(2, GroupBinding.Id, id, object, object.(*TaskRelManyValue).GroupsNew)
-	}); err != nil {
+func (taskRelManyValue_EntityInfo) PutRelated(ob *objectbox.ObjectBox, object interface{}, id uint64) error {
+	if err := BoxForTaskRelManyValue(ob).RelationReplace(TaskRelManyValue_.GroupsNew, id, object, object.(*TaskRelManyValue).GroupsNew); err != nil {
 		return err
 	}
 	return nil
@@ -83,7 +81,7 @@ func (taskRelManyValue_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.
 }
 
 // Load is called by ObjectBox to load an object from a FlatBuffer
-func (taskRelManyValue_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) (interface{}, error) {
+func (taskRelManyValue_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{}, error) {
 	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
@@ -91,15 +89,12 @@ func (taskRelManyValue_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte
 	var id = table.GetUint64Slot(4, 0)
 
 	var relGroupsNew []Group
-	if err := txn.RunWithCursor(TaskRelManyValueBinding.Id, func(cursor *objectbox.Cursor) error {
-		if rSlice, err := cursor.RelationGetAll(2, GroupBinding.Id, id); err != nil {
-			return err
-		} else {
-			relGroupsNew = rSlice.([]Group)
-			return nil
-		}
-	}); err != nil {
+	if rIds, err := BoxForTaskRelManyValue(ob).RelationIds(TaskRelManyValue_.GroupsNew, id); err != nil {
 		return nil, err
+	} else if rSlice, err := BoxForGroup(ob).GetMany(rIds...); err != nil {
+		return nil, err
+	} else {
+		relGroupsNew = rSlice
 	}
 
 	return &TaskRelManyValue{
@@ -186,7 +181,17 @@ func (box *TaskRelManyValueBox) Get(id uint64) (*TaskRelManyValue, error) {
 	return object.(*TaskRelManyValue), nil
 }
 
-// Get reads all stored objects
+// GetMany reads multiple objects at once.
+// If any of the objects doesn't exist, its position in the return slice is nil
+func (box *TaskRelManyValueBox) GetMany(ids ...uint64) ([]*TaskRelManyValue, error) {
+	objects, err := box.Box.GetMany(ids...)
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*TaskRelManyValue), nil
+}
+
+// GetAll reads all stored objects
 func (box *TaskRelManyValueBox) GetAll() ([]*TaskRelManyValue, error) {
 	objects, err := box.Box.GetAll()
 	if err != nil {

@@ -16,11 +16,13 @@
 
 package objectbox
 
-// Internal: Reserved for internal unit tests only and won't be exposed in the future
-type InternalTestAccessObjectBox struct {
-	ObjectBox *ObjectBox
-}
+import (
+	"github.com/google/flatbuffers/go"
+	"sync"
+)
 
-func (obx *InternalTestAccessObjectBox) RunInTxn(readOnly bool, txnFun txnFun) (err error) {
-	return obx.ObjectBox.runInTxn(readOnly, txnFun)
+var fbbPool = sync.Pool{
+	New: func() interface{} {
+		return flatbuffers.NewBuilder(256)
+	},
 }

@@ -17,6 +17,7 @@
 package objectbox_test
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"regexp"
@@ -584,117 +585,120 @@ type queryTestOptions struct {
 func testQueries(t *testing.T, env *model.TestEnv, options queryTestOptions, testCases []queryTestCase) {
 	t.Logf("Executing %d test cases", len(testCases))
 
-	var resetDb = func() {
-		assert.NoErr(t, model.BoxForEntity(env.ObjectBox).RemoveAll())
-		assert.NoErr(t, model.BoxForEntityByValue(env.ObjectBox).RemoveAll())
-		assert.NoErr(t, model.BoxForTestEntityRelated(env.ObjectBox).RemoveAll())
-		assert.NoErr(t, model.BoxForTestEntityInline(env.ObjectBox).RemoveAll())
-		assert.NoErr(t, model.BoxForTestStringIdEntity(env.ObjectBox).RemoveAll())
+	// reset the database
+	assert.NoErr(t, model.BoxForEntity(env.ObjectBox).RemoveAll())
+	assert.NoErr(t, model.BoxForEntityByValue(env.ObjectBox).RemoveAll())
+	assert.NoErr(t, model.BoxForTestEntityRelated(env.ObjectBox).RemoveAll())
+	assert.NoErr(t, model.BoxForTestEntityInline(env.ObjectBox).RemoveAll())
+	assert.NoErr(t, model.BoxForTestStringIdEntity(env.ObjectBox).RemoveAll())
 
-		// insert new entries
-		env.Populate(options.baseCount)
-	}
+	// insert new entries
+	env.Populate(options.baseCount)
 
 	for i, tc := range testCases {
-		// reset Db before each query, necessary due to query.Remove()
-		// TODO we can replace this to make the test run faster by a managed transaction with rollback
-		resetDb()
+		// run each test-case in a new transaction, resetting the state at the end
+		_ = env.ObjectBox.RunInWriteTx(func() error {
+			executeTestCase(t, env, options, i, tc)
+			return errors.New("no-error, just abort transaction to reset the DB")
+		})
+	}
+}
 
-		// assign some readable variable names
-		var count = tc.c
-		var desc = tc.d
-		var setup = tc.f
+func executeTestCase(t *testing.T, env *model.TestEnv, options queryTestOptions, i int, tc queryTestCase) {
+	// assign some readable variable names
+	var count = tc.c
+	var desc = tc.d
+	var setup = tc.f
 
-		var query *objectbox.Query
-		var box *objectbox.Box
-		var baseCount uint64
-		if q, valid := tc.q.(*model.EntityQuery); valid {
-			query = q.Query
-			box = model.BoxForEntity(env.ObjectBox).Box
-			baseCount = uint64(options.baseCount)
-		} else if q, valid := tc.q.(*model.TestEntityRelatedQuery); valid {
-			query = q.Query
-			box = model.BoxForTestEntityRelated(env.ObjectBox).Box
-			baseCount = uint64(options.baseCount) * 3 // TestEnv::Populate() currently inserts 3 relations for each main entity
-		} else if q, valid := tc.q.(*model.EntityByValueQuery); valid {
-			query = q.Query
-			box = model.BoxForEntityByValue(env.ObjectBox).Box
-			baseCount = uint64(options.baseCount) * 5 // TestEnv::Populate() currently inserts 5 relations for each main entity
-		} else {
-			assert.Failf(t, "Query is not supported by the test executor: %v", tc.q)
-			return
+	var query *objectbox.Query
+	var box *objectbox.Box
+	var baseCount uint64
+	if q, valid := tc.q.(*model.EntityQuery); valid {
+		query = q.Query
+		box = model.BoxForEntity(env.ObjectBox).Box
+		baseCount = uint64(options.baseCount)
+	} else if q, valid := tc.q.(*model.TestEntityRelatedQuery); valid {
+		query = q.Query
+		box = model.BoxForTestEntityRelated(env.ObjectBox).Box
+		baseCount = uint64(options.baseCount) * 3 // TestEnv::Populate() currently inserts 3 relations for each main entity
+	} else if q, valid := tc.q.(*model.EntityByValueQuery); valid {
+		query = q.Query
+		box = model.BoxForEntityByValue(env.ObjectBox).Box
+		baseCount = uint64(options.baseCount) * 5 // TestEnv::Populate() currently inserts 5 relations for each main entity
+	} else {
+		assert.Failf(t, "Query is not supported by the test executor: %v", tc.q)
+		return
+	}
+
+	// run query-setup function, if defined
+	if setup != nil {
+		if err := setup(query); err != nil {
+			assert.Failf(t, "case #%d {%s} setup failed - %s", i, desc, err)
 		}
+	}
 
-		// run query-setup function, if defined
-		if setup != nil {
-			if err := setup(query); err != nil {
-				assert.Failf(t, "case #%d {%s} setup failed - %s", i, desc, err)
+	var isExpected = func(actualDesc string) bool {
+		for _, expectedDescription := range desc {
+			if expectedDescription == actualDesc {
+				return true
 			}
 		}
+		return false
+	}
 
-		var isExpected = func(actualDesc string) bool {
-			for _, expectedDescription := range desc {
-				if expectedDescription == actualDesc {
-					return true
-				}
-			}
-			return false
-		}
+	// DescribeParams
+	var removeSpecialChars = strings.NewReplacer("\n", "", "\t", "")
+	if actualDesc, err := query.DescribeParams(); err != nil {
+		assert.Failf(t, "case #%d {%s} - %s", i, desc, err)
+	} else if actualDesc = removeSpecialChars.Replace(actualDesc); !isExpected(actualDesc) {
+		assert.Failf(t, "case #%d expected one of %v, but got {%s}", i, desc, actualDesc)
+	}
 
-		// DescribeParams
-		var removeSpecialChars = strings.NewReplacer("\n", "", "\t", "")
-		if actualDesc, err := query.DescribeParams(); err != nil {
-			assert.Failf(t, "case #%d {%s} - %s", i, desc, err)
-		} else if actualDesc = removeSpecialChars.Replace(actualDesc); !isExpected(actualDesc) {
-			assert.Failf(t, "case #%d expected one of %v, but got {%s}", i, desc, actualDesc)
-		}
+	// Find
+	var actualData interface{}
+	if data, err := query.Find(); err != nil {
+		assert.Failf(t, "case #%d {%s} %s", i, desc, err)
+	} else if data == nil {
+		assert.Failf(t, "case #%d {%s} data is nil", i, desc)
+	} else if reflect.ValueOf(data).Len() != count {
+		assert.Failf(t, "case #%d {%s} expected %d, but got %d len(Find())", i, desc, count, reflect.ValueOf(data).Len())
+	} else {
+		actualData = data
+	}
 
-		// Find
-		var actualData interface{}
-		if data, err := query.Find(); err != nil {
+	// Count
+	if !options.skipCount {
+		if actualCount, err := query.Count(); err != nil {
 			assert.Failf(t, "case #%d {%s} %s", i, desc, err)
-		} else if data == nil {
-			assert.Failf(t, "case #%d {%s} data is nil", i, desc)
-		} else if reflect.ValueOf(data).Len() != count {
-			assert.Failf(t, "case #%d {%s} expected %d, but got %d len(Find())", i, desc, count, reflect.ValueOf(data).Len())
-		} else {
-			actualData = data
+		} else if uint64(count) != actualCount {
+			assert.Failf(t, "case #%d {%s} expected %d, but got %d Count()", i, desc, count, actualCount)
 		}
+	}
 
-		// Count
-		if !options.skipCount {
-			if actualCount, err := query.Count(); err != nil {
-				assert.Failf(t, "case #%d {%s} %s", i, desc, err)
-			} else if uint64(count) != actualCount {
-				assert.Failf(t, "case #%d {%s} expected %d, but got %d Count()", i, desc, count, actualCount)
-			}
-		}
+	// FindIds
+	if ids, err := query.FindIds(); err != nil {
+		assert.Failf(t, "case #%d {%s} %s", i, desc, err)
+	} else {
+		//t.Logf("case #%d {%s} - checking all IDs are present in the result", i, desc)
+		matchAllEntityIds(t, ids, actualData)
+	}
 
-		// FindIds
-		if ids, err := query.FindIds(); err != nil {
+	// Remove
+	if !options.skipRemove {
+		if removedCount, err := query.Remove(); err != nil {
 			assert.Failf(t, "case #%d {%s} %s", i, desc, err)
-		} else {
-			//t.Logf("case #%d {%s} - checking all IDs are present in the result", i, desc)
-			matchAllEntityIds(t, ids, actualData)
-		}
-
-		// Remove
-		if !options.skipRemove {
-			if removedCount, err := query.Remove(); err != nil {
-				assert.Failf(t, "case #%d {%s} %s", i, desc, err)
-			} else if uint64(count) != removedCount {
-				assert.Failf(t, "case #%d {%s} expected %d, but got %d Remove()", i, desc, count, removedCount)
-			} else if actualCount, err := box.Count(); err != nil {
-				assert.Failf(t, "case #%d {%s} %s", i, desc, err)
-			} else if actualCount+removedCount != baseCount {
-				assert.Failf(t, "case #%d {%s} expected %d, but got %d Box.Count() after remove",
-					i, desc, baseCount-removedCount, actualCount)
-			}
-		}
-
-		if err := query.Close(); err != nil {
+		} else if uint64(count) != removedCount {
+			assert.Failf(t, "case #%d {%s} expected %d, but got %d Remove()", i, desc, count, removedCount)
+		} else if actualCount, err := box.Count(); err != nil {
 			assert.Failf(t, "case #%d {%s} %s", i, desc, err)
+		} else if actualCount+removedCount != baseCount {
+			assert.Failf(t, "case #%d {%s} expected %d, but got %d Box.Count() after remove",
+				i, desc, baseCount-removedCount, actualCount)
 		}
+	}
+
+	if err := query.Close(); err != nil {
+		assert.Failf(t, "case #%d {%s} %s", i, desc, err)
 	}
 }
 

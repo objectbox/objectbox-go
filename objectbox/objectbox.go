@@ -24,22 +24,34 @@ package objectbox
 import "C"
 
 import (
-	"errors"
 	"fmt"
 	"runtime"
 	"strconv"
 	"sync"
-
-	"github.com/google/flatbuffers/go"
 )
 
-//noinspection GoUnusedConst
 const (
 	DebugflagsLogTransactionsRead  = 1
 	DebugflagsLogTransactionsWrite = 2
 	DebugflagsLogQueries           = 4
 	DebugflagsLogQueryParameters   = 8
 	DebugflagsLogAsyncQueue        = 16
+)
+
+const (
+	// Standard put ("insert or update")
+	cPutModePut = 1
+
+	// Put succeeds only if the entity does not exist yet.
+	cPutModeInsert = 2
+
+	// Put succeeds only if the entity already exist.
+	cPutModeUpdate = 3
+
+	// Not used yet (does not make sense for asnyc puts)
+	// The given ID (non-zero) is guaranteed to be new; don't use unless you know exactly what you are doing!
+	// This is primarily used internally. Wrong usage leads to inconsistent data (e.g. index data not updated)!
+	cPutModePutIdGuaranteedToBeNew = 4
 )
 
 // atomic boolean true & false
@@ -53,17 +65,13 @@ type ObjectBox struct {
 	entitiesById   map[TypeId]*entity
 	entitiesByName map[string]*entity
 	boxes          map[TypeId]*Box
-	boxesMutex     *sync.Mutex
+	boxesMutex     sync.Mutex
 	options        options
 }
 
 type options struct {
-	putAsyncTimeout  uint
-	alwaysAwaitAsync bool
+	putAsyncTimeout uint
 }
-
-type txnFun func(transaction *Transaction) error
-type cursorFun func(cursor *Cursor) error
 
 // constant during runtime so no need to call this each time it's necessary
 var supportsBytesArray = bool(C.obx_supports_bytes_array())
@@ -75,48 +83,56 @@ func (ob *ObjectBox) Close() {
 	if storeToClose != nil {
 		C.obx_store_close(storeToClose)
 	}
-
-	ob.boxesMutex.Lock()
-	defer ob.boxesMutex.Unlock()
-	for _, box := range ob.boxes {
-		if err := box.close(); err != nil {
-			fmt.Println(err)
-		}
-	}
-	ob.boxes = nil
 }
 
-func (ob *ObjectBox) beginTxn() (*Transaction, error) {
+// RunInReadTx executes the given function inside a read transaction.
+// The execution of the function `fn` must be sequential and executed in the same thread, which is enforced internally.
+// If you launch goroutines inside `fn`, they will be executed on separate threads and not part of the same transaction.
+// Multiple read transaction may be executed concurrently.
+// The error returned by your callback is passed-through as the output error
+func (ob *ObjectBox) RunInReadTx(fn func() error) error {
+	return ob.runInTxn(true, fn)
+}
+
+// RunInWriteTx executes the given function inside a write transaction.
+// The execution of the function `fn` must be sequential and executed in the same thread, which is enforced internally.
+// If you launch goroutines inside `fn`, they will be executed on separate threads and not part of the same transaction.
+// Only one write transaction may be active at a time (concurrently).
+// The error returned by your callback is passed-through as the output error.
+// If the resulting error is not nil, the transaction is aborted (rolled-back)
+func (ob *ObjectBox) RunInWriteTx(fn func() error) error {
+	return ob.runInTxn(false, fn)
+}
+
+func (ob *ObjectBox) beginTxn() (*transaction, error) {
 	var ctxn = C.obx_txn_begin(ob.store)
 	if ctxn == nil {
 		return nil, createError()
 	}
-	return &Transaction{ctxn, ob}, nil
+	return &transaction{ctxn, ob}, nil
 }
 
-func (ob *ObjectBox) beginTxnRead() (*Transaction, error) {
+func (ob *ObjectBox) beginTxnRead() (*transaction, error) {
 	var ctxn = C.obx_txn_begin_read(ob.store)
 	if ctxn == nil {
 		return nil, createError()
 	}
-	return &Transaction{ctxn, ob}, nil
+	return &transaction{ctxn, ob}, nil
 }
 
-func (ob *ObjectBox) runInTxn(readOnly bool, txnFun txnFun) (err error) {
+func (ob *ObjectBox) runInTxn(readOnly bool, fn func() error) (err error) {
 	runtime.LockOSThread()
-	var txn *Transaction
+	var txn *transaction
 	if readOnly {
 		txn, err = ob.beginTxnRead()
 	} else {
 		txn, err = ob.beginTxn()
 	}
+
 	if err != nil {
 		runtime.UnlockOSThread()
-		return
+		return err
 	}
-
-	//fmt.Println(">>> START TX")
-	//os.Stdout.Sync()
 
 	// Defer to ensure a TX is ALWAYS closed, even in a panic
 	defer func() {
@@ -127,19 +143,13 @@ func (ob *ObjectBox) runInTxn(readOnly bool, txnFun txnFun) (err error) {
 		runtime.UnlockOSThread()
 	}()
 
-	err = txnFun(txn)
-
-	//fmt.Println("<<< END TX")
-	//os.Stdout.Sync()
+	err = fn()
 
 	if !readOnly && err == nil {
 		err = txn.Commit()
 	}
 
-	//fmt.Println("<<< END TX Close")
-	//os.Stdout.Sync()
-
-	return
+	return err
 }
 
 func (ob ObjectBox) getEntityById(typeId TypeId) *entity {
@@ -158,16 +168,6 @@ func (ob ObjectBox) getEntityByName(typeName string) *entity {
 		panic("Configuration error; no entity registered for type name " + typeName)
 	}
 	return entity
-}
-
-func (ob *ObjectBox) runWithCursor(e *entity, readOnly bool, cursorFun cursorFun) error {
-	if ob.options.alwaysAwaitAsync {
-		e.awaitAsyncCompletion()
-	}
-
-	return ob.runInTxn(readOnly, func(txn *Transaction) error {
-		return txn.runWithCursor(e, cursorFun)
-	})
 }
 
 // SetDebugFlags configures debug logging of the ObjectBox core.
@@ -200,15 +200,14 @@ func (ob *ObjectBox) box(typeId TypeId) (*Box, error) {
 	}
 
 	entity := ob.getEntityById(typeId)
-	cbox := C.obx_box_create(ob.store, C.obx_schema_id(typeId))
+	cbox := C.obx_box(ob.store, C.obx_schema_id(typeId))
 	if cbox == nil {
 		return nil, createError()
 	}
 
 	box = &Box{
 		objectBox: ob,
-		box:       cbox,
-		fbb:       flatbuffers.NewBuilder(512),
+		cBox:      cbox,
 		entity:    entity,
 	}
 	ob.boxes[typeId] = box
@@ -217,16 +216,8 @@ func (ob *ObjectBox) box(typeId TypeId) (*Box, error) {
 
 // AwaitAsyncCompletion blocks until all PutAsync insert have been processed
 func (ob *ObjectBox) AwaitAsyncCompletion() *ObjectBox {
-	if C.obx_store_await_async_completion(ob.store) != 0 {
+	if C.obx_store_await_async_completion(ob.store) != true {
 		fmt.Println(createError())
 	}
 	return ob
-}
-
-func createError() error {
-	msg := C.obx_last_error_message()
-	if msg == nil {
-		return errors.New("no error info available; please report")
-	}
-	return errors.New(C.GoString(msg))
 }

@@ -65,7 +65,7 @@ func (timeEntity_EntityInfo) SetId(object interface{}, id uint64) {
 }
 
 // PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
-func (timeEntity_EntityInfo) PutRelated(txn *objectbox.Transaction, object interface{}, id uint64) error {
+func (timeEntity_EntityInfo) PutRelated(ob *objectbox.ObjectBox, object interface{}, id uint64) error {
 	return nil
 }
 
@@ -81,7 +81,7 @@ func (timeEntity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builde
 }
 
 // Load is called by ObjectBox to load an object from a FlatBuffer
-func (timeEntity_EntityInfo) Load(txn *objectbox.Transaction, bytes []byte) (interface{}, error) {
+func (timeEntity_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{}, error) {
 	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
@@ -172,7 +172,17 @@ func (box *TimeEntityBox) Get(id uint64) (*TimeEntity, error) {
 	return object.(*TimeEntity), nil
 }
 
-// Get reads all stored objects
+// GetMany reads multiple objects at once.
+// If any of the objects doesn't exist, its position in the return slice is nil
+func (box *TimeEntityBox) GetMany(ids ...uint64) ([]*TimeEntity, error) {
+	objects, err := box.Box.GetMany(ids...)
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*TimeEntity), nil
+}
+
+// GetAll reads all stored objects
 func (box *TimeEntityBox) GetAll() ([]*TimeEntity, error) {
 	objects, err := box.Box.GetAll()
 	if err != nil {

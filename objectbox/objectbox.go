@@ -86,14 +86,18 @@ func (ob *ObjectBox) Close() {
 }
 
 // RunInReadTx executes the given function inside a read transaction.
-// Note, you must not launch Go routines inside this function - the call must be sequential.
+// The execution of the function `fn` must be sequential and executed in the same thread, which is enforced internally.
+// If you launch goroutines inside `fn`, they will be executed on separate threads and not part of the same transaction.
+// Multiple read transaction may be executed concurrently.
 // The error returned by your callback is passed-through as the output error
 func (ob *ObjectBox) RunInReadTx(fn func() error) error {
 	return ob.runInTxn(true, fn)
 }
 
 // RunInWriteTx executes the given function inside a write transaction.
-// Note, you must not launch Go routines inside this function - the call must be sequential.
+// The execution of the function `fn` must be sequential and executed in the same thread, which is enforced internally.
+// If you launch goroutines inside `fn`, they will be executed on separate threads and not part of the same transaction.
+// Only one write transaction may be active at a time (concurrently).
 // The error returned by your callback is passed-through as the output error.
 // If the resulting error is not nil, the transaction is aborted (rolled-back)
 func (ob *ObjectBox) RunInWriteTx(fn func() error) error {

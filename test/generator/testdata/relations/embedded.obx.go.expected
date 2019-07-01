@@ -108,7 +108,9 @@ func (taskRelEmbedded_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.B
 	// build the FlatBuffers object
 	fbb.StartObject(2)
 	fbutils.SetUint64Slot(fbb, 0, id)
-	fbutils.SetUint64Slot(fbb, 1, rIdGroup)
+	if obj.WithGroup.Group != nil {
+		fbutils.SetUint64Slot(fbb, 1, rIdGroup)
+	}
 	return nil
 }
 
@@ -121,8 +123,8 @@ func (taskRelEmbedded_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (i
 	var id = table.GetUint64Slot(4, 0)
 
 	var relGroup *Group
-	if rId := table.GetUint64Slot(6, 0); rId > 0 {
-		if rObject, err := BoxForGroup(ob).Get(rId); err != nil {
+	if rId := fbutils.GetUint64PtrSlot(table, 6); rId != nil && *rId > 0 {
+		if rObject, err := BoxForGroup(ob).Get(*rId); err != nil {
 			return nil, err
 		} else {
 			relGroup = rObject

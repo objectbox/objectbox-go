@@ -564,6 +564,151 @@ func TestQueryUint(t *testing.T) {
 	assert.Eq(t, uint64(1), count)
 }
 
+func TestQueryNil(t *testing.T) {
+	env := model.NewTestEnv(t)
+	defer env.Close()
+
+	var box = env.Box
+
+	// let's alias the entity to make the test cases easier to read
+	var E = model.Entity_
+
+	var setup = func() {
+		var err error
+		var object *model.Entity
+
+		// empty
+		object = &model.Entity{}
+		_, err = box.Put(object)
+		assert.NoErr(t, err)
+
+		// non-empty
+		object = model.Entity47()
+		object.IntPtr = &object.Int
+		object.Int8Ptr = &object.Int8
+		object.Int16Ptr = &object.Int16
+		object.Int32Ptr = &object.Int32
+		object.Int64Ptr = &object.Int64
+		object.UintPtr = &object.Uint
+		object.Uint8Ptr = &object.Uint8
+		object.Uint16Ptr = &object.Uint16
+		object.Uint32Ptr = &object.Uint32
+		object.Uint64Ptr = &object.Uint64
+		object.BoolPtr = &object.Bool
+		object.StringPtr = &object.String
+		object.StringVectorPtr = &object.StringVector
+		object.BytePtr = &object.Byte
+		object.ByteVectorPtr = &object.ByteVector
+		object.RunePtr = &object.Rune
+		object.Float32Ptr = &object.Float32
+		object.Float64Ptr = &object.Float64
+		_, err = box.Put(object)
+		assert.NoErr(t, err)
+
+		// empty vectors to make sure they're not handled as nil
+		object = &model.Entity{}
+		object.StringVector = []string{}
+		object.StringVectorPtr = &[]string{}
+		object.ByteVector = []byte{}
+		object.ByteVectorPtr = &[]byte{}
+		_, err = box.Put(object)
+		assert.NoErr(t, err)
+	}
+
+	testQueries(t, env, queryTestOptions{baseCount: 3, setupFn: setup}, []queryTestCase{
+		{0, s{`Int is null`}, box.Query(E.Int.IsNil()), nil},
+		{3, s{`Int is not null`}, box.Query(E.Int.IsNotNil()), nil},
+		{2, s{`IntPtr is null`}, box.Query(E.IntPtr.IsNil()), nil},
+		{1, s{`IntPtr is not null`}, box.Query(E.IntPtr.IsNotNil()), nil},
+
+		{0, s{`Int8 is null`}, box.Query(E.Int8.IsNil()), nil},
+		{3, s{`Int8 is not null`}, box.Query(E.Int8.IsNotNil()), nil},
+		{2, s{`Int8Ptr is null`}, box.Query(E.Int8Ptr.IsNil()), nil},
+		{1, s{`Int8Ptr is not null`}, box.Query(E.Int8Ptr.IsNotNil()), nil},
+
+		{0, s{`Int16 is null`}, box.Query(E.Int16.IsNil()), nil},
+		{3, s{`Int16 is not null`}, box.Query(E.Int16.IsNotNil()), nil},
+		{2, s{`Int16Ptr is null`}, box.Query(E.Int16Ptr.IsNil()), nil},
+		{1, s{`Int16Ptr is not null`}, box.Query(E.Int16Ptr.IsNotNil()), nil},
+
+		{0, s{`Int32 is null`}, box.Query(E.Int32.IsNil()), nil},
+		{3, s{`Int32 is not null`}, box.Query(E.Int32.IsNotNil()), nil},
+		{2, s{`Int32Ptr is null`}, box.Query(E.Int32Ptr.IsNil()), nil},
+		{1, s{`Int32Ptr is not null`}, box.Query(E.Int32Ptr.IsNotNil()), nil},
+
+		{0, s{`Int64 is null`}, box.Query(E.Int64.IsNil()), nil},
+		{3, s{`Int64 is not null`}, box.Query(E.Int64.IsNotNil()), nil},
+		{2, s{`Int64Ptr is null`}, box.Query(E.Int64Ptr.IsNil()), nil},
+		{1, s{`Int64Ptr is not null`}, box.Query(E.Int64Ptr.IsNotNil()), nil},
+
+		{0, s{`Uint is null`}, box.Query(E.Uint.IsNil()), nil},
+		{3, s{`Uint is not null`}, box.Query(E.Uint.IsNotNil()), nil},
+		{2, s{`UintPtr is null`}, box.Query(E.UintPtr.IsNil()), nil},
+		{1, s{`UintPtr is not null`}, box.Query(E.UintPtr.IsNotNil()), nil},
+
+		{0, s{`Uint8 is null`}, box.Query(E.Uint8.IsNil()), nil},
+		{3, s{`Uint8 is not null`}, box.Query(E.Uint8.IsNotNil()), nil},
+		{2, s{`Uint8Ptr is null`}, box.Query(E.Uint8Ptr.IsNil()), nil},
+		{1, s{`Uint8Ptr is not null`}, box.Query(E.Uint8Ptr.IsNotNil()), nil},
+
+		{0, s{`Uint16 is null`}, box.Query(E.Uint16.IsNil()), nil},
+		{3, s{`Uint16 is not null`}, box.Query(E.Uint16.IsNotNil()), nil},
+		{2, s{`Uint16Ptr is null`}, box.Query(E.Uint16Ptr.IsNil()), nil},
+		{1, s{`Uint16Ptr is not null`}, box.Query(E.Uint16Ptr.IsNotNil()), nil},
+
+		{0, s{`Uint32 is null`}, box.Query(E.Uint32.IsNil()), nil},
+		{3, s{`Uint32 is not null`}, box.Query(E.Uint32.IsNotNil()), nil},
+		{2, s{`Uint32Ptr is null`}, box.Query(E.Uint32Ptr.IsNil()), nil},
+		{1, s{`Uint32Ptr is not null`}, box.Query(E.Uint32Ptr.IsNotNil()), nil},
+
+		{0, s{`Uint64 is null`}, box.Query(E.Uint64.IsNil()), nil},
+		{3, s{`Uint64 is not null`}, box.Query(E.Uint64.IsNotNil()), nil},
+		{2, s{`Uint64Ptr is null`}, box.Query(E.Uint64Ptr.IsNil()), nil},
+		{1, s{`Uint64Ptr is not null`}, box.Query(E.Uint64Ptr.IsNotNil()), nil},
+
+		{0, s{`Bool is null`}, box.Query(E.Bool.IsNil()), nil},
+		{3, s{`Bool is not null`}, box.Query(E.Bool.IsNotNil()), nil},
+		{2, s{`BoolPtr is null`}, box.Query(E.BoolPtr.IsNil()), nil},
+		{1, s{`BoolPtr is not null`}, box.Query(E.BoolPtr.IsNotNil()), nil},
+
+		{0, s{`String is null`}, box.Query(E.String.IsNil()), nil},
+		{3, s{`String is not null`}, box.Query(E.String.IsNotNil()), nil},
+		{2, s{`StringPtr is null`}, box.Query(E.StringPtr.IsNil()), nil},
+		{1, s{`StringPtr is not null`}, box.Query(E.StringPtr.IsNotNil()), nil},
+
+		{1, s{`StringVector is null`}, box.Query(E.StringVector.IsNil()), nil},
+		{2, s{`StringVector is not null`}, box.Query(E.StringVector.IsNotNil()), nil},
+		{1, s{`StringVectorPtr is null`}, box.Query(E.StringVectorPtr.IsNil()), nil},
+		{2, s{`StringVectorPtr is not null`}, box.Query(E.StringVectorPtr.IsNotNil()), nil},
+
+		{0, s{`Byte is null`}, box.Query(E.Byte.IsNil()), nil},
+		{3, s{`Byte is not null`}, box.Query(E.Byte.IsNotNil()), nil},
+		{2, s{`BytePtr is null`}, box.Query(E.BytePtr.IsNil()), nil},
+		{1, s{`BytePtr is not null`}, box.Query(E.BytePtr.IsNotNil()), nil},
+
+		{1, s{`ByteVector is null`}, box.Query(E.ByteVector.IsNil()), nil},
+		{2, s{`ByteVector is not null`}, box.Query(E.ByteVector.IsNotNil()), nil},
+		{1, s{`ByteVectorPtr is null`}, box.Query(E.ByteVectorPtr.IsNil()), nil},
+		{2, s{`ByteVectorPtr is not null`}, box.Query(E.ByteVectorPtr.IsNotNil()), nil},
+
+		{0, s{`Rune is null`}, box.Query(E.Rune.IsNil()), nil},
+		{3, s{`Rune is not null`}, box.Query(E.Rune.IsNotNil()), nil},
+		{2, s{`RunePtr is null`}, box.Query(E.RunePtr.IsNil()), nil},
+		{1, s{`RunePtr is not null`}, box.Query(E.RunePtr.IsNotNil()), nil},
+
+		{0, s{`Float32 is null`}, box.Query(E.Float32.IsNil()), nil},
+		{3, s{`Float32 is not null`}, box.Query(E.Float32.IsNotNil()), nil},
+		{2, s{`Float32Ptr is null`}, box.Query(E.Float32Ptr.IsNil()), nil},
+		{1, s{`Float32Ptr is not null`}, box.Query(E.Float32Ptr.IsNotNil()), nil},
+
+		{0, s{`Float64 is null`}, box.Query(E.Float64.IsNil()), nil},
+		{3, s{`Float64 is not null`}, box.Query(E.Float64.IsNotNil()), nil},
+		{2, s{`Float64Ptr is null`}, box.Query(E.Float64Ptr.IsNil()), nil},
+		{1, s{`Float64Ptr is not null`}, box.Query(E.Float64Ptr.IsNotNil()), nil},
+
+	})
+}
+
 // define some type aliases to keep the test-case definitions short & readable
 type s = []string
 
@@ -579,6 +724,7 @@ type queryTestOptions struct {
 	baseCount  uint
 	skipCount  bool
 	skipRemove bool
+	setupFn    func()
 }
 
 // this function executes tests for all query methods on the given test-cases
@@ -593,7 +739,11 @@ func testQueries(t *testing.T, env *model.TestEnv, options queryTestOptions, tes
 	assert.NoErr(t, model.BoxForTestStringIdEntity(env.ObjectBox).RemoveAll())
 
 	// insert new entries
-	env.Populate(options.baseCount)
+	if options.setupFn != nil {
+		options.setupFn()
+	} else {
+		env.Populate(options.baseCount)
+	}
 
 	for i, tc := range testCases {
 		// run each test-case in a new transaction, resetting the state at the end

@@ -118,10 +118,10 @@ func (entity_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{
 
 	return &Entity{
 		Id:      id,
-		Int32:   table.GetInt32Slot(6, 0),
-		Int64:   table.GetInt64Slot(8, 0),
+		Int32:   fbutils.GetInt32Slot(table, 6),
+		Int64:   fbutils.GetInt64Slot(table, 8),
 		String:  fbutils.GetStringSlot(table, 10),
-		Float64: table.GetFloat64Slot(12, 0),
+		Float64: fbutils.GetFloat64Slot(table, 12),
 	}, nil
 }
 

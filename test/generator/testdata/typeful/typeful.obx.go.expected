@@ -16,9 +16,9 @@ type typeful_EntityInfo struct {
 
 var TypefulBinding = typeful_EntityInfo{
 	Entity: objectbox.Entity{
-		Id: 2,
+		Id: 3,
 	},
-	Uid: 8274930044578894929,
+	Uid: 4035568504096476779,
 }
 
 // Typeful_ contains type-based Property helpers to facilitate some common operations such as Queries.
@@ -173,34 +173,34 @@ func (typeful_EntityInfo) GeneratorVersion() int {
 
 // AddToModel is called by ObjectBox during model build
 func (typeful_EntityInfo) AddToModel(model *objectbox.Model) {
-	model.Entity("Typeful", 2, 8274930044578894929)
-	model.Property("Id", 6, 1, 1543572285742637646)
+	model.Entity("Typeful", 3, 4035568504096476779)
+	model.Property("Id", 6, 1, 959367522974354090)
 	model.PropertyFlags(8193)
-	model.Property("Int", 6, 2, 2661732831099943416)
-	model.Property("Int8", 2, 3, 8325060299420976708)
-	model.Property("Int16", 3, 4, 7837839688282259259)
-	model.Property("Int32", 5, 5, 2518412263346885298)
-	model.Property("Int64", 6, 6, 5617773211005988520)
-	model.Property("Uint", 6, 7, 2339563716805116249)
+	model.Property("Int", 6, 2, 2914295034816259174)
+	model.Property("Int8", 2, 3, 1395437218309923052)
+	model.Property("Int16", 3, 4, 6745438398739480977)
+	model.Property("Int32", 5, 5, 2897681629866238117)
+	model.Property("Int64", 6, 6, 3398579248012586914)
+	model.Property("Uint", 6, 7, 5974317550424871033)
 	model.PropertyFlags(8192)
-	model.Property("Uint8", 2, 8, 7144924247938981575)
+	model.Property("Uint8", 2, 8, 3317123977833389635)
 	model.PropertyFlags(8192)
-	model.Property("Uint16", 3, 9, 161231572858529631)
+	model.Property("Uint16", 3, 9, 5001958211167890979)
 	model.PropertyFlags(8192)
-	model.Property("Uint32", 5, 10, 7259475919510918339)
+	model.Property("Uint32", 5, 10, 167566062957544642)
 	model.PropertyFlags(8192)
-	model.Property("Uint64", 6, 11, 7373105480197164748)
+	model.Property("Uint64", 6, 11, 4778690082005258714)
 	model.PropertyFlags(8192)
-	model.Property("Bool", 1, 12, 3287288577352441706)
-	model.Property("String", 9, 13, 3930927879439176946)
-	model.Property("StringVector", 30, 14, 4706154865122290029)
-	model.Property("Byte", 2, 15, 2217592893536642650)
-	model.Property("ByteVector", 23, 16, 1929546706668609706)
-	model.Property("Rune", 5, 17, 6392442863481646880)
-	model.Property("Float32", 7, 18, 3706853784096366226)
-	model.Property("Float64", 8, 19, 2627038740284806767)
-	model.Property("Date", 10, 20, 6303220950515014660)
-	model.EntityLastPropertyId(20, 6303220950515014660)
+	model.Property("Bool", 1, 12, 1059542851699319360)
+	model.Property("String", 9, 13, 6972732843819909978)
+	model.Property("StringVector", 30, 14, 5558237345453186302)
+	model.Property("Byte", 2, 15, 7845762441295307478)
+	model.Property("ByteVector", 23, 16, 771642788862502430)
+	model.Property("Rune", 5, 17, 8514850266767180993)
+	model.Property("Float32", 7, 18, 8683452355129068124)
+	model.Property("Float64", 8, 19, 4345851588384648695)
+	model.Property("Date", 10, 20, 7699391924090763411)
+	model.EntityLastPropertyId(20, 7699391924090763411)
 }
 
 // GetId is called by ObjectBox during Put operations to check for existing ID on an object
@@ -260,25 +260,25 @@ func (typeful_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface
 
 	return &Typeful{
 		Id:           id,
-		Int:          int(table.GetUint64Slot(6, 0)),
-		Int8:         table.GetInt8Slot(8, 0),
-		Int16:        table.GetInt16Slot(10, 0),
-		Int32:        table.GetInt32Slot(12, 0),
-		Int64:        table.GetInt64Slot(14, 0),
-		Uint:         uint(table.GetUint64Slot(16, 0)),
-		Uint8:        table.GetUint8Slot(18, 0),
-		Uint16:       table.GetUint16Slot(20, 0),
-		Uint32:       table.GetUint32Slot(22, 0),
-		Uint64:       table.GetUint64Slot(24, 0),
-		Bool:         table.GetBoolSlot(26, false),
+		Int:          fbutils.GetIntSlot(table, 6),
+		Int8:         fbutils.GetInt8Slot(table, 8),
+		Int16:        fbutils.GetInt16Slot(table, 10),
+		Int32:        fbutils.GetInt32Slot(table, 12),
+		Int64:        fbutils.GetInt64Slot(table, 14),
+		Uint:         fbutils.GetUintSlot(table, 16),
+		Uint8:        fbutils.GetUint8Slot(table, 18),
+		Uint16:       fbutils.GetUint16Slot(table, 20),
+		Uint32:       fbutils.GetUint32Slot(table, 22),
+		Uint64:       fbutils.GetUint64Slot(table, 24),
+		Bool:         fbutils.GetBoolSlot(table, 26),
 		String:       fbutils.GetStringSlot(table, 28),
 		StringVector: fbutils.GetStringVectorSlot(table, 30),
-		Byte:         table.GetByteSlot(32, 0),
+		Byte:         fbutils.GetByteSlot(table, 32),
 		ByteVector:   fbutils.GetByteVectorSlot(table, 34),
-		Rune:         rune(table.GetInt32Slot(36, 0)),
-		Float32:      table.GetFloat32Slot(38, 0),
-		Float64:      table.GetFloat64Slot(40, 0),
-		Date:         table.GetInt64Slot(42, 0),
+		Rune:         fbutils.GetRuneSlot(table, 36),
+		Float32:      fbutils.GetFloat32Slot(table, 38),
+		Float64:      fbutils.GetFloat64Slot(table, 40),
+		Date:         fbutils.GetInt64Slot(table, 42),
 	}, nil
 }
 
@@ -300,7 +300,7 @@ type TypefulBox struct {
 // BoxForTypeful opens a box of Typeful objects
 func BoxForTypeful(ob *objectbox.ObjectBox) *TypefulBox {
 	return &TypefulBox{
-		Box: ob.InternalBox(2),
+		Box: ob.InternalBox(3),
 	}
 }
 

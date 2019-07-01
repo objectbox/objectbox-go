@@ -27,12 +27,8 @@ var BindingTemplate = template.Must(template.New("binding").Funcs(funcMap).Parse
 {{define "property-getter"}}{{/* used in Load*/}}
 	{{- if .Converter}}{{.Converter}}ToEntityProperty(
 	{{- else if .CastOnWrite}}{{.CastOnWrite}}({{end}}
-		{{- if eq .GoType "bool"}} table.GetBoolSlot({{.FbvTableOffset}}, false)
-    	{{- else if eq .GoType "int"}} int(table.GetUint64Slot({{.FbvTableOffset}}, 0))
-    	{{- else if eq .GoType "uint"}} uint(table.GetUint64Slot({{.FbvTableOffset}}, 0))
-		{{- else if eq .GoType "rune"}} rune(table.GetInt32Slot({{.FbvTableOffset}}, 0))
-		{{- else if eq .FbType "UOffsetT"}} fbutils.Get{{.ObTypeString}}Slot(table, {{.FbvTableOffset}})
-    	{{- else}} table.Get{{.GoType | StringTitle}}Slot({{.FbvTableOffset}}, 0)
+		{{- if eq .FbType "UOffsetT"}} fbutils.Get{{.ObTypeString}}{{if .IsPointer}}Ptr{{end}}Slot(table, {{.FbvTableOffset}})
+    	{{- else}} fbutils.Get{{.GoType | StringTitle}}{{if .IsPointer}}Ptr{{end}}Slot(table, {{.FbvTableOffset}})
     	{{- end}}
 	{{- if or .Converter .CastOnWrite}}){{end}}
 {{- end -}}
@@ -40,7 +36,7 @@ var BindingTemplate = template.Must(template.New("binding").Funcs(funcMap).Parse
 {{define "property-converter-encode"}}{{/* used in Flatten*/ -}}
 	{{- if .Converter}}{{.Converter}}ToDatabaseValue(obj.{{.Path}})
 	{{- else if .CastOnRead}}{{.CastOnRead}}(obj.{{.Path}})
-	{{- else}}obj.{{.Path}}{{end}}
+	{{- else}}{{if .IsPointer}}*{{end}}obj.{{.Path}}{{end}}
 {{- end -}}
 
 
@@ -196,7 +192,11 @@ func ({{$entityNameCamel}}_EntityInfo) Flatten(object interface{}, fbb *flatbuff
 	{{- end -}}
 
     {{- range $property := $entity.Properties}}{{if eq $property.FbType "UOffsetT"}}
-    var offset{{$property.Name}} = fbutils.Create{{$property.ObTypeString}}Offset(fbb, {{template "property-converter-encode" $property}})
+	{{if $property.IsPointer}}var offset{{$property.Name}} flatbuffers.UOffsetT
+	if obj.{{$property.Path}} != nil {
+	{{else}}var {{end -}}
+	offset{{$property.Name}} = fbutils.Create{{$property.ObTypeString}}Offset(fbb, {{template "property-converter-encode" $property}})
+	{{- if $property.IsPointer -}} } {{- end}}
 	{{- end}}{{end}}
 
 	{{- block "store-relations" $entity}}
@@ -219,7 +219,8 @@ func ({{$entityNameCamel}}_EntityInfo) Flatten(object interface{}, fbb *flatbuff
     // build the FlatBuffers object
     fbb.StartObject({{$entity.LastPropertyId.GetId}})
     {{range $property := $entity.Properties -}}
-    fbutils.Set{{$property.FbType}}Slot(fbb, {{$property.FbSlot}},
+	{{- if $property.IsPointer}}if obj.{{$property.Path}} != nil { {{- end -}}
+	fbutils.Set{{$property.FbType}}Slot(fbb, {{$property.FbSlot}},
 		{{- if $property.Relation}}rId{{$property.Name}})
         {{- else if eq $property.FbType "UOffsetT"}} offset{{$property.Name}})
         {{- else if eq $property.Name $entity.IdProperty.Name}} id)
@@ -227,6 +228,7 @@ func ({{$entityNameCamel}}_EntityInfo) Flatten(object interface{}, fbb *flatbuff
         {{- else if eq $property.GoType "uint"}} uint64({{template "property-converter-encode" $property}}))
         {{- else}} {{template "property-converter-encode" $property}})
         {{- end}}
+	{{- if $property.IsPointer -}} } {{- end}}
     {{end -}}
 	return nil
 }
@@ -243,8 +245,8 @@ func ({{$entityNameCamel}}_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byt
 	{{- range $field := .Fields}}
 		{{if $field.SimpleRelation -}}
 			var rel{{$field.Name}} *{{$field.Type}}
-			if rId := {{template "property-getter" $field.Property}}; rId > 0 {
-				if rObject, err := BoxFor{{$field.SimpleRelation.Target.Name}}(ob).Get(rId); err != nil {
+			if rId := {{template "property-getter" $field.Property}}; {{if $field.Property.IsPointer}}rId != nil && *{{end}}rId > 0 {
+				if rObject, err := BoxFor{{$field.SimpleRelation.Target.Name}}(ob).Get({{if $field.Property.IsPointer}}*{{end}}rId); err != nil {
 					return nil, err 
 				} else {
 					rel{{$field.Name}} = rObject

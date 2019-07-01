@@ -260,7 +260,7 @@ func (qb *QueryBuilder) All(ids []ConditionId) (ConditionId, error) {
 	return cid, qb.Err
 }
 
-func (qb *QueryBuilder) Null(property *BaseProperty) (ConditionId, error) {
+func (qb *QueryBuilder) IsNil(property *BaseProperty) (ConditionId, error) {
 	var cid ConditionId
 
 	if qb.Err == nil && qb.checkEntityId(property.Entity.Id) {
@@ -270,7 +270,7 @@ func (qb *QueryBuilder) Null(property *BaseProperty) (ConditionId, error) {
 	return cid, qb.Err
 }
 
-func (qb *QueryBuilder) NotNull(property *BaseProperty) (ConditionId, error) {
+func (qb *QueryBuilder) IsNotNil(property *BaseProperty) (ConditionId, error) {
 	var cid ConditionId
 
 	if qb.Err == nil && qb.checkEntityId(property.Entity.Id) {

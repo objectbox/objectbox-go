@@ -25,6 +25,11 @@ import (
 	"testing"
 )
 
+func True(t *testing.T, actual interface{}) {
+	if actual != true {
+		Failf(t, "Expected: true\nReceived: %v", actual)
+	}
+}
 
 // Uses reflect.DeepEqual to test for equality
 func Eq(t *testing.T, expected interface{}, actual interface{}) {

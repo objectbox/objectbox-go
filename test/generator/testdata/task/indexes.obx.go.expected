@@ -154,7 +154,7 @@ func (taskIndexed_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (inter
 		Id:       id,
 		Uid:      fbutils.GetStringSlot(table, 6),
 		Name:     fbutils.GetStringSlot(table, 8),
-		Priority: int(table.GetUint64Slot(10, 0)),
+		Priority: fbutils.GetIntSlot(table, 10),
 		Group:    fbutils.GetStringSlot(table, 12),
 		Place:    fbutils.GetStringSlot(table, 14),
 		Source:   fbutils.GetStringSlot(table, 16),

@@ -5,7 +5,7 @@
   "entities": [
     {
       "id": "1:3022148985475790732",
-      "lastPropertyId": "24:7776035803207726954",
+      "lastPropertyId": "44:6100401720382402484",
       "name": "Entity",
       "properties": [
         {
@@ -142,6 +142,101 @@
           "type": 11,
           "flags": 8192,
           "relationTarget": "TestEntityRelated"
+        },
+        {
+          "id": "25:373339162565757738",
+          "name": "IntPtr",
+          "type": 6
+        },
+        {
+          "id": "26:4408376776468442700",
+          "name": "Int8Ptr",
+          "type": 2
+        },
+        {
+          "id": "27:7767638672655087796",
+          "name": "Int16Ptr",
+          "type": 3
+        },
+        {
+          "id": "28:4484862171635994061",
+          "name": "Int32Ptr",
+          "type": 5
+        },
+        {
+          "id": "29:5702162443518573921",
+          "name": "Int64Ptr",
+          "type": 6
+        },
+        {
+          "id": "30:1419849538019864166",
+          "name": "UintPtr",
+          "type": 6,
+          "flags": 8192
+        },
+        {
+          "id": "31:5666684665126533193",
+          "name": "Uint8Ptr",
+          "type": 2,
+          "flags": 8192
+        },
+        {
+          "id": "32:588273992483456755",
+          "name": "Uint16Ptr",
+          "type": 3,
+          "flags": 8192
+        },
+        {
+          "id": "33:1921936640604795696",
+          "name": "Uint32Ptr",
+          "type": 5,
+          "flags": 8192
+        },
+        {
+          "id": "34:508303024901376893",
+          "name": "Uint64Ptr",
+          "type": 6,
+          "flags": 8192
+        },
+        {
+          "id": "35:8481118512070824875",
+          "name": "BoolPtr",
+          "type": 1
+        },
+        {
+          "id": "36:8409889434685629914",
+          "name": "StringPtr",
+          "type": 9
+        },
+        {
+          "id": "38:7395768407310126147",
+          "name": "BytePtr",
+          "type": 2
+        },
+        {
+          "id": "40:5826738612842297282",
+          "name": "RunePtr",
+          "type": 5
+        },
+        {
+          "id": "41:8081176555310747578",
+          "name": "Float32Ptr",
+          "type": 7
+        },
+        {
+          "id": "42:9203830121246076395",
+          "name": "Float64Ptr",
+          "type": 8
+        },
+        {
+          "id": "43:4222000762705400780",
+          "name": "StringVectorPtr",
+          "type": 30
+        },
+        {
+          "id": "44:6100401720382402484",
+          "name": "ByteVectorPtr",
+          "type": 23
         }
       ],
       "relations": [
@@ -252,7 +347,10 @@
   "modelVersionParserMinimum": 5,
   "retiredEntityUids": [],
   "retiredIndexUids": [],
-  "retiredPropertyUids": [],
+  "retiredPropertyUids": [
+    6660742687492626788,
+    2099025219528520009
+  ],
   "retiredRelationUids": [
     1741387849434222945,
     3069800080112765817,

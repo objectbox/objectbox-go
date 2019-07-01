@@ -66,6 +66,7 @@ type Property struct {
 	ObFlags     []int
 	GoType      string
 	FbType      string
+	IsPointer   bool
 	Relation    *Relation
 	Index       *Index
 	Converter   *string
@@ -424,17 +425,24 @@ func (field *Field) processType(f field) (fields fieldList, err error) {
 		return nil, err
 	}
 
+	// check if it needs a type cast (it is a named type, not an alias)
+	var isNamed bool
+
 	// in case it's a pointer, get it's underlying type
 	if pointer, isPointer := baseType.(*types.Pointer); isPointer {
 		baseType = pointer.Elem().Underlying()
 		field.IsPointer = true
+		field.Property.IsPointer = true
+		isNamed = typesTypeErrorful{Type: baseType}.IsNamed()
+	} else {
+		isNamed = typ.IsNamed()
 	}
 
 	if err := property.setBasicType(baseType.String()); err == nil {
 		// if the baseType is one of the basic supported types
 
 		// check if it needs a type cast (it is a named type, not an alias)
-		if typ.IsNamed() {
+		if isNamed {
 			property.CastOnRead = baseType.String()
 			property.CastOnWrite = path.Base(typ.String()) // sometimes, it may contain a full import path
 		}

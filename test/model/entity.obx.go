@@ -47,6 +47,24 @@ var Entity_ = struct {
 	Related         *objectbox.RelationToOne
 	RelatedPtr      *objectbox.RelationToOne
 	RelatedPtr2     *objectbox.RelationToOne
+	IntPtr          *objectbox.PropertyInt
+	Int8Ptr         *objectbox.PropertyInt8
+	Int16Ptr        *objectbox.PropertyInt16
+	Int32Ptr        *objectbox.PropertyInt32
+	Int64Ptr        *objectbox.PropertyInt64
+	UintPtr         *objectbox.PropertyUint
+	Uint8Ptr        *objectbox.PropertyUint8
+	Uint16Ptr       *objectbox.PropertyUint16
+	Uint32Ptr       *objectbox.PropertyUint32
+	Uint64Ptr       *objectbox.PropertyUint64
+	BoolPtr         *objectbox.PropertyBool
+	StringPtr       *objectbox.PropertyString
+	StringVectorPtr *objectbox.PropertyStringVector
+	BytePtr         *objectbox.PropertyByte
+	ByteVectorPtr   *objectbox.PropertyByteVector
+	RunePtr         *objectbox.PropertyRune
+	Float32Ptr      *objectbox.PropertyFloat32
+	Float64Ptr      *objectbox.PropertyFloat64
 	RelatedPtrSlice *objectbox.RelationToMany
 	RelatedSlice    *objectbox.RelationToMany
 }{
@@ -197,6 +215,114 @@ var Entity_ = struct {
 		},
 		Target: &TestEntityRelatedBinding.Entity,
 	},
+	IntPtr: &objectbox.PropertyInt{
+		BaseProperty: &objectbox.BaseProperty{
+			Id:     25,
+			Entity: &EntityBinding.Entity,
+		},
+	},
+	Int8Ptr: &objectbox.PropertyInt8{
+		BaseProperty: &objectbox.BaseProperty{
+			Id:     26,
+			Entity: &EntityBinding.Entity,
+		},
+	},
+	Int16Ptr: &objectbox.PropertyInt16{
+		BaseProperty: &objectbox.BaseProperty{
+			Id:     27,
+			Entity: &EntityBinding.Entity,
+		},
+	},
+	Int32Ptr: &objectbox.PropertyInt32{
+		BaseProperty: &objectbox.BaseProperty{
+			Id:     28,
+			Entity: &EntityBinding.Entity,
+		},
+	},
+	Int64Ptr: &objectbox.PropertyInt64{
+		BaseProperty: &objectbox.BaseProperty{
+			Id:     29,
+			Entity: &EntityBinding.Entity,
+		},
+	},
+	UintPtr: &objectbox.PropertyUint{
+		BaseProperty: &objectbox.BaseProperty{
+			Id:     30,
+			Entity: &EntityBinding.Entity,
+		},
+	},
+	Uint8Ptr: &objectbox.PropertyUint8{
+		BaseProperty: &objectbox.BaseProperty{
+			Id:     31,
+			Entity: &EntityBinding.Entity,
+		},
+	},
+	Uint16Ptr: &objectbox.PropertyUint16{
+		BaseProperty: &objectbox.BaseProperty{
+			Id:     32,
+			Entity: &EntityBinding.Entity,
+		},
+	},
+	Uint32Ptr: &objectbox.PropertyUint32{
+		BaseProperty: &objectbox.BaseProperty{
+			Id:     33,
+			Entity: &EntityBinding.Entity,
+		},
+	},
+	Uint64Ptr: &objectbox.PropertyUint64{
+		BaseProperty: &objectbox.BaseProperty{
+			Id:     34,
+			Entity: &EntityBinding.Entity,
+		},
+	},
+	BoolPtr: &objectbox.PropertyBool{
+		BaseProperty: &objectbox.BaseProperty{
+			Id:     35,
+			Entity: &EntityBinding.Entity,
+		},
+	},
+	StringPtr: &objectbox.PropertyString{
+		BaseProperty: &objectbox.BaseProperty{
+			Id:     36,
+			Entity: &EntityBinding.Entity,
+		},
+	},
+	StringVectorPtr: &objectbox.PropertyStringVector{
+		BaseProperty: &objectbox.BaseProperty{
+			Id:     43,
+			Entity: &EntityBinding.Entity,
+		},
+	},
+	BytePtr: &objectbox.PropertyByte{
+		BaseProperty: &objectbox.BaseProperty{
+			Id:     38,
+			Entity: &EntityBinding.Entity,
+		},
+	},
+	ByteVectorPtr: &objectbox.PropertyByteVector{
+		BaseProperty: &objectbox.BaseProperty{
+			Id:     44,
+			Entity: &EntityBinding.Entity,
+		},
+	},
+	RunePtr: &objectbox.PropertyRune{
+		BaseProperty: &objectbox.BaseProperty{
+			Id:     40,
+			Entity: &EntityBinding.Entity,
+		},
+	},
+	Float32Ptr: &objectbox.PropertyFloat32{
+		BaseProperty: &objectbox.BaseProperty{
+			Id:     41,
+			Entity: &EntityBinding.Entity,
+		},
+	},
+	Float64Ptr: &objectbox.PropertyFloat64{
+		BaseProperty: &objectbox.BaseProperty{
+			Id:     42,
+			Entity: &EntityBinding.Entity,
+		},
+	},
 	RelatedPtrSlice: &objectbox.RelationToMany{
 		Id:     5,
 		Source: &EntityBinding.Entity,
@@ -253,7 +379,30 @@ func (entity_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Property("RelatedPtr2", 11, 24, 7776035803207726954)
 	model.PropertyFlags(8192)
 	model.PropertyRelation("TestEntityRelated", 3, 6077259218141868916)
-	model.EntityLastPropertyId(24, 7776035803207726954)
+	model.Property("IntPtr", 6, 25, 373339162565757738)
+	model.Property("Int8Ptr", 2, 26, 4408376776468442700)
+	model.Property("Int16Ptr", 3, 27, 7767638672655087796)
+	model.Property("Int32Ptr", 5, 28, 4484862171635994061)
+	model.Property("Int64Ptr", 6, 29, 5702162443518573921)
+	model.Property("UintPtr", 6, 30, 1419849538019864166)
+	model.PropertyFlags(8192)
+	model.Property("Uint8Ptr", 2, 31, 5666684665126533193)
+	model.PropertyFlags(8192)
+	model.Property("Uint16Ptr", 3, 32, 588273992483456755)
+	model.PropertyFlags(8192)
+	model.Property("Uint32Ptr", 5, 33, 1921936640604795696)
+	model.PropertyFlags(8192)
+	model.Property("Uint64Ptr", 6, 34, 508303024901376893)
+	model.PropertyFlags(8192)
+	model.Property("BoolPtr", 1, 35, 8481118512070824875)
+	model.Property("StringPtr", 9, 36, 8409889434685629914)
+	model.Property("StringVectorPtr", 30, 43, 4222000762705400780)
+	model.Property("BytePtr", 2, 38, 7395768407310126147)
+	model.Property("ByteVectorPtr", 23, 44, 6100401720382402484)
+	model.Property("RunePtr", 5, 40, 5826738612842297282)
+	model.Property("Float32Ptr", 7, 41, 8081176555310747578)
+	model.Property("Float64Ptr", 8, 42, 9203830121246076395)
+	model.EntityLastPropertyId(44, 6100401720382402484)
 	model.Relation(5, 1694321226239708534, TestEntityRelatedBinding.Id, TestEntityRelatedBinding.Uid)
 	model.Relation(4, 5379891792880176678, EntityByValueBinding.Id, EntityByValueBinding.Uid)
 }
@@ -316,6 +465,18 @@ func (entity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, i
 	var offsetStringVector = fbutils.CreateStringVectorOffset(fbb, obj.StringVector)
 	var offsetByteVector = fbutils.CreateByteVectorOffset(fbb, obj.ByteVector)
 	var offsetComplex128 = fbutils.CreateByteVectorOffset(fbb, complex128BytesToDatabaseValue(obj.Complex128))
+	var offsetStringPtr flatbuffers.UOffsetT
+	if obj.StringPtr != nil {
+		offsetStringPtr = fbutils.CreateStringOffset(fbb, *obj.StringPtr)
+	}
+	var offsetStringVectorPtr flatbuffers.UOffsetT
+	if obj.StringVectorPtr != nil {
+		offsetStringVectorPtr = fbutils.CreateStringVectorOffset(fbb, *obj.StringVectorPtr)
+	}
+	var offsetByteVectorPtr flatbuffers.UOffsetT
+	if obj.ByteVectorPtr != nil {
+		offsetByteVectorPtr = fbutils.CreateByteVectorOffset(fbb, *obj.ByteVectorPtr)
+	}
 
 	var rIdRelated uint64
 	if rel := &obj.Related; rel != nil {
@@ -345,7 +506,7 @@ func (entity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, i
 	}
 
 	// build the FlatBuffers object
-	fbb.StartObject(24)
+	fbb.StartObject(44)
 	fbutils.SetUint64Slot(fbb, 0, id)
 	fbutils.SetInt64Slot(fbb, 1, int64(obj.Int))
 	fbutils.SetInt8Slot(fbb, 2, obj.Int8)
@@ -368,8 +529,66 @@ func (entity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, i
 	fbutils.SetInt64Slot(fbb, 18, timeInt64ToDatabaseValue(obj.Date))
 	fbutils.SetUOffsetTSlot(fbb, 19, offsetComplex128)
 	fbutils.SetUint64Slot(fbb, 21, rIdRelated)
-	fbutils.SetUint64Slot(fbb, 22, rIdRelatedPtr)
-	fbutils.SetUint64Slot(fbb, 23, rIdRelatedPtr2)
+	if obj.RelatedPtr != nil {
+		fbutils.SetUint64Slot(fbb, 22, rIdRelatedPtr)
+	}
+	if obj.RelatedPtr2 != nil {
+		fbutils.SetUint64Slot(fbb, 23, rIdRelatedPtr2)
+	}
+	if obj.IntPtr != nil {
+		fbutils.SetInt64Slot(fbb, 24, int64(*obj.IntPtr))
+	}
+	if obj.Int8Ptr != nil {
+		fbutils.SetInt8Slot(fbb, 25, *obj.Int8Ptr)
+	}
+	if obj.Int16Ptr != nil {
+		fbutils.SetInt16Slot(fbb, 26, *obj.Int16Ptr)
+	}
+	if obj.Int32Ptr != nil {
+		fbutils.SetInt32Slot(fbb, 27, *obj.Int32Ptr)
+	}
+	if obj.Int64Ptr != nil {
+		fbutils.SetInt64Slot(fbb, 28, *obj.Int64Ptr)
+	}
+	if obj.UintPtr != nil {
+		fbutils.SetUint64Slot(fbb, 29, uint64(*obj.UintPtr))
+	}
+	if obj.Uint8Ptr != nil {
+		fbutils.SetUint8Slot(fbb, 30, *obj.Uint8Ptr)
+	}
+	if obj.Uint16Ptr != nil {
+		fbutils.SetUint16Slot(fbb, 31, *obj.Uint16Ptr)
+	}
+	if obj.Uint32Ptr != nil {
+		fbutils.SetUint32Slot(fbb, 32, *obj.Uint32Ptr)
+	}
+	if obj.Uint64Ptr != nil {
+		fbutils.SetUint64Slot(fbb, 33, *obj.Uint64Ptr)
+	}
+	if obj.BoolPtr != nil {
+		fbutils.SetBoolSlot(fbb, 34, *obj.BoolPtr)
+	}
+	if obj.StringPtr != nil {
+		fbutils.SetUOffsetTSlot(fbb, 35, offsetStringPtr)
+	}
+	if obj.StringVectorPtr != nil {
+		fbutils.SetUOffsetTSlot(fbb, 42, offsetStringVectorPtr)
+	}
+	if obj.BytePtr != nil {
+		fbutils.SetByteSlot(fbb, 37, *obj.BytePtr)
+	}
+	if obj.ByteVectorPtr != nil {
+		fbutils.SetUOffsetTSlot(fbb, 43, offsetByteVectorPtr)
+	}
+	if obj.RunePtr != nil {
+		fbutils.SetInt32Slot(fbb, 39, *obj.RunePtr)
+	}
+	if obj.Float32Ptr != nil {
+		fbutils.SetFloat32Slot(fbb, 40, *obj.Float32Ptr)
+	}
+	if obj.Float64Ptr != nil {
+		fbutils.SetFloat64Slot(fbb, 41, *obj.Float64Ptr)
+	}
 	return nil
 }
 
@@ -382,7 +601,7 @@ func (entity_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{
 	var id = table.GetUint64Slot(4, 0)
 
 	var relRelated *TestEntityRelated
-	if rId := table.GetUint64Slot(46, 0); rId > 0 {
+	if rId := fbutils.GetUint64Slot(table, 46); rId > 0 {
 		if rObject, err := BoxForTestEntityRelated(ob).Get(rId); err != nil {
 			return nil, err
 		} else {
@@ -393,8 +612,8 @@ func (entity_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{
 	}
 
 	var relRelatedPtr *TestEntityRelated
-	if rId := table.GetUint64Slot(48, 0); rId > 0 {
-		if rObject, err := BoxForTestEntityRelated(ob).Get(rId); err != nil {
+	if rId := fbutils.GetUint64PtrSlot(table, 48); rId != nil && *rId > 0 {
+		if rObject, err := BoxForTestEntityRelated(ob).Get(*rId); err != nil {
 			return nil, err
 		} else {
 			relRelatedPtr = rObject
@@ -402,8 +621,8 @@ func (entity_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{
 	}
 
 	var relRelatedPtr2 *TestEntityRelated
-	if rId := table.GetUint64Slot(50, 0); rId > 0 {
-		if rObject, err := BoxForTestEntityRelated(ob).Get(rId); err != nil {
+	if rId := fbutils.GetUint64PtrSlot(table, 50); rId != nil && *rId > 0 {
+		if rObject, err := BoxForTestEntityRelated(ob).Get(*rId); err != nil {
 			return nil, err
 		} else {
 			relRelatedPtr2 = rObject
@@ -430,31 +649,49 @@ func (entity_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{
 
 	return &Entity{
 		Id:              id,
-		Int:             int(table.GetUint64Slot(6, 0)),
-		Int8:            table.GetInt8Slot(8, 0),
-		Int16:           table.GetInt16Slot(10, 0),
-		Int32:           table.GetInt32Slot(12, 0),
-		Int64:           table.GetInt64Slot(14, 0),
-		Uint:            uint(table.GetUint64Slot(16, 0)),
-		Uint8:           table.GetUint8Slot(18, 0),
-		Uint16:          table.GetUint16Slot(20, 0),
-		Uint32:          table.GetUint32Slot(22, 0),
-		Uint64:          table.GetUint64Slot(24, 0),
-		Bool:            table.GetBoolSlot(26, false),
+		Int:             fbutils.GetIntSlot(table, 6),
+		Int8:            fbutils.GetInt8Slot(table, 8),
+		Int16:           fbutils.GetInt16Slot(table, 10),
+		Int32:           fbutils.GetInt32Slot(table, 12),
+		Int64:           fbutils.GetInt64Slot(table, 14),
+		Uint:            fbutils.GetUintSlot(table, 16),
+		Uint8:           fbutils.GetUint8Slot(table, 18),
+		Uint16:          fbutils.GetUint16Slot(table, 20),
+		Uint32:          fbutils.GetUint32Slot(table, 22),
+		Uint64:          fbutils.GetUint64Slot(table, 24),
+		Bool:            fbutils.GetBoolSlot(table, 26),
 		String:          fbutils.GetStringSlot(table, 28),
 		StringVector:    fbutils.GetStringVectorSlot(table, 44),
-		Byte:            table.GetByteSlot(30, 0),
+		Byte:            fbutils.GetByteSlot(table, 30),
 		ByteVector:      fbutils.GetByteVectorSlot(table, 32),
-		Rune:            rune(table.GetInt32Slot(34, 0)),
-		Float32:         table.GetFloat32Slot(36, 0),
-		Float64:         table.GetFloat64Slot(38, 0),
-		Date:            timeInt64ToEntityProperty(table.GetInt64Slot(40, 0)),
+		Rune:            fbutils.GetRuneSlot(table, 34),
+		Float32:         fbutils.GetFloat32Slot(table, 36),
+		Float64:         fbutils.GetFloat64Slot(table, 38),
+		Date:            timeInt64ToEntityProperty(fbutils.GetInt64Slot(table, 40)),
 		Complex128:      complex128BytesToEntityProperty(fbutils.GetByteVectorSlot(table, 42)),
 		Related:         *relRelated,
 		RelatedPtr:      relRelatedPtr,
 		RelatedPtr2:     relRelatedPtr2,
 		RelatedSlice:    relRelatedSlice,
 		RelatedPtrSlice: relRelatedPtrSlice,
+		IntPtr:          fbutils.GetIntPtrSlot(table, 52),
+		Int8Ptr:         fbutils.GetInt8PtrSlot(table, 54),
+		Int16Ptr:        fbutils.GetInt16PtrSlot(table, 56),
+		Int32Ptr:        fbutils.GetInt32PtrSlot(table, 58),
+		Int64Ptr:        fbutils.GetInt64PtrSlot(table, 60),
+		UintPtr:         fbutils.GetUintPtrSlot(table, 62),
+		Uint8Ptr:        fbutils.GetUint8PtrSlot(table, 64),
+		Uint16Ptr:       fbutils.GetUint16PtrSlot(table, 66),
+		Uint32Ptr:       fbutils.GetUint32PtrSlot(table, 68),
+		Uint64Ptr:       fbutils.GetUint64PtrSlot(table, 70),
+		BoolPtr:         fbutils.GetBoolPtrSlot(table, 72),
+		StringPtr:       fbutils.GetStringPtrSlot(table, 74),
+		StringVectorPtr: fbutils.GetStringVectorPtrSlot(table, 88),
+		BytePtr:         fbutils.GetBytePtrSlot(table, 78),
+		ByteVectorPtr:   fbutils.GetByteVectorPtrSlot(table, 90),
+		RunePtr:         fbutils.GetRunePtrSlot(table, 82),
+		Float32Ptr:      fbutils.GetFloat32PtrSlot(table, 84),
+		Float64Ptr:      fbutils.GetFloat64PtrSlot(table, 86),
 	}, nil
 }
 
@@ -924,10 +1161,10 @@ func (testEntityInline_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (
 
 	return &TestEntityInline{
 		BaseWithDate: BaseWithDate{
-			Date: table.GetInt64Slot(4, 0),
+			Date: fbutils.GetInt64Slot(table, 4),
 		},
 		BaseWithValue: &BaseWithValue{
-			Value: table.GetFloat64Slot(6, 0),
+			Value: fbutils.GetFloat64Slot(table, 6),
 		},
 		Id: id,
 	}, nil
@@ -1193,7 +1430,9 @@ func (testEntityRelated_EntityInfo) Flatten(object interface{}, fbb *flatbuffers
 	fbb.StartObject(3)
 	fbutils.SetUint64Slot(fbb, 0, id)
 	fbutils.SetUOffsetTSlot(fbb, 1, offsetName)
-	fbutils.SetUint64Slot(fbb, 2, rIdNext)
+	if obj.Next != nil {
+		fbutils.SetUint64Slot(fbb, 2, rIdNext)
+	}
 	return nil
 }
 
@@ -1206,8 +1445,8 @@ func (testEntityRelated_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) 
 	var id = table.GetUint64Slot(4, 0)
 
 	var relNext *EntityByValue
-	if rId := table.GetUint64Slot(8, 0); rId > 0 {
-		if rObject, err := BoxForEntityByValue(ob).Get(rId); err != nil {
+	if rId := fbutils.GetUint64PtrSlot(table, 8); rId != nil && *rId > 0 {
+		if rObject, err := BoxForEntityByValue(ob).Get(*rId); err != nil {
 			return nil, err
 		} else {
 			relNext = rObject

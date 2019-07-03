@@ -339,7 +339,7 @@ func (box *{{$entity.Name}}Box) PutAsync(object *{{$entity.Name}}) (uint64, erro
 	return box.Box.PutAsync(object)
 }
 
-// PutAll inserts multiple objects in single transaction.
+// PutMany inserts multiple objects in single transaction.
 // In case {{$entity.IdProperty.Path}}s are not set on the objects, they would be assigned automatically (auto-increment).
 // 
 // Returns: IDs of the put objects (in the same order).
@@ -349,8 +349,8 @@ func (box *{{$entity.Name}}Box) PutAsync(object *{{$entity.Name}}) (uint64, erro
 // even though the transaction has been rolled back and the objects are not stored under those IDs.
 //
 // Note: The slice may be empty or even nil; in both cases, an empty IDs slice and no error is returned.
-func (box *{{$entity.Name}}Box) PutAll(objects []{{if not $.Options.ByValue}}*{{end}}{{$entity.Name}}) ([]uint64, error) {
-	return box.Box.PutAll(objects)
+func (box *{{$entity.Name}}Box) PutMany(objects []{{if not $.Options.ByValue}}*{{end}}{{$entity.Name}}) ([]uint64, error) {
+	return box.Box.PutMany(objects)
 }
 
 // Get reads a single object.

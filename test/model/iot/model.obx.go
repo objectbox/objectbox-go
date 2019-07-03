@@ -180,7 +180,7 @@ func (box *EventBox) PutAsync(object *Event) (uint64, error) {
 	return box.Box.PutAsync(object)
 }
 
-// PutAll inserts multiple objects in single transaction.
+// PutMany inserts multiple objects in single transaction.
 // In case Ids are not set on the objects, they would be assigned automatically (auto-increment).
 //
 // Returns: IDs of the put objects (in the same order).
@@ -190,8 +190,8 @@ func (box *EventBox) PutAsync(object *Event) (uint64, error) {
 // even though the transaction has been rolled back and the objects are not stored under those IDs.
 //
 // Note: The slice may be empty or even nil; in both cases, an empty IDs slice and no error is returned.
-func (box *EventBox) PutAll(objects []*Event) ([]uint64, error) {
-	return box.Box.PutAll(objects)
+func (box *EventBox) PutMany(objects []*Event) ([]uint64, error) {
+	return box.Box.PutMany(objects)
 }
 
 // Get reads a single object.
@@ -493,7 +493,7 @@ func (box *ReadingBox) PutAsync(object *Reading) (uint64, error) {
 	return box.Box.PutAsync(object)
 }
 
-// PutAll inserts multiple objects in single transaction.
+// PutMany inserts multiple objects in single transaction.
 // In case Ids are not set on the objects, they would be assigned automatically (auto-increment).
 //
 // Returns: IDs of the put objects (in the same order).
@@ -503,8 +503,8 @@ func (box *ReadingBox) PutAsync(object *Reading) (uint64, error) {
 // even though the transaction has been rolled back and the objects are not stored under those IDs.
 //
 // Note: The slice may be empty or even nil; in both cases, an empty IDs slice and no error is returned.
-func (box *ReadingBox) PutAll(objects []*Reading) ([]uint64, error) {
-	return box.Box.PutAll(objects)
+func (box *ReadingBox) PutMany(objects []*Reading) ([]uint64, error) {
+	return box.Box.PutMany(objects)
 }
 
 // Get reads a single object.

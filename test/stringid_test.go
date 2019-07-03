@@ -72,7 +72,7 @@ func TestStringIdMultiOps(t *testing.T) {
 
 	objects := []*model.TestStringIdEntity{{}, {}}
 
-	ids, err := box.PutAll(objects)
+	ids, err := box.PutMany(objects)
 	assert.NoErr(t, err)
 	assert.Eq(t, len(objects), len(ids))
 	assert.Eq(t, "1", objects[0].Id)

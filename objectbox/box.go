@@ -222,7 +222,7 @@ func (box *Box) Put(object interface{}) (id uint64, err error) {
 	return box.put(object, false, 0, false)
 }
 
-// PutAll inserts multiple objects in a single transaction.
+// PutMany inserts multiple objects in a single transaction.
 // The given argument must be a slice of the object type this Box represents (pointers to objects).
 // In case IDs are not set on the objects, they would be assigned automatically (auto-increment).
 //
@@ -232,7 +232,7 @@ func (box *Box) Put(object interface{}) (id uint64, err error) {
 // even though the transaction has been rolled back and the objects are not stored under those IDs.
 //
 // Note: The slice may be empty or even nil; in both cases, an empty IDs slice and no error is returned.
-func (box *Box) PutAll(objects interface{}) (ids []uint64, err error) {
+func (box *Box) PutMany(objects interface{}) (ids []uint64, err error) {
 	var slice = reflect.ValueOf(objects)
 	var count = slice.Len()
 
@@ -289,7 +289,7 @@ func (box *Box) PutAll(objects interface{}) (ids []uint64, err error) {
 
 // putManyObjects inserts a subset of objects, setting their IDs as an outArgument.
 // Requires to be called inside a write transaction, i.e. from the ObjectBox.RunInWriteTx() callback.
-// The caller of this method (PutAll) already sliced up the data into chunks to mitigate memory consumption.
+// The caller of this method (PutMany) already sliced up the data into chunks to mitigate memory consumption.
 func (box *Box) putManyObjects(objects reflect.Value, outIds []uint64, start, end int) error {
 	var binding = box.entity.binding
 	var count = end - start

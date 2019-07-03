@@ -62,7 +62,7 @@ func TestEntityByValue(t *testing.T) {
 	assert.Eq(t, uint64(1), count)
 
 	objects = []model.EntityByValue{{}, {}}
-	ids, err := box.PutAll(objects)
+	ids, err := box.PutMany(objects)
 	assert.NoErr(t, err)
 	assert.Eq(t, len(objects), len(ids))
 	assert.Eq(t, uint64(0), objects[0].Id)

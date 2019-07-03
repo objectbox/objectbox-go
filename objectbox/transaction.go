@@ -36,14 +36,6 @@ func (txn *transaction) Close() error {
 	return nil
 }
 
-func (txn *transaction) Abort() error {
-	rc := C.obx_txn_abort(txn.cTxn)
-	if rc != 0 {
-		return createError()
-	}
-	return nil
-}
-
 func (txn *transaction) Commit() error {
 	rc := C.obx_txn_commit(txn.cTxn)
 	if rc != 0 {

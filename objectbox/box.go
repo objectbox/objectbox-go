@@ -567,6 +567,19 @@ func (box *Box) Contains(id uint64) (bool, error) {
 	return bool(cResult), nil
 }
 
+// Contains checks whether all of the given objects are stored in DB.
+func (box *Box) ContainsMany(ids ...uint64) (bool, error) {
+	if cIds, err := goIdsArrayToC(ids); err != nil {
+		return false, err
+	} else {
+		var cResult C.bool
+		err = cCall(func() C.obx_err {
+			return C.obx_box_contains_many(box.cBox, cIds.cArray, &cResult)
+		})
+		return bool(cResult), err
+	}
+}
+
 // RelationIds returns IDs of all target objects related to the given source object ID
 func (box *Box) RelationIds(relation *RelationToMany, sourceId uint64) ([]uint64, error) {
 	return cGetIds(func() *C.OBX_id_array {

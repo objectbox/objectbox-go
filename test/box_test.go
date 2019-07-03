@@ -144,9 +144,21 @@ func TestBoxBulk(t *testing.T) {
 	assert.NoErr(t, err)
 	assert.Eq(t, len(objectIds), 0)
 
-	countRemoved, err := box.RemoveMany(events...)
+	contains, err := box.ContainsMany(events[0].Id, events[1].Id)
 	assert.NoErr(t, err)
-	assert.Eq(t, count, countRemoved)
+	assert.True(t, contains)
+
+	contains, err = box.ContainsMany(100, events[0].Id, events[1].Id)
+	assert.NoErr(t, err)
+	assert.True(t, !contains)
+
+	countRemoved, err := box.Box.RemoveMany(100, events[0].Id)
+	assert.NoErr(t, err)
+	assert.Eq(t, uint64(1), countRemoved)
+
+	countRemoved, err = box.RemoveMany(events...)
+	assert.NoErr(t, err)
+	assert.Eq(t, uint64(1), countRemoved)
 
 	count, err = box.Count()
 	assert.NoErr(t, err)

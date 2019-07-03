@@ -277,8 +277,21 @@ func (box *FBox) GetAll() ([]*F, error) {
 }
 
 // Remove deletes a single object
-func (box *FBox) Remove(object *F) (err error) {
+func (box *FBox) Remove(object *F) error {
 	return box.Box.Remove(object.id)
+}
+
+// RemoveMany deletes multiple objects at once.
+// Returns the number of deleted object or error on failure.
+// Note that this method will not fail if an object is not found (e.g. already removed).
+// In case you need to strictly check whether all of the objects exist before removing them,
+// you can execute multiple box.Contains() and box.Remove() inside a single write transaction.
+func (box *FBox) RemoveMany(objects ...*F) (uint64, error) {
+	var ids = make([]uint64, len(objects))
+	for k, object := range objects {
+		ids[k] = object.id
+	}
+	return box.Box.RemoveMany(ids...)
 }
 
 // Creates a query with the given conditions. Use the fields of the F_ struct to create conditions.

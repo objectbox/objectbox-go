@@ -227,8 +227,21 @@ func (box *EventBox) GetAll() ([]*Event, error) {
 }
 
 // Remove deletes a single object
-func (box *EventBox) Remove(object *Event) (err error) {
+func (box *EventBox) Remove(object *Event) error {
 	return box.Box.Remove(object.Id)
+}
+
+// RemoveMany deletes multiple objects at once.
+// Returns the number of deleted object or error on failure.
+// Note that this method will not fail if an object is not found (e.g. already removed).
+// In case you need to strictly check whether all of the objects exist before removing them,
+// you can execute multiple box.Contains() and box.Remove() inside a single write transaction.
+func (box *EventBox) RemoveMany(objects ...*Event) (uint64, error) {
+	var ids = make([]uint64, len(objects))
+	for k, object := range objects {
+		ids[k] = object.Id
+	}
+	return box.Box.RemoveMany(ids...)
 }
 
 // Creates a query with the given conditions. Use the fields of the Event_ struct to create conditions.
@@ -540,8 +553,21 @@ func (box *ReadingBox) GetAll() ([]*Reading, error) {
 }
 
 // Remove deletes a single object
-func (box *ReadingBox) Remove(object *Reading) (err error) {
+func (box *ReadingBox) Remove(object *Reading) error {
 	return box.Box.Remove(object.Id)
+}
+
+// RemoveMany deletes multiple objects at once.
+// Returns the number of deleted object or error on failure.
+// Note that this method will not fail if an object is not found (e.g. already removed).
+// In case you need to strictly check whether all of the objects exist before removing them,
+// you can execute multiple box.Contains() and box.Remove() inside a single write transaction.
+func (box *ReadingBox) RemoveMany(objects ...*Reading) (uint64, error) {
+	var ids = make([]uint64, len(objects))
+	for k, object := range objects {
+		ids[k] = object.Id
+	}
+	return box.Box.RemoveMany(ids...)
 }
 
 // Creates a query with the given conditions. Use the fields of the Reading_ struct to create conditions.

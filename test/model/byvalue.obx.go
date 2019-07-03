@@ -209,8 +209,21 @@ func (box *EntityByValueBox) GetAll() ([]EntityByValue, error) {
 }
 
 // Remove deletes a single object
-func (box *EntityByValueBox) Remove(object *EntityByValue) (err error) {
+func (box *EntityByValueBox) Remove(object *EntityByValue) error {
 	return box.Box.Remove(object.Id)
+}
+
+// RemoveMany deletes multiple objects at once.
+// Returns the number of deleted object or error on failure.
+// Note that this method will not fail if an object is not found (e.g. already removed).
+// In case you need to strictly check whether all of the objects exist before removing them,
+// you can execute multiple box.Contains() and box.Remove() inside a single write transaction.
+func (box *EntityByValueBox) RemoveMany(objects ...*EntityByValue) (uint64, error) {
+	var ids = make([]uint64, len(objects))
+	for k, object := range objects {
+		ids[k] = object.Id
+	}
+	return box.Box.RemoveMany(ids...)
 }
 
 // Creates a query with the given conditions. Use the fields of the EntityByValue_ struct to create conditions.

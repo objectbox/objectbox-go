@@ -100,7 +100,7 @@ func TestUnique(t *testing.T) {
 	assert.Eq(t, uint64(1), count)
 }
 
-func TestPutMany(t *testing.T) {
+func TestBoxBulk(t *testing.T) {
 	objectBox := iot.LoadEmptyTestObjectBox()
 	defer objectBox.Close()
 	box := iot.BoxForEvent(objectBox)
@@ -143,6 +143,15 @@ func TestPutMany(t *testing.T) {
 	objectIds, err = box.PutMany(noEvents)
 	assert.NoErr(t, err)
 	assert.Eq(t, len(objectIds), 0)
+
+	countRemoved, err := box.RemoveMany(events...)
+	assert.NoErr(t, err)
+	assert.Eq(t, count, countRemoved)
+
+	count, err = box.Count()
+	assert.NoErr(t, err)
+	assert.Eq(t, uint64(0), count)
+
 }
 
 func TestPut(t *testing.T) {

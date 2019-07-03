@@ -386,9 +386,23 @@ func (box *{{$entity.Name}}Box) GetAll() ([]{{if not $.Options.ByValue}}*{{end}}
 }
 
 // Remove deletes a single object
-func (box *{{$entity.Name}}Box) Remove(object *{{$entity.Name}}) (err error) {
+func (box *{{$entity.Name}}Box) Remove(object *{{$entity.Name}}) error {
 	return box.Box.Remove({{if $entity.IdProperty.Converter}}{{$entity.IdProperty.Converter}}ToDatabaseValue({{end -}}
 					object.{{$entity.IdProperty.Path}}{{if $entity.IdProperty.Converter}}){{end}})
+}
+
+// RemoveMany deletes multiple objects at once.
+// Returns the number of deleted object or error on failure.
+// Note that this method will not fail if an object is not found (e.g. already removed).
+// In case you need to strictly check whether all of the objects exist before removing them,
+// you can execute multiple box.Contains() and box.Remove() inside a single write transaction.
+func (box *{{$entity.Name}}Box) RemoveMany(objects ...*{{$entity.Name}}) (uint64, error) {
+	var ids = make([]uint64, len(objects))
+	for k, object := range objects {
+		ids[k] = {{if $entity.IdProperty.Converter}}{{$entity.IdProperty.Converter}}ToDatabaseValue({{end -}}
+					object.{{$entity.IdProperty.Path}}{{if $entity.IdProperty.Converter}}){{end}}
+	}
+	return box.Box.RemoveMany(ids...)
 }
 
 // Creates a query with the given conditions. Use the fields of the {{$entity.Name}}_ struct to create conditions.

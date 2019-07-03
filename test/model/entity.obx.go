@@ -793,8 +793,21 @@ func (box *EntityBox) GetAll() ([]*Entity, error) {
 }
 
 // Remove deletes a single object
-func (box *EntityBox) Remove(object *Entity) (err error) {
+func (box *EntityBox) Remove(object *Entity) error {
 	return box.Box.Remove(object.Id)
+}
+
+// RemoveMany deletes multiple objects at once.
+// Returns the number of deleted object or error on failure.
+// Note that this method will not fail if an object is not found (e.g. already removed).
+// In case you need to strictly check whether all of the objects exist before removing them,
+// you can execute multiple box.Contains() and box.Remove() inside a single write transaction.
+func (box *EntityBox) RemoveMany(objects ...*Entity) (uint64, error) {
+	var ids = make([]uint64, len(objects))
+	for k, object := range objects {
+		ids[k] = object.Id
+	}
+	return box.Box.RemoveMany(ids...)
 }
 
 // Creates a query with the given conditions. Use the fields of the Entity_ struct to create conditions.
@@ -1018,8 +1031,21 @@ func (box *TestStringIdEntityBox) GetAll() ([]*TestStringIdEntity, error) {
 }
 
 // Remove deletes a single object
-func (box *TestStringIdEntityBox) Remove(object *TestStringIdEntity) (err error) {
+func (box *TestStringIdEntityBox) Remove(object *TestStringIdEntity) error {
 	return box.Box.Remove(objectbox.StringIdConvertToDatabaseValue(object.Id))
+}
+
+// RemoveMany deletes multiple objects at once.
+// Returns the number of deleted object or error on failure.
+// Note that this method will not fail if an object is not found (e.g. already removed).
+// In case you need to strictly check whether all of the objects exist before removing them,
+// you can execute multiple box.Contains() and box.Remove() inside a single write transaction.
+func (box *TestStringIdEntityBox) RemoveMany(objects ...*TestStringIdEntity) (uint64, error) {
+	var ids = make([]uint64, len(objects))
+	for k, object := range objects {
+		ids[k] = objectbox.StringIdConvertToDatabaseValue(object.Id)
+	}
+	return box.Box.RemoveMany(ids...)
 }
 
 // Creates a query with the given conditions. Use the fields of the TestStringIdEntity_ struct to create conditions.
@@ -1268,8 +1294,21 @@ func (box *TestEntityInlineBox) GetAll() ([]*TestEntityInline, error) {
 }
 
 // Remove deletes a single object
-func (box *TestEntityInlineBox) Remove(object *TestEntityInline) (err error) {
+func (box *TestEntityInlineBox) Remove(object *TestEntityInline) error {
 	return box.Box.Remove(object.Id)
+}
+
+// RemoveMany deletes multiple objects at once.
+// Returns the number of deleted object or error on failure.
+// Note that this method will not fail if an object is not found (e.g. already removed).
+// In case you need to strictly check whether all of the objects exist before removing them,
+// you can execute multiple box.Contains() and box.Remove() inside a single write transaction.
+func (box *TestEntityInlineBox) RemoveMany(objects ...*TestEntityInline) (uint64, error) {
+	var ids = make([]uint64, len(objects))
+	for k, object := range objects {
+		ids[k] = object.Id
+	}
+	return box.Box.RemoveMany(ids...)
 }
 
 // Creates a query with the given conditions. Use the fields of the TestEntityInline_ struct to create conditions.
@@ -1568,8 +1607,21 @@ func (box *TestEntityRelatedBox) GetAll() ([]*TestEntityRelated, error) {
 }
 
 // Remove deletes a single object
-func (box *TestEntityRelatedBox) Remove(object *TestEntityRelated) (err error) {
+func (box *TestEntityRelatedBox) Remove(object *TestEntityRelated) error {
 	return box.Box.Remove(object.Id)
+}
+
+// RemoveMany deletes multiple objects at once.
+// Returns the number of deleted object or error on failure.
+// Note that this method will not fail if an object is not found (e.g. already removed).
+// In case you need to strictly check whether all of the objects exist before removing them,
+// you can execute multiple box.Contains() and box.Remove() inside a single write transaction.
+func (box *TestEntityRelatedBox) RemoveMany(objects ...*TestEntityRelated) (uint64, error) {
+	var ids = make([]uint64, len(objects))
+	for k, object := range objects {
+		ids[k] = object.Id
+	}
+	return box.Box.RemoveMany(ids...)
 }
 
 // Creates a query with the given conditions. Use the fields of the TestEntityRelated_ struct to create conditions.

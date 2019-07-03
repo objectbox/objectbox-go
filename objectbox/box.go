@@ -378,6 +378,23 @@ func (box *Box) Remove(id uint64) error {
 	})
 }
 
+// RemoveMany deletes multiple objects at once.
+// Returns the number of deleted object or error on failure.
+// Note that this method will not fail if an object is not found (e.g. already removed).
+// In case you need to strictly check whether all of the objects exist before removing them,
+// you can execute multiple box.Contains() and box.Remove() inside a single write transaction.
+func (box *Box) RemoveMany(ids ...uint64) (uint64, error) {
+	if cIds, err := goIdsArrayToC(ids); err != nil {
+		return 0, err
+	} else {
+		var cResult C.uint64_t
+		err = cCall(func() C.obx_err {
+			return C.obx_box_remove_many(box.cBox, cIds.cArray, &cResult)
+		})
+		return uint64(cResult), err
+	}
+}
+
 // RemoveAll removes all stored objects.
 // This is much faster than removing objects one by one in a loop.
 func (box *Box) RemoveAll() error {

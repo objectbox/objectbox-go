@@ -203,13 +203,8 @@ func (ob *ObjectBox) box(typeId TypeId) (*Box, error) {
 }
 
 // AwaitAsyncCompletion blocks until all PutAsync insert have been processed
-func (ob *ObjectBox) AwaitAsyncCompletion() *ObjectBox {
-	// for native calls/createError()
-	runtime.LockOSThread()
-	defer runtime.UnlockOSThread()
-
-	if C.obx_store_await_async_completion(ob.store) != true {
-		fmt.Println(createError())
-	}
-	return ob
+func (ob *ObjectBox) AwaitAsyncCompletion() error {
+	return cCallBool(func() bool {
+		return bool(C.obx_store_await_async_completion(ob.store))
+	})
 }

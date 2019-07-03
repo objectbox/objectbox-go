@@ -124,7 +124,9 @@ func (perf *Executor) PutAsync(items []*Entity) {
 		}
 	}
 
-	perf.ob.AwaitAsyncCompletion()
+	if err := perf.ob.AwaitAsyncCompletion(); err != nil {
+		panic(err)
+	}
 }
 
 func (perf *Executor) PutAll(items []*Entity) {

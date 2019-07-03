@@ -47,7 +47,7 @@ func TestPutAsync(t *testing.T) {
 	assert.NoErr(t, err)
 	assert.Eq(t, objectId, event.Id)
 
-	objectBox.AwaitAsyncCompletion()
+	assert.NoErr(t, objectBox.AwaitAsyncCompletion())
 
 	count, err := box.Count()
 	assert.NoErr(t, err)

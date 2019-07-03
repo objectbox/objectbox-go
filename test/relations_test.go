@@ -54,7 +54,7 @@ func TestRelationsInsert(t *testing.T) {
 			id, err = env.Box.Put(object)
 		} else {
 			id, err = env.Box.PutAsync(object)
-			env.ObjectBox.AwaitAsyncCompletion()
+			assert.NoErr(t, env.ObjectBox.AwaitAsyncCompletion())
 		}
 
 		assert.NoErr(t, err)
@@ -128,7 +128,7 @@ func TestRelationsUpdate(t *testing.T) {
 				_, err = env.Box.Put(object)
 			} else {
 				_, err = env.Box.PutAsync(object)
-				env.ObjectBox.AwaitAsyncCompletion()
+				assert.NoErr(t, env.ObjectBox.AwaitAsyncCompletion())
 			}
 
 			assert.NoErr(t, err)

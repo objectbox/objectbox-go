@@ -22,5 +22,5 @@ type Nillable struct {
 	Rune         *rune
 	Float32      *float32
 	Float64      *float64
-	Date         *int64 `date`
+	Date         *int64 `objectbox:"date"`
 }

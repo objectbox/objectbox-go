@@ -23,13 +23,13 @@ package objectbox
 import "C"
 
 type transaction struct {
-	txn       *C.OBX_txn
+	cTxn      *C.OBX_txn
 	objectBox *ObjectBox
 }
 
 func (txn *transaction) Close() error {
-	rc := C.obx_txn_close(txn.txn)
-	txn.txn = nil
+	rc := C.obx_txn_close(txn.cTxn)
+	txn.cTxn = nil
 	if rc != 0 {
 		return createError()
 	}
@@ -37,7 +37,7 @@ func (txn *transaction) Close() error {
 }
 
 func (txn *transaction) Abort() error {
-	rc := C.obx_txn_abort(txn.txn)
+	rc := C.obx_txn_abort(txn.cTxn)
 	if rc != 0 {
 		return createError()
 	}
@@ -45,7 +45,7 @@ func (txn *transaction) Abort() error {
 }
 
 func (txn *transaction) Commit() error {
-	rc := C.obx_txn_commit(txn.txn)
+	rc := C.obx_txn_commit(txn.cTxn)
 	if rc != 0 {
 		return createError()
 	}

@@ -82,17 +82,17 @@ type Model struct {
 }
 
 func NewModel() *Model {
-	cModel := C.obx_model_create()
-	var err error
-	if cModel == nil {
-		err = createError()
-	}
-	return &Model{
-		cModel:         cModel,
-		Error:          err,
+	var model = &Model{
 		entitiesById:   make(map[TypeId]*entity),
 		entitiesByName: make(map[string]*entity),
 	}
+
+	model.Error = cCallBool(func() bool {
+		model.cModel = C.obx_model_create()
+		return model.cModel != nil
+	})
+
+	return model
 }
 
 func (model *Model) GeneratorVersion(version int) {
@@ -137,9 +137,10 @@ func (model *Model) Entity(name string, id TypeId, uid uint64) {
 	cname := C.CString(name)
 	defer C.free(unsafe.Pointer(cname))
 
-	rc := C.obx_model_entity(model.cModel, cname, C.obx_schema_id(id), C.obx_uid(uid))
-	if rc != 0 {
-		model.Error = createError()
+	if err := cCall(func() C.obx_err {
+		return C.obx_model_entity(model.cModel, cname, C.obx_schema_id(id), C.obx_uid(uid))
+	}); err != nil {
+		model.Error = err
 		return
 	}
 
@@ -157,12 +158,10 @@ func (model *Model) Relation(relationId TypeId, relationUid uint64, targetEntity
 		return
 	}
 
-	rc := C.obx_model_relation(model.cModel, C.obx_schema_id(relationId), C.obx_uid(relationUid),
-		C.obx_schema_id(targetEntityId), C.obx_uid(targetEntityUid))
-	if rc != 0 {
-		model.Error = createError()
-		return
-	}
+	model.Error = cCall(func() C.obx_err {
+		return C.obx_model_relation(model.cModel, C.obx_schema_id(relationId), C.obx_uid(relationUid),
+			C.obx_schema_id(targetEntityId), C.obx_uid(targetEntityUid))
+	})
 
 	model.currentEntity.hasRelations = true
 }
@@ -171,10 +170,10 @@ func (model *Model) EntityLastPropertyId(id TypeId, uid uint64) {
 	if model.Error != nil {
 		return
 	}
-	rc := C.obx_model_entity_last_property_id(model.cModel, C.obx_schema_id(id), C.obx_uid(uid))
-	if rc != 0 {
-		model.Error = createError()
-	}
+
+	model.Error = cCall(func() C.obx_err {
+		return C.obx_model_entity_last_property_id(model.cModel, C.obx_schema_id(id), C.obx_uid(uid))
+	})
 }
 
 func (model *Model) Property(name string, propertyType int, id TypeId, uid uint64) {
@@ -184,42 +183,40 @@ func (model *Model) Property(name string, propertyType int, id TypeId, uid uint6
 	cname := C.CString(name)
 	defer C.free(unsafe.Pointer(cname))
 
-	rc := C.obx_model_property(model.cModel, cname, C.OBXPropertyType(propertyType), C.obx_schema_id(id), C.obx_uid(uid))
-	if rc != 0 {
-		model.Error = createError()
-	}
+	model.Error = cCall(func() C.obx_err {
+		return C.obx_model_property(model.cModel, cname, C.OBXPropertyType(propertyType), C.obx_schema_id(id), C.obx_uid(uid))
+	})
 }
 
 func (model *Model) PropertyFlags(propertyFlags int) {
 	if model.Error != nil {
 		return
 	}
-	rc := C.obx_model_property_flags(model.cModel, C.OBXPropertyFlags(propertyFlags))
-	if rc != 0 {
-		model.Error = createError()
-	}
+	model.Error = cCall(func() C.obx_err {
+		return C.obx_model_property_flags(model.cModel, C.OBXPropertyFlags(propertyFlags))
+	})
 }
 
 func (model *Model) PropertyIndex(id TypeId, uid uint64) {
 	if model.Error != nil {
 		return
 	}
-	rc := C.obx_model_property_index_id(model.cModel, C.obx_schema_id(id), C.obx_uid(uid))
-	if rc != 0 {
-		model.Error = createError()
-	}
+	model.Error = cCall(func() C.obx_err {
+		return C.obx_model_property_index_id(model.cModel, C.obx_schema_id(id), C.obx_uid(uid))
+	})
 }
 
 func (model *Model) PropertyRelation(targetEntityName string, indexId TypeId, indexUid uint64) {
 	if model.Error != nil {
 		return
 	}
+
 	cname := C.CString(targetEntityName)
 	defer C.free(unsafe.Pointer(cname))
-	rc := C.obx_model_property_relation(model.cModel, cname, C.obx_schema_id(indexId), C.obx_uid(indexUid))
-	if rc != 0 {
-		model.Error = createError()
-	}
+
+	model.Error = cCall(func() C.obx_err {
+		return C.obx_model_property_relation(model.cModel, cname, C.obx_schema_id(indexId), C.obx_uid(indexUid))
+	})
 
 	model.currentEntity.hasRelations = true
 }

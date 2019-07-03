@@ -38,6 +38,7 @@ void freeCharArray(char **a, int size) {
 import "C"
 import (
 	"reflect"
+	"runtime"
 	"unsafe"
 )
 
@@ -77,6 +78,10 @@ func cBytesArrayToGo(cBytesArray *C.OBX_bytes_array) [][]byte {
 }
 
 func goBytesArrayToC(goArray [][]byte) (*bytesArray, error) {
+	// for native calls/createError()
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+
 	var cArray = C.obx_bytes_array_create(C.size_t(len(goArray)))
 	if cArray == nil {
 		return nil, createError()
@@ -121,12 +126,17 @@ func cIdsArrayToGo(cArray *C.OBX_id_array) []uint64 {
 }
 
 func goIdsArrayToC(ids []uint64) (*idsArray, error) {
+	// for native calls/createError()
+	runtime.LockOSThread()
+
+	var err error
 	var cArray = C.obx_id_array_create(goUint64ArrayToCObxId(ids), C.size_t(len(ids)))
 	if cArray == nil {
-		return nil, createError()
+		err = createError()
 	}
 
-	return &idsArray{ids, cArray}, nil
+	runtime.UnlockOSThread()
+	return &idsArray{ids, cArray}, err
 }
 
 type stringArray struct {

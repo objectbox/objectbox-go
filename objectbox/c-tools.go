@@ -27,8 +27,6 @@ import (
 )
 
 // provides wrappers for objectbox C-api calls, making sure the returned error belongs to this call.
-// The c-api uses thread-local storage for the latest error so the we need to lock the current goroutine to a thread.
-// TODO migrate all native C.obx_* calls so that they use these wrappers
 
 func cCall(fn func() C.obx_err) (err error) {
 	runtime.LockOSThread()
@@ -40,6 +38,18 @@ func cCall(fn func() C.obx_err) (err error) {
 	runtime.UnlockOSThread()
 	return err
 }
+
+func cCallBool(fn func() bool) (err error) {
+	runtime.LockOSThread()
+
+	if successful := fn(); !successful {
+		err = createError()
+	}
+
+	runtime.UnlockOSThread()
+	return err
+}
+
 
 func cGetIds(fn func() *C.OBX_id_array) (ids []uint64, err error) {
 	runtime.LockOSThread()
@@ -71,6 +81,9 @@ func cGetBytesArray(fn func() *C.OBX_bytes_array) (array [][]byte, err error) {
 	return array, err
 }
 
+// createError fetches the latest error that happened in the c-api on a current-thread.
+// The c-api uses thread-local storage for the latest error so we need to lock the current goroutine to a thread.
+// Must only be called when runtime.LockOSThread() is active. Either use one of the above cCall-style functions or a TX.
 func createError() error {
 	msg := C.obx_last_error_message()
 	if msg == nil {

@@ -152,7 +152,7 @@ func (ob *ObjectBox) runInTxn(readOnly bool, fn func() error) (err error) {
 	return err
 }
 
-func (ob ObjectBox) getEntityById(typeId TypeId) *entity {
+func (ob *ObjectBox) getEntityById(typeId TypeId) *entity {
 	entity := ob.entitiesById[typeId]
 	if entity == nil {
 		// Configuration error by the dev, OK to panic
@@ -161,7 +161,7 @@ func (ob ObjectBox) getEntityById(typeId TypeId) *entity {
 	return entity
 }
 
-func (ob ObjectBox) getEntityByName(typeName string) *entity {
+func (ob *ObjectBox) getEntityByName(typeName string) *entity {
 	entity := ob.entitiesByName[typeName]
 	if entity == nil {
 		// Configuration error by the dev, OK to panic

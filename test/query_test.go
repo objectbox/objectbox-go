@@ -705,7 +705,6 @@ func TestQueryNil(t *testing.T) {
 		{3, s{`Float64 is not null`}, box.Query(E.Float64.IsNotNil()), nil},
 		{2, s{`Float64Ptr is null`}, box.Query(E.Float64Ptr.IsNil()), nil},
 		{1, s{`Float64Ptr is not null`}, box.Query(E.Float64Ptr.IsNotNil()), nil},
-
 	})
 }
 

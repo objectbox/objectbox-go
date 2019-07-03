@@ -93,7 +93,6 @@ func goBytesArrayToC(goArray [][]byte) (*bytesArray, error) {
 	return &bytesArray{goArray, cArray}, nil
 }
 
-
 type idsArray struct {
 	ids    []uint64
 	cArray *C.OBX_id_array

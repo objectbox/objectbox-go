@@ -276,7 +276,7 @@ func ({{$entityNameCamel}}_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byt
 		{{- range $field := .Fields}}
 			{{$field.Name}}: 
 				{{- if $field.SimpleRelation}}{{if not $field.IsPointer}}*{{end}}rel{{$field.Name}},
-				{{- else if $field.StandaloneRelation}}{{if $field.IsLazyLoaded}}nil, // see box.GetRelated(){{else}}rel{{$field.Name}},{{end}}
+				{{- else if $field.StandaloneRelation}}{{if $field.IsLazyLoaded}}nil, // see {{$field.Entity.Name}}Box::GetRelated(){{else}}rel{{$field.Name}},{{end}}
         		{{- else if $field.IsId}}{{with $field.Property}}
 					{{- if .Converter}}{{.Converter}}ToEntityProperty(
 					{{- else if .CastOnWrite}}{{.CastOnWrite}}({{end -}}

@@ -665,7 +665,7 @@ func (entity_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{
 		RelatedPtr:      relRelatedPtr,
 		RelatedPtr2:     relRelatedPtr2,
 		RelatedSlice:    relRelatedSlice,
-		RelatedPtrSlice: nil, // see box.GetRelated()
+		RelatedPtrSlice: nil, // see EntityBox::GetRelated()
 		IntPtr:          fbutils.GetIntPtrSlot(table, 52),
 		Int8Ptr:         fbutils.GetInt8PtrSlot(table, 54),
 		Int16Ptr:        fbutils.GetInt16PtrSlot(table, 56),

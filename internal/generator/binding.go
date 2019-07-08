@@ -128,8 +128,8 @@ type Field struct {
 	Property           *Property // nil if it's an embedded struct
 	Fields             []*Field  // inner fields, nil if it's a property
 	SimpleRelation     *Relation
-	StandaloneRelation *StandaloneRelation
-	IsLazyLoaded       bool
+	StandaloneRelation *StandaloneRelation // to-many relation stored as a standalone relation in the model
+	IsLazyLoaded       bool                // only standalone (to-many) relations currently support lazy loading
 }
 
 type Identifier struct {

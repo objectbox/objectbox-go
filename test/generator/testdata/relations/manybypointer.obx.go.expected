@@ -91,7 +91,7 @@ func (taskRelManyPtr_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (in
 
 	return &TaskRelManyPtr{
 		Id:     id,
-		Groups: nil, // see box.GetRelated()
+		Groups: nil, // see TaskRelManyPtrBox::GetRelated()
 
 	}, nil
 }

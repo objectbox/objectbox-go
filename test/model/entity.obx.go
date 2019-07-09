@@ -791,24 +791,27 @@ func (box *EntityBox) GetRelated(object *Entity, properties ...*objectbox.Relati
 
 	if properties == nil {
 		properties = []*objectbox.RelationToMany{Entity_.RelatedPtrSlice}
+	} else if len(properties) == 0 {
+		return nil
 	}
 
-	for _, property := range properties {
+	return box.ObjectBox.RunInReadTx(func() error {
+		for _, property := range properties {
 
-		if property == Entity_.RelatedPtrSlice {
-			if rIds, err := box.RelationIds(property, id); err != nil {
-				return err
-			} else if rSlice, err := BoxForTestEntityRelated(box.ObjectBox).GetMany(rIds...); err != nil {
-				return err
+			if property == Entity_.RelatedPtrSlice {
+				if rIds, err := box.RelationIds(property, id); err != nil {
+					return err
+				} else if rSlice, err := BoxForTestEntityRelated(box.ObjectBox).GetMany(rIds...); err != nil {
+					return err
+				} else {
+					object.RelatedPtrSlice = rSlice
+				}
 			} else {
-				object.RelatedPtrSlice = rSlice
+				return fmt.Errorf("EntityBox::GetRelated() called for an invalid property %v - not a lazy-loaded related property of Entity", property.Id)
 			}
-		} else {
-			return fmt.Errorf("EntityBox::GetRelated() called for an invalid property %v - not a lazy-loaded related property of Entity", property.Id)
 		}
-	}
-
-	return nil
+		return nil
+	})
 }
 
 // GetRelatedForEach calls GetRelated() on each of the objects in the given slice.

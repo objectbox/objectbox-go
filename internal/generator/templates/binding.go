@@ -407,34 +407,37 @@ func (box *{{$entity.Name}}Box) GetRelated(object *{{$entity.Name}}, properties 
 			{{- end}}
 		{{- end}}{{end}}
 		}
+	} else if len(properties) == 0 {
+		return nil
 	}
 
-	for _, property := range properties {
-		{{block "get-related" $entity}}
-		{{range $field := .Fields}}
-			{{if $field.SimpleRelation -}}
-				{{/* already loaded eagerly in binding.Load() */}}
-			{{- else if $field.StandaloneRelation -}}
-				{{- if $field.IsLazyLoaded -}}
-				if property == {{.Entity.Name}}_.{{$field.Name}} {
-					if rIds, err := box.RelationIds(property, id); err != nil {
-						return err
-					} else if rSlice, err := BoxFor{{$field.StandaloneRelation.Target.Name}}(box.ObjectBox).GetMany(rIds...); err != nil {
-						return err
-					} else {
-						object.{{$field.Name}} = rSlice
-					}
-				} else
-				{{- end -}}
-			{{else}}{{/* recursively visit fields in embedded structs */}}{{template "get-related" $field}}
-			{{end}}
-		{{end}}{{end}}
-		{{/* else if no property matches */}}{
-			return fmt.Errorf("{{$entity.Name}}Box::GetRelated() called for an invalid property %v - not a lazy-loaded related property of {{$entity.Name}}", property.Id)
+	return box.ObjectBox.RunInReadTx(func() error {
+		for _, property := range properties {
+			{{block "get-related" $entity}}
+			{{range $field := .Fields}}
+				{{if $field.SimpleRelation -}}
+					{{/* already loaded eagerly in binding.Load() */}}
+				{{- else if $field.StandaloneRelation -}}
+					{{- if $field.IsLazyLoaded -}}
+					if property == {{.Entity.Name}}_.{{$field.Name}} {
+						if rIds, err := box.RelationIds(property, id); err != nil {
+							return err
+						} else if rSlice, err := BoxFor{{$field.StandaloneRelation.Target.Name}}(box.ObjectBox).GetMany(rIds...); err != nil {
+							return err
+						} else {
+							object.{{$field.Name}} = rSlice
+						}
+					} else
+					{{- end -}}
+				{{else}}{{/* recursively visit fields in embedded structs */}}{{template "get-related" $field}}
+				{{end}}
+			{{end}}{{end}}
+			{{/* else if no property matches */}}{
+				return fmt.Errorf("{{$entity.Name}}Box::GetRelated() called for an invalid property %v - not a lazy-loaded related property of {{$entity.Name}}", property.Id)
+			}
 		}
-	}
-
-	return nil
+		return nil
+	})
 }
 
 // GetRelatedForEach calls GetRelated() on each of the objects in the given slice.

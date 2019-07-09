@@ -200,24 +200,27 @@ func (box *TaskRelManyPtrBox) GetRelated(object *TaskRelManyPtr, properties ...*
 
 	if properties == nil {
 		properties = []*objectbox.RelationToMany{TaskRelManyPtr_.Groups}
+	} else if len(properties) == 0 {
+		return nil
 	}
 
-	for _, property := range properties {
+	return box.ObjectBox.RunInReadTx(func() error {
+		for _, property := range properties {
 
-		if property == TaskRelManyPtr_.Groups {
-			if rIds, err := box.RelationIds(property, id); err != nil {
-				return err
-			} else if rSlice, err := BoxForGroup(box.ObjectBox).GetMany(rIds...); err != nil {
-				return err
+			if property == TaskRelManyPtr_.Groups {
+				if rIds, err := box.RelationIds(property, id); err != nil {
+					return err
+				} else if rSlice, err := BoxForGroup(box.ObjectBox).GetMany(rIds...); err != nil {
+					return err
+				} else {
+					object.Groups = rSlice
+				}
 			} else {
-				object.Groups = rSlice
+				return fmt.Errorf("TaskRelManyPtrBox::GetRelated() called for an invalid property %v - not a lazy-loaded related property of TaskRelManyPtr", property.Id)
 			}
-		} else {
-			return fmt.Errorf("TaskRelManyPtrBox::GetRelated() called for an invalid property %v - not a lazy-loaded related property of TaskRelManyPtr", property.Id)
 		}
-	}
-
-	return nil
+		return nil
+	})
 }
 
 // GetRelatedForEach calls GetRelated() on each of the objects in the given slice.

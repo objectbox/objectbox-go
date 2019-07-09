@@ -42,7 +42,7 @@ func TestPerformanceSimple(t *testing.T) {
 	executor.PutAsync(inserts)
 	executor.RemoveAll()
 
-	executor.PutAll(inserts)
+	executor.PutMany(inserts)
 
 	items := executor.ReadAll(count)
 	executor.ChangeValues(items)

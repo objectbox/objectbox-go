@@ -47,7 +47,7 @@ func main() {
 	inserts := executor.PrepareData(*count)
 
 	for i := 0; i < *runs; i++ {
-		executor.PutAll(inserts)
+		executor.PutMany(inserts)
 		items := executor.ReadAll(*count)
 		executor.UpdateAll(items)
 		executor.RemoveAll()
@@ -60,7 +60,7 @@ func main() {
 	}
 
 	executor.PrintTimes([]string{
-		"PutAll",
+		"PutMany",
 		"ReadAll",
 		"UpdateAll",
 		"RemoveAll",

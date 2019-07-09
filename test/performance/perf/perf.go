@@ -127,10 +127,10 @@ func (perf *Executor) PutAsync(items []*Entity) {
 	perf.ob.AwaitAsyncCompletion()
 }
 
-func (perf *Executor) PutAll(items []*Entity) {
+func (perf *Executor) PutMany(items []*Entity) {
 	defer perf.trackTime(time.Now())
 
-	if _, err := perf.box.PutAll(items); err != nil {
+	if _, err := perf.box.PutMany(items); err != nil {
 		panic(err)
 	}
 }
@@ -159,7 +159,7 @@ func (perf *Executor) ChangeValues(items []*Entity) {
 func (perf *Executor) UpdateAll(items []*Entity) {
 	defer perf.trackTime(time.Now())
 
-	if _, err := perf.box.PutAll(items); err != nil {
+	if _, err := perf.box.PutMany(items); err != nil {
 		panic(err)
 	}
 }

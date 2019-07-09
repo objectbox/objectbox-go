@@ -162,7 +162,7 @@ func (box *EntityByValueBox) PutAsync(object *EntityByValue) (uint64, error) {
 	return box.Box.PutAsync(object)
 }
 
-// PutAll inserts multiple objects in single transaction.
+// PutMany inserts multiple objects in single transaction.
 // In case Ids are not set on the objects, they would be assigned automatically (auto-increment).
 //
 // Returns: IDs of the put objects (in the same order).
@@ -172,8 +172,8 @@ func (box *EntityByValueBox) PutAsync(object *EntityByValue) (uint64, error) {
 // even though the transaction has been rolled back and the objects are not stored under those IDs.
 //
 // Note: The slice may be empty or even nil; in both cases, an empty IDs slice and no error is returned.
-func (box *EntityByValueBox) PutAll(objects []EntityByValue) ([]uint64, error) {
-	return box.Box.PutAll(objects)
+func (box *EntityByValueBox) PutMany(objects []EntityByValue) ([]uint64, error) {
+	return box.Box.PutMany(objects)
 }
 
 // Get reads a single object.
@@ -209,8 +209,21 @@ func (box *EntityByValueBox) GetAll() ([]EntityByValue, error) {
 }
 
 // Remove deletes a single object
-func (box *EntityByValueBox) Remove(object *EntityByValue) (err error) {
-	return box.Box.Remove(object.Id)
+func (box *EntityByValueBox) Remove(object *EntityByValue) error {
+	return box.Box.Remove(object)
+}
+
+// RemoveMany deletes multiple objects at once.
+// Returns the number of deleted object or error on failure.
+// Note that this method will not fail if an object is not found (e.g. already removed).
+// In case you need to strictly check whether all of the objects exist before removing them,
+// you can execute multiple box.Contains() and box.Remove() inside a single write transaction.
+func (box *EntityByValueBox) RemoveMany(objects ...*EntityByValue) (uint64, error) {
+	var ids = make([]uint64, len(objects))
+	for k, object := range objects {
+		ids[k] = object.Id
+	}
+	return box.Box.RemoveIds(ids...)
 }
 
 // Creates a query with the given conditions. Use the fields of the EntityByValue_ struct to create conditions.

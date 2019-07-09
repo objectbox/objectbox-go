@@ -222,7 +222,7 @@ func (box *Box) Put(object interface{}) (id uint64, err error) {
 	return box.put(object, false, 0, false)
 }
 
-// PutAll inserts multiple objects in a single transaction.
+// PutMany inserts multiple objects in a single transaction.
 // The given argument must be a slice of the object type this Box represents (pointers to objects).
 // In case IDs are not set on the objects, they would be assigned automatically (auto-increment).
 //
@@ -232,7 +232,7 @@ func (box *Box) Put(object interface{}) (id uint64, err error) {
 // even though the transaction has been rolled back and the objects are not stored under those IDs.
 //
 // Note: The slice may be empty or even nil; in both cases, an empty IDs slice and no error is returned.
-func (box *Box) PutAll(objects interface{}) (ids []uint64, err error) {
+func (box *Box) PutMany(objects interface{}) (ids []uint64, err error) {
 	var slice = reflect.ValueOf(objects)
 	var count = slice.Len()
 
@@ -289,7 +289,7 @@ func (box *Box) PutAll(objects interface{}) (ids []uint64, err error) {
 
 // putManyObjects inserts a subset of objects, setting their IDs as an outArgument.
 // Requires to be called inside a write transaction, i.e. from the ObjectBox.RunInWriteTx() callback.
-// The caller of this method (PutAll) already sliced up the data into chunks to mitigate memory consumption.
+// The caller of this method (PutMany) already sliced up the data into chunks to mitigate memory consumption.
 func (box *Box) putManyObjects(objects reflect.Value, outIds []uint64, start, end int) error {
 	var binding = box.entity.binding
 	var count = end - start
@@ -372,10 +372,37 @@ func (box *Box) putManyObjects(objects reflect.Value, outIds []uint64, start, en
 }
 
 // Remove deletes a single object
-func (box *Box) Remove(id uint64) error {
+func (box *Box) Remove(object interface{}) error {
+	id, err := box.entity.binding.GetId(object)
+	if err != nil {
+		return err
+	}
+
+	return box.RemoveId(id)
+}
+
+// RemoveId deletes a single object
+func (box *Box) RemoveId(id uint64) error {
 	return cCall(func() C.obx_err {
 		return C.obx_box_remove(box.cBox, C.obx_id(id))
 	})
+}
+
+// RemoveIds deletes multiple objects at once.
+// Returns the number of deleted object or error on failure.
+// Note that this method will not fail if an object is not found (e.g. already removed).
+// In case you need to strictly check whether all of the objects exist before removing them,
+// you can execute multiple box.Contains() and box.Remove() inside a single write transaction.
+func (box *Box) RemoveIds(ids ...uint64) (uint64, error) {
+	if cIds, err := goIdsArrayToC(ids); err != nil {
+		return 0, err
+	} else {
+		var cResult C.uint64_t
+		err = cCall(func() C.obx_err {
+			return C.obx_box_remove_many(box.cBox, cIds.cArray, &cResult)
+		})
+		return uint64(cResult), err
+	}
 }
 
 // RemoveAll removes all stored objects.
@@ -548,6 +575,19 @@ func (box *Box) Contains(id uint64) (bool, error) {
 		return false, err
 	}
 	return bool(cResult), nil
+}
+
+// ContainsIds checks whether all of the given objects are stored in DB.
+func (box *Box) ContainsIds(ids ...uint64) (bool, error) {
+	if cIds, err := goIdsArrayToC(ids); err != nil {
+		return false, err
+	} else {
+		var cResult C.bool
+		err = cCall(func() C.obx_err {
+			return C.obx_box_contains_many(box.cBox, cIds.cArray, &cResult)
+		})
+		return bool(cResult), err
+	}
 }
 
 // RelationIds returns IDs of all target objects related to the given source object ID

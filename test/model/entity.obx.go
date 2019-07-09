@@ -746,7 +746,7 @@ func (box *EntityBox) PutAsync(object *Entity) (uint64, error) {
 	return box.Box.PutAsync(object)
 }
 
-// PutAll inserts multiple objects in single transaction.
+// PutMany inserts multiple objects in single transaction.
 // In case Ids are not set on the objects, they would be assigned automatically (auto-increment).
 //
 // Returns: IDs of the put objects (in the same order).
@@ -756,8 +756,8 @@ func (box *EntityBox) PutAsync(object *Entity) (uint64, error) {
 // even though the transaction has been rolled back and the objects are not stored under those IDs.
 //
 // Note: The slice may be empty or even nil; in both cases, an empty IDs slice and no error is returned.
-func (box *EntityBox) PutAll(objects []*Entity) ([]uint64, error) {
-	return box.Box.PutAll(objects)
+func (box *EntityBox) PutMany(objects []*Entity) ([]uint64, error) {
+	return box.Box.PutMany(objects)
 }
 
 // Get reads a single object.
@@ -793,8 +793,21 @@ func (box *EntityBox) GetAll() ([]*Entity, error) {
 }
 
 // Remove deletes a single object
-func (box *EntityBox) Remove(object *Entity) (err error) {
-	return box.Box.Remove(object.Id)
+func (box *EntityBox) Remove(object *Entity) error {
+	return box.Box.Remove(object)
+}
+
+// RemoveMany deletes multiple objects at once.
+// Returns the number of deleted object or error on failure.
+// Note that this method will not fail if an object is not found (e.g. already removed).
+// In case you need to strictly check whether all of the objects exist before removing them,
+// you can execute multiple box.Contains() and box.Remove() inside a single write transaction.
+func (box *EntityBox) RemoveMany(objects ...*Entity) (uint64, error) {
+	var ids = make([]uint64, len(objects))
+	for k, object := range objects {
+		ids[k] = object.Id
+	}
+	return box.Box.RemoveIds(ids...)
 }
 
 // Creates a query with the given conditions. Use the fields of the Entity_ struct to create conditions.
@@ -971,7 +984,7 @@ func (box *TestStringIdEntityBox) PutAsync(object *TestStringIdEntity) (uint64, 
 	return box.Box.PutAsync(object)
 }
 
-// PutAll inserts multiple objects in single transaction.
+// PutMany inserts multiple objects in single transaction.
 // In case Ids are not set on the objects, they would be assigned automatically (auto-increment).
 //
 // Returns: IDs of the put objects (in the same order).
@@ -981,8 +994,8 @@ func (box *TestStringIdEntityBox) PutAsync(object *TestStringIdEntity) (uint64, 
 // even though the transaction has been rolled back and the objects are not stored under those IDs.
 //
 // Note: The slice may be empty or even nil; in both cases, an empty IDs slice and no error is returned.
-func (box *TestStringIdEntityBox) PutAll(objects []*TestStringIdEntity) ([]uint64, error) {
-	return box.Box.PutAll(objects)
+func (box *TestStringIdEntityBox) PutMany(objects []*TestStringIdEntity) ([]uint64, error) {
+	return box.Box.PutMany(objects)
 }
 
 // Get reads a single object.
@@ -1018,8 +1031,21 @@ func (box *TestStringIdEntityBox) GetAll() ([]*TestStringIdEntity, error) {
 }
 
 // Remove deletes a single object
-func (box *TestStringIdEntityBox) Remove(object *TestStringIdEntity) (err error) {
-	return box.Box.Remove(objectbox.StringIdConvertToDatabaseValue(object.Id))
+func (box *TestStringIdEntityBox) Remove(object *TestStringIdEntity) error {
+	return box.Box.Remove(object)
+}
+
+// RemoveMany deletes multiple objects at once.
+// Returns the number of deleted object or error on failure.
+// Note that this method will not fail if an object is not found (e.g. already removed).
+// In case you need to strictly check whether all of the objects exist before removing them,
+// you can execute multiple box.Contains() and box.Remove() inside a single write transaction.
+func (box *TestStringIdEntityBox) RemoveMany(objects ...*TestStringIdEntity) (uint64, error) {
+	var ids = make([]uint64, len(objects))
+	for k, object := range objects {
+		ids[k] = objectbox.StringIdConvertToDatabaseValue(object.Id)
+	}
+	return box.Box.RemoveIds(ids...)
 }
 
 // Creates a query with the given conditions. Use the fields of the TestStringIdEntity_ struct to create conditions.
@@ -1221,7 +1247,7 @@ func (box *TestEntityInlineBox) PutAsync(object *TestEntityInline) (uint64, erro
 	return box.Box.PutAsync(object)
 }
 
-// PutAll inserts multiple objects in single transaction.
+// PutMany inserts multiple objects in single transaction.
 // In case Ids are not set on the objects, they would be assigned automatically (auto-increment).
 //
 // Returns: IDs of the put objects (in the same order).
@@ -1231,8 +1257,8 @@ func (box *TestEntityInlineBox) PutAsync(object *TestEntityInline) (uint64, erro
 // even though the transaction has been rolled back and the objects are not stored under those IDs.
 //
 // Note: The slice may be empty or even nil; in both cases, an empty IDs slice and no error is returned.
-func (box *TestEntityInlineBox) PutAll(objects []*TestEntityInline) ([]uint64, error) {
-	return box.Box.PutAll(objects)
+func (box *TestEntityInlineBox) PutMany(objects []*TestEntityInline) ([]uint64, error) {
+	return box.Box.PutMany(objects)
 }
 
 // Get reads a single object.
@@ -1268,8 +1294,21 @@ func (box *TestEntityInlineBox) GetAll() ([]*TestEntityInline, error) {
 }
 
 // Remove deletes a single object
-func (box *TestEntityInlineBox) Remove(object *TestEntityInline) (err error) {
-	return box.Box.Remove(object.Id)
+func (box *TestEntityInlineBox) Remove(object *TestEntityInline) error {
+	return box.Box.Remove(object)
+}
+
+// RemoveMany deletes multiple objects at once.
+// Returns the number of deleted object or error on failure.
+// Note that this method will not fail if an object is not found (e.g. already removed).
+// In case you need to strictly check whether all of the objects exist before removing them,
+// you can execute multiple box.Contains() and box.Remove() inside a single write transaction.
+func (box *TestEntityInlineBox) RemoveMany(objects ...*TestEntityInline) (uint64, error) {
+	var ids = make([]uint64, len(objects))
+	for k, object := range objects {
+		ids[k] = object.Id
+	}
+	return box.Box.RemoveIds(ids...)
 }
 
 // Creates a query with the given conditions. Use the fields of the TestEntityInline_ struct to create conditions.
@@ -1521,7 +1560,7 @@ func (box *TestEntityRelatedBox) PutAsync(object *TestEntityRelated) (uint64, er
 	return box.Box.PutAsync(object)
 }
 
-// PutAll inserts multiple objects in single transaction.
+// PutMany inserts multiple objects in single transaction.
 // In case Ids are not set on the objects, they would be assigned automatically (auto-increment).
 //
 // Returns: IDs of the put objects (in the same order).
@@ -1531,8 +1570,8 @@ func (box *TestEntityRelatedBox) PutAsync(object *TestEntityRelated) (uint64, er
 // even though the transaction has been rolled back and the objects are not stored under those IDs.
 //
 // Note: The slice may be empty or even nil; in both cases, an empty IDs slice and no error is returned.
-func (box *TestEntityRelatedBox) PutAll(objects []*TestEntityRelated) ([]uint64, error) {
-	return box.Box.PutAll(objects)
+func (box *TestEntityRelatedBox) PutMany(objects []*TestEntityRelated) ([]uint64, error) {
+	return box.Box.PutMany(objects)
 }
 
 // Get reads a single object.
@@ -1568,8 +1607,21 @@ func (box *TestEntityRelatedBox) GetAll() ([]*TestEntityRelated, error) {
 }
 
 // Remove deletes a single object
-func (box *TestEntityRelatedBox) Remove(object *TestEntityRelated) (err error) {
-	return box.Box.Remove(object.Id)
+func (box *TestEntityRelatedBox) Remove(object *TestEntityRelated) error {
+	return box.Box.Remove(object)
+}
+
+// RemoveMany deletes multiple objects at once.
+// Returns the number of deleted object or error on failure.
+// Note that this method will not fail if an object is not found (e.g. already removed).
+// In case you need to strictly check whether all of the objects exist before removing them,
+// you can execute multiple box.Contains() and box.Remove() inside a single write transaction.
+func (box *TestEntityRelatedBox) RemoveMany(objects ...*TestEntityRelated) (uint64, error) {
+	var ids = make([]uint64, len(objects))
+	for k, object := range objects {
+		ids[k] = object.Id
+	}
+	return box.Box.RemoveIds(ids...)
 }
 
 // Creates a query with the given conditions. Use the fields of the TestEntityRelated_ struct to create conditions.

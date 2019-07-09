@@ -97,7 +97,7 @@ func (env *TestEnv) Populate(count uint) {
 			i++
 		}
 
-		_, err := env.Box.PutAll(entities)
+		_, err := env.Box.PutMany(entities)
 		assert.NoErr(env.t, err)
 	}
 

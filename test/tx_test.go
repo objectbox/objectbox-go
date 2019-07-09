@@ -60,7 +60,7 @@ func TestTransactionRollback(t *testing.T) {
 		insert[i] = &iot.Event{}
 	}
 
-	_, err := box.PutAll(insert)
+	_, err := box.PutMany(insert)
 	assert.NoErr(t, err)
 
 	count, err := box.Count()

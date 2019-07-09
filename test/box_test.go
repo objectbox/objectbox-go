@@ -100,7 +100,7 @@ func TestUnique(t *testing.T) {
 	assert.Eq(t, uint64(1), count)
 }
 
-func TestPutAll(t *testing.T) {
+func TestBoxBulk(t *testing.T) {
 	objectBox := iot.LoadEmptyTestObjectBox()
 	defer objectBox.Close()
 	box := iot.BoxForEvent(objectBox)
@@ -115,7 +115,7 @@ func TestPutAll(t *testing.T) {
 		Device: "Pi Zero",
 	}
 	events := []*iot.Event{&event1, &event2}
-	objectIds, err := box.PutAll(events)
+	objectIds, err := box.PutMany(events)
 	assert.NoErr(t, err)
 	assert.Eq(t, uint64(1), objectIds[0])
 	assert.Eq(t, objectIds[0], events[0].Id)
@@ -135,14 +135,35 @@ func TestPutAll(t *testing.T) {
 	assert.Eq(t, "Pi Zero", eventRead.Device)
 
 	// And passing nil & empty slice
-	objectIds, err = box.PutAll(nil)
+	objectIds, err = box.PutMany(nil)
 	assert.NoErr(t, err)
 	assert.Eq(t, len(objectIds), 0)
 	//noinspection GoPreferNilSlice
 	noEvents := []*iot.Event{}
-	objectIds, err = box.PutAll(noEvents)
+	objectIds, err = box.PutMany(noEvents)
 	assert.NoErr(t, err)
 	assert.Eq(t, len(objectIds), 0)
+
+	contains, err := box.ContainsIds(events[0].Id, events[1].Id)
+	assert.NoErr(t, err)
+	assert.True(t, contains)
+
+	contains, err = box.ContainsIds(100, events[0].Id, events[1].Id)
+	assert.NoErr(t, err)
+	assert.True(t, !contains)
+
+	countRemoved, err := box.RemoveIds(100, events[0].Id)
+	assert.NoErr(t, err)
+	assert.Eq(t, uint64(1), countRemoved)
+
+	countRemoved, err = box.RemoveMany(events...)
+	assert.NoErr(t, err)
+	assert.Eq(t, uint64(1), countRemoved)
+
+	count, err = box.Count()
+	assert.NoErr(t, err)
+	assert.Eq(t, uint64(0), count)
+
 }
 
 func TestPut(t *testing.T) {

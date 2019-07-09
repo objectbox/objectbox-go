@@ -182,7 +182,7 @@ func (box *RuneIdEntityBox) GetAll() ([]*RuneIdEntity, error) {
 
 // Remove deletes a single object
 func (box *RuneIdEntityBox) Remove(object *RuneIdEntity) error {
-	return box.Box.Remove(runeIdToDatabaseValue(object.Id))
+	return box.Box.Remove(object)
 }
 
 // RemoveMany deletes multiple objects at once.
@@ -195,7 +195,7 @@ func (box *RuneIdEntityBox) RemoveMany(objects ...*RuneIdEntity) (uint64, error)
 	for k, object := range objects {
 		ids[k] = runeIdToDatabaseValue(object.Id)
 	}
-	return box.Box.RemoveMany(ids...)
+	return box.Box.RemoveIds(ids...)
 }
 
 // Creates a query with the given conditions. Use the fields of the RuneIdEntity_ struct to create conditions.

@@ -195,7 +195,7 @@ func (box *DBox) GetAll() ([]*D, error) {
 
 // Remove deletes a single object
 func (box *DBox) Remove(object *D) error {
-	return box.Box.Remove(object.IdAndFloat64Value.Id)
+	return box.Box.Remove(object)
 }
 
 // RemoveMany deletes multiple objects at once.
@@ -208,7 +208,7 @@ func (box *DBox) RemoveMany(objects ...*D) (uint64, error) {
 	for k, object := range objects {
 		ids[k] = object.IdAndFloat64Value.Id
 	}
-	return box.Box.RemoveMany(ids...)
+	return box.Box.RemoveIds(ids...)
 }
 
 // Creates a query with the given conditions. Use the fields of the D_ struct to create conditions.

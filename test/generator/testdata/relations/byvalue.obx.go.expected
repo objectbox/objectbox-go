@@ -226,7 +226,7 @@ func (box *TaskRelValueBox) GetAll() ([]*TaskRelValue, error) {
 
 // Remove deletes a single object
 func (box *TaskRelValueBox) Remove(object *TaskRelValue) error {
-	return box.Box.Remove(object.Id)
+	return box.Box.Remove(object)
 }
 
 // RemoveMany deletes multiple objects at once.
@@ -239,7 +239,7 @@ func (box *TaskRelValueBox) RemoveMany(objects ...*TaskRelValue) (uint64, error)
 	for k, object := range objects {
 		ids[k] = object.Id
 	}
-	return box.Box.RemoveMany(ids...)
+	return box.Box.RemoveIds(ids...)
 }
 
 // Creates a query with the given conditions. Use the fields of the TaskRelValue_ struct to create conditions.

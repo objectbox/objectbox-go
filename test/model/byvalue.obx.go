@@ -210,7 +210,7 @@ func (box *EntityByValueBox) GetAll() ([]EntityByValue, error) {
 
 // Remove deletes a single object
 func (box *EntityByValueBox) Remove(object *EntityByValue) error {
-	return box.Box.Remove(object.Id)
+	return box.Box.Remove(object)
 }
 
 // RemoveMany deletes multiple objects at once.
@@ -223,7 +223,7 @@ func (box *EntityByValueBox) RemoveMany(objects ...*EntityByValue) (uint64, erro
 	for k, object := range objects {
 		ids[k] = object.Id
 	}
-	return box.Box.RemoveMany(ids...)
+	return box.Box.RemoveIds(ids...)
 }
 
 // Creates a query with the given conditions. Use the fields of the EntityByValue_ struct to create conditions.

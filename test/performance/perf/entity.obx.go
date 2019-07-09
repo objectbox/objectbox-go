@@ -224,7 +224,7 @@ func (box *EntityBox) GetAll() ([]*Entity, error) {
 
 // Remove deletes a single object
 func (box *EntityBox) Remove(object *Entity) error {
-	return box.Box.Remove(object.Id)
+	return box.Box.Remove(object)
 }
 
 // RemoveMany deletes multiple objects at once.
@@ -237,7 +237,7 @@ func (box *EntityBox) RemoveMany(objects ...*Entity) (uint64, error) {
 	for k, object := range objects {
 		ids[k] = object.Id
 	}
-	return box.Box.RemoveMany(ids...)
+	return box.Box.RemoveIds(ids...)
 }
 
 // Creates a query with the given conditions. Use the fields of the Entity_ struct to create conditions.

@@ -219,7 +219,7 @@ func (box *EBox) GetAll() ([]*E, error) {
 
 // Remove deletes a single object
 func (box *EBox) Remove(object *E) error {
-	return box.Box.Remove(object.id)
+	return box.Box.Remove(object)
 }
 
 // RemoveMany deletes multiple objects at once.
@@ -232,7 +232,7 @@ func (box *EBox) RemoveMany(objects ...*E) (uint64, error) {
 	for k, object := range objects {
 		ids[k] = object.id
 	}
-	return box.Box.RemoveMany(ids...)
+	return box.Box.RemoveIds(ids...)
 }
 
 // Creates a query with the given conditions. Use the fields of the E_ struct to create conditions.

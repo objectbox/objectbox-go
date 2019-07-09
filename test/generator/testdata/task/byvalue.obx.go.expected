@@ -210,7 +210,7 @@ func (box *TaskByValueBox) GetAll() ([]TaskByValue, error) {
 
 // Remove deletes a single object
 func (box *TaskByValueBox) Remove(object *TaskByValue) error {
-	return box.Box.Remove(object.Id)
+	return box.Box.Remove(object)
 }
 
 // RemoveMany deletes multiple objects at once.
@@ -223,7 +223,7 @@ func (box *TaskByValueBox) RemoveMany(objects ...*TaskByValue) (uint64, error) {
 	for k, object := range objects {
 		ids[k] = object.Id
 	}
-	return box.Box.RemoveMany(ids...)
+	return box.Box.RemoveIds(ids...)
 }
 
 // Creates a query with the given conditions. Use the fields of the TaskByValue_ struct to create conditions.
@@ -476,7 +476,7 @@ func (box *TaskStringByValueBox) GetAll() ([]TaskStringByValue, error) {
 
 // Remove deletes a single object
 func (box *TaskStringByValueBox) Remove(object *TaskStringByValue) error {
-	return box.Box.Remove(objectbox.StringIdConvertToDatabaseValue(object.Id))
+	return box.Box.Remove(object)
 }
 
 // RemoveMany deletes multiple objects at once.
@@ -489,7 +489,7 @@ func (box *TaskStringByValueBox) RemoveMany(objects ...*TaskStringByValue) (uint
 	for k, object := range objects {
 		ids[k] = objectbox.StringIdConvertToDatabaseValue(object.Id)
 	}
-	return box.Box.RemoveMany(ids...)
+	return box.Box.RemoveIds(ids...)
 }
 
 // Creates a query with the given conditions. Use the fields of the TaskStringByValue_ struct to create conditions.

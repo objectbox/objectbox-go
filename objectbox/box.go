@@ -371,19 +371,28 @@ func (box *Box) putManyObjects(objects reflect.Value, outIds []uint64, start, en
 	return nil
 }
 
-// Remove deletes a single object
-func (box *Box) Remove(id uint64) error {
+func (box *Box) Remove(object interface{}) error {
+	id, err := box.entity.binding.GetId(object)
+	if err != nil {
+		return err
+	}
+
+	return box.RemoveId(id)
+}
+
+// RemoveId deletes a single object
+func (box *Box) RemoveId(id uint64) error {
 	return cCall(func() C.obx_err {
 		return C.obx_box_remove(box.cBox, C.obx_id(id))
 	})
 }
 
-// RemoveMany deletes multiple objects at once.
+// RemoveIds deletes multiple objects at once.
 // Returns the number of deleted object or error on failure.
 // Note that this method will not fail if an object is not found (e.g. already removed).
 // In case you need to strictly check whether all of the objects exist before removing them,
 // you can execute multiple box.Contains() and box.Remove() inside a single write transaction.
-func (box *Box) RemoveMany(ids ...uint64) (uint64, error) {
+func (box *Box) RemoveIds(ids ...uint64) (uint64, error) {
 	if cIds, err := goIdsArrayToC(ids); err != nil {
 		return 0, err
 	} else {
@@ -567,8 +576,8 @@ func (box *Box) Contains(id uint64) (bool, error) {
 	return bool(cResult), nil
 }
 
-// Contains checks whether all of the given objects are stored in DB.
-func (box *Box) ContainsMany(ids ...uint64) (bool, error) {
+// ContainsIds checks whether all of the given objects are stored in DB.
+func (box *Box) ContainsIds(ids ...uint64) (bool, error) {
 	if cIds, err := goIdsArrayToC(ids); err != nil {
 		return false, err
 	} else {

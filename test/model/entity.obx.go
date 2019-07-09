@@ -794,7 +794,7 @@ func (box *EntityBox) GetAll() ([]*Entity, error) {
 
 // Remove deletes a single object
 func (box *EntityBox) Remove(object *Entity) error {
-	return box.Box.Remove(object.Id)
+	return box.Box.Remove(object)
 }
 
 // RemoveMany deletes multiple objects at once.
@@ -807,7 +807,7 @@ func (box *EntityBox) RemoveMany(objects ...*Entity) (uint64, error) {
 	for k, object := range objects {
 		ids[k] = object.Id
 	}
-	return box.Box.RemoveMany(ids...)
+	return box.Box.RemoveIds(ids...)
 }
 
 // Creates a query with the given conditions. Use the fields of the Entity_ struct to create conditions.
@@ -1032,7 +1032,7 @@ func (box *TestStringIdEntityBox) GetAll() ([]*TestStringIdEntity, error) {
 
 // Remove deletes a single object
 func (box *TestStringIdEntityBox) Remove(object *TestStringIdEntity) error {
-	return box.Box.Remove(objectbox.StringIdConvertToDatabaseValue(object.Id))
+	return box.Box.Remove(object)
 }
 
 // RemoveMany deletes multiple objects at once.
@@ -1045,7 +1045,7 @@ func (box *TestStringIdEntityBox) RemoveMany(objects ...*TestStringIdEntity) (ui
 	for k, object := range objects {
 		ids[k] = objectbox.StringIdConvertToDatabaseValue(object.Id)
 	}
-	return box.Box.RemoveMany(ids...)
+	return box.Box.RemoveIds(ids...)
 }
 
 // Creates a query with the given conditions. Use the fields of the TestStringIdEntity_ struct to create conditions.
@@ -1295,7 +1295,7 @@ func (box *TestEntityInlineBox) GetAll() ([]*TestEntityInline, error) {
 
 // Remove deletes a single object
 func (box *TestEntityInlineBox) Remove(object *TestEntityInline) error {
-	return box.Box.Remove(object.Id)
+	return box.Box.Remove(object)
 }
 
 // RemoveMany deletes multiple objects at once.
@@ -1308,7 +1308,7 @@ func (box *TestEntityInlineBox) RemoveMany(objects ...*TestEntityInline) (uint64
 	for k, object := range objects {
 		ids[k] = object.Id
 	}
-	return box.Box.RemoveMany(ids...)
+	return box.Box.RemoveIds(ids...)
 }
 
 // Creates a query with the given conditions. Use the fields of the TestEntityInline_ struct to create conditions.
@@ -1608,7 +1608,7 @@ func (box *TestEntityRelatedBox) GetAll() ([]*TestEntityRelated, error) {
 
 // Remove deletes a single object
 func (box *TestEntityRelatedBox) Remove(object *TestEntityRelated) error {
-	return box.Box.Remove(object.Id)
+	return box.Box.Remove(object)
 }
 
 // RemoveMany deletes multiple objects at once.
@@ -1621,7 +1621,7 @@ func (box *TestEntityRelatedBox) RemoveMany(objects ...*TestEntityRelated) (uint
 	for k, object := range objects {
 		ids[k] = object.Id
 	}
-	return box.Box.RemoveMany(ids...)
+	return box.Box.RemoveIds(ids...)
 }
 
 // Creates a query with the given conditions. Use the fields of the TestEntityRelated_ struct to create conditions.

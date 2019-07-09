@@ -387,8 +387,7 @@ func (box *{{$entity.Name}}Box) GetAll() ([]{{if not $.Options.ByValue}}*{{end}}
 
 // Remove deletes a single object
 func (box *{{$entity.Name}}Box) Remove(object *{{$entity.Name}}) error {
-	return box.Box.Remove({{if $entity.IdProperty.Converter}}{{$entity.IdProperty.Converter}}ToDatabaseValue({{end -}}
-					object.{{$entity.IdProperty.Path}}{{if $entity.IdProperty.Converter}}){{end}})
+	return box.Box.Remove(object)
 }
 
 // RemoveMany deletes multiple objects at once.
@@ -402,7 +401,7 @@ func (box *{{$entity.Name}}Box) RemoveMany(objects ...*{{$entity.Name}}) (uint64
 		ids[k] = {{if $entity.IdProperty.Converter}}{{$entity.IdProperty.Converter}}ToDatabaseValue({{end -}}
 					object.{{$entity.IdProperty.Path}}{{if $entity.IdProperty.Converter}}){{end}}
 	}
-	return box.Box.RemoveMany(ids...)
+	return box.Box.RemoveIds(ids...)
 }
 
 // Creates a query with the given conditions. Use the fields of the {{$entity.Name}}_ struct to create conditions.

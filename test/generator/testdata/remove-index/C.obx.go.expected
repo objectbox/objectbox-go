@@ -195,7 +195,7 @@ func (box *CBox) GetAll() ([]*C, error) {
 
 // Remove deletes a single object
 func (box *CBox) Remove(object *C) error {
-	return box.Box.Remove(object.Id)
+	return box.Box.Remove(object)
 }
 
 // RemoveMany deletes multiple objects at once.
@@ -208,7 +208,7 @@ func (box *CBox) RemoveMany(objects ...*C) (uint64, error) {
 	for k, object := range objects {
 		ids[k] = object.Id
 	}
-	return box.Box.RemoveMany(ids...)
+	return box.Box.RemoveIds(ids...)
 }
 
 // Creates a query with the given conditions. Use the fields of the C_ struct to create conditions.

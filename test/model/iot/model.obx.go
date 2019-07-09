@@ -228,7 +228,7 @@ func (box *EventBox) GetAll() ([]*Event, error) {
 
 // Remove deletes a single object
 func (box *EventBox) Remove(object *Event) error {
-	return box.Box.Remove(object.Id)
+	return box.Box.Remove(object)
 }
 
 // RemoveMany deletes multiple objects at once.
@@ -241,7 +241,7 @@ func (box *EventBox) RemoveMany(objects ...*Event) (uint64, error) {
 	for k, object := range objects {
 		ids[k] = object.Id
 	}
-	return box.Box.RemoveMany(ids...)
+	return box.Box.RemoveIds(ids...)
 }
 
 // Creates a query with the given conditions. Use the fields of the Event_ struct to create conditions.
@@ -554,7 +554,7 @@ func (box *ReadingBox) GetAll() ([]*Reading, error) {
 
 // Remove deletes a single object
 func (box *ReadingBox) Remove(object *Reading) error {
-	return box.Box.Remove(object.Id)
+	return box.Box.Remove(object)
 }
 
 // RemoveMany deletes multiple objects at once.
@@ -567,7 +567,7 @@ func (box *ReadingBox) RemoveMany(objects ...*Reading) (uint64, error) {
 	for k, object := range objects {
 		ids[k] = object.Id
 	}
-	return box.Box.RemoveMany(ids...)
+	return box.Box.RemoveIds(ids...)
 }
 
 // Creates a query with the given conditions. Use the fields of the Reading_ struct to create conditions.

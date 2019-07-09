@@ -182,7 +182,7 @@ func (box *StringIdEntityBox) GetAll() ([]*StringIdEntity, error) {
 
 // Remove deletes a single object
 func (box *StringIdEntityBox) Remove(object *StringIdEntity) error {
-	return box.Box.Remove(objectbox.StringIdConvertToDatabaseValue(object.Id))
+	return box.Box.Remove(object)
 }
 
 // RemoveMany deletes multiple objects at once.
@@ -195,7 +195,7 @@ func (box *StringIdEntityBox) RemoveMany(objects ...*StringIdEntity) (uint64, er
 	for k, object := range objects {
 		ids[k] = objectbox.StringIdConvertToDatabaseValue(object.Id)
 	}
-	return box.Box.RemoveMany(ids...)
+	return box.Box.RemoveIds(ids...)
 }
 
 // Creates a query with the given conditions. Use the fields of the StringIdEntity_ struct to create conditions.

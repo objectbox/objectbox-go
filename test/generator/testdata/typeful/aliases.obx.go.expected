@@ -247,7 +247,7 @@ func (box *AliasesBox) GetAll() ([]*Aliases, error) {
 
 // Remove deletes a single object
 func (box *AliasesBox) Remove(object *Aliases) error {
-	return box.Box.Remove(object.Id)
+	return box.Box.Remove(object)
 }
 
 // RemoveMany deletes multiple objects at once.
@@ -260,7 +260,7 @@ func (box *AliasesBox) RemoveMany(objects ...*Aliases) (uint64, error) {
 	for k, object := range objects {
 		ids[k] = object.Id
 	}
-	return box.Box.RemoveMany(ids...)
+	return box.Box.RemoveIds(ids...)
 }
 
 // Creates a query with the given conditions. Use the fields of the Aliases_ struct to create conditions.

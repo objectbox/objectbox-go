@@ -52,10 +52,17 @@ func showUsageAndExit() {
 }
 
 func getArgs() (file string, options generator.Options) {
+	var printVersion bool
 	flag.StringVar(&file, "source", "", "path to the source file containing structs to process")
 	flag.StringVar(&options.ModelInfoFile, "persist", "", "path to the model information persistence file")
 	flag.BoolVar(&options.ByValue, "byValue", false, "getters should return a struct value (a copy) instead of a struct pointer")
+	flag.BoolVar(&printVersion, "version", false, "print the generator version info")
 	flag.Parse()
+
+	if printVersion {
+		fmt.Println(fmt.Sprintf("ObjectBox Go binding code generator version: %d", generator.Version))
+		os.Exit(0)
+	}
 
 	if len(file) == 0 {
 		// if the command is run by go:generate some environment variables are set

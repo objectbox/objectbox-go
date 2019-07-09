@@ -44,7 +44,10 @@ func generateAllDirs(t *testing.T, overwriteExpected bool) {
 		}
 
 		var dir = filepath.Join(datadir, folder.Name())
-		generateOneDir(t, overwriteExpected, dir)
+		t.Run(folder.Name(), func(t *testing.T) {
+			t.Parallel()
+			generateOneDir(t, overwriteExpected, dir)
+		})
 	}
 }
 

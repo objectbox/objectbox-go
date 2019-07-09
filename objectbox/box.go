@@ -371,6 +371,7 @@ func (box *Box) putManyObjects(objects reflect.Value, outIds []uint64, start, en
 	return nil
 }
 
+// Remove deletes a single object
 func (box *Box) Remove(object interface{}) error {
 	id, err := box.entity.binding.GetId(object)
 	if err != nil {

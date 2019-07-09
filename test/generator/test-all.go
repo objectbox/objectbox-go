@@ -102,9 +102,6 @@ func assertSameFile(t *testing.T, file string, expectedFile string, overwriteExp
 }
 
 func generateAllFiles(t *testing.T, overwriteExpected bool, dir string, modelInfoFile string) {
-	// NOTE test-only - avoid changes caused by random numbers by fixing them to the same seed all the time
-	rand.Seed(0)
-
 	var modelFile = generator.ModelFile(modelInfoFile)
 
 	// remove generated files during development (they might be syntactically wrong)
@@ -156,7 +153,11 @@ func generateAllFiles(t *testing.T, overwriteExpected bool, dir string, modelInf
 var generatorArgsRegexp = regexp.MustCompile("//go:generate objectbox-gogen (.+)[\n|\r]")
 
 func getOptions(t *testing.T, sourceFile, modelInfoFile string) generator.Options {
-	var options = generator.Options{ModelInfoFile: modelInfoFile}
+	var options = generator.Options{
+		ModelInfoFile: modelInfoFile,
+		// NOTE zero seed for test-only - avoid changes caused by random numbers by fixing them to the same seed
+		Rand: rand.New(rand.NewSource(0)),
+	}
 
 	source, err := ioutil.ReadFile(sourceFile)
 	assert.NoErr(t, err)

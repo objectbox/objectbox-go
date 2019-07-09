@@ -23,9 +23,11 @@ import (
 	"fmt"
 	"go/format"
 	"io/ioutil"
+	"math/rand"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/objectbox/objectbox-go/internal/generator/modelinfo"
 	"github.com/objectbox/objectbox-go/internal/generator/templates"
@@ -57,6 +59,11 @@ func isGeneratedFile(file string) bool {
 func Process(sourceFile string, options Options) error {
 	var err error
 
+	// if no random generator is provided, we create and seed a new one
+	if options.Rand == nil {
+		options.Rand = rand.New(rand.NewSource(time.Now().UTC().UnixNano()))
+	}
+
 	if len(options.ModelInfoFile) == 0 {
 		options.ModelInfoFile = ModelInfoFile(filepath.Dir(sourceFile))
 	}
@@ -65,6 +72,7 @@ func Process(sourceFile string, options Options) error {
 	if modelInfo, err = modelinfo.LoadOrCreateModel(options.ModelInfoFile); err != nil {
 		return fmt.Errorf("can't init ModelInfo: %s", err)
 	} else {
+		modelInfo.Rand = options.Rand
 		defer modelInfo.Close()
 	}
 

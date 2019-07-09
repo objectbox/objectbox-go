@@ -51,7 +51,8 @@ type ModelInfo struct {
 	RetiredRelationUids  []Uid     `json:"retiredRelationUids"`
 	Version              int       `json:"version"` // user specified version
 
-	file *os.File // file handle, locked while the model is open
+	file *os.File              // file handle, locked while the model is open
+	Rand *rand.Rand `json:"-"` // seeded random number generator
 
 	// Model Template
 	Package string `json:"-"`
@@ -255,7 +256,7 @@ func (model *ModelInfo) generateUid() (result Uid, err error) {
 	result = 0
 
 	for i := 0; i < 1000; i++ {
-		t := Uid(rand.Int63())
+		t := Uid(model.Rand.Int63())
 		if !model.containsUid(t) {
 			result = t
 			break

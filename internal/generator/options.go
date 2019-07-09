@@ -16,7 +16,10 @@
 
 package generator
 
+import "math/rand"
+
 type Options struct {
 	ModelInfoFile string
 	ByValue       bool
+	Rand          *rand.Rand
 }

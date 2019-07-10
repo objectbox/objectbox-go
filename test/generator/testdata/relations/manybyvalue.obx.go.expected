@@ -68,6 +68,7 @@ func (taskRelManyValue_EntityInfo) PutRelated(ob *objectbox.ObjectBox, object in
 	if err := BoxForTaskRelManyValue(ob).RelationReplace(TaskRelManyValue_.Groups, id, object, object.(*TaskRelManyValue).Groups); err != nil {
 		return err
 	}
+
 	return nil
 }
 

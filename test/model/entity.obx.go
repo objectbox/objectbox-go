@@ -453,8 +453,10 @@ func (entity_EntityInfo) PutRelated(ob *objectbox.ObjectBox, object interface{},
 	if err := BoxForEntity(ob).RelationReplace(Entity_.RelatedSlice, id, object, object.(*Entity).RelatedSlice); err != nil {
 		return err
 	}
-	if err := BoxForEntity(ob).RelationReplace(Entity_.RelatedPtrSlice, id, object, object.(*Entity).RelatedPtrSlice); err != nil {
-		return err
+	if object.(*Entity).RelatedPtrSlice != nil { // lazy-loaded relations without EntityBox::GetRelated() called are nil
+		if err := BoxForEntity(ob).RelationReplace(Entity_.RelatedPtrSlice, id, object, object.(*Entity).RelatedPtrSlice); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -1481,6 +1483,7 @@ func (testEntityRelated_EntityInfo) PutRelated(ob *objectbox.ObjectBox, object i
 	if err := BoxForTestEntityRelated(ob).RelationReplace(TestEntityRelated_.NextSlice, id, object, object.(*TestEntityRelated).NextSlice); err != nil {
 		return err
 	}
+
 	return nil
 }
 

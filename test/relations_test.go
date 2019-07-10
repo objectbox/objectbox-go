@@ -200,6 +200,35 @@ func TestRelationsUpdate(t *testing.T) {
 		assert.EqItems(t, []uint64{8, 51}, []uint64{object.RelatedSlice[0].Id, object.RelatedSlice[1].Id})
 		assert.EqItems(t, []uint64{6, 31}, []uint64{object.RelatedPtrSlice[0].Id, object.RelatedPtrSlice[1].Id})
 
+		// update lazy-loaded object and make sure the relations were not removed
+		// check there are relations by using GetRelated
+		object, err = env.Box.Get(id)
+		assert.NoErr(t, err)
+		assert.NoErr(t, env.Box.GetRelated(object, model.Entity_.RelatedPtrSlice))
+		assert.Eq(t, 2, len(object.RelatedPtrSlice))
+
+		// check how it looks without calling GetRelated
+		object, err = env.Box.Get(id)
+		assert.NoErr(t, err)
+		assert.True(t, object.RelatedPtrSlice == nil)
+
+		// update the object, without any actual change
+		update(object)
+
+		// and make sure the relations that were not loaded are not affected
+		object, err = env.Box.Get(id)
+		assert.NoErr(t, err)
+		assert.NoErr(t, env.Box.GetRelated(object, model.Entity_.RelatedPtrSlice))
+		assert.Eq(t, 2, len(object.RelatedPtrSlice))
+
+		// finally, remove the relations by passing an empty slcie
+		object.RelatedPtrSlice = []*model.TestEntityRelated{}
+		update(object)
+		object, err = env.Box.Get(id)
+		assert.NoErr(t, err)
+		assert.NoErr(t, env.Box.GetRelated(object, model.Entity_.RelatedPtrSlice))
+		assert.Eq(t, 0, len(object.RelatedPtrSlice))
+
 		env.Close()
 	}
 }

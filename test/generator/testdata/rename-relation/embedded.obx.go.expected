@@ -89,6 +89,7 @@ func (taskRelEmbedded_EntityInfo) PutRelated(ob *objectbox.ObjectBox, object int
 	if err := BoxForTaskRelEmbedded(ob).RelationReplace(TaskRelEmbedded_.GroupsNew, id, object, object.(*TaskRelEmbedded).GroupsNew); err != nil {
 		return err
 	}
+
 	return nil
 }
 

@@ -167,9 +167,11 @@ func ({{$entityNameCamel}}_EntityInfo) PutRelated(ob *objectbox.ObjectBox, objec
 				}
 			}
 		{{- else if $field.StandaloneRelation}}
+			{{- if $field.IsLazyLoaded}} if object.(*{{$field.Entity.Name}}).{{$field.Name}} != nil { // lazy-loaded relations without {{$field.Entity.Name}}Box::GetRelated() called are nil {{end}}  
 			if err := BoxFor{{$field.Entity.Name}}(ob).RelationReplace({{.Entity.Name}}_.{{$field.Name}}, id, object, object.(*{{$field.Entity.Name}}).{{$field.Name}}); err != nil {
 				return err
 			}
+			{{if $field.IsLazyLoaded}} } {{end}}
 		{{- else}}{{/* recursively visit fields in embedded structs */}}{{template "put-relations" $field}}
 		{{- end}}
 	{{- end}}{{end}}

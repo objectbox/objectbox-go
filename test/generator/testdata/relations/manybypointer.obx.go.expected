@@ -66,8 +66,10 @@ func (taskRelManyPtr_EntityInfo) SetId(object interface{}, id uint64) {
 
 // PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
 func (taskRelManyPtr_EntityInfo) PutRelated(ob *objectbox.ObjectBox, object interface{}, id uint64) error {
-	if err := BoxForTaskRelManyPtr(ob).RelationReplace(TaskRelManyPtr_.Groups, id, object, object.(*TaskRelManyPtr).Groups); err != nil {
-		return err
+	if object.(*TaskRelManyPtr).Groups != nil { // lazy-loaded relations without TaskRelManyPtrBox::GetRelated() called are nil
+		if err := BoxForTaskRelManyPtr(ob).RelationReplace(TaskRelManyPtr_.Groups, id, object, object.(*TaskRelManyPtr).Groups); err != nil {
+			return err
+		}
 	}
 	return nil
 }

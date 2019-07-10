@@ -617,6 +617,16 @@ func (box *Box) RelationReplace(relation *RelationToMany, sourceId uint64, sourc
 	}
 
 	sliceValue := reflect.ValueOf(targetObjects)
+
+	// If the slice was nil it would be handled as an empty slice and removed all relations.
+	// This would cause problems with lazy-loaded relations during update, if GetRelated wasn't called.
+	// Therefore, we preemptively prevent such updates and force users to explicitly pass an empty slice instead.
+	if sliceValue.IsNil() && objId != 0 {
+		return fmt.Errorf("given NIL instead of an empty slice of target objects for relation ID %v - "+
+			"this is forbidden for updates due to potential code logic problems you may encounter when using "+
+			"lazy-loaded relations; pass an empty slice if you really want to remove all related entities", relation.Id)
+	}
+
 	count := sliceValue.Len()
 
 	// make a map of related target entity IDs, marking those that were originally related but should be removed

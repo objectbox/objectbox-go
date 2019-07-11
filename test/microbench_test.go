@@ -14,32 +14,16 @@
  * limitations under the License.
  */
 
-package objectbox
+package objectbox_test
 
-/*
-#include <stdlib.h>
-#include "objectbox.h"
-*/
-import "C"
+import (
+	"runtime"
+	"testing"
+)
 
-type transaction struct {
-	cTxn      *C.OBX_txn
-	objectBox *ObjectBox
-}
-
-func (txn *transaction) Close() error {
-	rc := C.obx_txn_close(txn.cTxn)
-	txn.cTxn = nil
-	if rc != 0 {
-		return createError()
-	}
-	return nil
-}
-
-func (txn *transaction) Commit() error {
-	rc := C.obx_txn_commit(txn.cTxn)
-	if rc != 0 {
-		return createError()
-	}
-	return nil
+// 2000000000	         0.00 ns/op
+func BenchmarkLockOsThread(b *testing.B) {
+	runtime.LockOSThread()
+	runtime.Version() // basically a no-op
+	runtime.UnlockOSThread()
 }

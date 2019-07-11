@@ -26,6 +26,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"runtime"
 	"unsafe"
 
 	"github.com/google/flatbuffers/go"
@@ -75,8 +76,17 @@ func (box *Box) QueryOrError(conditions ...Condition) (query *Query, err error) 
 
 func (box *Box) idForPut(idCandidate uint64) (id uint64, err error) {
 	id = uint64(C.obx_box_id_for_put(box.cBox, C.obx_id(idCandidate)))
-	if id == 0 {
-		err = createError()
+
+	if id == 0 { // Perf paranoia: use additional LockOSThread() only if we actually run into an error
+		// for native calls/createError()
+		runtime.LockOSThread()
+
+		id = uint64(C.obx_box_id_for_put(box.cBox, C.obx_id(idCandidate)))
+		if id == 0 {
+			err = createError()
+		}
+
+		runtime.UnlockOSThread()
 	}
 	return
 }
@@ -142,13 +152,9 @@ func (box *Box) putOne(id uint64, object interface{}, async bool, timeoutMs uint
 	// TODO move putAsync to AsyncBox
 	var cAsync *C.OBX_async
 	if async {
-		if err := cCall(func() C.obx_err {
+		if err := cCallBool(func() bool {
 			cAsync = C.obx_async_create(box.cBox, C.uint64_t(timeoutMs))
-			if cAsync == nil {
-				return -1
-			} else {
-				return 0
-			}
+			return cAsync != nil
 		}); err != nil {
 			return err
 		}
@@ -461,6 +467,7 @@ func (box *Box) Get(id uint64) (object interface{}, err error) {
 			return nil
 		} else {
 			object = nil
+			// NOTE: no need for manual runtime.LockOSThread() because we're inside a read transaction
 			return createError()
 		}
 

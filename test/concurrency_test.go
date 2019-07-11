@@ -81,7 +81,7 @@ func concurrentInsert(t *testing.T, count, concurrency int, putAsync bool) {
 	t.Log("waiting for all goroutines to finish")
 	wg.Wait()
 
-	objectBox.AwaitAsyncCompletion()
+	assert.NoErr(t, objectBox.AwaitAsyncCompletion())
 
 	t.Log("validating counts")
 	assert.Eq(t, 0, len(errors))

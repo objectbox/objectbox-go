@@ -104,32 +104,19 @@ func (ob *ObjectBox) RunInWriteTx(fn func() error) error {
 	return ob.runInTxn(false, fn)
 }
 
-func (ob *ObjectBox) beginTxn() (*transaction, error) {
-	var ctxn = C.obx_txn_begin(ob.store)
-	if ctxn == nil {
-		return nil, createError()
-	}
-	return &transaction{ctxn, ob}, nil
-}
-
-func (ob *ObjectBox) beginTxnRead() (*transaction, error) {
-	var ctxn = C.obx_txn_begin_read(ob.store)
-	if ctxn == nil {
-		return nil, createError()
-	}
-	return &transaction{ctxn, ob}, nil
-}
-
 func (ob *ObjectBox) runInTxn(readOnly bool, fn func() error) (err error) {
+	// NOTE if runtime.LockOSThread() is about to be removed, evaluate use of createError() inside transactions
 	runtime.LockOSThread()
-	var txn *transaction
+
+	var txn = &transaction{objectBox: ob}
 	if readOnly {
-		txn, err = ob.beginTxnRead()
+		txn.cTxn = C.obx_txn_begin_read(ob.store)
 	} else {
-		txn, err = ob.beginTxn()
+		txn.cTxn = C.obx_txn_begin(ob.store)
 	}
 
-	if err != nil {
+	if txn.cTxn == nil {
+		err = createError()
 		runtime.UnlockOSThread()
 		return err
 	}
@@ -173,11 +160,9 @@ func (ob ObjectBox) getEntityByName(typeName string) *entity {
 // SetDebugFlags configures debug logging of the ObjectBox core.
 // See DebugFlags* constants
 func (ob *ObjectBox) SetDebugFlags(flags uint) error {
-	rc := C.obx_store_debug_flags(ob.store, C.OBXDebugFlags(flags))
-	if rc != 0 {
-		return createError()
-	}
-	return nil
+	return cCall(func() C.obx_err {
+		return C.obx_store_debug_flags(ob.store, C.OBXDebugFlags(flags))
+	})
 }
 
 // InternalBox returns an Entity Box or panics on error (in case entity with the given ID doesn't exist)
@@ -200,24 +185,26 @@ func (ob *ObjectBox) box(typeId TypeId) (*Box, error) {
 	}
 
 	entity := ob.getEntityById(typeId)
-	cbox := C.obx_box(ob.store, C.obx_schema_id(typeId))
-	if cbox == nil {
-		return nil, createError()
-	}
 
 	box = &Box{
 		objectBox: ob,
-		cBox:      cbox,
 		entity:    entity,
 	}
+
+	if err := cCallBool(func() bool {
+		box.cBox = C.obx_box(ob.store, C.obx_schema_id(typeId))
+		return box.cBox != nil
+	}); err != nil {
+		return nil, err
+	}
+
 	ob.boxes[typeId] = box
 	return box, nil
 }
 
 // AwaitAsyncCompletion blocks until all PutAsync insert have been processed
-func (ob *ObjectBox) AwaitAsyncCompletion() *ObjectBox {
-	if C.obx_store_await_async_completion(ob.store) != true {
-		fmt.Println(createError())
-	}
-	return ob
+func (ob *ObjectBox) AwaitAsyncCompletion() error {
+	return cCallBool(func() bool {
+		return bool(C.obx_store_await_async_completion(ob.store))
+	})
 }

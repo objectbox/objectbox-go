@@ -48,7 +48,7 @@ func TestStringIdSingleOps(t *testing.T) {
 	assert.Eq(t, uint64(2), id2)
 	assert.Eq(t, strconv.FormatUint(id2, 10), object2.Id)
 
-	env.ObjectBox.AwaitAsyncCompletion()
+	assert.NoErr(t, env.ObjectBox.AwaitAsyncCompletion())
 
 	all, err := box.GetAll()
 	assert.NoErr(t, err)

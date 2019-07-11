@@ -24,6 +24,7 @@ import "C"
 import (
 	"errors"
 	"fmt"
+	"runtime"
 	"strings"
 	"unsafe"
 )
@@ -41,18 +42,15 @@ type QueryBuilder struct {
 }
 
 func newQueryBuilder(ob *ObjectBox, typeId TypeId) *QueryBuilder {
-	cqb := C.obx_qb_create(ob.store, C.obx_schema_id(typeId))
-	var err error = nil
-	if cqb == nil {
-		err = createError()
-	}
-
 	var qb = &QueryBuilder{
 		objectBox: ob,
-		cqb:       cqb,
 		typeId:    typeId,
-		Err:       err,
 	}
+
+	qb.Err = cCallBool(func() bool {
+		qb.cqb = C.obx_qb_create(ob.store, C.obx_schema_id(typeId))
+		return qb.cqb != nil
+	})
 
 	// log.Printf("QB %p created for entity %d\n", qb, typeId)
 	return qb
@@ -89,9 +87,10 @@ func (qb *QueryBuilder) Close() error {
 	toClose := qb.cqb
 	if toClose != nil {
 		qb.cqb = nil
-		rc := C.obx_qb_close(toClose)
-		if rc != 0 {
-			errs = append(errs, createError().Error())
+		if err := cCall(func() C.obx_err {
+			return C.obx_qb_close(toClose)
+		}); err != nil {
+			errs = append(errs, err.Error())
 		}
 	}
 
@@ -107,20 +106,20 @@ func (qb *QueryBuilder) Build(box *Box) (*Query, error) {
 		return nil, qb.Err
 	}
 
-	// log.Printf("Building %p\n", qb)
-
-	cQuery := C.obx_query_create(qb.cqb)
-	if cQuery == nil {
-		qb.Err = createError()
-		return nil, qb.Err
-	}
-
 	query := &Query{
 		objectBox: qb.objectBox,
-		cQuery:    cQuery,
 		box:       box,
 		entity:    qb.objectBox.getEntityById(qb.typeId),
 	}
+
+	if err := cCallBool(func() bool {
+		query.cQuery = C.obx_query_create(qb.cqb)
+		return query.cQuery != nil
+	}); err != nil {
+		qb.Err = err
+		return nil, err
+	}
+
 	query.installFinalizer()
 
 	// search all inner builders recursively and collect linked entity IDs
@@ -158,6 +157,10 @@ func (qb *QueryBuilder) LinkOneToMany(relation *RelationToOne, conditions []Cond
 	// create a new "inner" query builder
 	var iqb *QueryBuilder
 
+	// for native calls/createError() in newInnerBuilder
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+
 	cRelPropertyId := C.obx_schema_id(relation.Property.Id)
 	// recognize whether it's a link or a backlink
 	if relation.Property.Entity.Id == qb.typeId && relation.Target.Id != qb.typeId {
@@ -187,6 +190,10 @@ func (qb *QueryBuilder) LinkManyToMany(relation *RelationToMany, conditions []Co
 
 	// create a new "inner" query builder
 	var iqb *QueryBuilder
+
+	// for native calls/createError() in newInnerBuilder
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
 
 	// recognize whether it's a link or a backlink
 	if relation.Source.Id == qb.typeId && relation.Target.Id != qb.typeId {

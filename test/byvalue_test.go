@@ -44,7 +44,7 @@ func TestEntityByValue(t *testing.T) {
 	assert.NoErr(t, err)
 	assert.Eq(t, uint64(2), id2)
 
-	env.ObjectBox.AwaitAsyncCompletion()
+	assert.NoErr(t, env.ObjectBox.AwaitAsyncCompletion())
 
 	var objects []model.EntityByValue
 

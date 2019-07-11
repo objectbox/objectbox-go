@@ -24,6 +24,7 @@ import "C"
 
 import (
 	"fmt"
+	"runtime"
 	"unsafe"
 )
 
@@ -142,6 +143,10 @@ func (builder *Builder) BuildOrError() (*ObjectBox, error) {
 	if builder.model == nil {
 		return nil, fmt.Errorf("model is not defined")
 	}
+
+	// for native calls/createError()
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
 
 	cOptions := C.obx_opt()
 	if cOptions == nil {

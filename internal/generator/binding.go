@@ -551,7 +551,7 @@ func (field *Field) fillInfo(f field, typ typeErrorful) {
 	field.Type = strings.TrimLeft(field.Type, ".")
 
 	// if the package path is specified (happens for embedded fields), check whether it's current package
-	if strings.ContainsRune(field.Type, '/') {
+	if strings.ContainsRune(strings.Replace(field.Type, "\\", "/", -1), '/') {
 		// if the package is the current package, strip the path & name
 		var parts = strings.Split(field.Type, ".")
 

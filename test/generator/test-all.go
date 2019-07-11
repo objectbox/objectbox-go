@@ -140,7 +140,8 @@ func generateAllFiles(t *testing.T, overwriteExpected bool, dir string, modelInf
 			if err == nil {
 				assert.Failf(t, "Unexpected PASS on a negative test %s", sourceFile)
 			} else {
-				assert.Eq(t, getExpectedError(t, sourceFile), err)
+				var errPlatformIndependent = strings.Replace(err.Error(), "\\", "/", -1)
+				assert.Eq(t, getExpectedError(t, sourceFile).Error(), errPlatformIndependent)
 				continue
 			}
 		}

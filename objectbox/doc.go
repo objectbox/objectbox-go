@@ -6,7 +6,7 @@ You can define your entity as a standard .go struct, with a comment signalling t
 	//go:generate objectbox-gogen
 
 	type Person struct {
-	   Id        uint64 `id`
+	   Id        uint64 `objectbox:"id"`
 	   FirstName string
 	   LastName  string
 	}

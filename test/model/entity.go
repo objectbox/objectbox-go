@@ -45,13 +45,13 @@ type Entity struct {
 	Float64      float64
 
 	// converters
-	Date       time.Time  `date type:"int64" converter:"timeInt64"`
-	Complex128 complex128 `type:"[]byte" converter:"complex128Bytes"`
+	Date       time.Time  `objectbox:"date type:int64 converter:timeInt64"`
+	Complex128 complex128 `objectbox:"type:[]byte converter:complex128Bytes"`
 
 	// one-to-many relations
-	Related     TestEntityRelated  `link`
-	RelatedPtr  *TestEntityRelated `link`
-	RelatedPtr2 *TestEntityRelated `link`
+	Related     TestEntityRelated  `objectbox:"link"`
+	RelatedPtr  *TestEntityRelated `objectbox:"link"`
+	RelatedPtr2 *TestEntityRelated `objectbox:"link"`
 
 	// many-to-many relations
 	RelatedSlice    []EntityByValue
@@ -78,12 +78,12 @@ type Entity struct {
 }
 
 type TestStringIdEntity struct {
-	Id string `id`
+	Id string `objectbox:"id"`
 }
 
 type TestEntityInline struct {
-	BaseWithDate   `inline`
-	*BaseWithValue `inline`
+	BaseWithDate   `objectbox:"inline"`
+	*BaseWithValue `objectbox:"inline"`
 
 	Id uint64
 }
@@ -93,6 +93,6 @@ type TestEntityRelated struct {
 	Name string
 
 	// have another level of relations
-	Next      *EntityByValue `link`
+	Next      *EntityByValue `objectbox:"link"`
 	NextSlice []EntityByValue
 }

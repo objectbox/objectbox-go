@@ -8,7 +8,7 @@ type Id struct {
 }
 
 type Float64Value struct {
-	Value float64 `unique`
+	Value float64 `objectbox:"unique"`
 }
 
 type BytesValue struct {
@@ -22,9 +22,9 @@ type IdAndFloat64Value struct {
 
 type Combined struct {
 	Text         string
-	Empty        `inline`
-	Id           `inline`
-	Float64Value `inline`
+	Empty        `objectbox:"inline"`
+	Id           `objectbox:"inline"`
+	Float64Value `objectbox:"inline"`
 }
 
 type val uint64

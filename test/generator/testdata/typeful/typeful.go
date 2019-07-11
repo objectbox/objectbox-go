@@ -2,7 +2,7 @@ package object
 
 // Tests all available GO & ObjectBox types
 type Typeful struct {
-	Id           uint64 `id` // NOTE ID is currently required
+	Id           uint64 `objectbox:"id"` // NOTE ID is currently required
 	Int          int
 	Int8         int8
 	Int16        int16
@@ -21,5 +21,5 @@ type Typeful struct {
 	Rune         rune
 	Float32      float32
 	Float64      float64
-	Date         int64 `date`
+	Date         int64 `objectbox:"date"`
 }

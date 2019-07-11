@@ -142,10 +142,10 @@ func TestNilPropertiesVectors(t *testing.T) {
 
 	// empty vectors (not nil!)
 	id, err := box.Put(&model.Entity{
-		StringVector: []string{},
+		StringVector:    []string{},
 		StringVectorPtr: &[]string{},
-		ByteVector: []byte{},
-		ByteVectorPtr: &[]byte{},
+		ByteVector:      []byte{},
+		ByteVectorPtr:   &[]byte{},
 	})
 	assert.NoErr(t, err)
 
@@ -158,10 +158,10 @@ func TestNilPropertiesVectors(t *testing.T) {
 
 	// nil vectors
 	id, err = box.Put(&model.Entity{
-		StringVector: nil,
+		StringVector:    nil,
 		StringVectorPtr: nil,
-		ByteVector: nil,
-		ByteVectorPtr: nil,
+		ByteVector:      nil,
+		ByteVectorPtr:   nil,
 	})
 	assert.NoErr(t, err)
 

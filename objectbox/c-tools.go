@@ -92,4 +92,3 @@ func createError() error {
 		return errors.New(C.GoString(msg))
 	}
 }
-

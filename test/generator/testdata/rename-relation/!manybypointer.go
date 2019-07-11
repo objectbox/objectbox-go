@@ -4,5 +4,5 @@ package object
 
 type NegTaskRelManyPtr struct {
 	Id     uint64
-	Groups []*Group `uid`
+	Groups []*Group `objectbox:"uid"`
 }

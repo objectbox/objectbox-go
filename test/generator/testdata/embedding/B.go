@@ -1,6 +1,6 @@
 package object
 
 type B struct {
-	Combined `inline`
+	Combined `objectbox:"inline"`
 	Name     string
 }

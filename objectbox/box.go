@@ -75,15 +75,19 @@ func (box *Box) QueryOrError(conditions ...Condition) (query *Query, err error) 
 }
 
 func (box *Box) idForPut(idCandidate uint64) (id uint64, err error) {
-	// for native calls/createError()
-	runtime.LockOSThread()
-
 	id = uint64(C.obx_box_id_for_put(box.cBox, C.obx_id(idCandidate)))
-	if id == 0 {
-		err = createError()
-	}
 
-	runtime.UnlockOSThread()
+	if id == 0 { // Perf paranoia: use additional LockOSThread() only if we actually run into an error
+		// for native calls/createError()
+		runtime.LockOSThread()
+
+		id = uint64(C.obx_box_id_for_put(box.cBox, C.obx_id(idCandidate)))
+		if id == 0 {
+			err = createError()
+		}
+
+		runtime.UnlockOSThread()
+	}
 	return
 }
 

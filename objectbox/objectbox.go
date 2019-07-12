@@ -108,14 +108,14 @@ func (ob *ObjectBox) runInTxn(readOnly bool, fn func() error) (err error) {
 	// NOTE if runtime.LockOSThread() is about to be removed, evaluate use of createError() inside transactions
 	runtime.LockOSThread()
 
-	var txn = &transaction{objectBox: ob}
+	var cTxn *C.OBX_txn
 	if readOnly {
-		txn.cTxn = C.obx_txn_begin_read(ob.store)
+		cTxn = C.obx_txn_read(ob.store)
 	} else {
-		txn.cTxn = C.obx_txn_begin(ob.store)
+		cTxn = C.obx_txn_write(ob.store)
 	}
 
-	if txn.cTxn == nil {
+	if cTxn == nil {
 		err = createError()
 		runtime.UnlockOSThread()
 		return err
@@ -123,17 +123,23 @@ func (ob *ObjectBox) runInTxn(readOnly bool, fn func() error) (err error) {
 
 	// Defer to ensure a TX is ALWAYS closed, even in a panic
 	defer func() {
-		err2 := txn.Close()
-		if err == nil {
-			err = err2
+		if rc := C.obx_txn_close(cTxn); rc != 0 {
+			if err == nil {
+				err = createError()
+			} else {
+				err = fmt.Errorf("%s; %s", err, createError())
+			}
 		}
+
 		runtime.UnlockOSThread()
 	}()
 
 	err = fn()
 
 	if !readOnly && err == nil {
-		err = txn.Commit()
+		if rc := C.obx_txn_success(cTxn); rc != 0 {
+			err = createError()
+		}
 	}
 
 	return err

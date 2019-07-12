@@ -41,7 +41,7 @@ extern "C" {
 // Note that you should use methods with prefix obx_version_ to check when linking against the dynamic library
 #define OBX_VERSION_MAJOR 0
 #define OBX_VERSION_MINOR 5
-#define OBX_VERSION_PATCH 104  // values >= 100 are reserved for dev releases leading to the next minor/major increase
+#define OBX_VERSION_PATCH 105  // values >= 100 are reserved for dev releases leading to the next minor/major increase
 
 /// Returns the version of the library as ints. Pointers may be null
 void obx_version(int* major, int* minor, int* patch);
@@ -339,22 +339,26 @@ obx_err obx_store_close(OBX_store* store);
 struct OBX_txn;
 typedef struct OBX_txn OBX_txn;
 
-OBX_txn* obx_txn_begin(OBX_store* store);
+OBX_txn* obx_txn_write(OBX_store* store);
 
-OBX_txn* obx_txn_begin_read(OBX_store* store);
+OBX_txn* obx_txn_read(OBX_store* store);
 
 obx_err obx_txn_close(OBX_txn* txn);
 
-/// Mark transaction as failed. If it's an outermost TX, it will be aborted immediately.
-/// If it's an "inner" transaction, the outer transaction will be marked as failed as well and will be aborted.
+/// Aborts the underlying transaction immediately (freeing its resources).
+/// Only obx_txn_close() is allowed to be called on the transaction after calling this.
 obx_err obx_txn_abort(OBX_txn* txn);
 
 /// Mark transaction as successful. If it's an outermost TX, it will be committed immediately.
-obx_err obx_txn_commit(OBX_txn* txn);
+obx_err obx_txn_success(OBX_txn* txn);
 
-//----------------------------------------------
-// Cursor
-//----------------------------------------------
+/// Mark transaction as having failed.
+/// If it's an "inner" transaction, the outer transaction will be marked as failed as well and will be aborted.
+obx_err obx_txn_failure(OBX_txn* txn);
+
+//------------------------------------------------------------------
+// Cursor (lower level API, check also the more convenient Box API)
+//------------------------------------------------------------------
 
 struct OBX_cursor;
 typedef struct OBX_cursor OBX_cursor;
@@ -391,8 +395,7 @@ obx_id obx_cursor_id_for_put(OBX_cursor* cursor, obx_id id_or_zero);
 obx_err obx_cursor_put(OBX_cursor* cursor, obx_id id, const void* data, size_t size, bool checkForPreviousValue);
 
 /// Prefer obx_cursor_put (non-padded) if possible, as this does a memcpy if the size is not dividable by 4.
-obx_err obx_cursor_put_padded(OBX_cursor* cursor, obx_id id, const void* data, size_t size,
-                              bool checkForPreviousValue);
+obx_err obx_cursor_put_padded(OBX_cursor* cursor, obx_id id, const void* data, size_t size, bool checkForPreviousValue);
 
 obx_err obx_cursor_get(OBX_cursor* cursor, obx_id id, void** data, size_t* size);
 
@@ -510,6 +513,10 @@ obx_err obx_box_is_empty(OBX_box* box, bool* out_is_empty);
 /// You can pass limit=0 to count all objects without any limitation.
 obx_err obx_box_count(OBX_box* box, uint64_t limit, uint64_t* out_count);
 
+/// Fetch IDs of all back links to the given source object.
+/// @returns all target object IDs related to the given source object ID
+OBX_id_array* obx_box_backlink_ids(OBX_box* box, obx_schema_id propertyId, obx_id source_id);
+
 /// Insert a standalone relation entry between two objects.
 /// @param relation_id must be a standalone relation ID with source entity belonging to this box
 /// @param source_id identifies an object from this box
@@ -524,7 +531,6 @@ obx_err obx_box_rel_remove(OBX_box* box, obx_schema_id relation_id, obx_id sourc
 /// See obx_box_rel_put() for parameters documentation.
 /// @returns all target object IDs related to the given source object ID
 OBX_id_array* obx_box_rel_targets_ids(OBX_box* box, obx_schema_id relation_id, obx_id source_id);
-
 
 /// Created by obx_box_async, used for async operations like obx_async_put.
 struct OBX_async;
@@ -688,30 +694,21 @@ typedef struct OBX_query OBX_query;
 OBX_query* obx_query_create(OBX_query_builder* builder);
 obx_err obx_query_close(OBX_query* query);
 
-obx_err obx_query_visit(OBX_query* query, OBX_cursor* cursor, obx_data_visitor* visitor, void* visitor_arg,
-                        uint64_t offset, uint64_t limit);
-OBX_bytes_array* obx_query_find(OBX_query* query, OBX_cursor* cursor, uint64_t offset, uint64_t limit);
-OBX_id_array* obx_query_find_ids(OBX_query* query, OBX_cursor* cursor, uint64_t offset, uint64_t limit);
-obx_err obx_query_count(OBX_query* query, OBX_cursor* cursor, uint64_t* count);
-
-/// Removes (deletes!) all matching objects.
-obx_err obx_query_remove(OBX_query* query, OBX_cursor* cursor, uint64_t* count);
+/// Finds entities matching the query; NOTE: the returned data is only valid as long the transaction is active!
+OBX_bytes_array* obx_query_find(OBX_query* query, uint64_t offset, uint64_t limit);
 
 /// Walks over matching objects using the given data visitor
-obx_err obx_query_box_visit(OBX_query* query, OBX_box* box, obx_data_visitor* visitor, void* visitor_arg,
-                        uint64_t offset, uint64_t limit);
-
-/// Returns data of all matching objects
-OBX_bytes_array* obx_query_box_find(OBX_query* query, OBX_box* box, uint64_t offset, uint64_t limit);
+obx_err obx_query_visit(OBX_query* query, obx_data_visitor* visitor, void* visitor_arg, uint64_t offset,
+                        uint64_t limit);
 
 /// Returns IDs of all matching objects
-OBX_id_array* obx_query_box_find_ids(OBX_query* query, OBX_box* box, uint64_t offset, uint64_t limit);
+OBX_id_array* obx_query_find_ids(OBX_query* query, uint64_t offset, uint64_t limit);
 
 /// Returns the number of matching objects
-obx_err obx_query_box_count(OBX_query* query, OBX_box* box, uint64_t* count);
+obx_err obx_query_count(OBX_query* query, uint64_t* count);
 
 /// Removes all matching objects from the database & returns the number of deleted objects
-obx_err obx_query_box_remove(OBX_query* query, OBX_box* box, uint64_t* count);
+obx_err obx_query_remove(OBX_query* query, uint64_t* count);
 
 /// the resulting char* is valid until another call on to_string is made on the same query or until the query is freed
 const char* obx_query_describe(OBX_query* query);
@@ -719,6 +716,21 @@ const char* obx_query_describe(OBX_query* query);
 /// the resulting char* is valid until another call on describe_parameters is made on the same query or until the query
 /// is freed
 const char* obx_query_describe_params(OBX_query* query);
+
+//----------------------------------------------
+// Query using Cursor (lower level API)
+//----------------------------------------------
+obx_err obx_query_cursor_visit(OBX_query* query, OBX_cursor* cursor, obx_data_visitor* visitor, void* visitor_arg,
+                               uint64_t offset, uint64_t limit);
+
+/// Finds entities matching the query; NOTE: the returned data is only valid as long the transaction is active!
+OBX_bytes_array* obx_query_cursor_find(OBX_query* query, OBX_cursor* cursor, uint64_t offset, uint64_t limit);
+
+OBX_id_array* obx_query_cursor_find_ids(OBX_query* query, OBX_cursor* cursor, uint64_t offset, uint64_t limit);
+obx_err obx_query_cursor_count(OBX_query* query, OBX_cursor* cursor, uint64_t* count);
+
+/// Removes (deletes!) all matching objects.
+obx_err obx_query_cursor_remove(OBX_query* query, OBX_cursor* cursor, uint64_t* count);
 
 //----------------------------------------------
 // Query parameters (obx_query_{type}_param(s))

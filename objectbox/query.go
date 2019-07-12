@@ -86,13 +86,13 @@ func (query *Query) Find() (objects interface{}, err error) {
 
 	if supportsBytesArray {
 		var cFn = func() *C.OBX_bytes_array {
-			return C.obx_query_box_find(query.cQuery, query.box.cBox, C.uint64_t(query.offset), C.uint64_t(query.limit))
+			return C.obx_query_find(query.cQuery, C.uint64_t(query.offset), C.uint64_t(query.limit))
 		}
 		return query.box.readManyObjects(cFn)
 
 	} else {
 		var cFn = func(visitorArg unsafe.Pointer) C.obx_err {
-			return C.obx_query_box_visit(query.cQuery, query.box.cBox, dataVisitor, visitorArg,
+			return C.obx_query_visit(query.cQuery, dataVisitor, visitorArg,
 				C.uint64_t(query.offset), C.uint64_t(query.limit))
 		}
 		return query.box.readUsingVisitor(cFn)
@@ -118,7 +118,7 @@ func (query *Query) FindIds() ([]uint64, error) {
 	}
 
 	return cGetIds(func() *C.OBX_id_array {
-		return C.obx_query_box_find_ids(query.cQuery, query.box.cBox, C.uint64_t(query.offset), C.uint64_t(query.limit))
+		return C.obx_query_find_ids(query.cQuery, C.uint64_t(query.offset), C.uint64_t(query.limit))
 	})
 }
 
@@ -134,7 +134,7 @@ func (query *Query) Count() (uint64, error) {
 	}
 
 	var cResult C.uint64_t
-	if err := cCall(func() C.obx_err { return C.obx_query_box_count(query.cQuery, query.box.cBox, &cResult) }); err != nil {
+	if err := cCall(func() C.obx_err { return C.obx_query_count(query.cQuery, &cResult) }); err != nil {
 		return 0, err
 	}
 	return uint64(cResult), nil
@@ -152,7 +152,7 @@ func (query *Query) Remove() (count uint64, err error) {
 	}
 
 	var cResult C.uint64_t
-	if err := cCall(func() C.obx_err { return C.obx_query_box_remove(query.cQuery, query.box.cBox, &cResult) }); err != nil {
+	if err := cCall(func() C.obx_err { return C.obx_query_remove(query.cQuery, &cResult) }); err != nil {
 		return 0, err
 	}
 	return uint64(cResult), nil

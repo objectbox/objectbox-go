@@ -1,37 +1,22 @@
-variables:
-  REPO_NAME: github.com/objectbox/objectbox-go
-
-.test:linux:
-  stage: test
-  script:
-    # The problem is that to be able to use go get, one needs to put
-    # the repository in the $GOPATH. So for example if your gitlab domain
-    # is gitlab.com, and that your repository is namespace/project, and
-    # the default GOPATH being /go, then you'd need to have your
-    # repository in /go/src/gitlab.com/namespace/project
-    # Thus, making a symbolic link corrects this.
-    - mkdir -p $GOPATH/src/$(dirname $REPO_NAME)
-    - ln -svf $CI_PROJECT_DIR $GOPATH/src/$REPO_NAME
-    - cd $GOPATH/src/$REPO_NAME
-    - go get github.com/google/flatbuffers/go
-    - ./build/build.sh
-
 test:linux:x64:
-  extends: .test:linux
+  stage: test
   image: golang
   tags: [x64, linux, docker]
-  before_script:
+  script:
     - 'cd /usr/local/lib && { curl -o libobjectbox.so -H "PRIVATE-TOKEN: $CI_API_TOKEN" "${OBXLIB_URL_Linux64}" ; ldconfig ; cd - ; }'
+    - ./build/build.sh
 
 test:linux:ARMv7hf:
-  extends: .test:linux
+  stage: test
   image: arm32v7/golang
   tags: [armv7hf, linux, docker]
-  before_script:
+  script:
     - 'cd /usr/local/lib && { curl -o libobjectbox.so -H "PRIVATE-TOKEN: $CI_API_TOKEN" "${OBXLIB_URL_LinuxARMv7hf}" ; ldconfig ; cd - ; }'
+    - ./build/build.sh
 
 test:mac:x64:
-  extends: .test:linux
+  stage: test
   tags: [x64, mac, go]
-  before_script:
+  script:
     - 'curl -o /usr/local/lib/libobjectbox.dylib -H "PRIVATE-TOKEN: $CI_API_TOKEN" "$OBXLIB_URL_Mac64"'
+    - ./build/build.sh

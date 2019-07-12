@@ -40,6 +40,7 @@ var supportedAnnotations = map[string]bool{
 	"id":        true,
 	"index":     true,
 	"inline":    true,
+	"lazy":      true,
 	"link":      true,
 	"name":      true,
 	"type":      true,

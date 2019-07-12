@@ -83,11 +83,11 @@ func TestRelationsInsert(t *testing.T) {
 		// try to read the object and validate it's read correctly with relations assigned
 		objectRead, err := env.Box.Get(id)
 		assert.NoErr(t, err)
-		assert.NoErr(t, env.Box.GetRelated(objectRead))
 		assert.Eq(t, object.Related, objectRead.Related)
 		assert.Eq(t, object.RelatedPtr, objectRead.RelatedPtr)
 		assert.Eq(t, object.RelatedPtr2, objectRead.RelatedPtr2) // this one is empty
 		assert.Eq(t, object.RelatedSlice, objectRead.RelatedSlice)
+		assert.NoErr(t, env.Box.FetchRelatedPtrSlice(objectRead))
 		assert.Eq(t, object.RelatedPtrSlice, objectRead.RelatedPtrSlice)
 
 		// remove one target of each relation, read the object and check everything looks as expected (relations are removed)
@@ -97,12 +97,12 @@ func TestRelationsInsert(t *testing.T) {
 
 		objectRead, err = env.Box.Get(id)
 		assert.NoErr(t, err)
-		assert.NoErr(t, env.Box.GetRelated(objectRead))
 
 		assert.Eq(t, uint64(0), objectRead.Related.Id)
 		assert.Eq(t, true, objectRead.RelatedPtr == nil)
 		assert.Eq(t, 1, len(objectRead.RelatedSlice))
 		assert.Eq(t, relsV[1], objectRead.RelatedSlice[0])
+		assert.NoErr(t, env.Box.FetchRelatedPtrSlice(objectRead))
 		assert.Eq(t, 1, len(objectRead.RelatedPtrSlice))
 		assert.Eq(t, rels[2], objectRead.RelatedPtrSlice[0])
 
@@ -152,11 +152,11 @@ func TestRelationsUpdate(t *testing.T) {
 		// get one of the entities
 		var id uint64 = 2
 		object, err := env.Box.Get(id)
-		assert.NoErr(t, env.Box.GetRelated(object))
 		assert.NoErr(t, err)
 		assert.Eq(t, uint64(4), object.Related.Id)
 		assert.Eq(t, uint64(5), object.RelatedPtr.Id)
 		assert.Eq(t, 1, len(object.RelatedSlice))
+		assert.NoErr(t, env.Box.FetchRelatedPtrSlice(object))
 		assert.Eq(t, 1, len(object.RelatedPtrSlice))
 		assert.Eq(t, uint64(8), object.RelatedSlice[0].Id)
 		assert.Eq(t, uint64(6), object.RelatedPtrSlice[0].Id)
@@ -175,10 +175,10 @@ func TestRelationsUpdate(t *testing.T) {
 		// check if it was updated correctly
 		object, err = env.Box.Get(id)
 		assert.NoErr(t, err)
-		assert.NoErr(t, env.Box.GetRelated(object))
 		assert.Eq(t, uint64(4), object.Related.Id)
 		assert.Eq(t, uint64(5), object.RelatedPtr.Id)
 		assert.Eq(t, 3, len(object.RelatedSlice))
+		assert.NoErr(t, env.Box.FetchRelatedPtrSlice(object))
 		assert.Eq(t, 3, len(object.RelatedPtrSlice))
 		assert.Eq(t, []uint64{3, 8, 51}, []uint64{object.RelatedSlice[0].Id, object.RelatedSlice[1].Id, object.RelatedSlice[2].Id})
 		assert.EqItems(t, []uint64{5, 6, 31}, []uint64{object.RelatedPtrSlice[0].Id, object.RelatedPtrSlice[1].Id, object.RelatedPtrSlice[2].Id})
@@ -192,10 +192,10 @@ func TestRelationsUpdate(t *testing.T) {
 		// check if it was updated correctly
 		object, err = env.Box.Get(id)
 		assert.NoErr(t, err)
-		assert.NoErr(t, env.Box.GetRelated(object))
 		assert.Eq(t, uint64(4), object.Related.Id)
 		assert.Eq(t, true, nil == object.RelatedPtr)
 		assert.Eq(t, 2, len(object.RelatedSlice))
+		assert.NoErr(t, env.Box.FetchRelatedPtrSlice(object))
 		assert.Eq(t, 2, len(object.RelatedPtrSlice))
 		assert.EqItems(t, []uint64{8, 51}, []uint64{object.RelatedSlice[0].Id, object.RelatedSlice[1].Id})
 		assert.EqItems(t, []uint64{6, 31}, []uint64{object.RelatedPtrSlice[0].Id, object.RelatedPtrSlice[1].Id})
@@ -204,7 +204,7 @@ func TestRelationsUpdate(t *testing.T) {
 		// check there are relations by using GetRelated
 		object, err = env.Box.Get(id)
 		assert.NoErr(t, err)
-		assert.NoErr(t, env.Box.GetRelated(object, model.Entity_.RelatedPtrSlice))
+		assert.NoErr(t, env.Box.FetchRelatedPtrSlice(object))
 		assert.Eq(t, 2, len(object.RelatedPtrSlice))
 
 		// check how it looks without calling GetRelated
@@ -218,7 +218,7 @@ func TestRelationsUpdate(t *testing.T) {
 		// and make sure the relations that were not loaded are not affected
 		object, err = env.Box.Get(id)
 		assert.NoErr(t, err)
-		assert.NoErr(t, env.Box.GetRelated(object, model.Entity_.RelatedPtrSlice))
+		assert.NoErr(t, env.Box.FetchRelatedPtrSlice(object))
 		assert.Eq(t, 2, len(object.RelatedPtrSlice))
 
 		// finally, remove the relations by passing an empty slcie
@@ -226,7 +226,7 @@ func TestRelationsUpdate(t *testing.T) {
 		update(object)
 		object, err = env.Box.Get(id)
 		assert.NoErr(t, err)
-		assert.NoErr(t, env.Box.GetRelated(object, model.Entity_.RelatedPtrSlice))
+		assert.NoErr(t, env.Box.FetchRelatedPtrSlice(object))
 		assert.Eq(t, 0, len(object.RelatedPtrSlice))
 
 		env.Close()

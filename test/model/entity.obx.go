@@ -4,7 +4,6 @@
 package model
 
 import (
-	"fmt"
 	"github.com/google/flatbuffers/go"
 	"github.com/objectbox/objectbox-go/objectbox"
 	"github.com/objectbox/objectbox-go/objectbox/fbutils"
@@ -453,7 +452,7 @@ func (entity_EntityInfo) PutRelated(ob *objectbox.ObjectBox, object interface{},
 	if err := BoxForEntity(ob).RelationReplace(Entity_.RelatedSlice, id, object, object.(*Entity).RelatedSlice); err != nil {
 		return err
 	}
-	if object.(*Entity).RelatedPtrSlice != nil { // lazy-loaded relations without EntityBox::GetRelated() called are nil
+	if object.(*Entity).RelatedPtrSlice != nil { // lazy-loaded relations without EntityBox::FetchRelatedPtrSlice() called are nil
 		if err := BoxForEntity(ob).RelationReplace(Entity_.RelatedPtrSlice, id, object, object.(*Entity).RelatedPtrSlice); err != nil {
 			return err
 		}
@@ -667,7 +666,7 @@ func (entity_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{
 		RelatedPtr:      relRelatedPtr,
 		RelatedPtr2:     relRelatedPtr2,
 		RelatedSlice:    relRelatedSlice,
-		RelatedPtrSlice: nil, // see EntityBox::GetRelated()
+		RelatedPtrSlice: nil, // use EntityBox::FetchRelatedPtrSlice() to fetch this lazy-loaded relation
 		IntPtr:          fbutils.GetIntPtrSlot(table, 52),
 		Int8Ptr:         fbutils.GetInt8PtrSlot(table, 54),
 		Int16Ptr:        fbutils.GetInt16PtrSlot(table, 56),
@@ -786,45 +785,32 @@ func (box *EntityBox) GetAll() ([]*Entity, error) {
 	return objects.([]*Entity), nil
 }
 
-// GetRelated reads related (to-many) objects and sets the appropriate properties of the object.
-// If no properties are given, it will load all to-many relations.
-func (box *EntityBox) GetRelated(object *Entity, properties ...*objectbox.RelationToMany) error {
-	var id = object.Id
-
-	if properties == nil {
-		properties = []*objectbox.RelationToMany{Entity_.RelatedPtrSlice}
-	} else if len(properties) == 0 {
-		return nil
-	}
-
+// FetchRelatedPtrSlice reads target objects for relation Entity::RelatedPtrSlice.
+// It will "GetMany()" all related TestEntityRelated objects for each source object
+// and set sourceObject.RelatedPtrSlice to the slice of related objects, as currently stored in DB.
+func (box *EntityBox) FetchRelatedPtrSlice(sourceObjects ...*Entity) error {
 	return box.ObjectBox.RunInReadTx(func() error {
-		for _, property := range properties {
-
-			if property == Entity_.RelatedPtrSlice {
-				if rIds, err := box.RelationIds(property, id); err != nil {
-					return err
-				} else if rSlice, err := BoxForTestEntityRelated(box.ObjectBox).GetMany(rIds...); err != nil {
-					return err
-				} else {
-					object.RelatedPtrSlice = rSlice
-				}
+		// collect slices before setting the source objects' fields
+		// this keeps all the sourceObjects untouched in case there's an error during any of the requests
+		var slices = make([][]*TestEntityRelated, len(sourceObjects))
+		for k, object := range sourceObjects {
+			if rIds, err := box.RelationIds(Entity_.RelatedPtrSlice, object.Id); err != nil {
+				return err
+			} else if rSlice, err := BoxForTestEntityRelated(box.ObjectBox).GetMany(rIds...); err != nil {
+				return err
 			} else {
-				return fmt.Errorf("EntityBox::GetRelated() called for an invalid property %v - not a lazy-loaded related property of Entity", property.Id)
+				slices[k] = rSlice
 			}
 		}
+
+		// update the field on each of the objects
+		// this is really fast so it doesn't hurt to do inside a Tx even though it's unnecessary, consistency-wise
+		for k := range sourceObjects {
+			sourceObjects[k].RelatedPtrSlice = slices[k]
+		}
+
 		return nil
 	})
-}
-
-// GetRelatedForEach calls GetRelated() on each of the objects in the given slice.
-// See GetRelated() for more details.
-func (box *EntityBox) GetRelatedForEach(objects []*Entity, properties ...*objectbox.RelationToMany) error {
-	for key := range objects {
-		if err := box.GetRelated(objects[key]); err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 // Remove deletes a single object

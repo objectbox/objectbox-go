@@ -167,7 +167,7 @@ func ({{$entityNameCamel}}_EntityInfo) PutRelated(ob *objectbox.ObjectBox, objec
 				}
 			}
 		{{- else if $field.StandaloneRelation}}
-			{{- if $field.IsLazyLoaded}} if object.(*{{$field.Entity.Name}}).{{$field.Name}} != nil { // lazy-loaded relations without {{$field.Entity.Name}}Box::GetRelated() called are nil {{end}}  
+			{{- if $field.IsLazyLoaded}} if object.(*{{$field.Entity.Name}}).{{$field.Name}} != nil { // lazy-loaded relations without {{$field.Entity.Name}}Box::Fetch{{$field.Name}}() called are nil {{end}}  
 			if err := BoxFor{{$field.Entity.Name}}(ob).RelationReplace({{.Entity.Name}}_.{{$field.Name}}, id, object, object.(*{{$field.Entity.Name}}).{{$field.Name}}); err != nil {
 				return err
 			}
@@ -268,7 +268,7 @@ func ({{$entityNameCamel}}_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byt
 			} else {
 				rel{{$field.Name}} = rSlice
 			}
-			{{- end -}} {{/* see GetRelated for lazy loaded relations */}}
+			{{- end -}} {{/* see Fetch* for lazy loaded relations */}}
 		{{else}}{{/* recursively visit fields in embedded structs */}}{{template "load-relations" $field}}
 		{{- end}}
 	{{end}}{{end}}
@@ -278,7 +278,10 @@ func ({{$entityNameCamel}}_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byt
 		{{- range $field := .Fields}}
 			{{$field.Name}}: 
 				{{- if $field.SimpleRelation}}{{if not $field.IsPointer}}*{{end}}rel{{$field.Name}},
-				{{- else if $field.StandaloneRelation}}{{if $field.IsLazyLoaded}}nil, // see {{$field.Entity.Name}}Box::GetRelated(){{else}}rel{{$field.Name}},{{end}}
+				{{- else if $field.StandaloneRelation}}
+					{{- if $field.IsLazyLoaded}}nil, // use {{$field.Entity.Name}}Box::Fetch{{$field.Name}}() to fetch this lazy-loaded relation
+					{{- else}}rel{{$field.Name}},
+					{{- end}}
         		{{- else if $field.IsId}}{{with $field.Property}}
 					{{- if .Converter}}{{.Converter}}ToEntityProperty(
 					{{- else if .CastOnWrite}}{{.CastOnWrite}}({{end -}}
@@ -388,71 +391,44 @@ func (box *{{$entity.Name}}Box) GetAll() ([]{{if not $.Options.ByValue}}*{{end}}
 	return objects.([]{{if not $.Options.ByValue}}*{{end}}{{$entity.Name}}), nil
 }
 
-{{if $entity.HasLazyLoadedRelations}}
-// GetRelated reads related (to-many) objects and sets the appropriate properties of the object.
-// If no properties are given, it will load all to-many relations.
-func (box *{{$entity.Name}}Box) GetRelated(object *{{$entity.Name}}, properties ...*objectbox.RelationToMany) error {
-	var id = {{if $entity.IdProperty.Converter}}{{$entity.IdProperty.Converter}}ToDatabaseValue({{end -}}
-					object.{{$entity.IdProperty.Path}}{{if $entity.IdProperty.Converter}}){{end}}
-
-	if properties == nil {
-		properties = []*objectbox.RelationToMany{
-		{{- block "get-related-proplist" $entity}}
-		{{- range $field := .Fields}}
-			{{- if $field.SimpleRelation -}}
-				{{/* already loaded eagerly in binding.Load() */}}
-			{{- else if $field.StandaloneRelation}}
-				{{- if $field.IsLazyLoaded -}}
-				{{.Entity.Name}}_.{{$field.Name}},
-				{{end}}
-			{{- else}}{{/* recursively visit fields in embedded structs */}}{{template "get-related-proplist" $field}}
-			{{- end}}
-		{{- end}}{{end}}
-		}
-	} else if len(properties) == 0 {
-		return nil
-	}
-
-	return box.ObjectBox.RunInReadTx(func() error {
-		for _, property := range properties {
-			{{block "get-related" $entity}}
-			{{range $field := .Fields}}
-				{{if $field.SimpleRelation -}}
-					{{/* already loaded eagerly in binding.Load() */}}
-				{{- else if $field.StandaloneRelation -}}
-					{{- if $field.IsLazyLoaded -}}
-					if property == {{.Entity.Name}}_.{{$field.Name}} {
-						if rIds, err := box.RelationIds(property, id); err != nil {
+{{- block "fetch-related" $entity}}
+{{- range $field := .Fields}}
+	{{/* NOTE, we keep the IF-ELSE branching this way to correctly process embedded structs in the last ELSE */}}
+	{{- if .SimpleRelation -}}
+	{{- else if .StandaloneRelation}}
+		{{- if .IsLazyLoaded -}}
+			// Fetch{{.Name}} reads target objects for relation {{.Entity.Name}}::{{.Name}}.
+			// It will "GetMany()" all related {{.StandaloneRelation.Target.Name}} objects for each source object
+			// and set sourceObject.{{.Name}} to the slice of related objects, as currently stored in DB.
+			func (box *{{.Entity.Name}}Box) Fetch{{.Name}}(sourceObjects ...*{{.Entity.Name}}) error {
+				return box.ObjectBox.RunInReadTx(func() error {
+					// collect slices before setting the source objects' fields
+					// this keeps all the sourceObjects untouched in case there's an error during any of the requests
+					var slices = make([]{{.Type}}, len(sourceObjects))
+					for k, object := range sourceObjects {
+						if rIds, err := box.RelationIds({{.Entity.Name}}_.{{.Name}}, {{with .Entity.IdProperty}}{{if .Converter}}{{.Converter}}ToDatabaseValue({{end -}}
+							object.{{.Path}}{{if .Converter}}){{end}}{{end}}); err != nil {
 							return err
-						} else if rSlice, err := BoxFor{{$field.StandaloneRelation.Target.Name}}(box.ObjectBox).GetMany(rIds...); err != nil {
+						} else if rSlice, err := BoxFor{{.StandaloneRelation.Target.Name}}(box.ObjectBox).GetMany(rIds...); err != nil {
 							return err
 						} else {
-							object.{{$field.Name}} = rSlice
+							slices[k] = rSlice
 						}
-					} else
-					{{- end -}}
-				{{else}}{{/* recursively visit fields in embedded structs */}}{{template "get-related" $field}}
-				{{end}}
-			{{end}}{{end}}
-			{{/* else if no property matches */}}{
-				return fmt.Errorf("{{$entity.Name}}Box::GetRelated() called for an invalid property %v - not a lazy-loaded related property of {{$entity.Name}}", property.Id)
-			}
-		}
-		return nil
-	})
-}
+					}
 
-// GetRelatedForEach calls GetRelated() on each of the objects in the given slice.
-// See GetRelated() for more details.
-func (box *{{$entity.Name}}Box) GetRelatedForEach(objects []*{{$entity.Name}}, properties ...*objectbox.RelationToMany) error {
-	for key := range objects {
-		if err := box.GetRelated(objects[key]); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-{{- end}}
+					// update the field on each of the objects 
+					// this is really fast so it doesn't hurt to do inside a Tx even though it's unnecessary, consistency-wise
+					for k := range sourceObjects {
+						sourceObjects[k].{{.Name}} = slices[k]
+					}
+
+					return nil
+				})
+			}
+		{{end}}
+	{{- else}}{{/* recursively visit fields in embedded structs */}}{{template "fetch-related" $field}}
+	{{- end}}
+{{- end}}{{end}}
 
 // Remove deletes a single object
 func (box *{{$entity.Name}}Box) Remove(object *{{$entity.Name}}) error {

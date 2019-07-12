@@ -4,7 +4,6 @@
 package object
 
 import (
-	"fmt"
 	"github.com/google/flatbuffers/go"
 	"github.com/objectbox/objectbox-go/objectbox"
 	"github.com/objectbox/objectbox-go/objectbox/fbutils"
@@ -66,7 +65,7 @@ func (taskRelManyPtr_EntityInfo) SetId(object interface{}, id uint64) {
 
 // PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
 func (taskRelManyPtr_EntityInfo) PutRelated(ob *objectbox.ObjectBox, object interface{}, id uint64) error {
-	if object.(*TaskRelManyPtr).Groups != nil { // lazy-loaded relations without TaskRelManyPtrBox::GetRelated() called are nil
+	if object.(*TaskRelManyPtr).Groups != nil { // lazy-loaded relations without TaskRelManyPtrBox::FetchGroups() called are nil
 		if err := BoxForTaskRelManyPtr(ob).RelationReplace(TaskRelManyPtr_.Groups, id, object, object.(*TaskRelManyPtr).Groups); err != nil {
 			return err
 		}
@@ -93,7 +92,7 @@ func (taskRelManyPtr_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (in
 
 	return &TaskRelManyPtr{
 		Id:     id,
-		Groups: nil, // see TaskRelManyPtrBox::GetRelated()
+		Groups: nil, // use TaskRelManyPtrBox::FetchGroups() to fetch this lazy-loaded relation
 
 	}, nil
 }
@@ -195,45 +194,32 @@ func (box *TaskRelManyPtrBox) GetAll() ([]*TaskRelManyPtr, error) {
 	return objects.([]*TaskRelManyPtr), nil
 }
 
-// GetRelated reads related (to-many) objects and sets the appropriate properties of the object.
-// If no properties are given, it will load all to-many relations.
-func (box *TaskRelManyPtrBox) GetRelated(object *TaskRelManyPtr, properties ...*objectbox.RelationToMany) error {
-	var id = object.Id
-
-	if properties == nil {
-		properties = []*objectbox.RelationToMany{TaskRelManyPtr_.Groups}
-	} else if len(properties) == 0 {
-		return nil
-	}
-
+// FetchGroups reads target objects for relation TaskRelManyPtr::Groups.
+// It will "GetMany()" all related Group objects for each source object
+// and set sourceObject.Groups to the slice of related objects, as currently stored in DB.
+func (box *TaskRelManyPtrBox) FetchGroups(sourceObjects ...*TaskRelManyPtr) error {
 	return box.ObjectBox.RunInReadTx(func() error {
-		for _, property := range properties {
-
-			if property == TaskRelManyPtr_.Groups {
-				if rIds, err := box.RelationIds(property, id); err != nil {
-					return err
-				} else if rSlice, err := BoxForGroup(box.ObjectBox).GetMany(rIds...); err != nil {
-					return err
-				} else {
-					object.Groups = rSlice
-				}
+		// collect slices before setting the source objects' fields
+		// this keeps all the sourceObjects untouched in case there's an error during any of the requests
+		var slices = make([][]*Group, len(sourceObjects))
+		for k, object := range sourceObjects {
+			if rIds, err := box.RelationIds(TaskRelManyPtr_.Groups, object.Id); err != nil {
+				return err
+			} else if rSlice, err := BoxForGroup(box.ObjectBox).GetMany(rIds...); err != nil {
+				return err
 			} else {
-				return fmt.Errorf("TaskRelManyPtrBox::GetRelated() called for an invalid property %v - not a lazy-loaded related property of TaskRelManyPtr", property.Id)
+				slices[k] = rSlice
 			}
 		}
+
+		// update the field on each of the objects
+		// this is really fast so it doesn't hurt to do inside a Tx even though it's unnecessary, consistency-wise
+		for k := range sourceObjects {
+			sourceObjects[k].Groups = slices[k]
+		}
+
 		return nil
 	})
-}
-
-// GetRelatedForEach calls GetRelated() on each of the objects in the given slice.
-// See GetRelated() for more details.
-func (box *TaskRelManyPtrBox) GetRelatedForEach(objects []*TaskRelManyPtr, properties ...*objectbox.RelationToMany) error {
-	for key := range objects {
-		if err := box.GetRelated(objects[key]); err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 // Remove deletes a single object

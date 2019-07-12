@@ -282,10 +282,6 @@ func (binding *Binding) createEntityFromAst(strct *ast.StructType, name string, 
 
 	binding.Entities = append(binding.Entities, entity)
 
-	// fmt.Errorf is called in GetRelated()
-	if entity.HasLazyLoadedRelations() {
-		binding.Imports["fmt"] = "fmt"
-	}
 	return nil
 }
 

@@ -401,10 +401,10 @@ func (box *{{$entity.Name}}Box) GetAll() ([]{{if not $.Options.ByValue}}*{{end}}
 			// It will "GetMany()" all related {{.StandaloneRelation.Target.Name}} objects for each source object
 			// and set sourceObject.{{.Name}} to the slice of related objects, as currently stored in DB.
 			func (box *{{.Entity.Name}}Box) Fetch{{.Name}}(sourceObjects ...*{{.Entity.Name}}) error {
-				return box.ObjectBox.RunInReadTx(func() error {
+				var slices = make([]{{.Type}}, len(sourceObjects))
+				err := box.ObjectBox.RunInReadTx(func() error {
 					// collect slices before setting the source objects' fields
 					// this keeps all the sourceObjects untouched in case there's an error during any of the requests
-					var slices = make([]{{.Type}}, len(sourceObjects))
 					for k, object := range sourceObjects {
 						rIds, err := box.RelationIds({{.Entity.Name}}_.{{.Name}}, {{with .Entity.IdProperty}}{{if .Converter}}{{.Converter}}ToDatabaseValue({{end -}}
 							object.{{.Path}}{{if .Converter}}){{end}}{{end}})
@@ -415,15 +415,15 @@ func (box *{{$entity.Name}}Box) GetAll() ([]{{if not $.Options.ByValue}}*{{end}}
 							return err
 						}
 					}
+					return nil
+                })
 
-					// update the field on each of the objects 
-					// this is really fast so it doesn't hurt to do inside a Tx even though it's unnecessary, consistency-wise
+				if err == nil {  // update the field on all objects if we got all slices 
 					for k := range sourceObjects {
 						sourceObjects[k].{{.Name}} = slices[k]
 					}
-
-					return nil
-				})
+				}
+				return err
 			}
 		{{end}}
 	{{- else}}{{/* recursively visit fields in embedded structs */}}{{template "fetch-related" $field}}

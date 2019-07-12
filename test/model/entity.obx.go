@@ -789,10 +789,10 @@ func (box *EntityBox) GetAll() ([]*Entity, error) {
 // It will "GetMany()" all related TestEntityRelated objects for each source object
 // and set sourceObject.RelatedPtrSlice to the slice of related objects, as currently stored in DB.
 func (box *EntityBox) FetchRelatedPtrSlice(sourceObjects ...*Entity) error {
-	return box.ObjectBox.RunInReadTx(func() error {
+	var slices = make([][]*TestEntityRelated, len(sourceObjects))
+	err := box.ObjectBox.RunInReadTx(func() error {
 		// collect slices before setting the source objects' fields
 		// this keeps all the sourceObjects untouched in case there's an error during any of the requests
-		var slices = make([][]*TestEntityRelated, len(sourceObjects))
 		for k, object := range sourceObjects {
 			rIds, err := box.RelationIds(Entity_.RelatedPtrSlice, object.Id)
 			if err == nil {
@@ -802,15 +802,15 @@ func (box *EntityBox) FetchRelatedPtrSlice(sourceObjects ...*Entity) error {
 				return err
 			}
 		}
+		return nil
+	})
 
-		// update the field on each of the objects
-		// this is really fast so it doesn't hurt to do inside a Tx even though it's unnecessary, consistency-wise
+	if err == nil { // update the field on all objects if we got all slices
 		for k := range sourceObjects {
 			sourceObjects[k].RelatedPtrSlice = slices[k]
 		}
-
-		return nil
-	})
+	}
+	return err
 }
 
 // Remove deletes a single object

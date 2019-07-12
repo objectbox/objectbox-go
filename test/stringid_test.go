@@ -21,7 +21,6 @@ import (
 	"testing"
 
 	"github.com/objectbox/objectbox-go/test/assert"
-
 	"github.com/objectbox/objectbox-go/test/model"
 )
 

@@ -21,7 +21,6 @@ import (
 	"testing"
 
 	"github.com/objectbox/objectbox-go/test/assert"
-
 	"github.com/objectbox/objectbox-go/test/model"
 )
 
@@ -105,6 +104,8 @@ func TestRelationsInsert(t *testing.T) {
 		assert.Eq(t, relsV[1], objectRead.RelatedSlice[0])
 		assert.Eq(t, 1, len(objectRead.RelatedPtrSlice))
 		assert.Eq(t, rels[2], objectRead.RelatedPtrSlice[0])
+
+		env.Close()
 	}
 }
 
@@ -194,5 +195,7 @@ func TestRelationsUpdate(t *testing.T) {
 		assert.Eq(t, 2, len(object.RelatedPtrSlice))
 		assert.EqItems(t, []uint64{8, 51}, []uint64{object.RelatedSlice[0].Id, object.RelatedSlice[1].Id})
 		assert.EqItems(t, []uint64{6, 31}, []uint64{object.RelatedPtrSlice[0].Id, object.RelatedPtrSlice[1].Id})
+
+		env.Close()
 	}
 }

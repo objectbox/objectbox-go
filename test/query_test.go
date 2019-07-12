@@ -458,6 +458,7 @@ func TestQueryLinks(t *testing.T) {
 func TestQueryClose(t *testing.T) {
 	env := model.NewTestEnv(t)
 	defer env.Close()
+
 	query := env.Box.Query()
 	assert.NoErr(t, query.Close())
 

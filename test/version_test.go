@@ -17,10 +17,10 @@
 package objectbox_test
 
 import (
-	"github.com/objectbox/objectbox-go/objectbox"
 	"strings"
 	"testing"
 
+	"github.com/objectbox/objectbox-go/objectbox"
 	"github.com/objectbox/objectbox-go/test/assert"
 )
 

@@ -41,31 +41,39 @@ type TestEnvOptions struct {
 	PopulateRelations bool
 }
 
-func removeDb(name string) {
-	os.Remove(filepath.Join(name, "data.mdb"))
-	os.Remove(filepath.Join(name, "lock.mdb"))
-}
-
 func NewTestEnv(t *testing.T) *TestEnv {
-	var dbName = "testdata"
+	var env = &TestEnv{
+		dbName: "testdata",
+		t:      t,
+	}
+	env.removeDb()
 
-	removeDb(dbName)
-
-	ob, err := objectbox.NewBuilder().Directory(dbName).Model(ObjectBoxModel()).Build()
+	var err error
+	env.ObjectBox, err = objectbox.NewBuilder().Directory(env.dbName).Model(ObjectBoxModel()).Build()
 	if err != nil {
 		t.Fatal(err)
 	}
-	return &TestEnv{
-		ObjectBox: ob,
-		Box:       BoxForEntity(ob),
-		dbName:    dbName,
-		t:         t,
-	}
+
+	env.Box = BoxForEntity(env.ObjectBox)
+
+	return env
 }
 
 func (env *TestEnv) Close() {
 	env.ObjectBox.Close()
-	removeDb(env.dbName)
+	env.removeDb()
+}
+
+func removeFileIfExists(path string) error {
+	if _, err := os.Stat(path); err == nil {
+		return os.Remove(path)
+	}
+	return nil
+}
+
+func (env *TestEnv) removeDb() {
+	assert.NoErr(env.t, removeFileIfExists(filepath.Join(env.dbName, "data.mdb")))
+	assert.NoErr(env.t, removeFileIfExists(filepath.Join(env.dbName, "lock.mdb")))
 }
 
 func (env *TestEnv) SetOptions(options TestEnvOptions) *TestEnv {

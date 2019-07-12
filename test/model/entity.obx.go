@@ -794,12 +794,12 @@ func (box *EntityBox) FetchRelatedPtrSlice(sourceObjects ...*Entity) error {
 		// this keeps all the sourceObjects untouched in case there's an error during any of the requests
 		var slices = make([][]*TestEntityRelated, len(sourceObjects))
 		for k, object := range sourceObjects {
-			if rIds, err := box.RelationIds(Entity_.RelatedPtrSlice, object.Id); err != nil {
+			rIds, err := box.RelationIds(Entity_.RelatedPtrSlice, object.Id)
+			if err == nil {
+				slices[k], err = BoxForTestEntityRelated(box.ObjectBox).GetMany(rIds...)
+			}
+			if err != nil {
 				return err
-			} else if rSlice, err := BoxForTestEntityRelated(box.ObjectBox).GetMany(rIds...); err != nil {
-				return err
-			} else {
-				slices[k] = rSlice
 			}
 		}
 

@@ -406,13 +406,13 @@ func (box *{{$entity.Name}}Box) GetAll() ([]{{if not $.Options.ByValue}}*{{end}}
 					// this keeps all the sourceObjects untouched in case there's an error during any of the requests
 					var slices = make([]{{.Type}}, len(sourceObjects))
 					for k, object := range sourceObjects {
-						if rIds, err := box.RelationIds({{.Entity.Name}}_.{{.Name}}, {{with .Entity.IdProperty}}{{if .Converter}}{{.Converter}}ToDatabaseValue({{end -}}
-							object.{{.Path}}{{if .Converter}}){{end}}{{end}}); err != nil {
+						rIds, err := box.RelationIds({{.Entity.Name}}_.{{.Name}}, {{with .Entity.IdProperty}}{{if .Converter}}{{.Converter}}ToDatabaseValue({{end -}}
+							object.{{.Path}}{{if .Converter}}){{end}}{{end}})
+						if err == nil {
+						    slices[k], err = BoxFor{{.StandaloneRelation.Target.Name}}(box.ObjectBox).GetMany(rIds...)
+						}
+						if err != nil {
 							return err
-						} else if rSlice, err := BoxFor{{.StandaloneRelation.Target.Name}}(box.ObjectBox).GetMany(rIds...); err != nil {
-							return err
-						} else {
-							slices[k] = rSlice
 						}
 					}
 

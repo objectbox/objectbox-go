@@ -3,7 +3,7 @@ Package objectbox provides a super-fast, light-weight object persistence framewo
 
 You can define your entity as a standard .go struct, with a comment signalling to generate ObjectBox code
 
-	//go:generate objectbox-gogen
+	//go:generate go run github.com/objectbox/objectbox-go/cmd/objectbox-gogen
 
 	type Person struct {
 	   Id        uint64 `objectbox:"id"`

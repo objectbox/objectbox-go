@@ -154,7 +154,7 @@ func generateAllFiles(t *testing.T, overwriteExpected bool, dir string, modelInf
 	}
 }
 
-var generatorArgsRegexp = regexp.MustCompile("//go:generate objectbox-gogen (.+)[\n|\r]")
+var generatorArgsRegexp = regexp.MustCompile("//go:generate go run github.com/objectbox/objectbox-go/cmd/objectbox-gogen (.+)[\n|\r]")
 
 func getOptions(t *testing.T, sourceFile, modelInfoFile string) generator.Options {
 	var options = generator.Options{

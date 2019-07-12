@@ -16,7 +16,7 @@
 
 package model
 
-//go:generate objectbox-gogen -byValue
+//go:generate go run github.com/objectbox/objectbox-go/cmd/objectbox-gogen -byValue
 
 type EntityByValue struct {
 	Id   uint64

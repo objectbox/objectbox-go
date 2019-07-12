@@ -1,7 +1,7 @@
 /*
 Generates objectbox related code for ObjectBox entities (Go structs)
 
-It can be used by adding `//go:generate objectbox-gogen` comment inside a .go file
+It can be used by adding `//go:generate go run github.com/objectbox/objectbox-go/cmd/objectbox-gogen` comment inside a .go file
 containing the struct that you want to persist and executing `go generate` in the module
 
 

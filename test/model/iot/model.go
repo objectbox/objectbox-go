@@ -16,7 +16,7 @@
 
 package iot
 
-//go:generate objectbox-gogen
+//go:generate go run github.com/objectbox/objectbox-go/cmd/objectbox-gogen
 
 type Event struct {
 	Id      uint64 `objectbox:"id"`

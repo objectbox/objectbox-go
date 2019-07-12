@@ -18,7 +18,7 @@ package model
 
 import "time"
 
-//go:generate objectbox-gogen
+//go:generate go run github.com/objectbox/objectbox-go/cmd/objectbox-gogen
 
 // Tests all available GO & ObjectBox types
 // TODO rename; e.g. TestEntity

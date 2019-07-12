@@ -3,8 +3,6 @@ set -eu
 
 buildDir=${PWD}/build-artifacts
 
-PATH=${buildDir}:$PATH
-
 function preBuild {
     echo "******** Preparing build ********"
     echo "Creating build artifacts directory '$buildDir'"

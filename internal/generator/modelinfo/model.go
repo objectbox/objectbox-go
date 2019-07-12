@@ -51,7 +51,7 @@ type ModelInfo struct {
 	RetiredRelationUids  []Uid     `json:"retiredRelationUids"`
 	Version              int       `json:"version"` // user specified version
 
-	file *os.File              // file handle, locked while the model is open
+	file *os.File   // file handle, locked while the model is open
 	Rand *rand.Rand `json:"-"` // seeded random number generator
 
 	// Model Template

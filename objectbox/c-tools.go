@@ -50,7 +50,6 @@ func cCallBool(fn func() bool) (err error) {
 	return err
 }
 
-
 func cGetIds(fn func() *C.OBX_id_array) (ids []uint64, err error) {
 	runtime.LockOSThread()
 

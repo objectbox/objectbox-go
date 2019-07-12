@@ -16,7 +16,7 @@
 
 package model
 
-//go:generate objectbox-gogen
+//go:generate go run github.com/objectbox/objectbox-go/cmd/objectbox-gogen
 
 type Task struct {
 	Id           uint64

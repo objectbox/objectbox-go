@@ -77,7 +77,7 @@ This is important as diverging versions of any component might result in errors.
   
 The `install.sh` script can also be used for upgrading:
  ```bash
-~/go/src/github.com/objectbox/objectbox-go/install.sh
+bash <(curl -s https://raw.githubusercontent.com/objectbox/objectbox-go/master/install.sh)
  ```
  
 Afterwards, don't forget to re-run the code generation on your project

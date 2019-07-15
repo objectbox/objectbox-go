@@ -37,9 +37,33 @@ type Box struct {
 	ObjectBox *ObjectBox
 	entity    *entity
 	cBox      *C.OBX_box
+	cAsync    *C.OBX_async
 }
 
 const defaultSliceCapacity = 16
+
+func newBox(ob *ObjectBox, entityId TypeId) (*Box, error) {
+	var box = &Box{
+		ObjectBox: ob,
+		entity:    ob.getEntityById(entityId),
+	}
+
+	if err := cCallBool(func() bool {
+		box.cBox = C.obx_box(ob.store, C.obx_schema_id(entityId))
+		return box.cBox != nil
+	}); err != nil {
+		return nil, err
+	}
+
+	if err := cCallBool(func() bool {
+		box.cAsync = C.obx_async(box.cBox)
+		return box.cAsync != nil
+	}); err != nil {
+		return nil, err
+	}
+
+	return box, nil
+}
 
 // Query creates a query with the given conditions. Use generated properties to create conditions.
 // Keep the Query object if you intend to execute it multiple times.
@@ -107,7 +131,7 @@ func (box *Box) idsForPut(count int) (firstId uint64, err error) {
 	return uint64(cFirstID), nil
 }
 
-func (box *Box) put(object interface{}, async bool, timeoutMs uint, alreadyInTx bool) (id uint64, err error) {
+func (box *Box) put(object interface{}, async bool, alreadyInTx bool) (id uint64, err error) {
 	idFromObject, err := box.entity.binding.GetId(object)
 	if err != nil {
 		return 0, err
@@ -124,10 +148,10 @@ func (box *Box) put(object interface{}, async bool, timeoutMs uint, alreadyInTx 
 	// for entities with relations, execute all Put/PutRelated inside a single transaction
 	if box.entity.hasRelations && !alreadyInTx {
 		err = box.ObjectBox.RunInWriteTx(func() error {
-			return box.putOne(id, object, async, timeoutMs)
+			return box.putOne(id, object, async)
 		})
 	} else {
-		err = box.putOne(id, object, async, timeoutMs)
+		err = box.putOne(id, object, async)
 	}
 
 	if err != nil {
@@ -142,30 +166,17 @@ func (box *Box) put(object interface{}, async bool, timeoutMs uint, alreadyInTx 
 	return id, nil
 }
 
-func (box *Box) putOne(id uint64, object interface{}, async bool, timeoutMs uint) error {
+func (box *Box) putOne(id uint64, object interface{}, async bool) error {
 	if box.entity.hasRelations { // In that case, the caller already ensured to be inside a TX
 		if err := box.entity.binding.PutRelated(box.ObjectBox, object, id); err != nil {
 			return err
 		}
 	}
 
-	// TODO move putAsync to AsyncBox
-	var cAsync *C.OBX_async
-	if async {
-		if err := cCallBool(func() bool {
-			cAsync = C.obx_async_create(box.cBox, C.uint64_t(timeoutMs))
-			return cAsync != nil
-		}); err != nil {
-			return err
-		}
-
-		defer C.obx_async_close(cAsync)
-	}
-
 	return box.withObjectBytes(object, id, func(bytes []byte) error {
 		return cCall(func() C.obx_err {
 			if async {
-				return C.obx_async_put(cAsync, C.obx_id(id), unsafe.Pointer(&bytes[0]), C.size_t(len(bytes)))
+				return C.obx_async_put(box.cAsync, C.obx_id(id), unsafe.Pointer(&bytes[0]), C.size_t(len(bytes)))
 			} else {
 				return C.obx_box_put(box.cBox, C.obx_id(id), unsafe.Pointer(&bytes[0]), C.size_t(len(bytes)),
 					C.OBXPutMode(cPutModePut))
@@ -207,26 +218,20 @@ func (box *Box) withObjectBytes(object interface{}, id uint64, fn func([]byte) e
 // this will merge small transactions into bigger ones. This results in a significant gain in overall throughput.
 //
 //
-// In situations with (extremely) high async load, this method may be throttled (~1ms) or delayed
-// up to options.putAsyncTimeout (10 seconds by default). In the unlikely event that the object could
-// not be enqueued after delaying (because of a full queue), an error will be returned.
+// In situations with (extremely) high async load, this method may be throttled (~1ms) or delayed up to 10 seconds.
+// In the unlikely event that the object could still not be enqueued (full queue), an error will be returned.
 //
 // Note that this method does not give you hard durability guarantees like the synchronous Put provides.
 // There is a small time window in which the data may not have been committed durably yet.
 func (box *Box) PutAsync(object interface{}) (id uint64, err error) {
-	return box.put(object, true, box.ObjectBox.options.putAsyncTimeout, false)
-}
-
-// PutAsyncWithTimeout is same as PutAsync but with a custom enqueue timeout
-func (box *Box) PutAsyncWithTimeout(object interface{}, timeoutMs uint) (id uint64, err error) {
-	return box.put(object, true, timeoutMs, false)
+	return box.put(object, true, false)
 }
 
 // Put synchronously inserts/updates a single object.
 // In case the ID is not specified, it would be assigned automatically (auto-increment).
 // When inserting, the ID property on the passed object will be assigned the new ID as well.
 func (box *Box) Put(object interface{}) (id uint64, err error) {
-	return box.put(object, false, 0, false)
+	return box.put(object, false, false)
 }
 
 // PutMany inserts multiple objects in a single transaction.
@@ -276,7 +281,7 @@ func (box *Box) PutMany(objects interface{}) (ids []uint64, err error) {
 			}
 		} else {
 			for i := 0; i < count; i++ {
-				id, err := box.put(slice.Index(i).Interface(), false, 0, true)
+				id, err := box.put(slice.Index(i).Interface(), false, true)
 				if err != nil {
 					return err
 				}

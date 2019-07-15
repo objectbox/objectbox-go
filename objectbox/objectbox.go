@@ -185,27 +185,16 @@ func (ob *ObjectBox) box(typeId TypeId) (*Box, error) {
 	ob.boxesMutex.Lock()
 	defer ob.boxesMutex.Unlock()
 
-	box := ob.boxes[typeId]
-	if box != nil {
+	if box := ob.boxes[typeId]; box != nil {
 		return box, nil
 	}
 
-	entity := ob.getEntityById(typeId)
-
-	box = &Box{
-		ObjectBox: ob,
-		entity:    entity,
-	}
-
-	if err := cCallBool(func() bool {
-		box.cBox = C.obx_box(ob.store, C.obx_schema_id(typeId))
-		return box.cBox != nil
-	}); err != nil {
+	if box, err := newBox(ob, typeId); err != nil {
 		return nil, err
+	} else {
+		ob.boxes[typeId] = box
+		return box, nil
 	}
-
-	ob.boxes[typeId] = box
-	return box, nil
 }
 
 // AwaitAsyncCompletion blocks until all PutAsync insert have been processed

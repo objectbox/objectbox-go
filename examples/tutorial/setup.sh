@@ -1,7 +1,7 @@
 #!/bin/bash
 set -eu
 
-GO_VER_NEW=1.12.5
+GO_VER_NEW=1.12.7
 
 function fetch_go {
     ARCH=$(uname -m)

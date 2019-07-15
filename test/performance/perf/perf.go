@@ -120,6 +120,8 @@ func (perf *Executor) PutAsync(items []*Entity) {
 
 	for _, item := range items {
 		if _, err := perf.box.PutAsync(item); err != nil {
+			// Let it finish to avoid potential concurrency issues while shutting down; TODO <-- verify/fix this
+			_ = perf.ob.AwaitAsyncCompletion()
 			panic(err)
 		}
 	}

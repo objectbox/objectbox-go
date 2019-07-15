@@ -193,6 +193,7 @@ func (box *Box) withObjectBytes(object interface{}, id uint64, fn func([]byte) e
 	return err
 }
 
+// Temporary API note: it is likely that this function will move (e.g. into new "Async" struct).
 // PutAsync asynchronously inserts/updates a single object.
 // When inserting, the ID property on the passed object will be assigned the new ID as well.
 //

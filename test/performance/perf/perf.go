@@ -120,10 +120,10 @@ func (perf *Executor) PutAsync(items []*Entity) {
 
 	const retries = 20
 
-	var err error
+	var putErr error
 	for _, item := range items {
 		for i := 0; i < retries; i++ {
-			if _, err = perf.box.PutAsync(item); err != nil {
+			if _, putErr = perf.box.PutAsync(item); putErr != nil {
 				// before each retry we sleep for a little more
 				time.Sleep(time.Duration(i*i) * time.Millisecond)
 			} else {
@@ -132,7 +132,7 @@ func (perf *Executor) PutAsync(items []*Entity) {
 		}
 
 		// if retrying failed, stop completely
-		if err != nil {
+		if putErr != nil {
 			break
 		}
 	}
@@ -142,8 +142,8 @@ func (perf *Executor) PutAsync(items []*Entity) {
 	}
 
 	// if retrying failed
-	if err != nil {
-		panic(err)
+	if putErr != nil {
+		panic(putErr)
 	}
 }
 

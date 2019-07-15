@@ -24,32 +24,22 @@ Some features
 * Automatic model migration (no schema upgrade scripts etc.)
 * inline/prefix complex embedded structs (or you can use custom converters)
 
-Installation
-------------
-To get started with ObjectBox you can get the repository code as usual with go get 
-and install the two prerequisites - pre-compiled library and a bindings generator.
-
+Getting started
+---------------
+To install ObjectBox, execute the following command in your project directory. 
+You can have a look at [installation docs](https://golang.objectbox.io/install) for more details and further instructions. 
 ```bash
-mkdir objectboxlib && cd objectboxlib
-curl https://raw.githubusercontent.com/objectbox/objectbox-c/master/download.sh > download.sh
-bash download.sh
-
-go get github.com/objectbox/objectbox-go/...
-go install github.com/objectbox/objectbox-go/cmd/objectbox-gogen/
+bash <(curl -s https://raw.githubusercontent.com/objectbox/objectbox-go/master/install.sh)
 ```
 
-See [installation docs](https://golang.objectbox.io/install) for more details and further instructions.
-
-Additionally, you can run tests to validate your installation
+You can run tests to validate your installation
 ```bash
 go test github.com/objectbox/objectbox-go/...
 ```
 
-Getting started
----------------
 With the dependencies installed, you can start adding entities to your project:
 ```go
-//go:generate objectbox-gogen
+//go:generate go run github.com/objectbox/objectbox-go/cmd/objectbox-gogen
 ​
 type Task struct {
 	Id   uint64
@@ -85,8 +75,7 @@ When you want to update, please re-run the entire installation process to ensure
 
 This is important as diverging versions of any component might result in errors.
   
-This repository also come with a `install.sh` script that can be used for installation and upgrading:
-
+The `install.sh` script can also be used for upgrading:
  ```bash
 ~/go/src/github.com/objectbox/objectbox-go/install.sh
  ```

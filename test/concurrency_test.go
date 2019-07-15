@@ -84,6 +84,12 @@ func concurrentInsert(t *testing.T, count, concurrency int, putAsync bool) {
 	assert.NoErr(t, objectBox.AwaitAsyncCompletion())
 
 	t.Log("validating counts")
+	if len(errors) != 0 {
+		t.Errorf("encountered %d errors", len(errors))
+		for err := range errors {
+			t.Log(err)
+		}
+	}
 	assert.Eq(t, 0, len(errors))
 	assert.Eq(t, count, len(ids))
 

@@ -1,4 +1,5 @@
 #!/bin/bash
+set -eu
 
 GO_VER_NEW=1.12.5
 
@@ -17,8 +18,15 @@ function fetch_go {
 
     # download Go
     echo "Fetching go $GO_VER_NEW..."
-    wget -q https://dl.google.com/go/go$GO_VER_NEW.linux-$ARCH.tar.gz
-    tar xzf go$GO_VER_NEW.linux-$ARCH.tar.gz
+    if [ -x "$(command -v curl)" ]; then
+        curl -L -o go$GO_VER_NEW.linux-$ARCH.tar.gz https://dl.google.com/go/go$GO_VER_NEW.linux-$ARCH.tar.gz
+    else
+        wget -q https://dl.google.com/go/go$GO_VER_NEW.linux-$ARCH.tar.gz
+    fi
+    goroot=~/goroot
+    echo "Installing go $GO_VER_NEW into $goroot"
+    mkdir -p $goroot
+    tar -C $goroot -xzf go$GO_VER_NEW.linux-$ARCH.tar.gz --strip 1
     rm go$GO_VER_NEW.linux-$ARCH.tar.gz
 
     # comment out old GOROOT or GOPATH exports in bashrc if they already exist
@@ -26,31 +34,26 @@ function fetch_go {
     sed -i 's/^export PATH *=.*\$\(GOROOT\|GOPATH\)/#&/' ~/.bashrc
 
     # set Go's environment variables in bashrc
-    mkdir -p ~/go/libs
-    echo 'export GOROOT=$HOME/go/go' >> ~/.bashrc
-    echo 'export GOPATH=$HOME/go/libs' >> ~/.bashrc
-    echo 'export PATH=$GOPATH/bin:$GOROOT/bin:$PATH' >> ~/.bashrc
+    echo "Setting up ~/go as GOPATH"
+    mkdir -p ~/go
+    echo 'export GOROOT=$HOME/goroot' >> ~/.bashrc
+    echo 'export GOPATH=$HOME/go' >> ~/.bashrc
+    echo 'export PATH=$GOROOT/bin:$PATH' >> ~/.bashrc
     echo "Note: your ~/.bashrc has been adjusted to make Go $GO_VER_NEW be available globally"
     echo "Please execute \"source ~/.bashrc\" after this script finishes to make Go available for this session or restart your shell"
 
     # set these variables again for this session
-    export GOROOT=$HOME/go/go
-    export GOPATH=$HOME/go/libs
-    export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
+    export GOROOT=$HOME/goroot
+    export GOPATH=$HOME/go
+    export PATH=$GOROOT/bin:$PATH
 }
 
 # setup our working directory
 cd ~
-if [ ! -d "go" ]; then
-    GO_DIR_MISSING=1
-fi
-mkdir -p go
-cd go
 mkdir -p projects objectbox
 
 # check if recent version (>=1.12) of Go is installed, otherwise download it
-command -v go > /dev/null
-if (( "$?" != "0" )); then
+if [ ! -x "$(command -v go)" ]; then
     fetch_go
 else
     GO_VER=$(go version | cut -d' ' -f3)
@@ -74,46 +77,22 @@ fi
 
 # get the ObjectBox binary library
 cd objectbox
-IFS=
-read -d '' updateobjectbox <<"EOF"
+cat > update-objectbox.sh <<EOL
 #!/bin/bash
-curl -s https://raw.githubusercontent.com/objectbox/objectbox-c/master/download.sh 2> /dev/null > download.sh
-chmod +x download.sh
-./download.sh --quiet 2>&1 > /dev/null
-rm download.sh
-if [ -f /usr/local/lib/libobjectbox.so ]; then
-    echo "The ObjectBox library already exists in /usr/local/lib/libobjectbox.so."
-    read -p "Would you like to replace it with the possibly newer version that was just downloaded? (Y/n) " inp
-    if [[ "$inp" == "y" || "$inp" == "" ]]; then
-        sudo mv lib/libobjectbox.so /usr/local/lib/
-    fi
-else
-    echo "The ObjectBox library needs to be globally available for ObjectBox Go to work correctly."
-    read -p "Would you like to install the ObjectBox library system-wide (this might prompt for your root password)? (Y/n) " inp
-    if [[ "$inp" == "y" || "$inp" == "" ]]; then
-        sudo mv lib/libobjectbox.so /usr/local/lib/
-    else
-        echo "The library was not installed system-wide, but was moved to the directory ~/go/objectbox instead."
-        echo "Later calls to ObjectBox Go might fail, unless you adjust your CGO_LDFLAGS and LD_LIBRARY_PATH environment variables."
-        mv lib/libobjectbox.so .
-    fi
-fi
-rm -r download lib
-EOF
-printf $updateobjectbox > update-objectbox.sh
+set -eu
+cd "$(dirname "$0")"
+bash <(curl -s https://raw.githubusercontent.com/objectbox/objectbox-go/master/install.sh)
+EOL
 chmod +x update-objectbox.sh
 ./update-objectbox.sh
 
-# get the ObjectBox Go library
-go get -v github.com/objectbox/objectbox-go/...
-go get github.com/google/flatbuffers/go
-go install github.com/objectbox/objectbox-go/cmd/objectbox-gogen/
-
-# create the demo project
-cd ../projects
-mkdir objectbox-go-test
-cd objectbox-go-test
-wget -q https://raw.githubusercontent.com/objectbox/objectbox-go/master/examples/tutorial/main.go
-objectbox-gogen -source main.go
+# create the demo project from examples/tasks
+go get -d github.com/objectbox/objectbox-go/examples/tasks
+mkdir -p ~/projects/objectbox-go-test/
+cd ~/projects/objectbox-go-test/
+go mod init objectbox-go-test
+cp -r $GOPATH/src/github.com/objectbox/objectbox-go/examples/tasks/* ~/projects/objectbox-go-test/
+cd ~/projects/objectbox-go-test
+go generate ./...
 go build
 ./objectbox-go-test

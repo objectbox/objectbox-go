@@ -40,8 +40,8 @@ extern "C" {
 
 // Note that you should use methods with prefix obx_version_ to check when linking against the dynamic library
 #define OBX_VERSION_MAJOR 0
-#define OBX_VERSION_MINOR 5
-#define OBX_VERSION_PATCH 105  // values >= 100 are reserved for dev releases leading to the next minor/major increase
+#define OBX_VERSION_MINOR 6
+#define OBX_VERSION_PATCH 0  // values >= 100 are reserved for dev releases leading to the next minor/major increase
 
 /// Returns the version of the library as ints. Pointers may be null
 void obx_version(int* major, int* minor, int* patch);
@@ -280,6 +280,41 @@ typedef struct OBX_id_array {
     size_t count;
 } OBX_id_array;
 
+typedef struct OBX_string_array {
+    const char** items;
+    size_t count;
+} OBX_string_array;
+
+typedef struct OBX_int64_array {
+    const int64_t* items;
+    size_t count;
+} OBX_int64_array;
+
+typedef struct OBX_int32_array {
+    const int32_t* items;
+    size_t count;
+} OBX_int32_array;
+
+typedef struct OBX_int16_array {
+    const int16_t* items;
+    size_t count;
+} OBX_int16_array;
+
+typedef struct OBX_int8_array {
+    const int8_t* items;
+    size_t count;
+} OBX_int8_array;
+
+typedef struct OBX_double_array {
+    const double* items;
+    size_t count;
+} OBX_double_array;
+
+typedef struct OBX_float_array {
+    const float* items;
+    size_t count;
+} OBX_float_array;
+
 /// Create a default set of store options
 /// @returns NULL on failure, a default set of options on success
 OBX_store_options* obx_opt();
@@ -339,21 +374,35 @@ obx_err obx_store_close(OBX_store* store);
 struct OBX_txn;
 typedef struct OBX_txn OBX_txn;
 
+/// Creates a write transaction (read and write).
+/// Transaction creation can be nested (recursive), however only the outermost transaction is relevant on the DB level.
+/// @return OBX_ERROR_ILLEGAL_STATE if called when inside a read transaction.
 OBX_txn* obx_txn_write(OBX_store* store);
 
+/// Creates a read transaction (read only).
+/// Transaction creation can be nested (recursive), however only the outermost transaction is relevant on the DB level.
 OBX_txn* obx_txn_read(OBX_store* store);
 
+/// Closes (deletes) the transaction (read or write);
+/// if it's a write transaction, this potentially commits or aborts the transaction on the DB:
+/// 1) If it's an outermost TX and all (inner) TXs were marked successful, this commits the transaction.
+/// 2) If this transaction was not marked successful, this aborts the transaction (even if it's an inner TX).
 obx_err obx_txn_close(OBX_txn* txn);
 
-/// Aborts the underlying transaction immediately (freeing its resources).
+/// Aborts the underlying transaction immediately and thus frees DB resources.
 /// Only obx_txn_close() is allowed to be called on the transaction after calling this.
-obx_err obx_txn_abort(OBX_txn* txn);
+obx_err obx_txn_abort(OBX_txn* txn);  // Internal note: will make more sense once we introduce obx_txn_reset
 
-/// Mark transaction as successful. If it's an outermost TX, it will be committed immediately.
+/// Marks the write transaction as successful.
+/// @return OBX_ERROR_ILLEGAL_STATE if the given transaction is not a write transaction.
 obx_err obx_txn_success(OBX_txn* txn);
 
-/// Mark transaction as having failed.
-/// If it's an "inner" transaction, the outer transaction will be marked as failed as well and will be aborted.
+/// Same as calling obx_txn_success() and then obx_txn_close().
+/// @return OBX_ERROR_ILLEGAL_STATE if the given transaction is not a write transaction.
+obx_err obx_txn_success_close(OBX_txn* txn);
+
+/// Marks the write transaction as having failed to undo a previous obx_txn_success().
+/// @return OBX_ERROR_ILLEGAL_STATE if the given transaction is not a write transaction.
 obx_err obx_txn_failure(OBX_txn* txn);
 
 //------------------------------------------------------------------
@@ -691,6 +740,12 @@ OBX_query_builder* obx_qb_backlink_standalone(OBX_query_builder* builder, obx_sc
 struct OBX_query;
 typedef struct OBX_query OBX_query;
 
+// TODO maybe merge with OBXOrderFlags
+typedef enum {
+    OBXQueryFlags_DISTINCT_CASE_SENSITIVE = 32,
+    OBXQueryFlags_DISTINCT_CASE_INSENSITIVE = 64,
+} OBXQueryFlags;
+
 OBX_query* obx_query_create(OBX_query_builder* builder);
 obx_err obx_query_close(OBX_query* query);
 
@@ -762,6 +817,78 @@ obx_err obx_query_double_params_alias(OBX_query* query, const char* alias, doubl
 obx_err obx_query_bytes_param_alias(OBX_query* query, const char* alias, const void* value, size_t size);
 
 //----------------------------------------------
+// Property-Query - getting a single property instead of whole objects
+// WARN - the property query API is subject to change in future versions
+//----------------------------------------------
+
+/// Count the number of non-NULL values of the given property across all objects matching the query
+obx_err obx_query_prop_count(OBX_query* query, OBX_box* box, obx_schema_id property_id, bool distinct,
+                             uint64_t* out_count);
+
+/// Calculate an average value for the given numeric property across all objects matching the query
+obx_err obx_query_prop_avg(OBX_query* query, OBX_box* box, obx_schema_id property_id, double* out_average);
+
+/// Find the minimum value of the given floating-point property across all objects matching the query
+obx_err obx_query_prop_min(OBX_query* query, OBX_box* box, obx_schema_id property_id, double* out_minimum);
+
+/// Find the maximum value of the given floating-point property across all objects matching the query
+obx_err obx_query_prop_max(OBX_query* query, OBX_box* box, obx_schema_id property_id, double* out_maximum);
+
+/// Calculate the sum of the given floating-point property across all objects matching the query
+obx_err obx_query_prop_sum(OBX_query* query, OBX_box* box, obx_schema_id property_id, double* out_sum);
+
+/// Find the minimum value of the given property across all objects matching the query
+obx_err obx_query_prop_min_int(OBX_query* query, OBX_box* box, obx_schema_id property_id, int64_t* out_minimum);
+
+/// Find the maximum value of the given property across all objects matching the query
+obx_err obx_query_prop_max_int(OBX_query* query, OBX_box* box, obx_schema_id property_id, int64_t* out_maximum);
+
+/// Calculate the sum of the given property across all objects matching the query
+obx_err obx_query_prop_sum_int(OBX_query* query, OBX_box* box, obx_schema_id property_id, int64_t* out_sum);
+
+/// Returns an array of strings stored as the given property across all objects matching the query
+/// @param value_if_null value that should be used in place of NULL values on object fields;
+///     if value_if_null=NULL is given, objects with NULL values of the specified field are skipped
+OBX_string_array* obx_query_prop_string_find(OBX_query* query, OBX_box* box, obx_schema_id property_id,
+                                             const char* value_if_null, OBXQueryFlags flags);
+
+/// Returns an array of ints stored as the given property across all objects matching the query
+/// @param value_if_null value that should be used in place of NULL values on object fields;
+///     if value_if_null=NULL is given, objects with NULL values of the specified are skipped
+OBX_int64_array* obx_query_prop_int64_find(OBX_query* query, OBX_box* box, obx_schema_id property_id,
+                                           const int64_t* value_if_null, bool distinct);
+
+/// Returns an array of ints stored as the given property across all objects matching the query
+/// @param value_if_null value that should be used in place of NULL values on object fields;
+///     if value_if_null=NULL is given, objects with NULL values of the specified are skipped
+OBX_int32_array* obx_query_prop_int32_find(OBX_query* query, OBX_box* box, obx_schema_id property_id,
+                                           const int32_t* value_if_null, bool distinct);
+
+/// Returns an array of ints stored as the given property across all objects matching the query
+/// @param value_if_null value that should be used in place of NULL values on object fields;
+///     if value_if_null=NULL is given, objects with NULL values of the specified are skipped
+OBX_int16_array* obx_query_prop_int16_find(OBX_query* query, OBX_box* box, obx_schema_id property_id,
+                                           const int16_t* value_if_null, bool distinct);
+
+/// Returns an array of ints stored as the given property across all objects matching the query
+/// @param value_if_null value that should be used in place of NULL values on object fields;
+///     if value_if_null=NULL is given, objects with NULL values of the specified are skipped
+OBX_int8_array* obx_query_prop_int8_find(OBX_query* query, OBX_box* box, obx_schema_id property_id,
+                                         const int8_t* value_if_null, bool distinct);
+
+/// Returns an array of doubles stored as the given property across all objects matching the query
+/// @param value_if_null value that should be used in place of NULL values on object fields;
+///     if value_if_null=NULL is given, objects with NULL values of the specified are skipped
+OBX_double_array* obx_query_prop_double_find(OBX_query* query, OBX_box* box, obx_schema_id property_id,
+                                             const double* value_if_null, bool distinct);
+
+/// Returns an array of int stored as the given property across all objects matching the query
+/// @param value_if_null value that should be used in place of NULL values on object fields;
+///     if value_if_null=NULL is given, objects with NULL values of the specified are skipped
+OBX_float_array* obx_query_prop_float_find(OBX_query* query, OBX_box* box, obx_schema_id property_id,
+                                           const float* value_if_null, bool distinct);
+
+//----------------------------------------------
 // Utilities for bytes/ids/arrays
 //----------------------------------------------
 void obx_bytes_free(OBX_bytes* bytes);
@@ -778,8 +905,29 @@ void obx_bytes_array_free(OBX_bytes_array* array);
 /// Creates an ID array struct, copying the given IDs as the contents
 OBX_id_array* obx_id_array_create(const obx_id ids[], size_t count);
 
-/// Frees the id array struct
+/// Frees the array struct
 void obx_id_array_free(OBX_id_array* array);
+
+/// Frees the array struct
+void obx_string_array_free(OBX_string_array* array);
+
+/// Frees the array struct
+void obx_int64_array_free(OBX_int64_array* array);
+
+/// Frees the array struct
+void obx_int32_array_free(OBX_int32_array* array);
+
+/// Frees the array struct
+void obx_int16_array_free(OBX_int16_array* array);
+
+/// Frees the array struct
+void obx_int8_array_free(OBX_int8_array* array);
+
+/// Frees the array struct
+void obx_double_array_free(OBX_double_array* array);
+
+/// Frees the array struct
+void obx_float_array_free(OBX_float_array* array);
 
 #ifdef __cplusplus
 }

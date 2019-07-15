@@ -10,10 +10,10 @@ if [ ! "${goVersionMajor}" == "go1" ]; then
   echo "Unexpected Go major version ${goVersionMajor}, expecting Go 1.11.4+."
   echo "You can proceed and let us know if you think we should extend the support to your version."
 elif [ "${goVersionMinor}" -lt "11" ]; then
-  echo "Invalid Go version ${goVersion}, at least 1.11.4 required"
+  echo "Invalid Go version ${goVersion}, at least 1.11.4 required."
   exit 1
 elif [ "${goVersionMinor}" == "11" ] && [ "${goVersionPatch}" -lt "4" ]; then
-  echo "Invalid Go version ${goVersion}, at least 1.11.4 required"
+  echo "Invalid Go version ${goVersion}, at least 1.11.4 required."
   exit 1
 fi
 
@@ -29,15 +29,18 @@ if [ -x "$(command -v ldconfig)" ]; then
   fi
 fi
 
-# go get objectbox
-if [ -f "go.mod" ] && grep -q "module github.com/objectbox/objectbox-go" "go.mod"; then
-  echo "Seems like we're running inside the objectbox-go directory itself, skipping \`go get\` of the objectbox module"
-else
+# go get flatbuffers (if not using go modules) and objectbox
+if [[ ! -f "go.mod" ]]; then
+  echo "Your project doesn't seem to be using go modules. Installing FlatBuffers dependency manualy."
+  go get -u github.com/google/flatbuffers
   go get -u github.com/objectbox/objectbox-go/objectbox
 
-  if [[ -f "go.mod" ]]; then
-    echo "Found go.mod, skipping manual flatbuffers installation as they're already a dependency of the objectbox module"
-  fi
+elif grep -q "module github.com/objectbox/objectbox-go" "go.mod"; then
+  echo "Seems like we're running inside the objectbox-go directory itself, skipping ObjectBox Go module installation."
+
+else
+  go get -u github.com/objectbox/objectbox-go/objectbox
 fi
 
-echo "Installation complete"
+echo "Installation complete."
+echo "You can start using ObjectBox by importing github.com/objectbox/objectbox-go/objectbox in your source code."

@@ -118,15 +118,31 @@ func (perf *Executor) PrepareData(count int) []*Entity {
 func (perf *Executor) PutAsync(items []*Entity) {
 	defer perf.trackTime(time.Now())
 
+	const retries = 20
+
+	var err error
 	for _, item := range items {
-		if _, err := perf.box.PutAsync(item); err != nil {
-			// Let it finish to avoid potential concurrency issues while shutting down; TODO <-- verify/fix this
-			_ = perf.ob.AwaitAsyncCompletion()
-			panic(err)
+		for i := 0; i < retries; i++ {
+			if _, err = perf.box.PutAsync(item); err != nil {
+				// before each retry we sleep for a little more
+				time.Sleep(time.Duration(i*i) * time.Millisecond)
+			} else {
+				break
+			}
+		}
+
+		// if retrying failed, stop completely
+		if err != nil {
+			break
 		}
 	}
 
 	if err := perf.ob.AwaitAsyncCompletion(); err != nil {
+		panic(err)
+	}
+
+	// if retrying failed
+	if err != nil {
 		panic(err)
 	}
 }

@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -eu
 
+cLibVersion=0.6.0
+
 goVersion=$(go version | cut -d' ' -f 3)
 goVersionMajor=$(echo "${goVersion}" | cut -d'.' -f1)
 goVersionMinor=$(echo "${goVersion}" | cut -d'.' -f2)
@@ -19,7 +21,7 @@ fi
 
 # install the ObjectBox-C library
 mkdir -p objectboxlib && cd objectboxlib
-bash <(curl -s https://raw.githubusercontent.com/objectbox/objectbox-c/master/download.sh)
+bash <(curl -s https://raw.githubusercontent.com/objectbox/objectbox-c/master/download.sh) ${cLibVersion}
 cd -
 
 if [ -x "$(command -v ldconfig)" ]; then
@@ -32,7 +34,7 @@ fi
 # go get flatbuffers (if not using go modules) and objectbox
 if [[ ! -f "go.mod" ]]; then
   echo "Your project doesn't seem to be using go modules. Installing FlatBuffers dependency manualy."
-  go get -u github.com/google/flatbuffers
+  go get -u github.com/google/flatbuffers/go
   go get -u github.com/objectbox/objectbox-go/objectbox
 
 elif grep -q "module github.com/objectbox/objectbox-go" "go.mod"; then

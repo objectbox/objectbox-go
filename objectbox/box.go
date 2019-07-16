@@ -218,7 +218,7 @@ func (box *Box) withObjectBytes(object interface{}, id uint64, fn func([]byte) e
 // this will merge small transactions into bigger ones. This results in a significant gain in overall throughput.
 //
 //
-// In situations with (extremely) high async load, this method may be throttled (~1ms) or delayed up to 10 seconds.
+// In situations with (extremely) high async load, this method may be throttled (~1ms) or delayed up to 1 second.
 // In the unlikely event that the object could still not be enqueued (full queue), an error will be returned.
 //
 // Note that this method does not give you hard durability guarantees like the synchronous Put provides.

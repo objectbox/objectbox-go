@@ -70,7 +70,7 @@ type ObjectBox struct {
 }
 
 type options struct {
-	putAsyncTimeout uint
+	asyncTimeout uint
 }
 
 // constant during runtime so no need to call this each time it's necessary

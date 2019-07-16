@@ -75,7 +75,7 @@ func NewBuilder() *Builder {
 	return &Builder{
 		options: options{
 			// defaults
-			putAsyncTimeout: 10000, // 10s
+			asyncTimeout: 1000, // 1s ; TODO make this 0 to use core default?
 		},
 	}
 }
@@ -99,10 +99,11 @@ func (builder *Builder) MaxReaders(maxReaders uint) *Builder {
 	return builder
 }
 
-// PutAsyncTimeout configures PutAsync enqueue timeout (default is 10 seconds).
+// AsyncTimeout configures the default enqueue timeout for async operations (default is 1 second).
 // See Box.PutAsync method doc for more information.
-func (builder *Builder) PutAsyncTimeout(milliseconds uint) *Builder {
-	builder.putAsyncTimeout = milliseconds
+// TODO: implement this option in core and use it
+func (builder *Builder) asyncTimeout_(milliseconds uint) *Builder {
+	builder.asyncTimeout = milliseconds
 	return builder
 }
 

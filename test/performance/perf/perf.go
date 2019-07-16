@@ -125,7 +125,7 @@ func (perf *Executor) PutAsync(items []*Entity) {
 		for i := 0; i < retries; i++ {
 			if _, putErr = perf.box.PutAsync(item); putErr != nil {
 				// before each retry we sleep for a little more
-				time.Sleep(time.Duration(i*i) * time.Millisecond)
+				time.Sleep(time.Duration(i+1) * time.Second)
 			} else {
 				break
 			}

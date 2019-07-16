@@ -17,6 +17,8 @@
 package objectbox_test
 
 import (
+	"runtime"
+	"strings"
 	"sync"
 	"testing"
 
@@ -29,7 +31,12 @@ func TestConcurrentPut(t *testing.T) {
 }
 
 func TestConcurrentPutAsync(t *testing.T) {
-	concurrentInsert(t, 100000, 20, true)
+	count := 100000
+	if strings.Contains(strings.ToLower(runtime.GOARCH), "arm") {
+		count = 10000
+	}
+	t.Logf("Count for GOARCH %s: %v", runtime.GOARCH, count)
+	concurrentInsert(t, count, 20, true)
 }
 
 func concurrentInsert(t *testing.T, count, concurrency int, putAsync bool) {
@@ -84,6 +91,12 @@ func concurrentInsert(t *testing.T, count, concurrency int, putAsync bool) {
 	assert.NoErr(t, objectBox.AwaitAsyncCompletion())
 
 	t.Log("validating counts")
+	if len(errors) != 0 {
+		t.Errorf("encountered %d errors", len(errors))
+		for err := range errors {
+			t.Log(err)
+		}
+	}
 	assert.Eq(t, 0, len(errors))
 	assert.Eq(t, count, len(ids))
 

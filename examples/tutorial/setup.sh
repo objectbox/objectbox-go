@@ -3,7 +3,7 @@ set -eu
 
 GO_VER_NEW=1.12.7
 
-function fetch_go {
+function fetch_go() {
     ARCH=$(uname -m)
     if [[ "$ARCH" == "x86_64" ]]; then
         ARCH=amd64
@@ -36,9 +36,9 @@ function fetch_go {
     # set Go's environment variables in bashrc
     echo "Setting up ~/go as GOPATH"
     mkdir -p ~/go
-    echo 'export GOROOT=$HOME/goroot' >> ~/.bashrc
-    echo 'export GOPATH=$HOME/go' >> ~/.bashrc
-    echo 'export PATH=$GOROOT/bin:$PATH' >> ~/.bashrc
+    echo 'export GOROOT=$HOME/goroot' >>~/.bashrc
+    echo 'export GOPATH=$HOME/go' >>~/.bashrc
+    echo 'export PATH=$GOROOT/bin:$PATH' >>~/.bashrc
     echo "Note: your ~/.bashrc has been adjusted to make Go $GO_VER_NEW be available globally"
     echo "Please execute \"source ~/.bashrc\" after this script finishes to make Go available for this session or restart your shell"
 
@@ -59,7 +59,7 @@ else
     GO_VER=$(go version | cut -d' ' -f3)
     GO_VER_MAJOR=$(echo $GO_VER | cut -d'.' -f1 | cut -d'o' -f2)
     GO_VER_MINOR=$(echo $GO_VER | cut -d'.' -f2)
-    if (( "$GO_VER_MAJOR" >= "1" && "$GO_VER_MINOR" >= "12" )); then
+    if (("$GO_VER_MAJOR" >= "1" && "$GO_VER_MINOR" >= "12")); then
         echo "Note: using installed Go with version $GO_VER"
     else
         echo "Warning: an old version of Go ($GO_VER) is installed on your system, ObjectBox needs >= 1.12"
@@ -77,7 +77,7 @@ fi
 
 # get the ObjectBox binary library
 cd objectbox
-cat > update-objectbox.sh <<EOL
+cat >update-objectbox.sh <<'EOL'
 #!/bin/bash
 set -eu
 cd "$(dirname "$0")"
@@ -87,12 +87,19 @@ chmod +x update-objectbox.sh
 ./update-objectbox.sh
 
 # create the demo project from examples/tasks
-go get -d github.com/objectbox/objectbox-go/examples/tasks
-mkdir -p ~/projects/objectbox-go-test/
-cd ~/projects/objectbox-go-test/
-go mod init objectbox-go-test
-cp -r $GOPATH/src/github.com/objectbox/objectbox-go/examples/tasks/* ~/projects/objectbox-go-test/
-cd ~/projects/objectbox-go-test
-go generate ./...
-go build
-./objectbox-go-test
+exampleDir=~/projects/objectbox-go-test/
+if [[ -d "${exampleDir}" ]]; then
+    echo "Example directory ${exampleDir} already exists, skipping"
+else
+    echo "Creating an example in ${exampleDir}"
+    go get -d github.com/objectbox/objectbox-go/examples/tasks
+    mkdir -p ${exampleDir}
+    cd ${exampleDir}
+    go mod init objectbox-go-test
+    cp -r $GOPATH/src/github.com/objectbox/objectbox-go/examples/tasks/* ./
+    sed -i 's github.com/objectbox/objectbox-go/examples/tasks objectbox-go-test g' main.go
+    go generate ./...
+    go build
+    echo "Launching the example program"
+    ./objectbox-go-test
+fi

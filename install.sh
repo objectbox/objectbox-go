@@ -40,7 +40,7 @@ fi
 
 # go get flatbuffers (if not using go modules) and objectbox
 if [[ ! -f "go.mod" ]]; then
-  echo "Your project doesn't seem to be using go modules. Installing FlatBuffers dependency manualy."
+  echo "Your project doesn't seem to be using go modules. Installing FlatBuffers & ObjectBox using go get."
   go get -u github.com/google/flatbuffers/go
   go get -u github.com/objectbox/objectbox-go/objectbox
 

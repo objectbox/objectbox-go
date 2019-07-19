@@ -18,6 +18,7 @@ package modelinfo
 
 import "fmt"
 
+// CheckRelationCycles finds relations cycles
 func (model *ModelInfo) CheckRelationCycles() error {
 	// DFS cycle check, storing relation path in the recursion stack
 	var visited = make(map[*Entity]bool)

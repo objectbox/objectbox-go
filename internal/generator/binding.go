@@ -48,6 +48,7 @@ var supportedAnnotations = map[string]bool{
 	"unique":    true,
 }
 
+// Binding contains information about the processed set of Entities
 type Binding struct {
 	Package  *types.Package
 	Entities []*Entity
@@ -57,6 +58,7 @@ type Binding struct {
 	source *file
 }
 
+// Entity holds the model information necessary to generate the binding code
 type Entity struct {
 	Identifier
 	Name           string
@@ -72,6 +74,7 @@ type Entity struct {
 	propertiesByName map[string]bool
 }
 
+// Property represents a mapping between a struct field and a DB field
 type Property struct {
 	Identifier
 	BaseName    string // name in the containing struct (might be embedded)
@@ -96,12 +99,14 @@ type Property struct {
 	path       string // relative addressing path for embedded structs
 }
 
+// Relation contains information about a "to-one" relation
 type Relation struct {
 	Target struct {
 		Name string
 	}
 }
 
+// StandaloneRelation contains information about a "to-many" relation
 type StandaloneRelation struct {
 	Identifier
 	Target struct {
@@ -113,14 +118,17 @@ type StandaloneRelation struct {
 	uidRequest bool
 }
 
+// Index holds information for creating an indexed field in DB
 type Index struct {
 	Identifier
 }
 
+// Annotation is a tag on a struct-field
 type Annotation struct {
 	Value string
 }
 
+// Field is a field in an entity-struct. Not all fields become properties (e.g. to-many relations don't have a property)
 type Field struct {
 	Entity             *Entity // parent entity
 	Name               string
@@ -133,6 +141,7 @@ type Field struct {
 	IsLazyLoaded       bool                // only standalone (to-many) relations currently support lazy loading
 }
 
+// Identifier combines DB ID and UID into a single structure
 type Identifier struct {
 	Id  id
 	Uid uid
@@ -235,10 +244,10 @@ func (binding *Binding) createEntityFromAst(strct *ast.StructType, name string, 
 		}
 	}
 
-	if fields, err := entity.addFields(astStructFieldList{strct, binding.source}, entity.Name, ""); err != nil {
+	var err error
+	entity.Fields, err = entity.addFields(astStructFieldList{strct, binding.source}, entity.Name, "")
+	if err != nil {
 		return err
-	} else {
-		entity.Fields = fields
 	}
 
 	if len(entity.Properties) == 0 {
@@ -291,6 +300,7 @@ func (entity *Entity) addFields(fields fieldList, fieldPath, prefix string) ([]*
 	}
 
 	var fieldsTree []*Field
+	var err error // not a function-wise error, just to avoid later redeclarations
 
 	for i := 0; i < fields.Length(); i++ {
 		f := fields.Field(i)
@@ -300,11 +310,10 @@ func (entity *Entity) addFields(fields fieldList, fieldPath, prefix string) ([]*
 			path:   fieldPath,
 		}
 
-		if name, err := f.Name(); err != nil {
+		property.Name, err = f.Name()
+		if err != nil {
 			property.Name = strconv.FormatInt(int64(i), 10) // just for the error message
 			return nil, propertyError(err, property)
-		} else {
-			property.Name = name
 		}
 
 		// this is used to correctly render embedded-structs initialization template
@@ -360,12 +369,11 @@ func (entity *Entity) addFields(fields fieldList, fieldPath, prefix string) ([]*
 				}
 			}
 
-			if innerFields, err := entity.addFields(innerStructFields, fieldPath+"."+property.Name, innerPrefix); err != nil {
+			// apply some struct-related settings to the field
+			field.Property = nil
+			field.Fields, err = entity.addFields(innerStructFields, fieldPath+"."+property.Name, innerPrefix)
+			if err != nil {
 				return nil, err
-			} else {
-				// apply some struct-related settings to the field
-				field.Property = nil
-				field.Fields = innerFields
 			}
 
 			// this struct itself is not added, just the inner properties
@@ -396,9 +404,8 @@ func (entity *Entity) addFields(fields fieldList, fieldPath, prefix string) ([]*
 		if property.Annotations["name"] != nil {
 			if len(property.Annotations["name"].Value) == 0 {
 				return nil, propertyError(fmt.Errorf("name annotation value must not be empty - it's the field name in DB"), property)
-			} else {
-				property.ObName = property.Annotations["name"].Value
 			}
+			property.ObName = property.Annotations["name"].Value
 		} else {
 			property.ObName = property.Name
 		}
@@ -414,11 +421,10 @@ func (entity *Entity) addFields(fields fieldList, fieldPath, prefix string) ([]*
 		if entity.propertiesByName[realObName] {
 			return nil, propertyError(fmt.Errorf(
 				"duplicate name (note that property names are case insensitive)"), property)
-		} else {
-			entity.propertiesByName[realObName] = true
 		}
+		entity.propertiesByName[realObName] = true
 
-		if err := property.handleUid(); err != nil {
+		if err := property.handleUID(); err != nil {
 			return nil, propertyError(err, property)
 		}
 
@@ -477,19 +483,18 @@ func (field *Field) processType(f field) (fields fieldList, err error) {
 		// fill in the field information
 		field.fillInfo(f, typ)
 
+		// if it's a one-to-many relation
 		if property.Annotations["link"] != nil {
-			// if it's a one-to-many relation
 			if err := property.setRelation(typeBaseName(typ.String()), false); err != nil {
 				return nil, err
 			}
 
 			field.SimpleRelation = property.Relation
 			return nil, nil
-
-		} else {
-			// otherwise inline all fields
-			return structFieldList{strct}, nil
 		}
+
+		// otherwise inline all fields
+		return structFieldList{strct}, nil
 	}
 
 	// check if it's a slice of a non-base type
@@ -501,7 +506,7 @@ func (field *Field) processType(f field) (fields fieldList, err error) {
 			return nil, err
 		}
 
-		if err := property.handleUid(); err != nil {
+		if err := property.handleUID(); err != nil {
 			return nil, err
 		}
 
@@ -670,7 +675,7 @@ func (property *Property) setRelation(target string, manyToMany bool) error {
 	return nil
 }
 
-func (property *Property) handleUid() error {
+func (property *Property) handleUID() error {
 	if property.Annotations["uid"] != nil {
 		if len(property.Annotations["uid"].Value) == 0 {
 			// in case the user doesn't provide `objectbox:"uid"` value, it's considered in-process of setting up UID
@@ -795,17 +800,15 @@ func (property *Property) setBasicType(baseType string) error {
 	if property.Annotations["date"] != nil {
 		if property.ObType != propertyTypeLong {
 			return fmt.Errorf("invalid underlying type (PropertyType %v) for date field; expecting long", property.ObType)
-		} else {
-			property.ObType = propertyTypeDate
 		}
+		property.ObType = propertyTypeDate
 	}
 
 	if property.Annotations["link"] != nil {
 		if property.ObType != propertyTypeLong {
 			return fmt.Errorf("invalid underlying type (PropertyType %v) for relation field; expecting long", property.ObType)
-		} else {
-			property.ObType = propertyTypeRelation
 		}
+		property.ObType = propertyTypeRelation
 		property.Relation = &Relation{}
 		property.Relation.Target.Name = property.Annotations["link"].Value
 	}
@@ -820,10 +823,9 @@ func (property *Property) addObFlag(flag int) {
 func (property *Property) setIndex() error {
 	if property.Index != nil {
 		return fmt.Errorf("index is already defined")
-	} else {
-		property.Index = &Index{}
-		return nil
 	}
+	property.Index = &Index{}
+	return nil
 }
 
 func (property *Property) setObFlags() error {
@@ -872,6 +874,7 @@ func (property *Property) setObFlags() error {
 	return nil
 }
 
+// ObTypeString is called from the template
 func (property *Property) ObTypeString() string {
 	switch property.ObType {
 	case propertyTypeBool:
@@ -905,6 +908,7 @@ func (property *Property) ObTypeString() string {
 	}
 }
 
+// ObFlagsCombined called from the template
 func (property *Property) ObFlagsCombined() int {
 	var result = 0
 
@@ -915,9 +919,8 @@ func (property *Property) ObFlagsCombined() int {
 	return result
 }
 
-// called from the template
-// avoid GO error "variable declared and not used"
-func (entity *Entity) HasNonIdProperty() bool {
+// HasNonIDProperty called from the template. The goal is to void GO error "variable declared and not used"
+func (entity *Entity) HasNonIDProperty() bool {
 	for _, prop := range entity.Properties {
 		if prop != entity.IdProperty {
 			return true
@@ -927,6 +930,7 @@ func (entity *Entity) HasNonIdProperty() bool {
 	return false
 }
 
+// HasRelations called from the template.
 func (entity *Entity) HasRelations() bool {
 	for _, field := range entity.Fields {
 		if field.HasRelations() {
@@ -937,6 +941,7 @@ func (entity *Entity) HasRelations() bool {
 	return false
 }
 
+// HasLazyLoadedRelations called from the template.
 func (entity *Entity) HasLazyLoadedRelations() bool {
 	for _, field := range entity.Fields {
 		if field.HasLazyLoadedRelations() {
@@ -947,6 +952,7 @@ func (entity *Entity) HasLazyLoadedRelations() bool {
 	return false
 }
 
+// HasRelations called from the template.
 func (field *Field) HasRelations() bool {
 	if field.StandaloneRelation != nil || field.SimpleRelation != nil {
 		return true
@@ -961,6 +967,7 @@ func (field *Field) HasRelations() bool {
 	return false
 }
 
+// HasLazyLoadedRelations called from the template.
 func (field *Field) HasLazyLoadedRelations() bool {
 	if field.StandaloneRelation != nil && field.IsLazyLoaded {
 		return true
@@ -975,13 +982,12 @@ func (field *Field) HasLazyLoadedRelations() bool {
 	return false
 }
 
-// called from the template
-func (field *Field) IsId() bool {
+// IsID called from the template.
+func (field *Field) IsID() bool {
 	return field.Property == field.Entity.IdProperty
 }
 
-// calculates flatbuffers vTableOffset
-// called from the template
+// FbvTableOffset called from the template. Calculates flatbuffers vTableOffset.
 func (property *Property) FbvTableOffset() uint16 {
 	// derived from the FB generated code & https://google.github.io/flatbuffers/md__internals.html
 	var result = 4 + 2*uint32(property.FbSlot())
@@ -994,14 +1000,12 @@ func (property *Property) FbvTableOffset() uint16 {
 	return uint16(result)
 }
 
-// calculates flatbuffers slot number
-// called from the template
+// FbSlot is called from the template. It calculates flatbuffers slot number.
 func (property *Property) FbSlot() int {
 	return int(property.Id - 1)
 }
 
-// returns full path to the property (in embedded struct)
-// called from the template
+// Path is called from the template. It returns full path to the property (in embedded struct).
 func (property *Property) Path() string {
 	var parts = strings.Split(property.path, ".")
 

@@ -24,12 +24,12 @@ import (
 	"os"
 )
 
+// LoadOrCreateModel reads a model file or creates a new one if it doesn't exist
 func LoadOrCreateModel(path string) (model *ModelInfo, err error) {
 	if fileExists(path) {
-		return loadModelFromJsonFile(path)
-	} else {
-		return createModelJsonFile(path)
+		return loadModelFromJSONFile(path)
 	}
+	return createModelJSONFile(path)
 }
 
 // Close and unlock model
@@ -64,7 +64,7 @@ func fileExists(path string) bool {
 	return !os.IsNotExist(err)
 }
 
-func loadModelFromJsonFile(path string) (model *ModelInfo, err error) {
+func loadModelFromJSONFile(path string) (model *ModelInfo, err error) {
 	model = &ModelInfo{}
 
 	if model.file, err = os.OpenFile(path, os.O_RDWR, 0); err != nil {
@@ -93,7 +93,7 @@ func loadModelFromJsonFile(path string) (model *ModelInfo, err error) {
 	return model, nil
 }
 
-func createModelJsonFile(path string) (model *ModelInfo, err error) {
+func createModelJSONFile(path string) (model *ModelInfo, err error) {
 	model = createModelInfo()
 
 	// create a file handle so to have an exclusive access

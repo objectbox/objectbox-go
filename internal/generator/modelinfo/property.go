@@ -18,10 +18,11 @@ package modelinfo
 
 import "fmt"
 
+// Property in a model
 type Property struct {
 	Id             IdUid  `json:"id"`
 	Name           string `json:"name"`
-	IndexId        *IdUid `json:"indexId,omitempty"`
+	IndexId        *IdUid `json:"indexId,omitempty"` // a pointer because it may be nil
 	Type           int    `json:"type"`
 	Flags          int    `json:"flags,omitempty"`
 	RelationTarget string `json:"relationTarget,omitempty"`
@@ -29,6 +30,7 @@ type Property struct {
 	entity *Entity
 }
 
+// CreateProperty creates a property
 func CreateProperty(entity *Entity, id Id, uid Uid) *Property {
 	return &Property{
 		entity: entity,
@@ -36,7 +38,7 @@ func CreateProperty(entity *Entity, id Id, uid Uid) *Property {
 	}
 }
 
-// performs initial validation of loaded data so that it doesn't have to be checked in each function
+// Validate performs initial validation of loaded data so that it doesn't have to be checked in each function
 func (property *Property) Validate() error {
 	if property.entity == nil {
 		return fmt.Errorf("undefined parent entity")
@@ -65,19 +67,22 @@ func (property *Property) Validate() error {
 	return nil
 }
 
+// CreateIndex creates an index
 func (property *Property) CreateIndex() error {
 	if property.IndexId != nil {
 		return fmt.Errorf("can't create an index - it already exists")
 	}
 
-	if indexId, err := property.entity.model.createIndexId(); err != nil {
+	indexID, err := property.entity.model.createIndexID()
+	if err != nil {
 		return err
-	} else {
-		property.IndexId = &indexId
-		return nil
 	}
+
+	property.IndexId = &indexID
+	return nil
 }
 
+// RemoveIndex removes an index
 func (property *Property) RemoveIndex() error {
 	if property.IndexId == nil {
 		return fmt.Errorf("can't remove index - it's not defined")
@@ -90,8 +95,8 @@ func (property *Property) RemoveIndex() error {
 	return nil
 }
 
-// recursively checks whether given UID is present in the model
-func (property *Property) containsUid(searched Uid) bool {
+// containsUID recursively checks whether given UID is present in the model
+func (property *Property) containsUID(searched Uid) bool {
 	if property.Id.getUidSafe() == searched {
 		return true
 	}

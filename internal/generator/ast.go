@@ -81,11 +81,11 @@ func parseFile(sourceFile string) (f *file, err error) {
 }
 
 func getPackageName(filePath string) (string, error) {
-	if f, err := parser.ParseFile(&token.FileSet{}, filePath, nil, 0); err != nil {
+	f, err := parser.ParseFile(&token.FileSet{}, filePath, nil, 0)
+	if err != nil {
 		return "", err
-	} else {
-		return f.Name.Name, nil
 	}
+	return f.Name.Name, nil
 }
 
 func parserFilter(file os.FileInfo) bool {
@@ -124,11 +124,11 @@ func (f *file) getType(expr ast.Expr) (types.Type, error) {
 		}
 	}
 
-	if t := f.info.TypeOf(expr); t == nil {
+	t := f.info.TypeOf(expr)
+	if t == nil {
 		return nil, fmt.Errorf("type %s could not be resolved", expr)
-	} else {
-		return t, nil
 	}
+	return t, nil
 }
 
 func (f *file) walk(fn func(ast.Node) bool) {

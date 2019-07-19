@@ -23,10 +23,14 @@ import (
 	"strings"
 )
 
+// Id identifies a model element locally (e.g. property inside an entity)
 type Id = uint32
+
+// Uid identifies an element globally (i.e. is unique across the whole model)
 type Uid = uint64
 
 const (
+	// ModelVersion specifies current version of the model JSON file generated
 	ModelVersion = 5
 
 	// modelVersion supported by this parser & generator
@@ -34,6 +38,7 @@ const (
 	maxModelVersion = ModelVersion
 )
 
+// ModelInfo is a serialization interface for the model JSON file
 type ModelInfo struct {
 	// NOTE don't change order of these json exported properties because it will change users' model.json files
 	Note1                string    `json:"_note1"`
@@ -84,7 +89,7 @@ func (model *ModelInfo) fillMissing() {
 	model.Note3 = defaultModel.Note3
 }
 
-// performs initial validation of loaded data so that it doesn't have to be checked in each function
+// Validate performs initial validation of loaded data so that it doesn't have to be checked in each function
 func (model *ModelInfo) Validate() (err error) {
 	if model.ModelVersion < minModelVersion {
 		return fmt.Errorf("the loaded model is too old - version %d while the minimum supported is %d - "+
@@ -121,24 +126,24 @@ func (model *ModelInfo) Validate() (err error) {
 			return fmt.Errorf("lastEntityId: %s", err)
 		}
 
-		var lastId = model.LastEntityId.getIdSafe()
-		var lastUid = model.LastEntityId.getUidSafe()
+		var lastID = model.LastEntityId.getIdSafe()
+		var lastUID = model.LastEntityId.getUidSafe()
 
 		var found = false
 		for _, entity := range model.Entities {
-			if lastId == entity.Id.getIdSafe() {
-				if lastUid != entity.Id.getUidSafe() {
+			if lastID == entity.Id.getIdSafe() {
+				if lastUID != entity.Id.getUidSafe() {
 					return fmt.Errorf("lastEntityId %s doesn't match entity %s %s",
 						model.LastEntityId, entity.Name, entity.Id)
 				}
 				found = true
-			} else if lastId < entity.Id.getIdSafe() {
+			} else if lastID < entity.Id.getIdSafe() {
 				return fmt.Errorf("lastEntityId %s is lower than entity %s %s",
 					model.LastEntityId, entity.Name, entity.Id)
 			}
 		}
 
-		if !found && !searchSliceUid(model.RetiredEntityUids, lastUid) {
+		if !found && !searchSliceUID(model.RetiredEntityUids, lastUID) {
 			return fmt.Errorf("lastEntityId %s doesn't match any entity", model.LastEntityId)
 		}
 	}
@@ -155,8 +160,8 @@ func (model *ModelInfo) Validate() (err error) {
 		}
 
 		// find the last relation ID among entities' relations
-		var lastId = model.LastRelationId.getIdSafe()
-		var lastUid = model.LastRelationId.getUidSafe()
+		var lastID = model.LastRelationId.getIdSafe()
+		var lastUID = model.LastRelationId.getUidSafe()
 		var found = false
 
 		for _, entity := range model.Entities {
@@ -168,20 +173,20 @@ func (model *ModelInfo) Validate() (err error) {
 						relation.Name, relation.Id)
 				}
 
-				if lastId == relation.Id.getIdSafe() {
-					if lastUid != relation.Id.getUidSafe() {
+				if lastID == relation.Id.getIdSafe() {
+					if lastUID != relation.Id.getUidSafe() {
 						return fmt.Errorf("lastRelationId %s doesn't match relation %s %s",
 							model.LastRelationId, relation.Name, relation.Id)
 					}
 					found = true
-				} else if lastId < relation.Id.getIdSafe() {
+				} else if lastID < relation.Id.getIdSafe() {
 					return fmt.Errorf("lastRelationId %s is lower than relation %s %s",
 						model.LastRelationId, relation.Name, relation.Id)
 				}
 			}
 		}
 
-		if !found && !searchSliceUid(model.RetiredRelationUids, lastUid) {
+		if !found && !searchSliceUID(model.RetiredRelationUids, lastUID) {
 			return fmt.Errorf("lastRelationId %s doesn't match any relation", model.LastRelationId)
 		}
 	}
@@ -210,10 +215,11 @@ func (model *ModelInfo) hasRelations() bool {
 	return false
 }
 
-func (model *ModelInfo) FindEntityByUid(uid Uid) (*Entity, error) {
+// FindEntityByUID finds entity by UID
+func (model *ModelInfo) FindEntityByUID(uid Uid) (*Entity, error) {
 	for _, entity := range model.Entities {
-		entityUid, _ := entity.Id.GetUid()
-		if entityUid == uid {
+		uid, _ := entity.Id.GetUid()
+		if uid == uid {
 			return entity, nil
 		}
 	}
@@ -221,6 +227,7 @@ func (model *ModelInfo) FindEntityByUid(uid Uid) (*Entity, error) {
 	return nil, fmt.Errorf("entity with uid %d was not found", uid)
 }
 
+// FindEntityByName finds entity by name
 func (model *ModelInfo) FindEntityByName(name string) (*Entity, error) {
 	for _, entity := range model.Entities {
 		if strings.ToLower(entity.Name) == strings.ToLower(name) {
@@ -231,19 +238,20 @@ func (model *ModelInfo) FindEntityByName(name string) (*Entity, error) {
 	return nil, fmt.Errorf("entity named %s was not found", name)
 }
 
+// CreateEntity creates an entity
 func (model *ModelInfo) CreateEntity(name string) (*Entity, error) {
 	var id Id = 1
 	if len(model.Entities) > 0 {
 		id = model.LastEntityId.getIdSafe() + 1
 	}
 
-	uniqueUid, err := model.generateUid()
+	uniqueUID, err := model.generateUID()
 
 	if err != nil {
 		return nil, err
 	}
 
-	var entity = CreateEntity(model, id, uniqueUid)
+	var entity = CreateEntity(model, id, uniqueUID)
 	entity.Name = name
 
 	model.Entities = append(model.Entities, entity)
@@ -252,12 +260,12 @@ func (model *ModelInfo) CreateEntity(name string) (*Entity, error) {
 	return entity, nil
 }
 
-func (model *ModelInfo) generateUid() (result Uid, err error) {
+func (model *ModelInfo) generateUID() (result Uid, err error) {
 	result = 0
 
 	for i := 0; i < 1000; i++ {
 		t := Uid(model.Rand.Int63())
-		if !model.containsUid(t) {
+		if !model.containsUID(t) {
 			result = t
 			break
 		}
@@ -270,40 +278,40 @@ func (model *ModelInfo) generateUid() (result Uid, err error) {
 	return result, err
 }
 
-func (model *ModelInfo) createIndexId() (IdUid, error) {
+func (model *ModelInfo) createIndexID() (IdUid, error) {
 	var id Id = 1
 	if len(model.LastIndexId) > 0 {
 		id = model.LastIndexId.getIdSafe() + 1
 	}
 
-	uniqueUid, err := model.generateUid()
+	uniqueUID, err := model.generateUID()
 
 	if err != nil {
 		return "", err
 	}
 
-	model.LastIndexId = CreateIdUid(id, uniqueUid)
+	model.LastIndexId = CreateIdUid(id, uniqueUID)
 	return model.LastIndexId, nil
 }
 
-func (model *ModelInfo) createRelationId() (IdUid, error) {
+func (model *ModelInfo) createRelationID() (IdUid, error) {
 	var id Id = 1
 	if len(model.LastRelationId) > 0 {
 		id = model.LastRelationId.getIdSafe() + 1
 	}
 
-	uniqueUid, err := model.generateUid()
+	uniqueUID, err := model.generateUID()
 
 	if err != nil {
 		return "", err
 	}
 
-	model.LastRelationId = CreateIdUid(id, uniqueUid)
+	model.LastRelationId = CreateIdUid(id, uniqueUID)
 	return model.LastRelationId, nil
 }
 
 // recursively checks whether given UID is present in the model
-func (model *ModelInfo) containsUid(searched Uid) bool {
+func (model *ModelInfo) containsUID(searched Uid) bool {
 	if model.LastEntityId.getUidSafe() == searched {
 		return true
 	}
@@ -316,20 +324,20 @@ func (model *ModelInfo) containsUid(searched Uid) bool {
 		return true
 	}
 
-	if searchSliceUid(model.RetiredEntityUids, searched) {
+	if searchSliceUID(model.RetiredEntityUids, searched) {
 		return true
 	}
 
-	if searchSliceUid(model.RetiredIndexUids, searched) {
+	if searchSliceUID(model.RetiredIndexUids, searched) {
 		return true
 	}
 
-	if searchSliceUid(model.RetiredPropertyUids, searched) {
+	if searchSliceUID(model.RetiredPropertyUids, searched) {
 		return true
 	}
 
 	for _, entity := range model.Entities {
-		if entity.containsUid(searched) {
+		if entity.containsUID(searched) {
 			return true
 		}
 	}
@@ -338,7 +346,7 @@ func (model *ModelInfo) containsUid(searched Uid) bool {
 }
 
 // the passed slices are not too large so let's just do linear search
-func searchSliceUid(slice []Uid, searched Uid) bool {
+func searchSliceUID(slice []Uid, searched Uid) bool {
 	for _, i := range slice {
 		if i == searched {
 			return true

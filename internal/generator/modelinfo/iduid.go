@@ -22,13 +22,15 @@ import (
 	"strings"
 )
 
+// IdUid represents a "ID:UID" string as used in the model jSON
 type IdUid string
 
+// CreateIdUid creates a string representation of ID and UID
 func CreateIdUid(id Id, uid Uid) IdUid {
 	return IdUid(strconv.FormatInt(int64(id), 10) + ":" + strconv.FormatUint(uid, 10))
 }
 
-// performs initial validation of loaded data so that it doesn't have to be checked in each function
+// Validate performs initial validation of loaded data so that it doesn't have to be checked in each function
 func (str *IdUid) Validate() error {
 	if _, err := str.GetUid(); err != nil {
 		return fmt.Errorf("uid: %s", err)
@@ -45,18 +47,21 @@ func (str *IdUid) Validate() error {
 	return nil
 }
 
+// GetId returns the ID part
 func (str IdUid) GetId() (Id, error) {
-	if i, err := str.getComponent(0, 32); err != nil {
+	id, err := str.getComponent(0, 32)
+	if err != nil {
 		return 0, err
-	} else {
-		return Id(i), nil
 	}
+	return Id(id), nil
 }
 
+// GetUid returns the UID part
 func (str *IdUid) GetUid() (Uid, error) {
 	return str.getComponent(1, 64)
 }
 
+// Get returns a pair of ID and UID
 func (str *IdUid) Get() (Id, Uid, error) {
 	if id, err := str.GetId(); err != nil {
 		return 0, 0, err

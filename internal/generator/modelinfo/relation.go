@@ -21,6 +21,7 @@ import (
 	"fmt"
 )
 
+// StandaloneRelation in a model
 type StandaloneRelation struct {
 	Id       IdUid   `json:"id"`
 	Name     string  `json:"name"`
@@ -30,11 +31,12 @@ type StandaloneRelation struct {
 	entity *Entity
 }
 
+// CreateStandaloneRelation creates a standalone relation
 func CreateStandaloneRelation(entity *Entity, id IdUid) *StandaloneRelation {
 	return &StandaloneRelation{entity: entity, Id: id}
 }
 
-// performs initial validation of loaded data so that it doesn't have to be checked in each function
+// Validate performs initial validation of loaded data so that it doesn't have to be checked in each function
 func (relation *StandaloneRelation) Validate() error {
 	if err := relation.Id.Validate(); err != nil {
 		return err
@@ -63,6 +65,7 @@ func (relation *StandaloneRelation) Validate() error {
 	return nil
 }
 
+// SetTarget sets the relation target entity
 func (relation *StandaloneRelation) SetTarget(entity *Entity) {
 	relation.Target = entity
 	relation.TargetId = entity.Id

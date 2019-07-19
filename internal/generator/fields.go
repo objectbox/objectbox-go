@@ -116,11 +116,11 @@ func (expr astTypeExpr) Underlying() types.Type {
 }
 
 func (expr astTypeExpr) UnderlyingOrError() (types.Type, error) {
-	if t, err := expr.source.getType(expr.Expr); err != nil {
+	t, err := expr.source.getType(expr.Expr)
+	if err != nil {
 		return nil, err
-	} else {
-		return t.Underlying(), nil
 	}
+	return t.Underlying(), nil
 }
 
 //endregion

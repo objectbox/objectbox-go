@@ -162,32 +162,31 @@ func goStringArrayToC(values []string) *stringArray {
 }
 
 func goInt64ArrayToC(values []int64) *C.int64_t {
-	if len(values) > 0 {
-		return (*C.int64_t)(unsafe.Pointer(&values[0]))
+	if len(values) == 0 {
+		return nil
 	}
-	return nil
+	return (*C.int64_t)(unsafe.Pointer(&values[0]))
 }
 
 func goInt32ArrayToC(values []int32) *C.int32_t {
-	if len(values) > 0 {
-		return (*C.int32_t)(unsafe.Pointer(&values[0]))
+	if len(values) == 0 {
+		return nil
 	}
-	return nil
+	return (*C.int32_t)(unsafe.Pointer(&values[0]))
 }
 
 func goUint64ArrayToCObxId(values []uint64) *C.obx_id {
-	if len(values) > 0 {
-		return (*C.obx_id)(unsafe.Pointer(&values[0]))
-	} else {
+	if len(values) == 0 {
 		return nil
 	}
+	return (*C.obx_id)(unsafe.Pointer(&values[0]))
 }
 
 func cBytesPtr(value []byte) unsafe.Pointer {
-	if len(value) >= 1 {
-		return unsafe.Pointer(&value[0])
+	if len(value) == 0 {
+		return nil
 	}
-	return nil
+	return unsafe.Pointer(&value[0])
 }
 
 // Maps a C void* to the given byte-slice. The void* is not garbage collected and must be managed outside.

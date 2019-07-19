@@ -21,12 +21,12 @@ import (
 	"strconv"
 )
 
-// implements "StringIdConvert" property value converter
+// StringIdConvertToEntityProperty implements "StringIdConvert" property value converter
 func StringIdConvertToEntityProperty(dbValue uint64) (goValue string) {
 	return strconv.FormatUint(dbValue, 10)
 }
 
-// implements "StringIdConvert" property value converter
+// StringIdConvertToDatabaseValue implements "StringIdConvert" property value converter
 func StringIdConvertToDatabaseValue(goValue string) uint64 {
 	// in case the object was initialized by the user without setting the ID explicitly
 	if goValue == "" {

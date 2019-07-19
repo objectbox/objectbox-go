@@ -102,7 +102,7 @@ func (builder *Builder) MaxReaders(maxReaders uint) *Builder {
 // AsyncTimeout configures the default enqueue timeout for async operations (default is 1 second).
 // See Box.PutAsync method doc for more information.
 // TODO: implement this option in core and use it
-func (builder *Builder) asyncTimeout_(milliseconds uint) *Builder {
+func (builder *Builder) asyncTimeoutTBD(milliseconds uint) *Builder {
 	builder.asyncTimeout = milliseconds
 	return builder
 }
@@ -173,11 +173,11 @@ func (builder *Builder) BuildOrError() (*ObjectBox, error) {
 
 	C.obx_opt_model(cOptions, builder.model.cModel)
 
+	// cOptions is consumed by obx_store_open() so no need to free it
 	cStore := C.obx_store_open(cOptions)
 	if cStore == nil {
 		return nil, createError()
 	}
-	cOptions = nil // consumed by obx_store_open()
 
 	ob := &ObjectBox{
 		store:          cStore,

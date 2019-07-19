@@ -46,6 +46,7 @@ func (relation *RelationToOne) Link(conditions ...Condition) Condition {
 	return &conditionRelationOneToMany{relation, conditions}
 }
 
+// Equals finds entities with relation target ID equal to the given value
 func (relation RelationToOne) Equals(value uint64) Condition {
 	return &conditionClosure{
 		func(qb *QueryBuilder) (ConditionId, error) {
@@ -54,6 +55,7 @@ func (relation RelationToOne) Equals(value uint64) Condition {
 	}
 }
 
+// NotEquals finds entities with relation target ID different than the given value
 func (relation RelationToOne) NotEquals(value uint64) Condition {
 	return &conditionClosure{
 		func(qb *QueryBuilder) (ConditionId, error) {
@@ -72,6 +74,7 @@ func (relation RelationToOne) int64Slice(values []uint64) []int64 {
 	return result
 }
 
+// In finds entities with relation target ID equal to any of the given values
 func (relation RelationToOne) In(values ...uint64) Condition {
 	return &conditionClosure{
 		func(qb *QueryBuilder) (ConditionId, error) {
@@ -80,6 +83,7 @@ func (relation RelationToOne) In(values ...uint64) Condition {
 	}
 }
 
+// NotIn finds entities with relation target ID not equal to any the given values
 func (relation RelationToOne) NotIn(values ...uint64) Condition {
 	return &conditionClosure{
 		func(qb *QueryBuilder) (ConditionId, error) {

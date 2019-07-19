@@ -261,7 +261,7 @@ func (binding *Binding) createEntityFromAst(strct *ast.StructType, name string, 
 				(strings.ToLower(property.GoType) == "uint64" || strings.ToLower(property.GoType) == "string") {
 				if entity.IdProperty == nil {
 					entity.IdProperty = property
-					property.addObFlag(propertyFlagID)
+					property.addObFlag(propertyFlagId)
 				} else {
 					// fail in case multiple fields match this condition
 					return fmt.Errorf(
@@ -424,7 +424,7 @@ func (entity *Entity) addFields(fields fieldList, fieldPath, prefix string) ([]*
 		}
 		entity.propertiesByName[realObName] = true
 
-		if err := property.handleUID(); err != nil {
+		if err := property.handleUid(); err != nil {
 			return nil, propertyError(err, property)
 		}
 
@@ -506,7 +506,7 @@ func (field *Field) processType(f field) (fields fieldList, err error) {
 			return nil, err
 		}
 
-		if err := property.handleUID(); err != nil {
+		if err := property.handleUid(); err != nil {
 			return nil, err
 		}
 
@@ -675,7 +675,7 @@ func (property *Property) setRelation(target string, manyToMany bool) error {
 	return nil
 }
 
-func (property *Property) handleUID() error {
+func (property *Property) handleUid() error {
 	if property.Annotations["uid"] != nil {
 		if len(property.Annotations["uid"].Value) == 0 {
 			// in case the user doesn't provide `objectbox:"uid"` value, it's considered in-process of setting up UID
@@ -830,7 +830,7 @@ func (property *Property) setIndex() error {
 
 func (property *Property) setObFlags() error {
 	if property.Annotations["id"] != nil {
-		property.addObFlag(propertyFlagID)
+		property.addObFlag(propertyFlagId)
 	}
 
 	if property.Annotations["index"] != nil {
@@ -919,8 +919,8 @@ func (property *Property) ObFlagsCombined() int {
 	return result
 }
 
-// HasNonIDProperty called from the template. The goal is to void GO error "variable declared and not used"
-func (entity *Entity) HasNonIDProperty() bool {
+// HasNonIdProperty called from the template. The goal is to void GO error "variable declared and not used"
+func (entity *Entity) HasNonIdProperty() bool {
 	for _, prop := range entity.Properties {
 		if prop != entity.IdProperty {
 			return true
@@ -982,8 +982,8 @@ func (field *Field) HasLazyLoadedRelations() bool {
 	return false
 }
 
-// IsID called from the template.
-func (field *Field) IsID() bool {
+// IsId called from the template.
+func (field *Field) IsId() bool {
 	return field.Property == field.Entity.IdProperty
 }
 

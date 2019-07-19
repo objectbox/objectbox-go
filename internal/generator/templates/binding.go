@@ -181,7 +181,7 @@ func ({{$entityNameCamel}}_EntityInfo) PutRelated(ob *objectbox.ObjectBox, objec
 
 // Flatten is called by ObjectBox to transform an object to a FlatBuffer
 func ({{$entityNameCamel}}_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) error {
-    {{if $entity.HasNonIDProperty -}}
+    {{if $entity.HasNonIdProperty -}}
 		{{- if not $.Options.ByValue}}obj := object.(*{{$entity.Name}}) 
 		{{- else -}}
 		var obj *{{$entity.Name}}
@@ -283,7 +283,7 @@ func ({{$entityNameCamel}}_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byt
 					{{- if $field.IsLazyLoaded}}nil, // use {{$field.Entity.Name}}Box::Fetch{{$field.Name}}() to fetch this lazy-loaded relation
 					{{- else}}rel{{$field.Name}},
 					{{- end}}
-        		{{- else if $field.IsID}}{{with $field.Property}}
+        		{{- else if $field.IsId}}{{with $field.Property}}
 					{{- if .Converter}}{{.Converter}}ToEntityProperty(
 					{{- else if .CastOnWrite}}{{.CastOnWrite}}({{end -}}
 					id

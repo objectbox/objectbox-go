@@ -32,19 +32,19 @@ import (
 
 const (
 	// DebugflagsLogTransactionsRead enable read transaction logging
-	DebugflagsLogTransactionsRead  = 1
+	DebugflagsLogTransactionsRead = 1
 
 	// DebugflagsLogTransactionsWrite enable write transaction logging
 	DebugflagsLogTransactionsWrite = 2
 
 	// DebugflagsLogQueries enable query logging
-	DebugflagsLogQueries           = 4
+	DebugflagsLogQueries = 4
 
 	// DebugflagsLogQueryParameters enable query parameters logging
-	DebugflagsLogQueryParameters   = 8
+	DebugflagsLogQueryParameters = 8
 
 	// DebugflagsLogAsyncQueue enable async operations logging
-	DebugflagsLogAsyncQueue        = 16
+	DebugflagsLogAsyncQueue = 16
 )
 
 const (

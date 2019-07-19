@@ -17,7 +17,7 @@
 package generator
 
 const (
-	propertyFlagID = 1
+	propertyFlagId = 1
 
 	propertyFlagNonPrimitiveType = 2
 
@@ -29,9 +29,9 @@ const (
 
 	propertyFlagUnique = 32
 
-	propertyFlaIDMonotonicSequence = 64
+	propertyFlaIdMonotonicSequence = 64
 
-	propertyFlagIDSelfAssignable = 128
+	propertyFlagIdSelfAssignable = 128
 
 	propertyFlagIndexPartialSkipNull = 256
 

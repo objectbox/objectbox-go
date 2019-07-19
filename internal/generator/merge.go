@@ -47,7 +47,7 @@ func mergeBindingWithModelInfo(binding *Binding, modelInfo *modelinfo.ModelInfo)
 
 func getModelEntity(bindingEntity *Entity, modelInfo *modelinfo.ModelInfo) (*modelinfo.Entity, error) {
 	if bindingEntity.Uid != 0 {
-		return modelInfo.FindEntityByUID(bindingEntity.Uid)
+		return modelInfo.FindEntityByUid(bindingEntity.Uid)
 	}
 
 	// we don't care about this error = either the entity is found or we create it
@@ -141,7 +141,7 @@ func mergeModelEntity(bindingEntity *Entity, modelEntity *modelinfo.Entity, mode
 
 func getModelProperty(bindingProperty *Property, modelEntity *modelinfo.Entity) (*modelinfo.Property, error) {
 	if bindingProperty.Uid != 0 {
-		return modelEntity.FindPropertyByUID(bindingProperty.Uid)
+		return modelEntity.FindPropertyByUid(bindingProperty.Uid)
 	}
 
 	// we don't care about this error, either the property is found or we create it
@@ -222,7 +222,7 @@ func bindingPropertyExists(modelProperty *modelinfo.Property, bindingEntity *Ent
 
 func getModelRelation(bindingRelation *StandaloneRelation, modelEntity *modelinfo.Entity) (*modelinfo.StandaloneRelation, error) {
 	if bindingRelation.Uid != 0 {
-		return modelEntity.FindRelationByUID(bindingRelation.Uid)
+		return modelEntity.FindRelationByUid(bindingRelation.Uid)
 	}
 
 	// we don't care about this error, either the relation is found or we create it

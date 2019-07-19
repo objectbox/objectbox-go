@@ -19,14 +19,12 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"github.com/objectbox/objectbox-go/examples/tasks/internal/model"
+	"github.com/objectbox/objectbox-go/objectbox"
 	"os"
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/objectbox/objectbox-go/objectbox"
-
-	"github.com/objectbox/objectbox-go/examples/tasks/internal/model"
 )
 
 func main() {
@@ -114,8 +112,8 @@ func createTask(box *model.TaskBox, text string) {
 	if id, err := box.Put(task); err != nil {
 		fmt.Fprintf(os.Stderr, "could not create task: %s\n", err)
 	} else {
-		task.ID = id
-		fmt.Printf("task ID %d successfully created\n", task.ID)
+		task.Id = id
+		fmt.Printf("task ID %d successfully created\n", task.Id)
 	}
 }
 
@@ -138,7 +136,7 @@ func printList(box *model.TaskBox, all bool) {
 	fmt.Printf("%3s  %-29s  %-29s  %s\n", "ID", "Created", "Finished", "Text")
 	for _, task := range list {
 		fmt.Printf("%3d  %-29s  %-29s  %s\n",
-			task.ID, fmtTime(task.DateCreated), fmtTime(task.DateFinished), task.Text)
+			task.Id, fmtTime(task.DateCreated), fmtTime(task.DateFinished), task.Text)
 	}
 }
 

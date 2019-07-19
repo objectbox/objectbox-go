@@ -23,12 +23,12 @@ var TaskBinding = task_EntityInfo{
 
 // Task_ contains type-based Property helpers to facilitate some common operations such as Queries.
 var Task_ = struct {
-	ID           *objectbox.PropertyUint64
+	Id           *objectbox.PropertyUint64
 	Text         *objectbox.PropertyString
 	DateCreated  *objectbox.PropertyInt64
 	DateFinished *objectbox.PropertyInt64
 }{
-	ID: &objectbox.PropertyUint64{
+	Id: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
 			Id:     1,
 			Entity: &TaskBinding.Entity,
@@ -62,7 +62,7 @@ func (task_EntityInfo) GeneratorVersion() int {
 // AddToModel is called by ObjectBox during model build
 func (task_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("Task", 1, 1306759095002958910)
-	model.Property("ID", 6, 1, 2193439623591184445)
+	model.Property("Id", 6, 1, 2193439623591184445)
 	model.PropertyFlags(8193)
 	model.Property("Text", 9, 2, 6177929178231325611)
 	model.Property("DateCreated", 6, 3, 9141374017424160113)
@@ -72,12 +72,12 @@ func (task_EntityInfo) AddToModel(model *objectbox.Model) {
 
 // GetId is called by ObjectBox during Put operations to check for existing ID on an object
 func (task_EntityInfo) GetId(object interface{}) (uint64, error) {
-	return object.(*Task).ID, nil
+	return object.(*Task).Id, nil
 }
 
 // SetId is called by ObjectBox during Put to update an ID on an object that has just been inserted
 func (task_EntityInfo) SetId(object interface{}, id uint64) {
-	object.(*Task).ID = id
+	object.(*Task).Id = id
 }
 
 // PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
@@ -108,7 +108,7 @@ func (task_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{},
 	var id = table.GetUint64Slot(4, 0)
 
 	return &Task{
-		ID:           id,
+		Id:           id,
 		Text:         fbutils.GetStringSlot(table, 6),
 		DateCreated:  fbutils.GetInt64Slot(table, 8),
 		DateFinished: fbutils.GetInt64Slot(table, 10),
@@ -138,14 +138,14 @@ func BoxForTask(ob *objectbox.ObjectBox) *TaskBox {
 }
 
 // Put synchronously inserts/updates a single object.
-// In case the ID is not specified, it would be assigned automatically (auto-increment).
-// When inserting, the Task.ID property on the passed object will be assigned the new ID as well.
+// In case the Id is not specified, it would be assigned automatically (auto-increment).
+// When inserting, the Task.Id property on the passed object will be assigned the new ID as well.
 func (box *TaskBox) Put(object *Task) (uint64, error) {
 	return box.Box.Put(object)
 }
 
 // PutAsync asynchronously inserts/updates a single object.
-// When inserting, the Task.ID property on the passed object will be assigned the new ID as well.
+// When inserting, the Task.Id property on the passed object will be assigned the new ID as well.
 //
 // It's executed on a separate internal thread for better performance.
 //
@@ -167,12 +167,12 @@ func (box *TaskBox) PutAsync(object *Task) (uint64, error) {
 }
 
 // PutMany inserts multiple objects in single transaction.
-// In case IDs are not set on the objects, they would be assigned automatically (auto-increment).
+// In case Ids are not set on the objects, they would be assigned automatically (auto-increment).
 //
 // Returns: IDs of the put objects (in the same order).
-// When inserting, the Task.ID property on the objects in the slice will be assigned the new IDs as well.
+// When inserting, the Task.Id property on the objects in the slice will be assigned the new IDs as well.
 //
-// Note: In case an error occurs during the transaction, some of the objects may already have the Task.ID assigned
+// Note: In case an error occurs during the transaction, some of the objects may already have the Task.Id assigned
 // even though the transaction has been rolled back and the objects are not stored under those IDs.
 //
 // Note: The slice may be empty or even nil; in both cases, an empty IDs slice and no error is returned.
@@ -225,7 +225,7 @@ func (box *TaskBox) Remove(object *Task) error {
 func (box *TaskBox) RemoveMany(objects ...*Task) (uint64, error) {
 	var ids = make([]uint64, len(objects))
 	for k, object := range objects {
-		ids[k] = object.ID
+		ids[k] = object.Id
 	}
 	return box.Box.RemoveIds(ids...)
 }
@@ -252,8 +252,8 @@ func (box *TaskBox) QueryOrError(conditions ...objectbox.Condition) (*TaskQuery,
 
 // Query provides a way to search stored objects
 //
-// For example, you can find all Task which ID is either 42 or 47:
-// 		box.Query(Task_.ID.In(42, 47)).Find()
+// For example, you can find all Task which Id is either 42 or 47:
+// 		box.Query(Task_.Id.In(42, 47)).Find()
 type TaskQuery struct {
 	*objectbox.Query
 }

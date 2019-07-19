@@ -73,12 +73,12 @@ func (property *Property) CreateIndex() error {
 		return fmt.Errorf("can't create an index - it already exists")
 	}
 
-	indexID, err := property.entity.model.createIndexID()
+	indexId, err := property.entity.model.createIndexId()
 	if err != nil {
 		return err
 	}
 
-	property.IndexId = &indexID
+	property.IndexId = &indexId
 	return nil
 }
 
@@ -95,8 +95,8 @@ func (property *Property) RemoveIndex() error {
 	return nil
 }
 
-// containsUID recursively checks whether given UID is present in the model
-func (property *Property) containsUID(searched Uid) bool {
+// containsUid recursively checks whether given Uid is present in the model
+func (property *Property) containsUid(searched Uid) bool {
 	if property.Id.getUidSafe() == searched {
 		return true
 	}

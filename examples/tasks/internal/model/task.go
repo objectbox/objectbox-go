@@ -20,7 +20,7 @@ package model
 
 // Task model
 type Task struct {
-	ID           uint64
+	Id           uint64
 	Text         string
 	DateCreated  int64
 	DateFinished int64

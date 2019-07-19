@@ -126,24 +126,24 @@ func (model *ModelInfo) Validate() (err error) {
 			return fmt.Errorf("lastEntityId: %s", err)
 		}
 
-		var lastID = model.LastEntityId.getIdSafe()
-		var lastUID = model.LastEntityId.getUidSafe()
+		var lastId = model.LastEntityId.getIdSafe()
+		var lastUid = model.LastEntityId.getUidSafe()
 
 		var found = false
 		for _, entity := range model.Entities {
-			if lastID == entity.Id.getIdSafe() {
-				if lastUID != entity.Id.getUidSafe() {
+			if lastId == entity.Id.getIdSafe() {
+				if lastUid != entity.Id.getUidSafe() {
 					return fmt.Errorf("lastEntityId %s doesn't match entity %s %s",
 						model.LastEntityId, entity.Name, entity.Id)
 				}
 				found = true
-			} else if lastID < entity.Id.getIdSafe() {
+			} else if lastId < entity.Id.getIdSafe() {
 				return fmt.Errorf("lastEntityId %s is lower than entity %s %s",
 					model.LastEntityId, entity.Name, entity.Id)
 			}
 		}
 
-		if !found && !searchSliceUID(model.RetiredEntityUids, lastUID) {
+		if !found && !searchSliceUid(model.RetiredEntityUids, lastUid) {
 			return fmt.Errorf("lastEntityId %s doesn't match any entity", model.LastEntityId)
 		}
 	}
@@ -160,8 +160,8 @@ func (model *ModelInfo) Validate() (err error) {
 		}
 
 		// find the last relation ID among entities' relations
-		var lastID = model.LastRelationId.getIdSafe()
-		var lastUID = model.LastRelationId.getUidSafe()
+		var lastId = model.LastRelationId.getIdSafe()
+		var lastUid = model.LastRelationId.getUidSafe()
 		var found = false
 
 		for _, entity := range model.Entities {
@@ -173,20 +173,20 @@ func (model *ModelInfo) Validate() (err error) {
 						relation.Name, relation.Id)
 				}
 
-				if lastID == relation.Id.getIdSafe() {
-					if lastUID != relation.Id.getUidSafe() {
+				if lastId == relation.Id.getIdSafe() {
+					if lastUid != relation.Id.getUidSafe() {
 						return fmt.Errorf("lastRelationId %s doesn't match relation %s %s",
 							model.LastRelationId, relation.Name, relation.Id)
 					}
 					found = true
-				} else if lastID < relation.Id.getIdSafe() {
+				} else if lastId < relation.Id.getIdSafe() {
 					return fmt.Errorf("lastRelationId %s is lower than relation %s %s",
 						model.LastRelationId, relation.Name, relation.Id)
 				}
 			}
 		}
 
-		if !found && !searchSliceUID(model.RetiredRelationUids, lastUID) {
+		if !found && !searchSliceUid(model.RetiredRelationUids, lastUid) {
 			return fmt.Errorf("lastRelationId %s doesn't match any relation", model.LastRelationId)
 		}
 	}
@@ -215,8 +215,8 @@ func (model *ModelInfo) hasRelations() bool {
 	return false
 }
 
-// FindEntityByUID finds entity by UID
-func (model *ModelInfo) FindEntityByUID(uid Uid) (*Entity, error) {
+// FindEntityByUid finds entity by Uid
+func (model *ModelInfo) FindEntityByUid(uid Uid) (*Entity, error) {
 	for _, entity := range model.Entities {
 		uid, _ := entity.Id.GetUid()
 		if uid == uid {
@@ -245,13 +245,13 @@ func (model *ModelInfo) CreateEntity(name string) (*Entity, error) {
 		id = model.LastEntityId.getIdSafe() + 1
 	}
 
-	uniqueUID, err := model.generateUID()
+	uniqueUid, err := model.generateUid()
 
 	if err != nil {
 		return nil, err
 	}
 
-	var entity = CreateEntity(model, id, uniqueUID)
+	var entity = CreateEntity(model, id, uniqueUid)
 	entity.Name = name
 
 	model.Entities = append(model.Entities, entity)
@@ -260,12 +260,12 @@ func (model *ModelInfo) CreateEntity(name string) (*Entity, error) {
 	return entity, nil
 }
 
-func (model *ModelInfo) generateUID() (result Uid, err error) {
+func (model *ModelInfo) generateUid() (result Uid, err error) {
 	result = 0
 
 	for i := 0; i < 1000; i++ {
 		t := Uid(model.Rand.Int63())
-		if !model.containsUID(t) {
+		if !model.containsUid(t) {
 			result = t
 			break
 		}
@@ -278,40 +278,40 @@ func (model *ModelInfo) generateUID() (result Uid, err error) {
 	return result, err
 }
 
-func (model *ModelInfo) createIndexID() (IdUid, error) {
+func (model *ModelInfo) createIndexId() (IdUid, error) {
 	var id Id = 1
 	if len(model.LastIndexId) > 0 {
 		id = model.LastIndexId.getIdSafe() + 1
 	}
 
-	uniqueUID, err := model.generateUID()
+	uniqueUid, err := model.generateUid()
 
 	if err != nil {
 		return "", err
 	}
 
-	model.LastIndexId = CreateIdUid(id, uniqueUID)
+	model.LastIndexId = CreateIdUid(id, uniqueUid)
 	return model.LastIndexId, nil
 }
 
-func (model *ModelInfo) createRelationID() (IdUid, error) {
+func (model *ModelInfo) createRelationId() (IdUid, error) {
 	var id Id = 1
 	if len(model.LastRelationId) > 0 {
 		id = model.LastRelationId.getIdSafe() + 1
 	}
 
-	uniqueUID, err := model.generateUID()
+	uniqueUid, err := model.generateUid()
 
 	if err != nil {
 		return "", err
 	}
 
-	model.LastRelationId = CreateIdUid(id, uniqueUID)
+	model.LastRelationId = CreateIdUid(id, uniqueUid)
 	return model.LastRelationId, nil
 }
 
 // recursively checks whether given UID is present in the model
-func (model *ModelInfo) containsUID(searched Uid) bool {
+func (model *ModelInfo) containsUid(searched Uid) bool {
 	if model.LastEntityId.getUidSafe() == searched {
 		return true
 	}
@@ -324,20 +324,20 @@ func (model *ModelInfo) containsUID(searched Uid) bool {
 		return true
 	}
 
-	if searchSliceUID(model.RetiredEntityUids, searched) {
+	if searchSliceUid(model.RetiredEntityUids, searched) {
 		return true
 	}
 
-	if searchSliceUID(model.RetiredIndexUids, searched) {
+	if searchSliceUid(model.RetiredIndexUids, searched) {
 		return true
 	}
 
-	if searchSliceUID(model.RetiredPropertyUids, searched) {
+	if searchSliceUid(model.RetiredPropertyUids, searched) {
 		return true
 	}
 
 	for _, entity := range model.Entities {
-		if entity.containsUID(searched) {
+		if entity.containsUid(searched) {
 			return true
 		}
 	}
@@ -346,7 +346,7 @@ func (model *ModelInfo) containsUID(searched Uid) bool {
 }
 
 // the passed slices are not too large so let's just do linear search
-func searchSliceUID(slice []Uid, searched Uid) bool {
+func searchSliceUid(slice []Uid, searched Uid) bool {
 	for _, i := range slice {
 		if i == searched {
 			return true

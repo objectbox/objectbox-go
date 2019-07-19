@@ -60,8 +60,8 @@ func (entity *Entity) Validate() (err error) {
 			return fmt.Errorf("lastPropertyId: %s", err)
 		}
 
-		var lastID = entity.LastPropertyId.getIdSafe()
-		var lastUID = entity.LastPropertyId.getUidSafe()
+		var lastId = entity.LastPropertyId.getIdSafe()
+		var lastUid = entity.LastPropertyId.getUidSafe()
 
 		var found = false
 		for _, property := range entity.Properties {
@@ -72,19 +72,19 @@ func (entity *Entity) Validate() (err error) {
 					property.Name, property.Id)
 			}
 
-			if lastID == property.Id.getIdSafe() {
-				if lastUID != property.Id.getUidSafe() {
+			if lastId == property.Id.getIdSafe() {
+				if lastUid != property.Id.getUidSafe() {
 					return fmt.Errorf("lastPropertyId %s doesn't match relation %s %s",
 						entity.LastPropertyId, property.Name, property.Id)
 				}
 				found = true
-			} else if lastID < property.Id.getIdSafe() {
+			} else if lastId < property.Id.getIdSafe() {
 				return fmt.Errorf("lastPropertyId %s is lower than relation %s %s",
 					entity.LastPropertyId, property.Name, property.Id)
 			}
 		}
 
-		if !found && !searchSliceUID(entity.model.RetiredPropertyUids, lastUID) {
+		if !found && !searchSliceUid(entity.model.RetiredPropertyUids, lastUid) {
 			return fmt.Errorf("lastPropertyId %s doesn't match any relation", entity.LastPropertyId)
 		}
 	}
@@ -116,11 +116,11 @@ func (entity *Entity) Validate() (err error) {
 	return nil
 }
 
-// FindPropertyByUID finds a property by UID
-func (entity *Entity) FindPropertyByUID(uid Uid) (*Property, error) {
+// FindPropertyByUid finds a property by Uid
+func (entity *Entity) FindPropertyByUid(uid Uid) (*Property, error) {
 	for _, property := range entity.Properties {
-		propertyUID, _ := property.Id.GetUid()
-		if propertyUID == uid {
+		propertyUid, _ := property.Id.GetUid()
+		if propertyUid == uid {
 			return property, nil
 		}
 	}
@@ -146,13 +146,13 @@ func (entity *Entity) CreateProperty() (*Property, error) {
 		id = entity.LastPropertyId.getIdSafe() + 1
 	}
 
-	uniqueUID, err := entity.model.generateUID()
+	uniqueUid, err := entity.model.generateUid()
 
 	if err != nil {
 		return nil, err
 	}
 
-	var property = CreateProperty(entity, id, uniqueUID)
+	var property = CreateProperty(entity, id, uniqueUid)
 
 	entity.Properties = append(entity.Properties, property)
 	entity.LastPropertyId = property.Id
@@ -189,11 +189,11 @@ func (entity *Entity) RemoveProperty(property *Property) error {
 	return nil
 }
 
-// FindRelationByUID Finds relation by UID
-func (entity *Entity) FindRelationByUID(uid Uid) (*StandaloneRelation, error) {
+// FindRelationByUid Finds relation by Uid
+func (entity *Entity) FindRelationByUid(uid Uid) (*StandaloneRelation, error) {
 	for _, relation := range entity.Relations {
-		relationUID, _ := relation.Id.GetUid()
-		if relationUID == uid {
+		relationUid, _ := relation.Id.GetUid()
+		if relationUid == uid {
 			return relation, nil
 		}
 	}
@@ -214,7 +214,7 @@ func (entity *Entity) FindRelationByName(name string) (*StandaloneRelation, erro
 
 // CreateRelation creates relation
 func (entity *Entity) CreateRelation() (*StandaloneRelation, error) {
-	id, err := entity.model.createRelationID()
+	id, err := entity.model.createRelationId()
 	if err != nil {
 		return nil, err
 	}
@@ -246,8 +246,8 @@ func (entity *Entity) RemoveRelation(relation *StandaloneRelation) error {
 	return nil
 }
 
-// containsUID recursively checks whether given UID is present in the model
-func (entity *Entity) containsUID(searched Uid) bool {
+// containsUid recursively checks whether given Uid is present in the model
+func (entity *Entity) containsUid(searched Uid) bool {
 	if entity.Id.getUidSafe() == searched {
 		return true
 	}
@@ -257,7 +257,7 @@ func (entity *Entity) containsUID(searched Uid) bool {
 	}
 
 	for _, property := range entity.Properties {
-		if property.containsUID(searched) {
+		if property.containsUid(searched) {
 			return true
 		}
 	}

@@ -114,8 +114,8 @@ func createTask(box *model.TaskBox, text string) {
 	if id, err := box.Put(task); err != nil {
 		fmt.Fprintf(os.Stderr, "could not create task: %s\n", err)
 	} else {
-		task.Id = id
-		fmt.Printf("task ID %d successfully created\n", task.Id)
+		task.ID = id
+		fmt.Printf("task ID %d successfully created\n", task.ID)
 	}
 }
 
@@ -138,7 +138,7 @@ func printList(box *model.TaskBox, all bool) {
 	fmt.Printf("%3s  %-29s  %-29s  %s\n", "ID", "Created", "Finished", "Text")
 	for _, task := range list {
 		fmt.Printf("%3d  %-29s  %-29s  %s\n",
-			task.Id, fmtTime(task.DateCreated), fmtTime(task.DateFinished), task.Text)
+			task.ID, fmtTime(task.DateCreated), fmtTime(task.DateFinished), task.Text)
 	}
 }
 
@@ -158,11 +158,10 @@ func setDone(box *model.TaskBox, id uint64) {
 }
 
 func fmtTime(obTimestamp int64) string {
-	if obTimestamp == 0 {
-		return ""
-	} else {
+	if obTimestamp != 0 {
 		return time.Unix(obTimestamp/1000, obTimestamp%1000*1000000).String()
 	}
+	return ""
 }
 
 func obNow() int64 {

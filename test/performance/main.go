@@ -22,8 +22,6 @@ import (
 	"os"
 	"runtime"
 	"runtime/debug"
-
-	"github.com/objectbox/objectbox-go/test/performance/perf"
 )
 
 func main() {
@@ -41,16 +39,16 @@ func main() {
 	// disable automatic garbage collector
 	debug.SetGCPercent(-1)
 
-	executor := perf.CreateExecutor(*dbName)
-	defer executor.Close()
+	executor := createExecutor(*dbName)
+	defer executor.close()
 
-	inserts := executor.PrepareData(*count)
+	inserts := executor.prepareData(*count)
 
 	for i := 0; i < *runs; i++ {
-		executor.PutMany(inserts)
-		items := executor.ReadAll(*count)
-		executor.UpdateAll(items)
-		executor.RemoveAll()
+		executor.putMany(inserts)
+		items := executor.readAll(*count)
+		executor.updateAll(items)
+		executor.removeAll()
 
 		log.Printf("%d/%d finished", i+1, *runs)
 
@@ -59,10 +57,10 @@ func main() {
 		log.Printf("%d/%d garbage-collector executed", i+1, *runs)
 	}
 
-	executor.PrintTimes([]string{
-		"PutMany",
-		"ReadAll",
-		"UpdateAll",
-		"RemoveAll",
+	executor.printTimes([]string{
+		"putMany",
+		"readAll",
+		"updateAll",
+		"removeAll",
 	})
 }

@@ -18,8 +18,9 @@ package perf
 
 //go:generate go run github.com/objectbox/objectbox-go/cmd/objectbox-gogen
 
+// Entity model
 type Entity struct {
-	Id      uint64
+	ID      uint64
 	Int32   int32
 	Int64   int64
 	String  string

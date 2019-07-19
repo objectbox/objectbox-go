@@ -20,8 +20,6 @@ import (
 	"log"
 	"os"
 	"testing"
-
-	"github.com/objectbox/objectbox-go/test/performance/perf"
 )
 
 func TestPerformanceSimple(t *testing.T) {
@@ -34,19 +32,19 @@ func TestPerformanceSimple(t *testing.T) {
 	os.RemoveAll(dbName)
 	defer os.RemoveAll(dbName)
 
-	executor := perf.CreateExecutor(dbName)
-	defer executor.Close()
+	executor := createExecutor(dbName)
+	defer executor.close()
 
-	inserts := executor.PrepareData(count)
+	inserts := executor.prepareData(count)
 
-	executor.PutAsync(inserts)
-	executor.RemoveAll()
+	executor.putAsync(inserts)
+	executor.removeAll()
 
-	executor.PutMany(inserts)
+	executor.putMany(inserts)
 
-	items := executor.ReadAll(count)
-	executor.ChangeValues(items)
-	executor.UpdateAll(items)
+	items := executor.readAll(count)
+	executor.changeValues(items)
+	executor.updateAll(items)
 
-	executor.PrintTimes([]string{})
+	executor.printTimes([]string{})
 }

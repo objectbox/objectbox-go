@@ -20,8 +20,7 @@ import "time"
 
 //go:generate go run github.com/objectbox/objectbox-go/cmd/objectbox-gogen
 
-// Tests all available GO & ObjectBox types
-// TODO rename; e.g. TestEntity
+// Entity model for tests
 type Entity struct {
 	// base types
 	Id           uint64
@@ -77,10 +76,12 @@ type Entity struct {
 	Float64Ptr      *float64
 }
 
+// TestStringIdEntity model
 type TestStringIdEntity struct {
 	Id string `objectbox:"id"`
 }
 
+// TestEntityInline model
 type TestEntityInline struct {
 	BaseWithDate   `objectbox:"inline"`
 	*BaseWithValue `objectbox:"inline"`
@@ -88,6 +89,7 @@ type TestEntityInline struct {
 	Id uint64
 }
 
+// TestEntityRelated model
 type TestEntityRelated struct {
 	Id   uint64
 	Name string

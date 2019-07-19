@@ -24,6 +24,7 @@ import (
 	"github.com/objectbox/objectbox-go/test/assert"
 )
 
+// LoadEmptyTestObjectBox creates an empty ObjectBox instance
 func LoadEmptyTestObjectBox() *objectbox.ObjectBox {
 	var dbName = "iot-test"
 
@@ -37,6 +38,7 @@ func LoadEmptyTestObjectBox() *objectbox.ObjectBox {
 	return objectBox
 }
 
+// PutEvent creates an event
 func PutEvent(ob *objectbox.ObjectBox, device string, date int64) *Event {
 	event := Event{Device: device, Date: date}
 	id, err := BoxForEvent(ob).Put(&event)
@@ -45,6 +47,7 @@ func PutEvent(ob *objectbox.ObjectBox, device string, date int64) *Event {
 	return &event
 }
 
+// PutReading creates a reading
 func PutReading(ob *objectbox.ObjectBox, name string, ValueString string, ValueInteger int64, ValueFloating float64, ValueInt32 int32, ValueFloating32 float32) *Reading {
 	event := Reading{ValueName: name, ValueString: ValueString, ValueInteger: ValueInteger, ValueFloating: ValueFloating, ValueInt32: ValueInt32, ValueFloating32: ValueFloating32}
 	id, err := BoxForReading(ob).Put(&event)
@@ -53,6 +56,7 @@ func PutReading(ob *objectbox.ObjectBox, name string, ValueString string, ValueI
 	return &event
 }
 
+// PutEvents creates multiple events
 func PutEvents(ob *objectbox.ObjectBox, count int) []*Event {
 	// TODO TX
 	events := make([]*Event, 0, count)
@@ -63,6 +67,7 @@ func PutEvents(ob *objectbox.ObjectBox, count int) []*Event {
 	return events
 }
 
+// PutReadings creates multiple readings
 func PutReadings(ob *objectbox.ObjectBox, count int) []*Reading {
 	// TODO TX
 	readings := make([]*Reading, 0, count)

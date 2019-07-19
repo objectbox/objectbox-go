@@ -6,10 +6,12 @@ import (
 	"time"
 )
 
+// BaseWithDate model
 type BaseWithDate struct {
 	Date int64 `objectbox:"date"`
 }
 
+// BaseWithValue model
 type BaseWithValue struct {
 	Value float64
 }

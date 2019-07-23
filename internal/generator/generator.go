@@ -229,3 +229,47 @@ func generateModelFile(model *modelinfo.ModelInfo) (data []byte, err error) {
 
 	return b.Bytes(), nil
 }
+
+const recursionSuffix = "/..."
+
+// Clean removes generated files in the given path.
+// Removes *.obx.go and objectbox-model.go but keeps objectbox-model.json
+func Clean(path string) error {
+	var recursive bool
+
+	// if it's a pattern
+	if strings.HasSuffix(path, recursionSuffix) {
+		recursive = true
+		path = path[0:len(path)-len(recursionSuffix)] + "/*"
+	} else {
+		// if it's a directory
+		if finfo, err := os.Stat(path); err == nil && finfo.IsDir() {
+			path = path + "/*"
+		}
+	}
+
+	matches, err := filepath.Glob(path)
+	if err != nil {
+		return err
+	}
+
+	for _, subpath := range matches {
+		finfo, err := os.Stat(subpath)
+		if err != nil {
+			return err
+		}
+
+		if recursive && finfo.Mode().IsDir() {
+			err = Clean(subpath + recursionSuffix)
+		} else if finfo.Mode().IsRegular() && isGeneratedFile(subpath) {
+			fmt.Printf("Removing %s\n", subpath)
+			err = os.Remove(subpath)
+		}
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}

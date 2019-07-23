@@ -246,6 +246,54 @@ func (box *TaskRelPtrBox) QueryOrError(conditions ...objectbox.Condition) (*Task
 	}
 }
 
+// Async provides access to the default Async Box for asynchronous operations. See TaskRelPtrAsyncBox for more information.
+func (box *TaskRelPtrBox) Async() *TaskRelPtrAsyncBox {
+	return &TaskRelPtrAsyncBox{AsyncBox: box.Box.Async()}
+}
+
+// TaskRelPtrAsyncBox provides asynchronous operations on TaskRelPtr objects.
+//
+// Asynchronous operations are executed on a separate internal thread for better performance.
+//
+// There are two main use cases:
+//
+// 1) "execute & forget:" you gain faster put/remove operations as you don't have to wait for the transaction to finish.
+//
+// 2) Many small transactions: if your write load is typically a lot of individual puts that happen in parallel,
+// this will merge small transactions into bigger ones. This results in a significant gain in overall throughput.
+//
+// In situations with (extremely) high async load, an async method may be throttled (~1ms) or delayed up to 1 second.
+// In the unlikely event that the object could still not be enqueued (full queue), an error will be returned.
+//
+// Note that async methods do not give you hard durability guarantees like the synchronous Box provides.
+// There is a small time window in which the data may not have been committed durably yet.
+type TaskRelPtrAsyncBox struct {
+	*objectbox.AsyncBox
+}
+
+// AsyncBoxForTaskRelPtr creates a new async box with the given operation timeout in case an async queue is full.
+// The returned struct must be freed explicitly using the Close() method.
+// It's usually preferable to use TaskRelPtrBox::Async() which takes care of resource management and doesn't require closing.
+func AsyncBoxForTaskRelPtr(ob *objectbox.ObjectBox, timeoutMs uint64) *TaskRelPtrAsyncBox {
+	var async, err = objectbox.NewAsyncBox(ob, 2, timeoutMs)
+	if err != nil {
+		panic("Could not create async box for entity ID 2: %s" + err.Error())
+	}
+	return &TaskRelPtrAsyncBox{AsyncBox: async}
+}
+
+// Put inserts/updates a single object asynchronously.
+// When inserting a new object, the Id property on the passed object will be assigned the new ID the entity would hold
+// if the insert will be successful.
+func (asyncBox *TaskRelPtrAsyncBox) Put(object *TaskRelPtr) (uint64, error) {
+	return asyncBox.AsyncBox.Put(object)
+}
+
+// Remove deletes a single object asynchronously.
+func (asyncBox *TaskRelPtrAsyncBox) Remove(object *TaskRelPtr) error {
+	return asyncBox.AsyncBox.Remove(object)
+}
+
 // Query provides a way to search stored objects
 //
 // For example, you can find all TaskRelPtr which Id is either 42 or 47:

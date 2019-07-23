@@ -26,23 +26,34 @@ import (
 
 // TestBoxAsync tests the implicit AsyncBox returned by Box.Async()
 func TestBoxAsync(t *testing.T) {
-	testAsync(t, func(box *model.TestEntityInlineBox) *objectbox.AsyncBox {
+	testAsync(t, func(box *model.TestEntityInlineBox) *model.TestEntityInlineAsyncBox {
 		return box.Async()
 	})
 }
 
+const timeoutMs = 100
+
 // TestAsyncBox tests manually managed AsyncBox with custom timeout
 func TestAsyncBox(t *testing.T) {
-	testAsync(t, func(box *model.TestEntityInlineBox) *objectbox.AsyncBox {
-		asyncBox, err := objectbox.NewAsyncBox(box.Box, 100)
+	testAsync(t, func(box *model.TestEntityInlineBox) *model.TestEntityInlineAsyncBox {
+		asyncBox, err := objectbox.NewAsyncBox(box.ObjectBox, model.TestEntityInlineBinding.Id, timeoutMs)
 		assert.NoErr(t, err)
+		assert.True(t, asyncBox != nil)
+		return &model.TestEntityInlineAsyncBox{AsyncBox: asyncBox}
+	})
+}
+
+// TestAsyncBoxGenerated tests manually managed AsyncBox with custom timeout
+func TestAsyncBoxGenerated(t *testing.T) {
+	testAsync(t, func(box *model.TestEntityInlineBox) *model.TestEntityInlineAsyncBox {
+		asyncBox := model.AsyncBoxForTestEntityInline(box.ObjectBox, timeoutMs)
 		assert.True(t, asyncBox != nil)
 		return asyncBox
 	})
 }
 
 // testAsync tests all AsyncBox operations
-func testAsync(t *testing.T, asyncF func(box *model.TestEntityInlineBox) *objectbox.AsyncBox) {
+func testAsync(t *testing.T, asyncF func(box *model.TestEntityInlineBox) *model.TestEntityInlineAsyncBox) {
 	var env = model.NewTestEnv(t)
 	defer env.Close()
 
@@ -54,7 +65,7 @@ func testAsync(t *testing.T, asyncF func(box *model.TestEntityInlineBox) *object
 	}()
 
 	for testCase := 0; testCase <= 1; testCase++ {
-		var object= &model.TestEntityInline{BaseWithValue: &model.BaseWithValue{}}
+		var object = &model.TestEntityInline{BaseWithValue: &model.BaseWithValue{}}
 		id, err := async.Put(object)
 		assert.NoErr(t, err)
 		assert.Eq(t, id, object.Id)

@@ -50,14 +50,15 @@ type AsyncBox struct {
 
 // NewAsyncBox creates a new async box with the given operation timeout in case an async queue is full.
 // The returned struct must be freed explicitly using the Close() method.
-func NewAsyncBox(box *Box, timeoutMs uint64) (*AsyncBox, error) {
+// It's usually preferable to use Box::Async() which takes care of resource management and doesn't require closing.
+func NewAsyncBox(ob *ObjectBox, entityId TypeId, timeoutMs uint64) (*AsyncBox, error) {
 	var async = &AsyncBox{
-		box:    box,
+		box:    ob.InternalBox(entityId),
 		cOwned: true,
 	}
 
 	if err := cCallBool(func() bool {
-		async.cAsync = C.obx_async_create(box.cBox, C.uint64_t(timeoutMs))
+		async.cAsync = C.obx_async_create(async.box.cBox, C.uint64_t(timeoutMs))
 		return async.cAsync != nil
 	}); err != nil {
 		return nil, err
@@ -66,6 +67,7 @@ func NewAsyncBox(box *Box, timeoutMs uint64) (*AsyncBox, error) {
 	return async, nil
 }
 
+// Close frees the AsyncBox resources
 func (async *AsyncBox) Close() error {
 	if !async.cOwned {
 		return nil

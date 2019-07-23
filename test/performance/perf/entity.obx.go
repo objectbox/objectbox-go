@@ -244,6 +244,54 @@ func (box *EntityBox) QueryOrError(conditions ...objectbox.Condition) (*EntityQu
 	}
 }
 
+// Async provides access to the default Async Box for asynchronous operations. See EntityAsyncBox for more information.
+func (box *EntityBox) Async() *EntityAsyncBox {
+	return &EntityAsyncBox{AsyncBox: box.Box.Async()}
+}
+
+// EntityAsyncBox provides asynchronous operations on Entity objects.
+//
+// Asynchronous operations are executed on a separate internal thread for better performance.
+//
+// There are two main use cases:
+//
+// 1) "execute & forget:" you gain faster put/remove operations as you don't have to wait for the transaction to finish.
+//
+// 2) Many small transactions: if your write load is typically a lot of individual puts that happen in parallel,
+// this will merge small transactions into bigger ones. This results in a significant gain in overall throughput.
+//
+// In situations with (extremely) high async load, an async method may be throttled (~1ms) or delayed up to 1 second.
+// In the unlikely event that the object could still not be enqueued (full queue), an error will be returned.
+//
+// Note that async methods do not give you hard durability guarantees like the synchronous Box provides.
+// There is a small time window in which the data may not have been committed durably yet.
+type EntityAsyncBox struct {
+	*objectbox.AsyncBox
+}
+
+// AsyncBoxForEntity creates a new async box with the given operation timeout in case an async queue is full.
+// The returned struct must be freed explicitly using the Close() method.
+// It's usually preferable to use EntityBox::Async() which takes care of resource management and doesn't require closing.
+func AsyncBoxForEntity(ob *objectbox.ObjectBox, timeoutMs uint64) *EntityAsyncBox {
+	var async, err = objectbox.NewAsyncBox(ob, 1, timeoutMs)
+	if err != nil {
+		panic("Could not create async box for entity ID 1: %s" + err.Error())
+	}
+	return &EntityAsyncBox{AsyncBox: async}
+}
+
+// Put inserts/updates a single object asynchronously.
+// When inserting a new object, the Id property on the passed object will be assigned the new ID the entity would hold
+// if the insert will be successful.
+func (asyncBox *EntityAsyncBox) Put(object *Entity) (uint64, error) {
+	return asyncBox.AsyncBox.Put(object)
+}
+
+// Remove deletes a single object asynchronously.
+func (asyncBox *EntityAsyncBox) Remove(object *Entity) error {
+	return asyncBox.AsyncBox.Remove(object)
+}
+
 // Query provides a way to search stored objects
 //
 // For example, you can find all Entity which Id is either 42 or 47:

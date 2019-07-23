@@ -718,23 +718,7 @@ func (box *EntityBox) Put(object *Entity) (uint64, error) {
 }
 
 // PutAsync asynchronously inserts/updates a single object.
-// When inserting, the Entity.Id property on the passed object will be assigned the new ID as well.
-//
-// It's executed on a separate internal thread for better performance.
-//
-// There are two main use cases:
-//
-// 1) "Put & Forget:" you gain faster puts as you don't have to wait for the transaction to finish.
-//
-// 2) Many small transactions: if your write load is typically a lot of individual puts that happen in parallel,
-// this will merge small transactions into bigger ones. This results in a significant gain in overall throughput.
-//
-//
-// In situations with (extremely) high async load, this method may be throttled (~1ms) or delayed (<1s).
-// In the unlikely event that the object could not be enqueued after delaying, an error will be returned.
-//
-// Note that this method does not give you hard durability guarantees like the synchronous Put provides.
-// There is a small time window (typically 3 ms) in which the data may not have been committed durably yet.
+// Deprecated: use box.Async().Put() instead
 func (box *EntityBox) PutAsync(object *Entity) (uint64, error) {
 	return box.Box.PutAsync(object)
 }
@@ -984,23 +968,7 @@ func (box *TestStringIdEntityBox) Put(object *TestStringIdEntity) (uint64, error
 }
 
 // PutAsync asynchronously inserts/updates a single object.
-// When inserting, the TestStringIdEntity.Id property on the passed object will be assigned the new ID as well.
-//
-// It's executed on a separate internal thread for better performance.
-//
-// There are two main use cases:
-//
-// 1) "Put & Forget:" you gain faster puts as you don't have to wait for the transaction to finish.
-//
-// 2) Many small transactions: if your write load is typically a lot of individual puts that happen in parallel,
-// this will merge small transactions into bigger ones. This results in a significant gain in overall throughput.
-//
-//
-// In situations with (extremely) high async load, this method may be throttled (~1ms) or delayed (<1s).
-// In the unlikely event that the object could not be enqueued after delaying, an error will be returned.
-//
-// Note that this method does not give you hard durability guarantees like the synchronous Put provides.
-// There is a small time window (typically 3 ms) in which the data may not have been committed durably yet.
+// Deprecated: use box.Async().Put() instead
 func (box *TestStringIdEntityBox) PutAsync(object *TestStringIdEntity) (uint64, error) {
 	return box.Box.PutAsync(object)
 }
@@ -1247,23 +1215,7 @@ func (box *TestEntityInlineBox) Put(object *TestEntityInline) (uint64, error) {
 }
 
 // PutAsync asynchronously inserts/updates a single object.
-// When inserting, the TestEntityInline.Id property on the passed object will be assigned the new ID as well.
-//
-// It's executed on a separate internal thread for better performance.
-//
-// There are two main use cases:
-//
-// 1) "Put & Forget:" you gain faster puts as you don't have to wait for the transaction to finish.
-//
-// 2) Many small transactions: if your write load is typically a lot of individual puts that happen in parallel,
-// this will merge small transactions into bigger ones. This results in a significant gain in overall throughput.
-//
-//
-// In situations with (extremely) high async load, this method may be throttled (~1ms) or delayed (<1s).
-// In the unlikely event that the object could not be enqueued after delaying, an error will be returned.
-//
-// Note that this method does not give you hard durability guarantees like the synchronous Put provides.
-// There is a small time window (typically 3 ms) in which the data may not have been committed durably yet.
+// Deprecated: use box.Async().Put() instead
 func (box *TestEntityInlineBox) PutAsync(object *TestEntityInline) (uint64, error) {
 	return box.Box.PutAsync(object)
 }
@@ -1561,23 +1513,7 @@ func (box *TestEntityRelatedBox) Put(object *TestEntityRelated) (uint64, error) 
 }
 
 // PutAsync asynchronously inserts/updates a single object.
-// When inserting, the TestEntityRelated.Id property on the passed object will be assigned the new ID as well.
-//
-// It's executed on a separate internal thread for better performance.
-//
-// There are two main use cases:
-//
-// 1) "Put & Forget:" you gain faster puts as you don't have to wait for the transaction to finish.
-//
-// 2) Many small transactions: if your write load is typically a lot of individual puts that happen in parallel,
-// this will merge small transactions into bigger ones. This results in a significant gain in overall throughput.
-//
-//
-// In situations with (extremely) high async load, this method may be throttled (~1ms) or delayed (<1s).
-// In the unlikely event that the object could not be enqueued after delaying, an error will be returned.
-//
-// Note that this method does not give you hard durability guarantees like the synchronous Put provides.
-// There is a small time window (typically 3 ms) in which the data may not have been committed durably yet.
+// Deprecated: use box.Async().Put() instead
 func (box *TestEntityRelatedBox) PutAsync(object *TestEntityRelated) (uint64, error) {
 	return box.Box.PutAsync(object)
 }

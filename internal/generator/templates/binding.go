@@ -43,6 +43,7 @@ var BindingTemplate = template.Must(template.New("binding").Funcs(funcMap).Parse
 package {{.Binding.Package.Name}}
 
 import (
+	"errors"
 	"github.com/google/flatbuffers/go"
 	"github.com/objectbox/objectbox-go/objectbox"
 	"github.com/objectbox/objectbox-go/objectbox/fbutils"
@@ -237,6 +238,10 @@ func ({{$entityNameCamel}}_EntityInfo) Flatten(object interface{}, fbb *flatbuff
 
 // Load is called by ObjectBox to load an object from a FlatBuffer 
 func ({{$entityNameCamel}}_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{}, error) {
+	if len(bytes) == 0 { // sanity check, should "never" happen
+		return nil, errors.New("can't deserialize an object of type '{{$entity.Name}}' - no data received")
+	}
+
 	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
@@ -301,6 +306,9 @@ func ({{$entityNameCamel}}_EntityInfo) MakeSlice(capacity int) interface{} {
 
 // AppendToSlice is called by ObjectBox to fill the slice of the read objects
 func ({{$entityNameCamel}}_EntityInfo) AppendToSlice(slice interface{}, object interface{}) interface{} {
+	if object == nil {
+		return append(slice.([]{{if not $.Options.ByValue}}*{{end}}{{$entity.Name}}), {{if $.Options.ByValue}}{{$entity.Name}}{}{{else}}nil{{end}})
+	}
 	return append(slice.([]{{if not $.Options.ByValue}}*{{end}}{{$entity.Name}}), {{if $.Options.ByValue}}*{{end}}object.(*{{$entity.Name}}))
 }
 

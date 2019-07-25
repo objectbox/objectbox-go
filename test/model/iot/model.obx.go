@@ -4,6 +4,7 @@
 package iot
 
 import (
+	"errors"
 	"github.com/google/flatbuffers/go"
 	"github.com/objectbox/objectbox-go/objectbox"
 	"github.com/objectbox/objectbox-go/objectbox/fbutils"
@@ -114,6 +115,10 @@ func (event_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id
 
 // Load is called by ObjectBox to load an object from a FlatBuffer
 func (event_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{}, error) {
+	if len(bytes) == 0 { // sanity check, should "never" happen
+		return nil, errors.New("can't deserialize an object of type 'Event' - no data received")
+	}
+
 	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
@@ -136,6 +141,9 @@ func (event_EntityInfo) MakeSlice(capacity int) interface{} {
 
 // AppendToSlice is called by ObjectBox to fill the slice of the read objects
 func (event_EntityInfo) AppendToSlice(slice interface{}, object interface{}) interface{} {
+	if object == nil {
+		return append(slice.([]*Event), nil)
+	}
 	return append(slice.([]*Event), object.(*Event))
 }
 
@@ -436,6 +444,10 @@ func (reading_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, 
 
 // Load is called by ObjectBox to load an object from a FlatBuffer
 func (reading_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{}, error) {
+	if len(bytes) == 0 { // sanity check, should "never" happen
+		return nil, errors.New("can't deserialize an object of type 'Reading' - no data received")
+	}
+
 	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
@@ -462,6 +474,9 @@ func (reading_EntityInfo) MakeSlice(capacity int) interface{} {
 
 // AppendToSlice is called by ObjectBox to fill the slice of the read objects
 func (reading_EntityInfo) AppendToSlice(slice interface{}, object interface{}) interface{} {
+	if object == nil {
+		return append(slice.([]*Reading), nil)
+	}
 	return append(slice.([]*Reading), object.(*Reading))
 }
 

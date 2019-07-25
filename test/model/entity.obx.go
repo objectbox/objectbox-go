@@ -4,6 +4,7 @@
 package model
 
 import (
+	"errors"
 	"github.com/google/flatbuffers/go"
 	"github.com/objectbox/objectbox-go/objectbox"
 	"github.com/objectbox/objectbox-go/objectbox/fbutils"
@@ -596,6 +597,10 @@ func (entity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, i
 
 // Load is called by ObjectBox to load an object from a FlatBuffer
 func (entity_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{}, error) {
+	if len(bytes) == 0 { // sanity check, should "never" happen
+		return nil, errors.New("can't deserialize an object of type 'Entity' - no data received")
+	}
+
 	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
@@ -695,6 +700,9 @@ func (entity_EntityInfo) MakeSlice(capacity int) interface{} {
 
 // AppendToSlice is called by ObjectBox to fill the slice of the read objects
 func (entity_EntityInfo) AppendToSlice(slice interface{}, object interface{}) interface{} {
+	if object == nil {
+		return append(slice.([]*Entity), nil)
+	}
 	return append(slice.([]*Entity), object.(*Entity))
 }
 
@@ -943,6 +951,10 @@ func (testStringIdEntity_EntityInfo) Flatten(object interface{}, fbb *flatbuffer
 
 // Load is called by ObjectBox to load an object from a FlatBuffer
 func (testStringIdEntity_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{}, error) {
+	if len(bytes) == 0 { // sanity check, should "never" happen
+		return nil, errors.New("can't deserialize an object of type 'TestStringIdEntity' - no data received")
+	}
+
 	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
@@ -961,6 +973,9 @@ func (testStringIdEntity_EntityInfo) MakeSlice(capacity int) interface{} {
 
 // AppendToSlice is called by ObjectBox to fill the slice of the read objects
 func (testStringIdEntity_EntityInfo) AppendToSlice(slice interface{}, object interface{}) interface{} {
+	if object == nil {
+		return append(slice.([]*TestStringIdEntity), nil)
+	}
 	return append(slice.([]*TestStringIdEntity), object.(*TestStringIdEntity))
 }
 
@@ -1200,6 +1215,10 @@ func (testEntityInline_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.
 
 // Load is called by ObjectBox to load an object from a FlatBuffer
 func (testEntityInline_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{}, error) {
+	if len(bytes) == 0 { // sanity check, should "never" happen
+		return nil, errors.New("can't deserialize an object of type 'TestEntityInline' - no data received")
+	}
+
 	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
@@ -1224,6 +1243,9 @@ func (testEntityInline_EntityInfo) MakeSlice(capacity int) interface{} {
 
 // AppendToSlice is called by ObjectBox to fill the slice of the read objects
 func (testEntityInline_EntityInfo) AppendToSlice(slice interface{}, object interface{}) interface{} {
+	if object == nil {
+		return append(slice.([]*TestEntityInline), nil)
+	}
 	return append(slice.([]*TestEntityInline), object.(*TestEntityInline))
 }
 
@@ -1499,6 +1521,10 @@ func (testEntityRelated_EntityInfo) Flatten(object interface{}, fbb *flatbuffers
 
 // Load is called by ObjectBox to load an object from a FlatBuffer
 func (testEntityRelated_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{}, error) {
+	if len(bytes) == 0 { // sanity check, should "never" happen
+		return nil, errors.New("can't deserialize an object of type 'TestEntityRelated' - no data received")
+	}
+
 	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
@@ -1538,6 +1564,9 @@ func (testEntityRelated_EntityInfo) MakeSlice(capacity int) interface{} {
 
 // AppendToSlice is called by ObjectBox to fill the slice of the read objects
 func (testEntityRelated_EntityInfo) AppendToSlice(slice interface{}, object interface{}) interface{} {
+	if object == nil {
+		return append(slice.([]*TestEntityRelated), nil)
+	}
 	return append(slice.([]*TestEntityRelated), object.(*TestEntityRelated))
 }
 

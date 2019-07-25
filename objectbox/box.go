@@ -529,6 +529,12 @@ func (box *Box) readManyObjects(cFn func() *C.OBX_bytes_array) (slice interface{
 		var binding = box.entity.binding
 		slice = binding.MakeSlice(len(bytesArray))
 		for _, bytesData := range bytesArray {
+			if bytesData == nil {
+				// may be nil if an object on this index was not found (can happen with GetMany)
+				slice = binding.AppendToSlice(slice, nil)
+				continue
+			}
+
 			if object, err := binding.Load(box.ObjectBox, bytesData); err != nil {
 				return err
 			} else {
@@ -550,6 +556,12 @@ func (box *Box) readUsingVisitor(cFn func(visitorArg unsafe.Pointer) C.obx_err) 
 	var binding = box.entity.binding
 	var visitorId uint32
 	visitorId, err = dataVisitorRegister(func(bytes []byte) bool {
+		// may be nil if an object on this index was not found (can happen with GetMany)
+		if bytes == nil {
+			slice = binding.AppendToSlice(slice, nil)
+			return true
+		}
+
 		if object, err2 := binding.Load(box.ObjectBox, bytes); err2 != nil {
 			err = err2
 			return false

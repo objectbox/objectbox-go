@@ -255,6 +255,10 @@ func ({{$entityNameCamel}}_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byt
 			if rId := {{template "property-getter" $field.Property}}; {{if $field.Property.IsPointer}}rId != nil && *{{end}}rId > 0 {
 				if rObject, err := BoxFor{{$field.SimpleRelation.Target.Name}}(ob).Get({{if $field.Property.IsPointer}}*{{end}}rId); err != nil {
 					return nil, err 
+				{{if not $field.IsPointer -}}
+				} else if rObject == nil {
+					rel{{$field.Name}} = &{{$field.Type}}{}
+				{{end -}}
 				} else {
 					rel{{$field.Name}} = rObject
 				}

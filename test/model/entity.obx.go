@@ -611,6 +611,8 @@ func (entity_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{
 	if rId := fbutils.GetUint64Slot(table, 46); rId > 0 {
 		if rObject, err := BoxForTestEntityRelated(ob).Get(rId); err != nil {
 			return nil, err
+		} else if rObject == nil {
+			relRelated = &TestEntityRelated{}
 		} else {
 			relRelated = rObject
 		}

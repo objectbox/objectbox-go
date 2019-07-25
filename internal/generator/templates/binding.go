@@ -268,7 +268,7 @@ func ({{$entityNameCamel}}_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byt
 			var rel{{$field.Name}} {{$field.Type}} 
 			if rIds, err := BoxFor{{$field.Entity.Name}}(ob).RelationIds({{.Entity.Name}}_.{{$field.Name}}, id); err != nil {
 				return nil, err
-			} else if rSlice, err := BoxFor{{$field.StandaloneRelation.Target.Name}}(ob).GetMany(rIds...); err != nil {
+			} else if rSlice, err := BoxFor{{$field.StandaloneRelation.Target.Name}}(ob).GetManyExisting(rIds...); err != nil {
 				return nil, err
 			} else {
 				rel{{$field.Name}} = rSlice
@@ -390,6 +390,15 @@ func (box *{{$entity.Name}}Box) GetMany(ids ...uint64) ([]{{if not $.Options.ByV
 	return objects.([]{{if not $.Options.ByValue}}*{{end}}{{$entity.Name}}), nil
 }
 
+// GetManyExisting reads multiple objects at once, skipping those that do not exist.
+func (box *{{$entity.Name}}Box) GetManyExisting(ids ...uint64) ([]{{if not $.Options.ByValue}}*{{end}}{{$entity.Name}}, error) {
+	objects, err := box.Box.GetManyExisting(ids...)
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]{{if not $.Options.ByValue}}*{{end}}{{$entity.Name}}), nil
+}
+
 // GetAll reads all stored objects
 func (box *{{$entity.Name}}Box) GetAll() ([]{{if not $.Options.ByValue}}*{{end}}{{$entity.Name}}, error) {
 	objects, err := box.Box.GetAll()
@@ -406,7 +415,7 @@ func (box *{{$entity.Name}}Box) GetAll() ([]{{if not $.Options.ByValue}}*{{end}}
 	{{- else if .StandaloneRelation}}
 		{{- if .IsLazyLoaded -}}
 			// Fetch{{.Name}} reads target objects for relation {{.Entity.Name}}::{{.Name}}.
-			// It will "GetMany()" all related {{.StandaloneRelation.Target.Name}} objects for each source object
+			// It will "GetManyExisting()" all related {{.StandaloneRelation.Target.Name}} objects for each source object
 			// and set sourceObject.{{.Name}} to the slice of related objects, as currently stored in DB.
 			func (box *{{.Entity.Name}}Box) Fetch{{.Name}}(sourceObjects ...*{{.Entity.Name}}) error {
 				var slices = make([]{{.Type}}, len(sourceObjects))
@@ -417,7 +426,7 @@ func (box *{{$entity.Name}}Box) GetAll() ([]{{if not $.Options.ByValue}}*{{end}}
 						rIds, err := box.RelationIds({{.Entity.Name}}_.{{.Name}}, {{with .Entity.IdProperty}}{{if .Converter}}{{.Converter}}ToDatabaseValue({{end -}}
 							object.{{.Path}}{{if .Converter}}){{end}}{{end}})
 						if err == nil {
-						    slices[k], err = BoxFor{{.StandaloneRelation.Target.Name}}(box.ObjectBox).GetMany(rIds...)
+						    slices[k], err = BoxFor{{.StandaloneRelation.Target.Name}}(box.ObjectBox).GetManyExisting(rIds...)
 						}
 						if err != nil {
 							return err

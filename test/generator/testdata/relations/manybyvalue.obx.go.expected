@@ -97,7 +97,7 @@ func (taskRelManyValue_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (
 	var relGroups []Group
 	if rIds, err := BoxForTaskRelManyValue(ob).RelationIds(TaskRelManyValue_.Groups, id); err != nil {
 		return nil, err
-	} else if rSlice, err := BoxForGroup(ob).GetMany(rIds...); err != nil {
+	} else if rSlice, err := BoxForGroup(ob).GetManyExisting(rIds...); err != nil {
 		return nil, err
 	} else {
 		relGroups = rSlice
@@ -194,6 +194,15 @@ func (box *TaskRelManyValueBox) Get(id uint64) (*TaskRelManyValue, error) {
 // If any of the objects doesn't exist, its position in the return slice is nil
 func (box *TaskRelManyValueBox) GetMany(ids ...uint64) ([]*TaskRelManyValue, error) {
 	objects, err := box.Box.GetMany(ids...)
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*TaskRelManyValue), nil
+}
+
+// GetManyExisting reads multiple objects at once, skipping those that do not exist.
+func (box *TaskRelManyValueBox) GetManyExisting(ids ...uint64) ([]*TaskRelManyValue, error) {
+	objects, err := box.Box.GetManyExisting(ids...)
 	if err != nil {
 		return nil, err
 	}

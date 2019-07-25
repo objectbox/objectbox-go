@@ -190,6 +190,15 @@ func (box *TimeEntityBox) GetMany(ids ...uint64) ([]*TimeEntity, error) {
 	return objects.([]*TimeEntity), nil
 }
 
+// GetManyExisting reads multiple objects at once, skipping those that do not exist.
+func (box *TimeEntityBox) GetManyExisting(ids ...uint64) ([]*TimeEntity, error) {
+	objects, err := box.Box.GetManyExisting(ids...)
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*TimeEntity), nil
+}
+
 // GetAll reads all stored objects
 func (box *TimeEntityBox) GetAll() ([]*TimeEntity, error) {
 	objects, err := box.Box.GetAll()

@@ -225,6 +225,15 @@ func (box *EventBox) GetMany(ids ...uint64) ([]*Event, error) {
 	return objects.([]*Event), nil
 }
 
+// GetManyExisting reads multiple objects at once, skipping those that do not exist.
+func (box *EventBox) GetManyExisting(ids ...uint64) ([]*Event, error) {
+	objects, err := box.Box.GetManyExisting(ids...)
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*Event), nil
+}
+
 // GetAll reads all stored objects
 func (box *EventBox) GetAll() ([]*Event, error) {
 	objects, err := box.Box.GetAll()
@@ -552,6 +561,15 @@ func (box *ReadingBox) Get(id uint64) (*Reading, error) {
 // If any of the objects doesn't exist, its position in the return slice is nil
 func (box *ReadingBox) GetMany(ids ...uint64) ([]*Reading, error) {
 	objects, err := box.Box.GetMany(ids...)
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*Reading), nil
+}
+
+// GetManyExisting reads multiple objects at once, skipping those that do not exist.
+func (box *ReadingBox) GetManyExisting(ids ...uint64) ([]*Reading, error) {
+	objects, err := box.Box.GetManyExisting(ids...)
 	if err != nil {
 		return nil, err
 	}

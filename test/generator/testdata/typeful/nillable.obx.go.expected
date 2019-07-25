@@ -425,6 +425,15 @@ func (box *NillableBox) GetMany(ids ...uint64) ([]*Nillable, error) {
 	return objects.([]*Nillable), nil
 }
 
+// GetManyExisting reads multiple objects at once, skipping those that do not exist.
+func (box *NillableBox) GetManyExisting(ids ...uint64) ([]*Nillable, error) {
+	objects, err := box.Box.GetManyExisting(ids...)
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*Nillable), nil
+}
+
 // GetAll reads all stored objects
 func (box *NillableBox) GetAll() ([]*Nillable, error) {
 	objects, err := box.Box.GetAll()

@@ -315,4 +315,9 @@ func TestBoxGetMany(t *testing.T) {
 	assert.Eq(t, 2, len(objects))
 	assert.True(t, objects[0].Id == 1)
 	assert.True(t, objects[1] == nil)
+
+	objects, err = env.Box.GetManyExisting(1, 999)
+	assert.NoErr(t, err)
+	assert.Eq(t, 1, len(objects))
+	assert.True(t, objects[0].Id == 1)
 }

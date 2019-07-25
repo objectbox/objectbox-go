@@ -211,6 +211,15 @@ func (box *TaskBox) GetMany(ids ...uint64) ([]*Task, error) {
 	return objects.([]*Task), nil
 }
 
+// GetManyExisting reads multiple objects at once, skipping those that do not exist.
+func (box *TaskBox) GetManyExisting(ids ...uint64) ([]*Task, error) {
+	objects, err := box.Box.GetManyExisting(ids...)
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*Task), nil
+}
+
 // GetAll reads all stored objects
 func (box *TaskBox) GetAll() ([]*Task, error) {
 	objects, err := box.Box.GetAll()

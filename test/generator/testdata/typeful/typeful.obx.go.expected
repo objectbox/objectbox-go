@@ -378,6 +378,15 @@ func (box *TypefulBox) GetMany(ids ...uint64) ([]*Typeful, error) {
 	return objects.([]*Typeful), nil
 }
 
+// GetManyExisting reads multiple objects at once, skipping those that do not exist.
+func (box *TypefulBox) GetManyExisting(ids ...uint64) ([]*Typeful, error) {
+	objects, err := box.Box.GetManyExisting(ids...)
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*Typeful), nil
+}
+
 // GetAll reads all stored objects
 func (box *TypefulBox) GetAll() ([]*Typeful, error) {
 	objects, err := box.Box.GetAll()

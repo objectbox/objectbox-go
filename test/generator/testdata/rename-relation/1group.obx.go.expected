@@ -191,6 +191,15 @@ func (box *GroupBox) GetMany(ids ...uint64) ([]*Group, error) {
 	return objects.([]*Group), nil
 }
 
+// GetManyExisting reads multiple objects at once, skipping those that do not exist.
+func (box *GroupBox) GetManyExisting(ids ...uint64) ([]*Group, error) {
+	objects, err := box.Box.GetManyExisting(ids...)
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*Group), nil
+}
+
 // GetAll reads all stored objects
 func (box *GroupBox) GetAll() ([]*Group, error) {
 	objects, err := box.Box.GetAll()

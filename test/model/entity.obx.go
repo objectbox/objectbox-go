@@ -639,7 +639,7 @@ func (entity_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{
 	var relRelatedSlice []EntityByValue
 	if rIds, err := BoxForEntity(ob).RelationIds(Entity_.RelatedSlice, id); err != nil {
 		return nil, err
-	} else if rSlice, err := BoxForEntityByValue(ob).GetMany(rIds...); err != nil {
+	} else if rSlice, err := BoxForEntityByValue(ob).GetManyExisting(rIds...); err != nil {
 		return nil, err
 	} else {
 		relRelatedSlice = rSlice
@@ -784,6 +784,15 @@ func (box *EntityBox) GetMany(ids ...uint64) ([]*Entity, error) {
 	return objects.([]*Entity), nil
 }
 
+// GetManyExisting reads multiple objects at once, skipping those that do not exist.
+func (box *EntityBox) GetManyExisting(ids ...uint64) ([]*Entity, error) {
+	objects, err := box.Box.GetManyExisting(ids...)
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*Entity), nil
+}
+
 // GetAll reads all stored objects
 func (box *EntityBox) GetAll() ([]*Entity, error) {
 	objects, err := box.Box.GetAll()
@@ -794,7 +803,7 @@ func (box *EntityBox) GetAll() ([]*Entity, error) {
 }
 
 // FetchRelatedPtrSlice reads target objects for relation Entity::RelatedPtrSlice.
-// It will "GetMany()" all related TestEntityRelated objects for each source object
+// It will "GetManyExisting()" all related TestEntityRelated objects for each source object
 // and set sourceObject.RelatedPtrSlice to the slice of related objects, as currently stored in DB.
 func (box *EntityBox) FetchRelatedPtrSlice(sourceObjects ...*Entity) error {
 	var slices = make([][]*TestEntityRelated, len(sourceObjects))
@@ -804,7 +813,7 @@ func (box *EntityBox) FetchRelatedPtrSlice(sourceObjects ...*Entity) error {
 		for k, object := range sourceObjects {
 			rIds, err := box.RelationIds(Entity_.RelatedPtrSlice, object.Id)
 			if err == nil {
-				slices[k], err = BoxForTestEntityRelated(box.ObjectBox).GetMany(rIds...)
+				slices[k], err = BoxForTestEntityRelated(box.ObjectBox).GetManyExisting(rIds...)
 			}
 			if err != nil {
 				return err
@@ -1051,6 +1060,15 @@ func (box *TestStringIdEntityBox) Get(id uint64) (*TestStringIdEntity, error) {
 // If any of the objects doesn't exist, its position in the return slice is nil
 func (box *TestStringIdEntityBox) GetMany(ids ...uint64) ([]*TestStringIdEntity, error) {
 	objects, err := box.Box.GetMany(ids...)
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*TestStringIdEntity), nil
+}
+
+// GetManyExisting reads multiple objects at once, skipping those that do not exist.
+func (box *TestStringIdEntityBox) GetManyExisting(ids ...uint64) ([]*TestStringIdEntity, error) {
+	objects, err := box.Box.GetManyExisting(ids...)
 	if err != nil {
 		return nil, err
 	}
@@ -1327,6 +1345,15 @@ func (box *TestEntityInlineBox) GetMany(ids ...uint64) ([]*TestEntityInline, err
 	return objects.([]*TestEntityInline), nil
 }
 
+// GetManyExisting reads multiple objects at once, skipping those that do not exist.
+func (box *TestEntityInlineBox) GetManyExisting(ids ...uint64) ([]*TestEntityInline, error) {
+	objects, err := box.Box.GetManyExisting(ids...)
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*TestEntityInline), nil
+}
+
 // GetAll reads all stored objects
 func (box *TestEntityInlineBox) GetAll() ([]*TestEntityInline, error) {
 	objects, err := box.Box.GetAll()
@@ -1543,7 +1570,7 @@ func (testEntityRelated_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) 
 	var relNextSlice []EntityByValue
 	if rIds, err := BoxForTestEntityRelated(ob).RelationIds(TestEntityRelated_.NextSlice, id); err != nil {
 		return nil, err
-	} else if rSlice, err := BoxForEntityByValue(ob).GetMany(rIds...); err != nil {
+	} else if rSlice, err := BoxForEntityByValue(ob).GetManyExisting(rIds...); err != nil {
 		return nil, err
 	} else {
 		relNextSlice = rSlice
@@ -1642,6 +1669,15 @@ func (box *TestEntityRelatedBox) Get(id uint64) (*TestEntityRelated, error) {
 // If any of the objects doesn't exist, its position in the return slice is nil
 func (box *TestEntityRelatedBox) GetMany(ids ...uint64) ([]*TestEntityRelated, error) {
 	objects, err := box.Box.GetMany(ids...)
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*TestEntityRelated), nil
+}
+
+// GetManyExisting reads multiple objects at once, skipping those that do not exist.
+func (box *TestEntityRelatedBox) GetManyExisting(ids ...uint64) ([]*TestEntityRelated, error) {
+	objects, err := box.Box.GetManyExisting(ids...)
 	if err != nil {
 		return nil, err
 	}

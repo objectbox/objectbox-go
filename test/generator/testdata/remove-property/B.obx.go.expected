@@ -190,6 +190,15 @@ func (box *BBox) GetMany(ids ...uint64) ([]*B, error) {
 	return objects.([]*B), nil
 }
 
+// GetManyExisting reads multiple objects at once, skipping those that do not exist.
+func (box *BBox) GetManyExisting(ids ...uint64) ([]*B, error) {
+	objects, err := box.Box.GetManyExisting(ids...)
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*B), nil
+}
+
 // GetAll reads all stored objects
 func (box *BBox) GetAll() ([]*B, error) {
 	objects, err := box.Box.GetAll()

@@ -130,3 +130,19 @@ func (async *AsyncBox) RemoveId(id uint64) error {
 		return C.obx_async_remove(async.cAsync, C.obx_id(id))
 	})
 }
+
+/// Awaits for all (including future) async submissions to be completed (the async queue becomes idle for a moment).
+/// Returns an error if shutting down or an error occurred
+func (async *AsyncBox) AwaitCompletion() error {
+	return cCall(func() C.obx_err {
+		return C.obx_async_await_completion(async.cAsync)
+	})
+}
+
+/// Awaits for previously submitted async operations to be completed (the async queue does not have to become idle).
+/// Returns an error if shutting down or an error occurred
+func (async *AsyncBox) AwaitSubmitted(timeoutMs uint64) error {
+	return cCall(func() C.obx_err {
+		return C.obx_async_await_submitted(async.cAsync, C.uint64_t(timeoutMs))
+	})
+}

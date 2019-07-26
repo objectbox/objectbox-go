@@ -70,7 +70,7 @@ func testAsync(t *testing.T, asyncF func(box *model.TestEntityInlineBox) *model.
 		assert.NoErr(t, err)
 		assert.Eq(t, id, object.Id)
 
-		assert.NoErr(t, ob.AwaitAsyncCompletion())
+		assert.NoErr(t, async.AwaitCompletion())
 
 		count, err := box.Count()
 		assert.NoErr(t, err)
@@ -87,7 +87,7 @@ func testAsync(t *testing.T, asyncF func(box *model.TestEntityInlineBox) *model.
 		}
 		assert.NoErr(t, err)
 
-		assert.NoErr(t, ob.AwaitAsyncCompletion())
+		assert.NoErr(t, async.AwaitSubmitted(timeoutMs))
 		count, err = box.Count()
 		assert.NoErr(t, err)
 		assert.True(t, count == 0)

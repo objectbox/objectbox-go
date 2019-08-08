@@ -864,6 +864,8 @@ func (property *Property) setObFlags() error {
 	}
 
 	if property.Relation != nil {
+		property.addObFlag(PropertyFlagIndexed)
+		property.addObFlag(PropertyFlagIndexPartialSkipZero)
 		if err := property.setIndex(); err != nil {
 			return err
 		}

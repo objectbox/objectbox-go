@@ -386,7 +386,7 @@ func (reading_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.PropertyFlags(8193)
 	model.Property("Date", 10, 2, 4852407661923085028)
 	model.Property("EventId", 11, 3, 1403806151574554320)
-	model.PropertyFlags(8192)
+	model.PropertyFlags(8712)
 	model.PropertyRelation("Event", 2, 2642563953244304959)
 	model.Property("ValueName", 9, 4, 5626221656121286670)
 	model.Property("ValueString", 9, 5, 7303099924122013060)

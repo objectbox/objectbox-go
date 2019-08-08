@@ -37,7 +37,7 @@
           "name": "GroupId",
           "indexId": "2:8274930044578894929",
           "type": 11,
-          "flags": 8192,
+          "flags": 8712,
           "relationTarget": "Group"
         }
       ]

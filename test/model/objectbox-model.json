@@ -124,7 +124,7 @@
           "name": "Related",
           "indexId": "1:7297830522090799401",
           "type": 11,
-          "flags": 8192,
+          "flags": 8712,
           "relationTarget": "TestEntityRelated"
         },
         {
@@ -132,7 +132,7 @@
           "name": "RelatedPtr",
           "indexId": "2:1636618737379039866",
           "type": 11,
-          "flags": 8192,
+          "flags": 8712,
           "relationTarget": "TestEntityRelated"
         },
         {
@@ -140,7 +140,7 @@
           "name": "RelatedPtr2",
           "indexId": "3:6077259218141868916",
           "type": 11,
-          "flags": 8192,
+          "flags": 8712,
           "relationTarget": "TestEntityRelated"
         },
         {
@@ -327,7 +327,7 @@
           "name": "Next",
           "indexId": "4:3414034888235702623",
           "type": 11,
-          "flags": 8192,
+          "flags": 8712,
           "relationTarget": "EntityByValue"
         }
       ],

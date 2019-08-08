@@ -19,7 +19,7 @@
           "name": "GroupNew",
           "indexId": "1:501233450539197794",
           "type": 11,
-          "flags": 8192,
+          "flags": 8712,
           "relationTarget": "Group"
         }
       ]
@@ -40,7 +40,7 @@
           "name": "GroupNew",
           "indexId": "2:6044372234677422456",
           "type": 11,
-          "flags": 8192,
+          "flags": 8712,
           "relationTarget": "Group"
         }
       ]
@@ -61,7 +61,7 @@
           "name": "GroupNew",
           "indexId": "3:8325060299420976708",
           "type": 11,
-          "flags": 8192,
+          "flags": 8712,
           "relationTarget": "Group"
         }
       ]
@@ -82,7 +82,7 @@
           "name": "Group",
           "indexId": "4:2339563716805116249",
           "type": 11,
-          "flags": 8192,
+          "flags": 8712,
           "relationTarget": "Group"
         }
       ],

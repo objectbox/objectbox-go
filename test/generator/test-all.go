@@ -62,7 +62,7 @@ func generateOneDir(t *testing.T, overwriteExpected bool, dir string) {
 	for i := 0; i <= 1; i++ {
 		if i == 0 {
 			t.Logf("Testing %s without model info JSON", filepath.Base(dir))
-			assert.NoErr(t, os.Remove(modelInfoFile))
+			os.Remove(modelInfoFile)
 		} else {
 			t.Logf("Testing %s with previous model info JSON", filepath.Base(dir))
 		}

@@ -116,8 +116,8 @@ func (f *file) getType(expr ast.Expr) (types.Type, error) {
 		var conf = types.Config{
 			IgnoreFuncBodies:         true,
 			DisableUnusedImportCheck: true,
-			// TODO switch to the new method (available since Go 1.12)
-			//  Importer:                 importer.ForCompiler(f.fileset, "source", nil),
+			// NOTE there is importer.ForCompiler() since 1.12 but it breaks our compatibility with 1.11.4
+			// NOTE importer.Default() doesn't seem to work for local files - run the generator tests for more details
 			Importer: importer.For("source", nil),
 		}
 

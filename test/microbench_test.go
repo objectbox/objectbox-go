@@ -34,16 +34,6 @@ func BenchmarkLockOsThread(b *testing.B) {
 // prevent compiler optimizing out an unused return value
 var globalErr error
 
-// 100000000	        27.1 ns/op
-func BenchmarkErrorReturn(b *testing.B) {
-	var recovery = func() error {
-		return errors.New("oh")
-	}
-	for n := 0; n < b.N; n++ {
-		globalErr = recovery()
-	}
-}
-
 // Panic/Failing         	20000000	        88.2 ns/op
 // Panic/Successful      	50000000	        36.1 ns/op
 // Error/Failing         	50000000	        31.0 ns/op

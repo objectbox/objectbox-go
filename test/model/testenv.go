@@ -71,6 +71,13 @@ func (env *TestEnv) Close() {
 	os.RemoveAll(env.Directory)
 }
 
+func (env *TestEnv) SyncClient(serverUri string) *objectbox.SyncClient {
+	err, client := objectbox.NewSyncClient(env.ObjectBox, serverUri)
+	assert.NoErr(env.t, err)
+	assert.True(env.t, client != nil)
+	return client
+}
+
 func removeFileIfExists(path string) error {
 	if _, err := os.Stat(path); err == nil {
 		return os.Remove(path)

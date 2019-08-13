@@ -21,6 +21,7 @@ import (
 	"github.com/objectbox/objectbox-go/objectbox"
 	"github.com/objectbox/objectbox-go/test/assert"
 	"github.com/objectbox/objectbox-go/test/model"
+	"strings"
 	"testing"
 	"time"
 )
@@ -124,7 +125,7 @@ func waitUntil(timeout time.Duration, fn func() (bool, error)) error {
 		select {
 		// Got a timeout! fail with a timeout error
 		case <-endtime:
-			return errors.New("timed out while waiting for a condition to become true")
+			return errors.New("timeout while waiting for a condition to become true")
 		// Got a tick, we should check on doSomething()
 		case <-tick:
 			if ok, err := fn(); err != nil {
@@ -149,14 +150,7 @@ func NewTestSyncClient(t *testing.T, serverURI, name string) *testSyncClient {
 
 	client.env = model.NewTestEnv(t)
 
-	// start a client and wait until login
 	client.sync = client.env.SyncClient(serverURI)
-	assert.NoErr(t, client.sync.Start())
-
-	assert.NoErr(t, waitUntil(time.Second, func() (bool, error) {
-		return client.sync.State() == objectbox.SyncClientStateLoggedIn, nil
-	}))
-
 	return client
 }
 
@@ -165,14 +159,25 @@ func (client *testSyncClient) Close() {
 	client.env.Close()
 }
 
-func TestSyncData(t *testing.T) {
+func (client *testSyncClient) Start() {
+	assert.NoErr(client.t, client.sync.Start())
+
+	assert.NoErr(client.t, waitUntil(time.Second, func() (bool, error) {
+		return client.sync.State() == objectbox.SyncClientStateLoggedIn, nil
+	}))
+
+}
+
+func TestSyncDataAutomatic(t *testing.T) {
 	var server = NewTestSyncServer(t)
 	defer server.Close()
 
 	var a = NewTestSyncClient(t, server.URI(), "a")
+	a.Start()
 	defer a.Close()
 
 	var b = NewTestSyncClient(t, server.URI(), "b")
+	b.Start()
 	defer b.Close()
 
 	isEmpty, err := a.env.Box.IsEmpty()
@@ -219,4 +224,74 @@ func TestSyncData(t *testing.T) {
 	}))
 
 	assertEqualBoxes(a.env.Box, b.env.Box)
+}
+
+func TestSyncDataManual(t *testing.T) {
+	var server = NewTestSyncServer(t)
+	defer server.Close()
+
+	var a = NewTestSyncClient(t, server.URI(), "a")
+	assert.NoErr(t, a.sync.UpdatesMode(objectbox.SyncClientUpdatesManual))
+	a.Start()
+	defer a.Close()
+
+	var b = NewTestSyncClient(t, server.URI(), "b")
+	assert.NoErr(t, b.sync.UpdatesMode(objectbox.SyncClientUpdatesManual))
+	b.Start()
+	defer b.Close()
+
+	isEmpty, err := a.env.Box.IsEmpty()
+	assert.NoErr(t, err)
+	assert.True(t, isEmpty)
+
+	isEmpty, err = b.env.Box.IsEmpty()
+	assert.NoErr(t, err)
+	assert.True(t, isEmpty)
+
+	// insert into one box
+	var count uint = 10
+	a.env.Populate(count)
+
+	// this will time out because we haven't manually initiated an update
+	assert.True(t, strings.Contains(waitUntil(500 * time.Millisecond, func() (bool, error) {
+		bCount, err := b.env.Box.Count()
+		return bCount == uint64(count), err
+	}).Error(), "timeout"))
+
+	// manually trigger the data synchronization
+	assert.NoErr(t, b.sync.RequestUpdates(false))
+
+	// wait for the data to be synced to the other box
+	assert.NoErr(t, waitUntil(time.Second, func() (bool, error) {
+		bCount, err := b.env.Box.Count()
+		return bCount == uint64(count), err
+	}))
+
+	assert.NoErr(t, a.env.Box.RemoveAll())
+	count = 0
+
+	// this will time out because we haven't subscribed for all further updates
+	assert.True(t, strings.Contains(waitUntil(500 * time.Millisecond, func() (bool, error) {
+		bCount, err := b.env.Box.Count()
+		return bCount == uint64(count), err
+	}).Error(), "timeout"))
+
+	// subscribe for further updates
+	assert.NoErr(t, b.sync.RequestUpdates(true))
+
+	// wait for the data to be synced to the other box
+	assert.NoErr(t, waitUntil(time.Second, func() (bool, error) {
+		bCount, err := b.env.Box.Count()
+		return bCount == uint64(count), err
+	}))
+
+	count = 10
+	a.env.Populate(count)
+
+	// wait for the data to be synced to the other box
+	assert.NoErr(t, waitUntil(time.Second, func() (bool, error) {
+		bCount, err := b.env.Box.Count()
+		return bCount == uint64(count), err
+	}))
+
 }

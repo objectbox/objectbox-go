@@ -21,8 +21,10 @@ import (
 	"github.com/objectbox/objectbox-go/test/assert"
 	"github.com/objectbox/objectbox-go/test/model"
 	"net"
+	"net/url"
 	"os"
 	"os/exec"
+	"strings"
 	"testing"
 	"time"
 )
@@ -70,9 +72,24 @@ func NewTestSyncServer(t *testing.T) *testSyncServer {
 	assert.NoErr(t, server.cmd.Start())
 
 	// wait for the server to start listening for connections
-	conn, err := net.DialTimeout("tcp", "golang.org:80", 5 * time.Second)
+	uri, err := url.Parse(server.URI())
 	assert.NoErr(t, err)
-	assert.NoErr(t, conn.Close())
+	assert.NoErr(t, waitUntil(5*time.Second, func() (b bool, e error) {
+		conn, err := net.DialTimeout("tcp", uri.Hostname() + ":" + uri.Port(), 5 * time.Second)
+
+		// if connection was successful, stop waiting (return true)
+		if err == nil {
+			return true, conn.Close()
+		}
+
+		// if the connection was refused, try again next time
+		if strings.Contains(err.Error(), "connection refused") {
+			return false, nil
+		}
+
+		// fail immediately on other errors
+		return false, err
+	}))
 
 	return server
 }

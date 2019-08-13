@@ -31,6 +31,7 @@ import (
 type SyncClient struct {
 	ob      *ObjectBox
 	cClient *C.OBX_sync
+	authSet bool
 }
 
 // NewSyncClient starts a creation of a new sync client.
@@ -66,6 +67,7 @@ func (client *SyncClient) Close() error {
 
 // AuthSharedSecret configures the client to use shared-secret authentication
 func (client *SyncClient) AuthSharedSecret(data []byte) error {
+	client.authSet = true
 	return cCall(func() C.obx_err {
 		var dataPtr unsafe.Pointer = nil
 		if len(data) > 0 {
@@ -128,6 +130,16 @@ func (client *SyncClient) State() SyncClientState {
 
 // Start initiates the connection to the server and begins the synchronization
 func (client *SyncClient) Start() error {
+	// If no authentication was provided by the user, try if the server accepts clients without any credentials at all.
+	// That's what the client code/setup implies. Maybe the c-api should do this automatically.
+	if !client.authSet {
+		if err := cCall(func() C.obx_err {
+			return C.obx_sync_credentials(client.cClient, C.OBXSyncCredentialsType_UNCHECKED, nil, 0)
+		}); err != nil {
+			return err
+		}
+	}
+
 	return cCall(func() C.obx_err {
 		return C.obx_sync_start(client.cClient)
 	})
@@ -156,7 +168,7 @@ func (client *SyncClient) CancelUpdates() error {
 	})
 }
 
-// DoFullSync is good for new clients to quickly bring the local database up-to-date in a single transaction, without
+// DoFullSync is useful for new clients to quickly bring the local database up-to-date in a single transaction, without
 // transmitting the whole history.
 func (client *SyncClient) DoFullSync() error {
 	return cCall(func() C.obx_err {

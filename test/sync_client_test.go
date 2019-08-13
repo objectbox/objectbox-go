@@ -117,14 +117,14 @@ func TestSyncState(t *testing.T) {
 }
 
 func waitUntil(timeout time.Duration, fn func() (bool, error)) error {
-	var endtime = time.After(timeout)
+	var endTime = time.After(timeout)
 	tick := time.Tick(time.Millisecond)
 
 	// Keep trying until we're timed out or got a result or got an error
 	for {
 		select {
 		// Got a timeout! fail with a timeout error
-		case <-endtime:
+		case <-endTime:
 			return errors.New("timeout while waiting for a condition to become true")
 		// Got a tick, we should check on doSomething()
 		case <-tick:
@@ -165,7 +165,6 @@ func (client *testSyncClient) Start() {
 	assert.NoErr(client.t, waitUntil(time.Second, func() (bool, error) {
 		return client.sync.State() == objectbox.SyncClientStateLoggedIn, nil
 	}))
-
 }
 
 func TestSyncDataAutomatic(t *testing.T) {
@@ -295,3 +294,31 @@ func TestSyncDataManual(t *testing.T) {
 	}))
 
 }
+
+func TestSyncWaitForLogin(t *testing.T) {
+	var server = NewTestSyncServer(t)
+	defer server.Close()
+
+	// success
+	var a = NewTestSyncClient(t, server.URI(), "a")
+	timedOut, err := a.sync.WaitForLogin(time.Second)
+	assert.NoErr(t, err)
+	assert.True(t, !timedOut)
+	defer a.Close()
+
+	// failure
+	var b = NewTestSyncClient(t, server.URI(), "b")
+	assert.NoErr(t, b.sync.AuthSharedSecret([]byte{1}))
+	timedOut, err = b.sync.WaitForLogin(time.Second)
+	assert.True(t, strings.Contains(err.Error(), "credentials rejected"))
+	assert.True(t, !timedOut)
+	defer b.Close()
+
+	// time out
+	var c = NewTestSyncClient(t, server.URI(), "b")
+	timedOut, err = c.sync.WaitForLogin(time.Nanosecond)
+	assert.NoErr(t, err)
+	assert.True(t, timedOut)
+	defer c.Close()
+}
+

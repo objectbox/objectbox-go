@@ -24,6 +24,9 @@ import "C"
 
 import (
 	"errors"
+	"fmt"
+	"sync"
+	"time"
 	"unsafe"
 )
 
@@ -32,33 +35,106 @@ type SyncClient struct {
 	ob      *ObjectBox
 	cClient *C.OBX_sync
 	authSet bool
+	started bool
+	state   syncClientState
+
+	// these are unregistered when closing
+	callbackIds []cCallbackId
 }
 
 // NewSyncClient starts a creation of a new sync client.
 // See other methods for configuration and then use Start() to begin synchronization.
-func NewSyncClient(ob *ObjectBox, serverUri string) (error, *SyncClient) {
+func NewSyncClient(ob *ObjectBox, serverUri string) (err error, client *SyncClient) {
 	if !C.obx_sync_available() {
 		return errors.New("sync client is not available"), nil
 	}
 
-	var result = &SyncClient{ob: ob}
+	client = &SyncClient{ob: ob}
 
-	var err = cCallBool(func() bool {
+	// close the sync client if some part of the initialization fails
+	defer func() {
+		if err != nil {
+			if err2 := client.Close(); err2 != nil {
+				err = fmt.Errorf("%s; %s", err, err2)
+			}
+			client = nil
+		}
+	}()
+
+	err = cCallBool(func() bool {
 		var cUri = C.CString(serverUri)
 		defer C.free(unsafe.Pointer(cUri))
-		result.cClient = C.obx_sync(ob.store, cUri)
-		return result.cClient != nil
+		client.cClient = C.obx_sync(ob.store, cUri)
+		return client.cClient != nil
 	})
 
-	if err != nil {
-		return err, nil
+	if err == nil {
+		err = client.registerCallbacks()
 	}
 
-	return nil, result
+	return err, client
+}
+
+type syncClientCode uint64
+
+const (
+	syncClientCodeOk                  syncClientCode = C.OBXSyncCode_OK
+	syncClientCodeRequestRejected     syncClientCode = C.OBXSyncCode_REQ_REJECTED
+	syncClientCodeCredentialsRejected syncClientCode = C.OBXSyncCode_CREDENTIALS_REJECTED
+	syncClientCodeUnknown             syncClientCode = C.OBXSyncCode_UNKNOWN
+	syncClientCodeAuthUnreachable     syncClientCode = C.OBXSyncCode_AUTH_UNREACHABLE
+	syncClientCodeBadVersion          syncClientCode = C.OBXSyncCode_BAD_VERSION
+	syncClientCodeClientIdTaken       syncClientCode = C.OBXSyncCode_CLIENT_ID_TAKEN
+	syncClientCodeTxViolatedUnique    syncClientCode = C.OBXSyncCode_TX_VIOLATED_UNIQUE
+)
+
+func (client *SyncClient) registerCallbacks() error {
+	// login
+	if callbackId, err := cCallbackRegister(cVoidCallback(func() {
+		client.state.Update(func(state *syncClientState) {
+			state.loggedIn = true
+			state.loginError = nil
+		})
+	})); err != nil {
+		return err
+	} else {
+		client.callbackIds = append(client.callbackIds, callbackId)
+		C.obx_sync_listener_login(client.cClient, (*C.OBX_sync_listener_login)(cVoidCallbackDispatchPtr), unsafe.Pointer(&callbackId))
+	}
+
+	// login failed
+	if callbackId, err := cCallbackRegister(cVoidUint64Callback(func(code uint64) {
+		client.state.Update(func(state *syncClientState) {
+			state.loggedIn = false
+			switch syncClientCode(code) {
+			case syncClientCodeCredentialsRejected:
+				state.loginError = errors.New("credentials rejected")
+			case syncClientCodeAuthUnreachable:
+				state.loginError = errors.New("authentication unreachable")
+			default:
+				state.loginError = fmt.Errorf("error code %v", code)
+			}
+		})
+	})); err != nil {
+		return err
+	} else {
+		client.callbackIds = append(client.callbackIds, callbackId)
+		C.obx_sync_listener_login_failure(client.cClient, (*C.OBX_sync_listener_login_failure)(cVoidUint64CallbackDispatchPtr), unsafe.Pointer(&callbackId))
+	}
+
+	return nil
 }
 
 // Close stops synchronization and frees the resources.
 func (client *SyncClient) Close() error {
+	if client.cClient == nil {
+		return nil
+	}
+
+	for _, cbId := range client.callbackIds {
+		cCallbackUnregister(cbId)
+	}
+
 	return cCall(func() C.obx_err {
 		defer func() { client.cClient = nil }()
 		return C.obx_sync_close(client.cClient)
@@ -130,6 +206,7 @@ func (client *SyncClient) State() SyncClientState {
 
 // Start initiates the connection to the server and begins the synchronization
 func (client *SyncClient) Start() error {
+	client.started = true
 	// If no authentication was provided by the user, try if the server accepts clients without any credentials at all.
 	// That's what the client code/setup implies. Maybe the c-api should do this automatically.
 	if !client.authSet {
@@ -149,6 +226,27 @@ func (client *SyncClient) Start() error {
 func (client *SyncClient) Stop() error {
 	return cCall(func() C.obx_err {
 		return C.obx_sync_stop(client.cClient)
+	})
+}
+
+// WaitForLogin initiates the connection to the server and waits for a login response (either a success or a failure)
+// Returns:
+// 		(true, nil) in case of a time out;
+// 		(false, nil) in case the login was successful;
+// 		(false, error) if an error occurred (such as wrong credentials)
+func (client *SyncClient) WaitForLogin(timeout time.Duration) (timedOut bool, err error) {
+	if !client.started {
+		if err := client.Start(); err != nil {
+			return false, err
+		}
+	}
+
+	return waitUntil(timeout, time.Millisecond, func() (result bool, err error) {
+		client.state.Lock()
+		result = client.state.loggedIn
+		err = client.state.loginError
+		client.state.Unlock()
+		return
 	})
 }
 
@@ -174,4 +272,19 @@ func (client *SyncClient) DoFullSync() error {
 	return cCall(func() C.obx_err {
 		return C.obx_sync_full(client.cClient)
 	})
+}
+
+type syncClientState struct {
+	sync.Mutex
+	loggedIn   bool
+	loginError error
+}
+
+// Update changes the state under a mutex and signals the conditional variable
+func (state *syncClientState) Update(fn func(*syncClientState)) {
+	state.Lock()
+	defer func() {
+		state.Unlock()
+	}()
+	fn(state)
 }

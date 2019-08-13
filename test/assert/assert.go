@@ -116,6 +116,14 @@ func NoErr(t *testing.T, err error) {
 	}
 }
 
+// NotNil verifies that the given value is not nil
+func NotNil(t *testing.T, actual interface{}) {
+	var act = reflect.ValueOf(actual)
+	if act.IsNil() {
+		Failf(t, "Unexpected nil, type %v", act.Type())
+	}
+}
+
 // Failf fails immediately
 func Failf(t *testing.T, format string, args ...interface{}) {
 	Fail(t, fmt.Sprintf(format, args...))

@@ -80,7 +80,7 @@ func EqItems(t *testing.T, expected interface{}, actual interface{}) {
 	for i := 0; i < act.Len(); i++ {
 		var existing = merged.MapIndex(act.Index(i))
 		if !existing.IsValid() {
-			Failf(t, "Unexpected item %v found in %v, expecting %v", act.Index(i), act, exp)
+			Failf(t, "Unexpected item %d: %v found in %v, expecting %v", i, act.Index(i), act, exp)
 		}
 
 		merged.SetMapIndex(act.Index(i), reflect.ValueOf(int(existing.Int())-1)) // decrease by one

@@ -83,7 +83,6 @@ func TestSyncState(t *testing.T) {
 	defer env.Close()
 
 	var client = env.SyncClient(server.URI())
-	assert.NoErr(t, client.UpdatesMode(objectbox.SyncClientUpdatesManual))
 
 	assert.Eq(t, objectbox.SyncClientStateCreated, client.State())
 
@@ -137,4 +136,87 @@ func waitUntil(timeout time.Duration, fn func() (bool, error)) error {
 			// this will exit up to the for loop
 		}
 	}
+}
+
+type testSyncClient struct {
+	t    *testing.T
+	env  *model.TestEnv
+	sync *objectbox.SyncClient
+}
+
+func NewTestSyncClient(t *testing.T, serverURI, name string) *testSyncClient {
+	var client = &testSyncClient{t: t}
+
+	client.env = model.NewTestEnv(t)
+
+	// start a client and wait until login
+	client.sync = client.env.SyncClient(serverURI)
+	assert.NoErr(t, client.sync.Start())
+
+	assert.NoErr(t, waitUntil(time.Second, func() (bool, error) {
+		return client.sync.State() == objectbox.SyncClientStateLoggedIn, nil
+	}))
+
+	return client
+}
+
+func (client *testSyncClient) Close() {
+	assert.NoErr(client.t, client.sync.Close())
+	client.env.Close()
+}
+
+func TestSyncData(t *testing.T) {
+	var server = NewTestSyncServer(t)
+	defer server.Close()
+
+	var a = NewTestSyncClient(t, server.URI(), "a")
+	defer a.Close()
+
+	var b = NewTestSyncClient(t, server.URI(), "b")
+	defer b.Close()
+
+	isEmpty, err := a.env.Box.IsEmpty()
+	assert.NoErr(t, err)
+	assert.True(t, isEmpty)
+
+	isEmpty, err = b.env.Box.IsEmpty()
+	assert.NoErr(t, err)
+	assert.True(t, isEmpty)
+
+	// insert into one box
+	var count uint = 10
+	a.env.Populate(count)
+
+	// wait for the data to be synced to the other box
+	assert.NoErr(t, waitUntil(time.Second, func() (bool, error) {
+		bCount, err := b.env.Box.Count()
+		return bCount == uint64(count), err
+	}))
+
+	var assertEqualBoxes = func(boxA, boxB *model.EntityBox) {
+		itemsA, err := a.env.Box.GetAll()
+		assert.NoErr(t, err)
+
+		itemsB, err := b.env.Box.GetAll()
+		assert.NoErr(t, err)
+
+		assert.Eq(t, count, uint(len(itemsA)))
+		assert.Eq(t, count, uint(len(itemsB)))
+		assert.Eq(t, itemsA, itemsB)
+	}
+	assertEqualBoxes(a.env.Box, b.env.Box)
+
+	// remove from one of the boxes
+	removed, err := b.env.Box.RemoveIds(1, 3, 6)
+	assert.NoErr(t, err)
+	assert.True(t, 3 == removed)
+	count = count - uint(removed)
+
+	// wait for the data to be synced to the other box
+	assert.NoErr(t, waitUntil(time.Second, func() (bool, error) {
+		bCount, err := a.env.Box.Count()
+		return bCount == uint64(count), err
+	}))
+
+	assertEqualBoxes(a.env.Box, b.env.Box)
 }

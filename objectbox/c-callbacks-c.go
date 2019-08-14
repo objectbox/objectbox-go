@@ -42,3 +42,9 @@ func cVoidUint64CallbackDispatch(callbackIdPtr unsafe.Pointer, arg uint64) {
 	var callbackId = *(*cCallbackId)(callbackIdPtr)
 	cCallbackLookup(callbackId).callVoidUint64(arg)
 }
+
+//export cVoidConstVoidCallbackDispatch
+func cVoidConstVoidCallbackDispatch(callbackIdPtr unsafe.Pointer, arg unsafe.Pointer) {
+	var callbackId = *(*cCallbackId)(callbackIdPtr)
+	cCallbackLookup(callbackId).callVoidConstVoid(arg)
+}

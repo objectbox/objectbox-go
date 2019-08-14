@@ -252,7 +252,7 @@ func TestSyncDataManual(t *testing.T) {
 	a.env.Populate(count)
 
 	// this will time out because we haven't manually initiated an update
-	assert.True(t, strings.Contains(waitUntil(500 * time.Millisecond, func() (bool, error) {
+	assert.True(t, strings.Contains(waitUntil(500*time.Millisecond, func() (bool, error) {
 		bCount, err := b.env.Box.Count()
 		return bCount == uint64(count), err
 	}).Error(), "timeout"))
@@ -270,7 +270,7 @@ func TestSyncDataManual(t *testing.T) {
 	count = 0
 
 	// this will time out because we haven't subscribed for all further updates
-	assert.True(t, strings.Contains(waitUntil(500 * time.Millisecond, func() (bool, error) {
+	assert.True(t, strings.Contains(waitUntil(500*time.Millisecond, func() (bool, error) {
 		bCount, err := b.env.Box.Count()
 		return bCount == uint64(count), err
 	}).Error(), "timeout"))
@@ -292,7 +292,6 @@ func TestSyncDataManual(t *testing.T) {
 		bCount, err := b.env.Box.Count()
 		return bCount == uint64(count), err
 	}))
-
 }
 
 func TestSyncWaitForLogin(t *testing.T) {
@@ -322,3 +321,51 @@ func TestSyncWaitForLogin(t *testing.T) {
 	defer c.Close()
 }
 
+func TestSyncOnChange(t *testing.T) {
+	var server = NewTestSyncServer(t)
+	defer server.Close()
+
+	var a = NewTestSyncClient(t, server.URI(), "a")
+	a.Start()
+	defer a.Close()
+
+	var putIDs = make([]uint64, 0)
+	var removedIDs = make([]uint64, 0)
+
+	var b = NewTestSyncClient(t, server.URI(), "b")
+	assert.NoErr(t, b.sync.OnChange(func(changes []*objectbox.SyncChangeNotification) {
+		t.Logf("received %d changes", len(changes))
+		for i, change := range changes {
+			t.Logf("change %d: %v", i, change)
+
+			// only count the main entity, not relations
+			if change.EntityId == model.EntityBinding.Id {
+				putIDs = append(putIDs, change.PutIds...)
+				removedIDs = append(removedIDs, change.RemovedIds...)
+			}
+		}
+	}))
+	b.Start()
+	defer b.Close()
+
+	var count uint = 1000
+	if testing.Short() {
+		count = 100
+	}
+
+	// insert into one box
+	a.env.Populate(count)
+
+	// wait for the data to be synced to the other box
+	assert.NoErr(t, waitUntil(time.Second, func() (bool, error) {
+		return count == uint(len(putIDs)), nil
+	}))
+
+	assert.Eq(t, 0, len(removedIDs))
+
+	var expectedIds []uint64
+	for id := uint(1); id <= count; id++ {
+		expectedIds = append(expectedIds, uint64(id))
+	}
+	assert.Eq(t, expectedIds, putIDs)
+}

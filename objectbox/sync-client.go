@@ -36,10 +36,10 @@ type SyncClient struct {
 	cClient *C.OBX_sync
 	authSet bool
 	started bool
-	state   syncClientState
+	state   syncClientInternalState
 
 	// these are unregistered when closing
-	callbackIds []cCallbackId
+	cCallbackIds []cCallbackId
 }
 
 // NewSyncClient starts a creation of a new sync client.
@@ -91,20 +91,20 @@ const (
 func (client *SyncClient) registerCallbacks() error {
 	// login
 	if callbackId, err := cCallbackRegister(cVoidCallback(func() {
-		client.state.Update(func(state *syncClientState) {
+		client.state.Update(func(state *syncClientInternalState) {
 			state.loggedIn = true
 			state.loginError = nil
 		})
 	})); err != nil {
 		return err
 	} else {
-		client.callbackIds = append(client.callbackIds, callbackId)
+		client.cCallbackIds = append(client.cCallbackIds, callbackId)
 		C.obx_sync_listener_login(client.cClient, (*C.OBX_sync_listener_login)(cVoidCallbackDispatchPtr), unsafe.Pointer(&callbackId))
 	}
 
 	// login failed
 	if callbackId, err := cCallbackRegister(cVoidUint64Callback(func(code uint64) {
-		client.state.Update(func(state *syncClientState) {
+		client.state.Update(func(state *syncClientInternalState) {
 			state.loggedIn = false
 			switch syncClientCode(code) {
 			case syncClientCodeCredentialsRejected:
@@ -118,7 +118,7 @@ func (client *SyncClient) registerCallbacks() error {
 	})); err != nil {
 		return err
 	} else {
-		client.callbackIds = append(client.callbackIds, callbackId)
+		client.cCallbackIds = append(client.cCallbackIds, callbackId)
 		C.obx_sync_listener_login_failure(client.cClient, (*C.OBX_sync_listener_login_failure)(cVoidUint64CallbackDispatchPtr), unsafe.Pointer(&callbackId))
 	}
 
@@ -131,7 +131,7 @@ func (client *SyncClient) Close() error {
 		return nil
 	}
 
-	for _, cbId := range client.callbackIds {
+	for _, cbId := range client.cCallbackIds {
 		cCallbackUnregister(cbId)
 	}
 
@@ -222,11 +222,13 @@ func (client *SyncClient) Start() error {
 	})
 }
 
-// Stop stops the synchronization and close the connection to the server
+// Stop stops the synchronization and closes the connection to the server
 func (client *SyncClient) Stop() error {
-	return cCall(func() C.obx_err {
+	var err = cCall(func() C.obx_err {
 		return C.obx_sync_stop(client.cClient)
 	})
+	client.started = false
+	return err
 }
 
 // WaitForLogin initiates the connection to the server and waits for a login response (either a success or a failure)
@@ -274,14 +276,42 @@ func (client *SyncClient) DoFullSync() error {
 	})
 }
 
-type syncClientState struct {
+// SyncChangeNotification describes a single incoming change received by the sync client
+type SyncChangeNotification struct {
+	EntityId   TypeId
+	PutIds     []uint64
+	RemovedIds []uint64
+}
+
+type syncChangeNotificationListener func(changes []*SyncChangeNotification)
+
+// OnChange attaches a callback to receive incoming changes notifications.
+// OnChange event is issued after a transaction is applied to the local database.
+func (client *SyncClient) OnChange(callback syncChangeNotificationListener) error {
+	if client.started {
+		return errors.New("cannot attach an OnChange listener - already started")
+	}
+
+	if callbackId, err := cCallbackRegister(cVoidConstVoidCallback(func(cChangeList unsafe.Pointer) {
+		callback(cSyncChangeArrayToGo((*C.OBX_sync_change_array)(cChangeList)))
+	})); err != nil {
+		return err
+	} else {
+		client.cCallbackIds = append(client.cCallbackIds, callbackId)
+		C.obx_sync_listener_change(client.cClient, (*C.OBX_sync_listener_change)(cVoidConstVoidCallbackDispatchPtr), unsafe.Pointer(&callbackId))
+	}
+
+	return nil
+}
+
+type syncClientInternalState struct {
 	sync.Mutex
 	loggedIn   bool
 	loginError error
 }
 
 // Update changes the state under a mutex and signals the conditional variable
-func (state *syncClientState) Update(fn func(*syncClientState)) {
+func (state *syncClientInternalState) Update(fn func(*syncClientInternalState)) {
 	state.Lock()
 	defer func() {
 		state.Unlock()

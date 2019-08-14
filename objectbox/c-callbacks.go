@@ -51,6 +51,10 @@ typedef void cVoidCallback(void* callbackId);
 // void return, uint64 argument
 extern void cVoidUint64CallbackDispatch(void* callbackId);
 typedef void cVoidUint64Callback(void* callbackId, uint64_t arg);
+
+// void return, const void* argument
+extern void cVoidConstVoidCallbackDispatch(void* callbackId);
+typedef void cVoidConstVoidCallback(void* callbackId, const void* arg);
 */
 import "C"
 import (
@@ -65,6 +69,7 @@ import (
 type cCallable interface {
 	callVoid()
 	callVoidUint64(uint64)
+	callVoidConstVoid(unsafe.Pointer)
 }
 
 // programming error - using an incorrect `cCallable` (arguments and return-type combination)
@@ -72,19 +77,30 @@ const cCallablePanicMsg = "invalid callback signature"
 
 type cVoidCallback func()
 
-func (fn cVoidCallback) callVoid()             { fn() }
-func (fn cVoidCallback) callVoidUint64(uint64) { panic(cCallablePanicMsg) }
+func (fn cVoidCallback) callVoid()                        { fn() }
+func (fn cVoidCallback) callVoidUint64(uint64)            { panic(cCallablePanicMsg) }
+func (fn cVoidCallback) callVoidConstVoid(unsafe.Pointer) { panic(cCallablePanicMsg) }
 
 var cVoidCallbackDispatchPtr = (*C.cVoidCallback)(unsafe.Pointer(C.cVoidCallbackDispatch))
 
 type cVoidUint64Callback func(uint64)
 
-func (fn cVoidUint64Callback) callVoid()                 { panic(cCallablePanicMsg) }
-func (fn cVoidUint64Callback) callVoidUint64(arg uint64) { fn(arg) }
+func (fn cVoidUint64Callback) callVoid()                        { panic(cCallablePanicMsg) }
+func (fn cVoidUint64Callback) callVoidUint64(arg uint64)        { fn(arg) }
+func (fn cVoidUint64Callback) callVoidConstVoid(unsafe.Pointer) { panic(cCallablePanicMsg) }
 
 var cVoidUint64CallbackDispatchPtr = (*C.cVoidUint64Callback)(unsafe.Pointer(C.cVoidUint64CallbackDispatch))
 
+type cVoidConstVoidCallback func(unsafe.Pointer)
+
+func (fn cVoidConstVoidCallback) callVoid()                            { panic(cCallablePanicMsg) }
+func (fn cVoidConstVoidCallback) callVoidUint64(uint64)                { panic(cCallablePanicMsg) }
+func (fn cVoidConstVoidCallback) callVoidConstVoid(arg unsafe.Pointer) { fn(arg) }
+
+var cVoidConstVoidCallbackDispatchPtr = (*C.cVoidConstVoidCallback)(unsafe.Pointer(C.cVoidConstVoidCallbackDispatch))
+
 type cCallbackId uint32
+
 var cCallbackLastId cCallbackId
 var cCallbackMutex sync.Mutex
 var cCallbackMap = make(map[cCallbackId]cCallable)
@@ -112,7 +128,13 @@ func cCallbackLookup(id cCallbackId) cCallable {
 	cCallbackMutex.Lock()
 	defer cCallbackMutex.Unlock()
 
-	return cCallbackMap[id]
+	fn, found := cCallbackMap[id]
+	if !found {
+		// this must never happen - it's either a programming error or a bug in the C library, calling with an invalid pass-through argument
+		panic(fmt.Errorf("invalid callback ID %d", id))
+	}
+
+	return fn
 }
 
 func cCallbackUnregister(id cCallbackId) {

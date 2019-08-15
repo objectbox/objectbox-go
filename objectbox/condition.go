@@ -16,6 +16,8 @@
 
 package objectbox
 
+import "errors"
+
 // Condition is used by Query to limit object selection
 type Condition interface {
 	applyTo(qb *QueryBuilder, isRoot bool) (ConditionId, error)
@@ -37,6 +39,16 @@ type conditionCombination struct {
 	conditions []Condition
 }
 
+// assertNoLinks makes sure there are no links (0 condition IDs) among given conditions
+func (*conditionCombination) assertNoLinks(conditionIds []ConditionId) error {
+	for _, cid := range conditionIds {
+		if cid == 0 {
+			return errors.New("using Link inside Any/All is not supported")
+		}
+	}
+	return nil
+}
+
 func (condition *conditionCombination) applyTo(qb *QueryBuilder, isRoot bool) (ConditionId, error) {
 	if len(condition.conditions) == 0 {
 		return 0, nil
@@ -53,14 +65,20 @@ func (condition *conditionCombination) applyTo(qb *QueryBuilder, isRoot bool) (C
 		}
 	}
 
-	if condition.or {
-		return qb.Any(ids)
-	} else if !isRoot {
-		// only necessary to use AND if it's not a root condition group
-		return qb.All(ids)
-	} else {
+	// root All (AND) is implicit so no need to actually combine the conditions
+	if isRoot && !condition.or {
 		return 0, nil
 	}
+
+	if err := condition.assertNoLinks(ids); err != nil {
+		return 0, err
+	}
+
+	if condition.or {
+		return qb.Any(ids)
+	}
+
+	return qb.All(ids)
 }
 
 // Any provides a way to combine multiple query conditions (equivalent to OR logical operator)

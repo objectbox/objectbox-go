@@ -452,7 +452,38 @@ func TestQueryLinks(t *testing.T) {
 		{1, s{`TRUE Link: TRUE Link: String == "Val-1"`},
 			boxV.Query(R.NextSlice.Link(E.RelatedPtr.Link(E.String.Equals("", true)))),
 			func(q i) error { return eq(q).SetStringParams(E.String, e.String) }},
+
+		// ALL (implicit): two to-one links and a source-entity condition
+		{1, s{`String == "Val-1" Link: Name == "rel-Val-1" Link: Name == "relPtr-Val-1"`}, box.Query(
+			E.String.Equals("Val-1", true),
+			E.Related.Link(R.Name.Equals("rel-Val-1", true)),
+			E.RelatedPtr.Link(R.Name.Equals("relPtr-Val-1", true)),
+		), nil},
 	})
+
+	// ALL (explicit, inner): two to-one links and a source-entity condition
+	func() {
+		defer assert.MustPanic(t, regexp.MustCompile("using Link inside Any/All is not supported"))
+
+		box.Query(
+			E.String.Equals("Val-1", true),
+			objectbox.All(
+				E.Related.Link(R.Name.Equals("rel-Val-1", true)),
+				E.RelatedPtr.Link(R.Name.Equals("relPtr-Val-1", true)),
+			))
+	}()
+
+	// Any (explicit): two to-one links and a source-entity condition
+	func() {
+		defer assert.MustPanic(t, regexp.MustCompile("using Link inside Any/All is not supported"))
+
+		box.Query(objectbox.Any(
+			E.String.Equals("Val-1", true),
+			E.Related.Link(R.Name.Equals("rel-Val-1", true)),
+			E.RelatedPtr.Link(R.Name.Equals("relPtr-Val-1", true)),
+		))
+	}()
+
 }
 
 func TestQueryClose(t *testing.T) {

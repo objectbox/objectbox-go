@@ -41,7 +41,7 @@ extern "C" {
 // Note that you should use methods with prefix obx_version_ to check when linking against the dynamic library
 #define OBX_VERSION_MAJOR 0
 #define OBX_VERSION_MINOR 6
-#define OBX_VERSION_PATCH 0  // values >= 100 are reserved for dev releases leading to the next minor/major increase
+#define OBX_VERSION_PATCH 100  // values >= 100 are reserved for dev releases leading to the next minor/major increase
 
 /// Returns the version of the library as ints. Pointers may be null
 void obx_version(int* major, int* minor, int* patch);
@@ -138,6 +138,13 @@ typedef bool obx_data_visitor(void* arg, const void* data, size_t size);
 //----------------------------------------------
 // Error info
 //----------------------------------------------
+
+/// Returns the error status on the current thread and clears the error state.
+/// The buffer returned in out_message is valid only until the next call into ObjectBox.
+/// @param out_error receives the error code; may be NULL
+/// @param out_message receives the pointer to the error messages; may be NULL
+/// @returns true if an error was pending
+bool obx_pop_last_error(obx_err* out_error, const char** out_message);
 
 obx_err obx_last_error_code(void);
 
@@ -538,6 +545,7 @@ obx_err obx_box_ids_for_put(OBX_box* box, uint64_t count, obx_id* out_first_id);
 obx_err obx_box_put(OBX_box* box, obx_id id, const void* data, size_t size, OBXPutMode mode);
 
 /// Put all given objects in the database in a single transaction
+/// @param ids Previously allocated IDs for the given given objects (e.g. using obx_box_ids_for_put)
 obx_err obx_box_put_many(OBX_box* box, const OBX_bytes_array* objects, const obx_id* ids, OBXPutMode mode);
 
 /// Remove a single object
@@ -548,11 +556,11 @@ obx_err obx_box_remove(OBX_box* box, obx_id id);
 /// Note that this method will not fail if the object is not found (e.g. already removed).
 /// In case you need to strictly check whether all of the objects exist before removing them,
 ///  execute obx_box_contains_ids() and obx_box_remove_ids() inside a single write transaction.
-/// You can pass nullptr as out_count in case you're not interested in the number of the removed objects.
+/// @param out_count Pointer to retrieve the number of removed objects; may be NULL.
 obx_err obx_box_remove_many(OBX_box* box, const OBX_id_array* ids, uint64_t* out_count);
 
 /// Remove all objects and set the out_count the the number of removed objects.
-/// You can pass nullptr as out_count in case you're not interested in the number of the removed objects.
+/// @param out_count Pointer to retrieve the number of removed objects; may be NULL.
 obx_err obx_box_remove_all(OBX_box* box, uint64_t* out_count);
 
 /// Checks whether there are any objects for this entity and updates the out_is_empty accordingly

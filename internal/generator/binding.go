@@ -235,10 +235,15 @@ func (binding *Binding) createEntityFromAst(strct *ast.StructType, name string, 
 		}
 	}
 
-	if fields, err := entity.addFields(astStructFieldList{strct, binding.source}, entity.Name, ""); err != nil {
-		return err
-	} else {
-		entity.Fields = fields
+	{
+		var fieldList = astStructFieldList{strct, binding.source}
+		var recursionStack = map[string]bool{}
+		recursionStack[entity.Name] = true
+		if fields, err := entity.addFields(fieldList, entity.Name, "", &recursionStack); err != nil {
+			return err
+		} else {
+			entity.Fields = fields
+		}
 	}
 
 	if len(entity.Properties) == 0 {
@@ -285,9 +290,9 @@ func (binding *Binding) createEntityFromAst(strct *ast.StructType, name string, 
 	return nil
 }
 
-func (entity *Entity) addFields(fields fieldList, fieldPath, prefix string) ([]*Field, error) {
+func (entity *Entity) addFields(fields fieldList, fieldPath, prefix string, recursionStack *map[string]bool) ([]*Field, error) {
 	var propertyError = func(err error, property *Property) error {
-		return fmt.Errorf("%s on property %s, entity %s", err, property.Name, fieldPath)
+		return fmt.Errorf("%s on property %s found in %s", err, property.Name, fieldPath)
 	}
 
 	var fieldsTree []*Field
@@ -360,13 +365,24 @@ func (entity *Entity) addFields(fields fieldList, fieldPath, prefix string) ([]*
 				}
 			}
 
-			if innerFields, err := entity.addFields(innerStructFields, fieldPath+"."+property.Name, innerPrefix); err != nil {
+			// Structs may be chained in a cycle (using pointers), causing an infinite recursion.
+			// Let's make sure this doesn't happen because it causes the generator (and a whole OS) to "freeze".
+			if field.Type != "" {
+				if (*recursionStack)[field.Type] {
+					return nil, propertyError(fmt.Errorf("embedded struct cycle detected: %v", fieldPath), property)
+				}
+				(*recursionStack)[field.Type] = true
+			}
+
+			if innerFields, err := entity.addFields(innerStructFields, fieldPath+"."+property.Name, innerPrefix, recursionStack); err != nil {
 				return nil, err
 			} else {
 				// apply some struct-related settings to the field
 				field.Property = nil
 				field.Fields = innerFields
 			}
+
+			delete(*recursionStack, field.Type)
 
 			// this struct itself is not added, just the inner properties
 			// so skip the the following steps of adding the property

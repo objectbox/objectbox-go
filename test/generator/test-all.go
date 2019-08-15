@@ -187,6 +187,7 @@ func getExpectedError(t *testing.T, sourceFile string) error {
 		return errors.New(strings.TrimSpace(string(match[1])))
 	}
 
+	assert.Failf(t, "missing error declaration in %s - add comment to the file // ERROR = expected error text", sourceFile)
 	return nil
 }
 

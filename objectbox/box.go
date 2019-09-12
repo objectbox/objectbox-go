@@ -605,8 +605,12 @@ func (box *Box) ContainsIds(ids ...uint64) (bool, error) {
 
 // RelationIds returns IDs of all target objects related to the given source object ID
 func (box *Box) RelationIds(relation *RelationToMany, sourceId uint64) ([]uint64, error) {
+	targetBox, err := box.ObjectBox.box(relation.Target.Id)
+	if err != nil {
+		return nil, err
+	}
 	return cGetIds(func() *C.OBX_id_array {
-		return C.obx_box_rel_targets_ids(box.cBox, C.obx_schema_id(relation.Id), C.obx_id(sourceId))
+		return C.obx_box_rel_get_ids(targetBox.cBox, C.obx_schema_id(relation.Id), C.obx_id(sourceId))
 	})
 }
 

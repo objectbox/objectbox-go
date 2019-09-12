@@ -48,7 +48,7 @@ func newQueryBuilder(ob *ObjectBox, typeId TypeId) *QueryBuilder {
 	}
 
 	qb.Err = cCallBool(func() bool {
-		qb.cqb = C.obx_qb_create(ob.store, C.obx_schema_id(typeId))
+		qb.cqb = C.obx_query_builder(ob.store, C.obx_schema_id(typeId))
 		return qb.cqb != nil
 	})
 
@@ -113,7 +113,7 @@ func (qb *QueryBuilder) Build(box *Box) (*Query, error) {
 	}
 
 	if err := cCallBool(func() bool {
-		query.cQuery = C.obx_query_create(qb.cqb)
+		query.cQuery = C.obx_query(qb.cqb)
 		return query.cQuery != nil
 	}); err != nil {
 		qb.Err = err

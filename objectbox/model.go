@@ -88,7 +88,7 @@ func NewModel() *Model {
 	}
 
 	model.Error = cCallBool(func() bool {
-		model.cModel = C.obx_model_create()
+		model.cModel = C.obx_model()
 		return model.cModel != nil
 	})
 

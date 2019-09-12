@@ -137,7 +137,7 @@ func (ob *ObjectBox) runInTxn(readOnly bool, fn func() error) (err error) {
 	err = fn()
 
 	if !readOnly && err == nil {
-		if rc := C.obx_txn_success(cTxn); rc != 0 {
+		if rc := C.obx_txn_mark_success(cTxn, true); rc != 0 {
 			err = createError()
 		}
 	}

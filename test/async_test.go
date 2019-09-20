@@ -62,6 +62,7 @@ func testAsync(t *testing.T, asyncF func(box *model.TestEntityInlineBox) *model.
 	var async = asyncF(box)
 	defer func() {
 		assert.NoErr(t, async.Close())
+		assert.NoErr(t, async.Close()) // test double close
 	}()
 
 	var waitAndCount = func(expected uint64) {

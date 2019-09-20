@@ -71,11 +71,13 @@ func NewAsyncBox(ob *ObjectBox, entityId TypeId, timeoutMs uint64) (*AsyncBox, e
 // Not necessary for the standard (shared) instance from box.Async(); Close() can still be called for those:
 // it just won't have any effect.
 func (async *AsyncBox) Close() error {
-	if !async.cOwned {
+	if !async.cOwned || async.cAsync == nil {
 		return nil
 	}
+	var cAsync = async.cAsync
+	async.cAsync = nil
 	return cCall(func() C.obx_err {
-		return C.obx_async_close(async.cAsync)
+		return C.obx_async_close(cAsync)
 	})
 }
 

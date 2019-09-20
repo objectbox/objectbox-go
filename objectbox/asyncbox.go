@@ -67,7 +67,7 @@ func NewAsyncBox(ob *ObjectBox, entityId TypeId, timeoutMs uint64) (*AsyncBox, e
 	return async, nil
 }
 
-// Closes a customized AsyncBox to free its resources (e.g. customized timeout).
+// Close frees resources of a customized AsyncBox (e.g. with a custom timeout).
 // Not necessary for the standard (shared) instance from box.Async(); Close() can still be called for those:
 // it just won't have any effect.
 func (async *AsyncBox) Close() error {

@@ -48,7 +48,7 @@ func (taskRelManyPtr_EntityInfo) GeneratorVersion() int {
 func (taskRelManyPtr_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("TaskRelManyPtr", 6, 3287288577352441706)
 	model.Property("Id", 6, 1, 3930927879439176946)
-	model.PropertyFlags(8193)
+	model.PropertyFlags(1)
 	model.EntityLastPropertyId(1, 3930927879439176946)
 	model.Relation(2, 4706154865122290029, GroupBinding.Id, GroupBinding.Uid)
 }

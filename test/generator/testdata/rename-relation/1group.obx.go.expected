@@ -49,7 +49,7 @@ func (group_EntityInfo) GeneratorVersion() int {
 func (group_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("Group", 5, 7144924247938981575)
 	model.Property("Id", 6, 1, 161231572858529631)
-	model.PropertyFlags(8193)
+	model.PropertyFlags(1)
 	model.Property("Name", 9, 2, 7259475919510918339)
 	model.EntityLastPropertyId(2, 7259475919510918339)
 }

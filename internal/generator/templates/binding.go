@@ -107,9 +107,9 @@ func ({{$entityNameCamel}}_EntityInfo) AddToModel(model *objectbox.Model) {
     model.Entity("{{$entity.Name}}", {{$entity.Id}}, {{$entity.Uid}})
     {{range $property := $entity.Properties -}}
     model.Property("{{$property.ObName}}", {{$property.ObType}}, {{$property.Id}}, {{$property.Uid}})
-    {{if len $property.ObFlags -}}
-        model.PropertyFlags({{$property.ObFlagsCombined}})
-    {{end -}}
+    {{with $property.ObFlagsCombined -}}
+		model.PropertyFlags({{.}})
+	{{end -}}
 	{{if $property.Relation}}model.PropertyRelation("{{$property.Relation.Target.Name}}", {{$property.Index.Id}}, {{$property.Index.Uid}})
 	{{else if $property.Index}}model.PropertyIndex({{$property.Index.Id}}, {{$property.Index.Uid}})
     {{end -}}

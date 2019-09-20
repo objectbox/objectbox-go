@@ -344,7 +344,7 @@ func (entity_EntityInfo) GeneratorVersion() int {
 func (entity_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("Entity", 1, 3022148985475790732)
 	model.Property("Id", 6, 1, 1213346202559552829)
-	model.PropertyFlags(8193)
+	model.PropertyFlags(1)
 	model.Property("Int", 6, 2, 6609825840127351046)
 	model.Property("Int8", 2, 3, 741904540265547276)
 	model.Property("Int16", 3, 4, 2102961483425256790)
@@ -1167,7 +1167,7 @@ func (testEntityInline_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Property("Date", 10, 1, 6052475349651303914)
 	model.Property("Value", 8, 2, 7019205901062172310)
 	model.Property("Id", 6, 3, 5298431058949014957)
-	model.PropertyFlags(8193)
+	model.PropertyFlags(1)
 	model.EntityLastPropertyId(3, 5298431058949014957)
 }
 
@@ -1435,7 +1435,7 @@ func (testEntityRelated_EntityInfo) GeneratorVersion() int {
 func (testEntityRelated_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("TestEntityRelated", 5, 145948658381494339)
 	model.Property("Id", 6, 1, 710127486443861244)
-	model.PropertyFlags(8193)
+	model.PropertyFlags(1)
 	model.Property("Name", 9, 2, 1781092268467778149)
 	model.Property("Next", 11, 3, 3103593908461833729)
 	model.PropertyFlags(8712)

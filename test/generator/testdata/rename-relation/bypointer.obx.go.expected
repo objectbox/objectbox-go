@@ -50,7 +50,7 @@ func (taskRelPtr_EntityInfo) GeneratorVersion() int {
 func (taskRelPtr_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("TaskRelPtr", 2, 3390393562759376202)
 	model.Property("Id", 6, 1, 2669985732393126063)
-	model.PropertyFlags(8193)
+	model.PropertyFlags(1)
 	model.Property("GroupNew", 11, 2, 1774932891286980153)
 	model.PropertyFlags(8712)
 	model.PropertyRelation("Group", 2, 6044372234677422456)

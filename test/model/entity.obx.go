@@ -528,7 +528,7 @@ func (entity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, i
 	fbutils.SetInt32Slot(fbb, 15, obj.Rune)
 	fbutils.SetFloat32Slot(fbb, 16, obj.Float32)
 	fbutils.SetFloat64Slot(fbb, 17, obj.Float64)
-	fbutils.SetInt64Slot(fbb, 18, timeInt64ToDatabaseValue(obj.Date))
+	fbutils.SetInt64Slot(fbb, 18, objectbox.TimeInt64ConvertToDatabaseValue(obj.Date))
 	fbutils.SetUOffsetTSlot(fbb, 19, offsetComplex128)
 	fbutils.SetUint64Slot(fbb, 21, rIdRelated)
 	if obj.RelatedPtr != nil {
@@ -660,7 +660,7 @@ func (entity_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{
 		Rune:            fbutils.GetRuneSlot(table, 34),
 		Float32:         fbutils.GetFloat32Slot(table, 36),
 		Float64:         fbutils.GetFloat64Slot(table, 38),
-		Date:            timeInt64ToEntityProperty(fbutils.GetInt64Slot(table, 40)),
+		Date:            objectbox.TimeInt64ConvertToEntityProperty(fbutils.GetInt64Slot(table, 40)),
 		Complex128:      complex128BytesToEntityProperty(fbutils.GetByteVectorSlot(table, 42)),
 		Related:         *relRelated,
 		RelatedPtr:      relRelatedPtr,

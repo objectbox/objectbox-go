@@ -45,7 +45,7 @@ type Entity struct {
 	Float64      float64
 
 	// converters
-	Date       time.Time  `objectbox:"date type:int64 converter:timeInt64"`
+	Date       time.Time  `objectbox:"date"`
 	Complex128 complex128 `objectbox:"type:[]byte converter:complex128Bytes"`
 
 	// one-to-many relations

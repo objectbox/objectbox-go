@@ -295,6 +295,9 @@ func (binding *Binding) createEntityFromAst(strct *ast.StructType, name string, 
 }
 
 func (entity *Entity) addFields(fields fieldList, fieldPath, prefix string, recursionStack *map[string]bool) ([]*Field, error) {
+	var propertyLog = func(text string, property *Property) {
+		log.Printf("%s property %s found in %s", text, property.Name, fieldPath)
+	}
 	var propertyError = func(err error, property *Property) error {
 		return fmt.Errorf("%s on property %s found in %s", err, property.Name, fieldPath)
 	}
@@ -305,9 +308,10 @@ func (entity *Entity) addFields(fields fieldList, fieldPath, prefix string, recu
 		f := fields.Field(i)
 
 		var property = &Property{
-			entity:  entity,
-			path:    fieldPath,
-			obFlags: map[int]bool{},
+			entity:      entity,
+			path:        fieldPath,
+			obFlags:     map[int]bool{},
+			Annotations: make(map[string]*Annotation),
 		}
 
 		if name, err := f.Name(); err != nil {
@@ -341,7 +345,7 @@ func (entity *Entity) addFields(fields fieldList, fieldPath, prefix string, recu
 		// if the embedded field is from a different package, check if it's available (starts with an upercase letter)
 		if f.Package().Path() != entity.binding.Package.Path() {
 			if len(field.Name) == 0 || field.Name[0] < 65 || field.Name[0] > 90 {
-				log.Printf("Note - skipping unavailable field '%s' on entity %s", property.Name, fieldPath)
+				propertyLog("Notice: skipping unavailable (private)", property)
 				continue
 			}
 
@@ -355,8 +359,31 @@ func (entity *Entity) addFields(fields fieldList, fieldPath, prefix string, recu
 			if err := property.setBasicType(property.Annotations["type"].Value); err != nil {
 				return nil, propertyError(err, property)
 			}
+
 		} else if innerStructFields, err := field.processType(f); err != nil {
 			return nil, propertyError(err, property)
+
+		} else if field.Type == "time.Time" {
+			// first, try to handle time.Time struct - automatically set a converter if it's declared a date by the user
+			if property.Annotations["date"] == nil {
+				property.Annotations["date"] = &Annotation{}
+				propertyLog("Warning: using `objectbox.TimeInt64Convert` with millisecond precision and implying "+
+					"`date` annotation on", property)
+				log.Printf("To avoid this warning: either define your own converter using `converter` and " +
+					"`type` annotations or define the `date` annotation explicitly")
+			}
+
+			// store the field as an int64
+			// Note - property.Annotations["type"] is not set or this code branch wouldn't be executed
+			if err := property.setBasicType("int64"); err != nil {
+				return nil, propertyError(err, property)
+			}
+
+			if property.Annotations["converter"] == nil {
+				var converter = "objectbox.TimeInt64Convert"
+				property.Converter = &converter
+			}
+
 		} else if innerStructFields != nil {
 			// if it was recognized as a struct that should be embedded, add all the fields
 
@@ -645,8 +672,6 @@ func parseCommentsLines(comments []*ast.Comment) []string {
 }
 
 func (property *Property) setAnnotations(tags string) error {
-	property.Annotations = make(map[string]*Annotation)
-
 	if err := parseAnnotations(tags, &property.Annotations); err != nil {
 		property.Annotations = nil
 		return err

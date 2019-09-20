@@ -19,6 +19,7 @@ package objectbox
 import (
 	"fmt"
 	"strconv"
+	"time"
 )
 
 // implements "StringIdConvert" property value converter
@@ -38,4 +39,17 @@ func StringIdConvertToDatabaseValue(goValue string) uint64 {
 	} else {
 		return uint64(id)
 	}
+}
+
+// TimeInt64ConvertToEntityProperty converts Unix timestamp in milliseconds (ObjectBox date field) to time.Time
+// NOTE - you lose precision - anything smaller then milliseconds is dropped
+func TimeInt64ConvertToEntityProperty(dbValue int64) (goValue time.Time) {
+	return time.Unix(dbValue/1000, dbValue%1000*1000000).UTC()
+}
+
+// TimeInt64ConvertToDatabaseValue converts time.Time to Unix timestamp in milliseconds (internal format expected by ObjectBox on a date field)
+// NOTE - you lose precision - anything smaller then milliseconds is dropped
+func TimeInt64ConvertToDatabaseValue(goValue time.Time) int64 {
+	var ms = int64(goValue.Nanosecond()) / 1000000
+	return goValue.Unix()*1000 + ms
 }

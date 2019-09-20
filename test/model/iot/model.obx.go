@@ -70,7 +70,7 @@ func (event_EntityInfo) GeneratorVersion() int {
 func (event_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("Event", 1, 1468539308767086854)
 	model.Property("Id", 6, 1, 3098166604415018001)
-	model.PropertyFlags(8193)
+	model.PropertyFlags(1)
 	model.Property("Uid", 9, 4, 472416569173577818)
 	model.PropertyFlags(32)
 	model.PropertyIndex(1, 3297791712577314158)
@@ -383,7 +383,7 @@ func (reading_EntityInfo) GeneratorVersion() int {
 func (reading_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("Reading", 2, 5284076134434938613)
 	model.Property("Id", 6, 1, 3968063745680890327)
-	model.PropertyFlags(8193)
+	model.PropertyFlags(1)
 	model.Property("Date", 10, 2, 4852407661923085028)
 	model.Property("EventId", 11, 3, 1403806151574554320)
 	model.PropertyFlags(8712)

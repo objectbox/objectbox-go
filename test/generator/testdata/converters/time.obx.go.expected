@@ -49,7 +49,7 @@ func (timeEntity_EntityInfo) GeneratorVersion() int {
 func (timeEntity_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("TimeEntity", 3, 3390393562759376202)
 	model.Property("Id", 6, 1, 2669985732393126063)
-	model.PropertyFlags(8193)
+	model.PropertyFlags(1)
 	model.Property("Time", 10, 2, 1774932891286980153)
 	model.EntityLastPropertyId(2, 1774932891286980153)
 }

@@ -91,7 +91,7 @@ func (f_EntityInfo) GeneratorVersion() int {
 func (f_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("F", 6, 3930927879439176946)
 	model.Property("id", 6, 1, 4706154865122290029)
-	model.PropertyFlags(8193)
+	model.PropertyFlags(1)
 	model.Property("Combined_Text", 9, 2, 2217592893536642650)
 	model.Property("Combined_Id", 6, 3, 1929546706668609706)
 	model.PropertyFlags(8192)

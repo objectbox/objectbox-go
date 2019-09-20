@@ -84,7 +84,7 @@ func (taskIndexed_EntityInfo) GeneratorVersion() int {
 func (taskIndexed_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("TaskIndexed", 5, 7144924247938981575)
 	model.Property("Id", 6, 1, 161231572858529631)
-	model.PropertyFlags(8193)
+	model.PropertyFlags(1)
 	model.Property("Uid", 9, 2, 7259475919510918339)
 	model.PropertyFlags(32)
 	model.PropertyIndex(3, 7373105480197164748)

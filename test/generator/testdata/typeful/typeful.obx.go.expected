@@ -175,7 +175,7 @@ func (typeful_EntityInfo) GeneratorVersion() int {
 func (typeful_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("Typeful", 3, 4035568504096476779)
 	model.Property("Id", 6, 1, 959367522974354090)
-	model.PropertyFlags(8193)
+	model.PropertyFlags(1)
 	model.Property("Int", 6, 2, 2914295034816259174)
 	model.Property("Int8", 2, 3, 1395437218309923052)
 	model.Property("Int16", 3, 4, 6745438398739480977)

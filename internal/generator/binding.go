@@ -258,9 +258,6 @@ func (binding *Binding) createEntityFromAst(strct *ast.StructType, name string, 
 				if entity.IdProperty == nil {
 					entity.IdProperty = property
 					property.addObFlag(PropertyFlagId)
-					// IDs must not be tagged unsigned for compatibility reasons
-                                        // initially set for uint types by setBasicType()
-					property.removeObFlag(PropertyFlagUnsigned)
 				} else {
 					// fail in case multiple fields match this condition
 					return fmt.Errorf(
@@ -275,6 +272,10 @@ func (binding *Binding) createEntityFromAst(strct *ast.StructType, name string, 
 				"`objectbox:\"id\"` tag or use an (u)int64 field named 'Id/id/ID'", entity.Name)
 		}
 	}
+
+	// IDs must not be tagged unsigned for compatibility reasons
+	// initially set for uint types by setBasicType()
+	entity.IdProperty.removeObFlag(PropertyFlagUnsigned)
 
 	// special handling for string IDs = they are transformed to uint64 in the binding
 	if entity.IdProperty.GoType == "string" {

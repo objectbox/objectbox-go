@@ -71,7 +71,7 @@ func (task_EntityInfo) GeneratorVersion() int {
 func (task_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("Task", 1, 8717895732742165505)
 	model.Property("Id", 6, 1, 6050128673802995827)
-	model.PropertyFlags(8193)
+	model.PropertyFlags(1)
 	model.Property("Uid", 9, 2, 501233450539197794)
 	model.PropertyFlags(32)
 	model.PropertyIndex(1, 3390393562759376202)
@@ -331,7 +331,7 @@ func (group_EntityInfo) GeneratorVersion() int {
 func (group_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("Group", 2, 2259404117704393152)
 	model.Property("Id", 6, 1, 1543572285742637646)
-	model.PropertyFlags(8193)
+	model.PropertyFlags(1)
 	model.EntityLastPropertyId(1, 1543572285742637646)
 }
 

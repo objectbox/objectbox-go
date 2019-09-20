@@ -42,7 +42,7 @@ func (runeIdEntity_EntityInfo) GeneratorVersion() int {
 func (runeIdEntity_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("RuneIdEntity", 1, 8717895732742165505)
 	model.Property("Id", 6, 1, 2259404117704393152)
-	model.PropertyFlags(8193)
+	model.PropertyFlags(1)
 	model.EntityLastPropertyId(1, 2259404117704393152)
 }
 

@@ -282,9 +282,22 @@ func AsyncBoxForB(ob *objectbox.ObjectBox, timeoutMs uint64) *BAsyncBox {
 
 // Put inserts/updates a single object asynchronously.
 // When inserting a new object, the Combined.Id.Id property on the passed object will be assigned the new ID the entity would hold
-// if the insert will be successful.
+// if the insert is ultimately successful.
 func (asyncBox *BAsyncBox) Put(object *B) (uint64, error) {
 	return asyncBox.AsyncBox.Put(object)
+}
+
+// Insert a single object asynchronously.
+// The Combined.Id.Id property on the passed object will be assigned the new ID the entity would hold if the insert is ultimately
+// successful. Fails silently if an object with the same ID already exists (this error is not returned).
+func (asyncBox *BAsyncBox) Insert(object *B) (id uint64, err error) {
+	return asyncBox.AsyncBox.Insert(object)
+}
+
+// Update a single object asynchronously.
+// The object must already exists or the update fails silently (without an error returned).
+func (asyncBox *BAsyncBox) Update(object *B) error {
+	return asyncBox.AsyncBox.Update(object)
 }
 
 // Remove deletes a single object asynchronously.

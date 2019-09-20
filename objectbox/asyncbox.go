@@ -79,10 +79,7 @@ func (async *AsyncBox) Close() error {
 	})
 }
 
-// Put inserts/updates a single object asynchronously.
-// When inserting a new object, the ID property on the passed object will be assigned the new ID the entity would hold
-// if the insert will be successful.
-func (async *AsyncBox) Put(object interface{}) (id uint64, err error) {
+func (async *AsyncBox) put(object interface{}, mode int) (uint64, error) {
 	entity := async.box.entity
 	idFromObject, err := entity.binding.GetId(object)
 	if err != nil {
@@ -90,11 +87,11 @@ func (async *AsyncBox) Put(object interface{}) (id uint64, err error) {
 	}
 
 	if entity.hasRelations {
-		// TODO: give a short comment why that is
-		return 0, errors.New("asynchronous Put is currently not supported on entities that have relations")
+		return 0, errors.New("asynchronous Put/Insert/Update is currently not supported on entities that have" +
+			" relations because it could result in partial inserts/broken relations")
 	}
 
-	id, err = async.box.idForPut(idFromObject)
+	id, err := async.box.idForPut(idFromObject)
 	if err != nil {
 		return 0, err
 	}
@@ -102,7 +99,7 @@ func (async *AsyncBox) Put(object interface{}) (id uint64, err error) {
 	err = async.box.withObjectBytes(object, id, func(bytes []byte) error {
 		return cCall(func() C.obx_err {
 			return C.obx_async_put_mode(async.cAsync, C.obx_id(id), unsafe.Pointer(&bytes[0]), C.size_t(len(bytes)),
-				C.OBXPutMode(cPutModePut))
+				C.OBXPutMode(mode))
 		})
 	})
 
@@ -116,6 +113,27 @@ func (async *AsyncBox) Put(object interface{}) (id uint64, err error) {
 	}
 
 	return id, nil
+}
+
+// Put inserts/updates a single object asynchronously.
+// When inserting a new object, the ID property on the passed object will be assigned the new ID the entity would hold
+// if the insert is ultimately successful.
+func (async *AsyncBox) Put(object interface{}) (id uint64, err error) {
+	return async.put(object, cPutModePut)
+}
+
+// Insert a single object asynchronously.
+// The ID property on the passed object will be assigned the new ID the entity would hold if the insert is ultimately
+// successful. Fails silently if an object with the same ID already exists (this error is not returned).
+func (async *AsyncBox) Insert(object interface{}) (id uint64, err error) {
+	return async.put(object, cPutModeInsert)
+}
+
+// Update a single object asynchronously.
+// The object must already exists or the update fails silently (without an error returned).
+func (async *AsyncBox) Update(object interface{}) error {
+	_, err := async.put(object, cPutModeUpdate)
+	return err
 }
 
 // Remove deletes a single object asynchronously.
@@ -135,18 +153,19 @@ func (async *AsyncBox) RemoveId(id uint64) error {
 	})
 }
 
-/// Awaits for all (including future) async submissions to be completed (the async queue becomes idle for a moment).
-/// Returns an error if shutting down or an error occurred
-func (async *AsyncBox) AwaitCompletion() error {
-	return cCall(func() C.obx_err {
-		return C.obx_async_await_completion(async.cAsync)
-	})
-}
-
-/// Awaits for previously submitted async operations to be completed (the async queue does not have to become idle).
-/// Returns an error if shutting down or an error occurred
-func (async *AsyncBox) AwaitSubmitted(timeoutMs uint64) error {
-	return cCall(func() C.obx_err {
-		return C.obx_async_await_submitted(async.cAsync, C.uint64_t(timeoutMs))
-	})
-}
+// These are currently not really available in the core (while the methods exist, there is a single Async Queue)
+///// Awaits for all (including future) async submissions to be completed (the async queue becomes idle for a moment).
+///// Returns an error if shutting down or an error occurred
+//func (async *AsyncBox) AwaitCompletion() error {
+//	return cCall(func() C.obx_err {
+//		return C.obx_async_await_completion(async.cAsync)
+//	})
+//}
+//
+///// Awaits for previously submitted async operations to be completed (the async queue does not have to become idle).
+///// Returns an error if shutting down or an error occurred
+//func (async *AsyncBox) AwaitSubmitted(timeoutMs uint64) error {
+//	return cCall(func() C.obx_err {
+//		return C.obx_async_await_submitted(async.cAsync, C.uint64_t(timeoutMs))
+//	})
+//}

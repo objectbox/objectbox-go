@@ -873,9 +873,22 @@ func AsyncBoxForEntity(ob *objectbox.ObjectBox, timeoutMs uint64) *EntityAsyncBo
 
 // Put inserts/updates a single object asynchronously.
 // When inserting a new object, the Id property on the passed object will be assigned the new ID the entity would hold
-// if the insert will be successful.
+// if the insert is ultimately successful.
 func (asyncBox *EntityAsyncBox) Put(object *Entity) (uint64, error) {
 	return asyncBox.AsyncBox.Put(object)
+}
+
+// Insert a single object asynchronously.
+// The Id property on the passed object will be assigned the new ID the entity would hold if the insert is ultimately
+// successful. Fails silently if an object with the same ID already exists (this error is not returned).
+func (asyncBox *EntityAsyncBox) Insert(object *Entity) (id uint64, err error) {
+	return asyncBox.AsyncBox.Insert(object)
+}
+
+// Update a single object asynchronously.
+// The object must already exists or the update fails silently (without an error returned).
+func (asyncBox *EntityAsyncBox) Update(object *Entity) error {
+	return asyncBox.AsyncBox.Update(object)
 }
 
 // Remove deletes a single object asynchronously.
@@ -1143,9 +1156,22 @@ func AsyncBoxForTestStringIdEntity(ob *objectbox.ObjectBox, timeoutMs uint64) *T
 
 // Put inserts/updates a single object asynchronously.
 // When inserting a new object, the Id property on the passed object will be assigned the new ID the entity would hold
-// if the insert will be successful.
+// if the insert is ultimately successful.
 func (asyncBox *TestStringIdEntityAsyncBox) Put(object *TestStringIdEntity) (uint64, error) {
 	return asyncBox.AsyncBox.Put(object)
+}
+
+// Insert a single object asynchronously.
+// The Id property on the passed object will be assigned the new ID the entity would hold if the insert is ultimately
+// successful. Fails silently if an object with the same ID already exists (this error is not returned).
+func (asyncBox *TestStringIdEntityAsyncBox) Insert(object *TestStringIdEntity) (id uint64, err error) {
+	return asyncBox.AsyncBox.Insert(object)
+}
+
+// Update a single object asynchronously.
+// The object must already exists or the update fails silently (without an error returned).
+func (asyncBox *TestStringIdEntityAsyncBox) Update(object *TestStringIdEntity) error {
+	return asyncBox.AsyncBox.Update(object)
 }
 
 // Remove deletes a single object asynchronously.
@@ -1438,9 +1464,22 @@ func AsyncBoxForTestEntityInline(ob *objectbox.ObjectBox, timeoutMs uint64) *Tes
 
 // Put inserts/updates a single object asynchronously.
 // When inserting a new object, the Id property on the passed object will be assigned the new ID the entity would hold
-// if the insert will be successful.
+// if the insert is ultimately successful.
 func (asyncBox *TestEntityInlineAsyncBox) Put(object *TestEntityInline) (uint64, error) {
 	return asyncBox.AsyncBox.Put(object)
+}
+
+// Insert a single object asynchronously.
+// The Id property on the passed object will be assigned the new ID the entity would hold if the insert is ultimately
+// successful. Fails silently if an object with the same ID already exists (this error is not returned).
+func (asyncBox *TestEntityInlineAsyncBox) Insert(object *TestEntityInline) (id uint64, err error) {
+	return asyncBox.AsyncBox.Insert(object)
+}
+
+// Update a single object asynchronously.
+// The object must already exists or the update fails silently (without an error returned).
+func (asyncBox *TestEntityInlineAsyncBox) Update(object *TestEntityInline) error {
+	return asyncBox.AsyncBox.Update(object)
 }
 
 // Remove deletes a single object asynchronously.
@@ -1784,9 +1823,22 @@ func AsyncBoxForTestEntityRelated(ob *objectbox.ObjectBox, timeoutMs uint64) *Te
 
 // Put inserts/updates a single object asynchronously.
 // When inserting a new object, the Id property on the passed object will be assigned the new ID the entity would hold
-// if the insert will be successful.
+// if the insert is ultimately successful.
 func (asyncBox *TestEntityRelatedAsyncBox) Put(object *TestEntityRelated) (uint64, error) {
 	return asyncBox.AsyncBox.Put(object)
+}
+
+// Insert a single object asynchronously.
+// The Id property on the passed object will be assigned the new ID the entity would hold if the insert is ultimately
+// successful. Fails silently if an object with the same ID already exists (this error is not returned).
+func (asyncBox *TestEntityRelatedAsyncBox) Insert(object *TestEntityRelated) (id uint64, err error) {
+	return asyncBox.AsyncBox.Insert(object)
+}
+
+// Update a single object asynchronously.
+// The object must already exists or the update fails silently (without an error returned).
+func (asyncBox *TestEntityRelatedAsyncBox) Update(object *TestEntityRelated) error {
+	return asyncBox.AsyncBox.Update(object)
 }
 
 // Remove deletes a single object asynchronously.

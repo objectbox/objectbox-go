@@ -491,9 +491,22 @@ func AsyncBoxFor{{$entity.Name}}(ob *objectbox.ObjectBox, timeoutMs uint64) *{{$
 
 // Put inserts/updates a single object asynchronously.
 // When inserting a new object, the {{$entity.IdProperty.Path}} property on the passed object will be assigned the new ID the entity would hold
-// if the insert will be successful.
+// if the insert is ultimately successful.
 func (asyncBox *{{$entity.Name}}AsyncBox) Put(object *{{$entity.Name}}) (uint64, error) {
 	return asyncBox.AsyncBox.Put(object)
+}
+
+// Insert a single object asynchronously.
+// The {{$entity.IdProperty.Path}} property on the passed object will be assigned the new ID the entity would hold if the insert is ultimately
+// successful. Fails silently if an object with the same ID already exists (this error is not returned).
+func (asyncBox *{{$entity.Name}}AsyncBox) Insert(object *{{$entity.Name}})  (id uint64, err error) {
+	return asyncBox.AsyncBox.Insert(object)
+}
+
+// Update a single object asynchronously.
+// The object must already exists or the update fails silently (without an error returned).
+func (asyncBox *{{$entity.Name}}AsyncBox) Update(object *{{$entity.Name}}) error {
+	return asyncBox.AsyncBox.Update(object)
 }
 
 // Remove deletes a single object asynchronously.

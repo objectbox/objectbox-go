@@ -64,32 +64,64 @@ func testAsync(t *testing.T, asyncF func(box *model.TestEntityInlineBox) *model.
 		assert.NoErr(t, async.Close())
 	}()
 
-	for testCase := 0; testCase <= 1; testCase++ {
-		var object = &model.TestEntityInline{BaseWithValue: &model.BaseWithValue{}}
-		id, err := async.Put(object)
-		assert.NoErr(t, err)
-		assert.Eq(t, id, object.Id)
-
-		assert.NoErr(t, async.AwaitCompletion())
-
+	var waitAndCount = func(expected uint64) {
+		assert.NoErr(t, ob.AwaitAsyncCompletion())
 		count, err := box.Count()
 		assert.NoErr(t, err)
-		assert.True(t, count == 1)
-
-		objectRead, err := box.Get(id)
-		assert.NoErr(t, err)
-		assert.Eq(t, *object, *objectRead)
-
-		if testCase == 0 {
-			err = async.Remove(object)
-		} else {
-			err = async.RemoveId(id)
-		}
-		assert.NoErr(t, err)
-
-		assert.NoErr(t, async.AwaitSubmitted(timeoutMs))
-		count, err = box.Count()
-		assert.NoErr(t, err)
-		assert.True(t, count == 0)
+		assert.Eq(t, expected, count)
 	}
+
+	var object = &model.TestEntityInline{BaseWithValue: &model.BaseWithValue{}}
+	id, err := async.Put(object)
+	assert.NoErr(t, err)
+	assert.Eq(t, id, object.Id)
+	waitAndCount(1)
+
+	// check the inserted object
+	objectRead, err := box.Get(id)
+	assert.NoErr(t, err)
+	assert.Eq(t, *object, *objectRead)
+
+	// update the object
+	object.Value = object.Value + 1
+	assert.NoErr(t, async.Update(object))
+	waitAndCount(1)
+
+	// check the updated object
+	objectRead, err = box.Get(id)
+	assert.NoErr(t, err)
+	assert.Eq(t, *object, *objectRead)
+
+	err = async.Remove(object)
+	assert.NoErr(t, err)
+	waitAndCount(0)
+
+	// while the update will ultimately fail because the object is removed, it can't know it in advance
+	assert.NoErr(t, async.Update(object))
+	waitAndCount(0)
+
+	// insert with a custom ID will work just fine
+	id, err = async.Insert(object)
+	assert.NoErr(t, err)
+	assert.Eq(t, object.Id, id)
+
+	id, err = async.Insert(&model.TestEntityInline{BaseWithValue: &model.BaseWithValue{}})
+	assert.NoErr(t, err)
+	assert.Eq(t, object.Id+1, id)
+	waitAndCount(2)
+
+	objects, err := box.GetAll()
+	assert.NoErr(t, err)
+	assert.Eq(t, 2, len(objects))
+	assert.EqItems(t, []uint64{object.Id, id}, []uint64{objects[0].Id, objects[1].Id})
+
+	// insert with an existing ID will fail now (silently)
+	var idBefore = object.Id
+	id, err = async.Insert(object)
+	assert.NoErr(t, err)
+	assert.Eq(t, object.Id, idBefore)
+	waitAndCount(2)
+
+	assert.NoErr(t, async.RemoveId(object.Id))
+	waitAndCount(1)
 }

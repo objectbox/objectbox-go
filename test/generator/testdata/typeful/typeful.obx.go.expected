@@ -439,9 +439,22 @@ func AsyncBoxForTypeful(ob *objectbox.ObjectBox, timeoutMs uint64) *TypefulAsync
 
 // Put inserts/updates a single object asynchronously.
 // When inserting a new object, the Id property on the passed object will be assigned the new ID the entity would hold
-// if the insert will be successful.
+// if the insert is ultimately successful.
 func (asyncBox *TypefulAsyncBox) Put(object *Typeful) (uint64, error) {
 	return asyncBox.AsyncBox.Put(object)
+}
+
+// Insert a single object asynchronously.
+// The Id property on the passed object will be assigned the new ID the entity would hold if the insert is ultimately
+// successful. Fails silently if an object with the same ID already exists (this error is not returned).
+func (asyncBox *TypefulAsyncBox) Insert(object *Typeful) (id uint64, err error) {
+	return asyncBox.AsyncBox.Insert(object)
+}
+
+// Update a single object asynchronously.
+// The object must already exists or the update fails silently (without an error returned).
+func (asyncBox *TypefulAsyncBox) Update(object *Typeful) error {
+	return asyncBox.AsyncBox.Update(object)
 }
 
 // Remove deletes a single object asynchronously.

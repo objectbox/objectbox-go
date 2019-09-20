@@ -231,18 +231,31 @@ type StringIdEntityAsyncBox struct {
 // The returned struct must be freed explicitly using the Close() method.
 // It's usually preferable to use StringIdEntityBox::Async() which takes care of resource management and doesn't require closing.
 func AsyncBoxForStringIdEntity(ob *objectbox.ObjectBox, timeoutMs uint64) *StringIdEntityAsyncBox {
-	var async, err = objectbox.NewAsyncBox(ob, 4, timeoutMs)
+	var async, err = objectbox.NewAsyncBox(ob, 5, timeoutMs)
 	if err != nil {
-		panic("Could not create async box for entity ID 4: %s" + err.Error())
+		panic("Could not create async box for entity ID 5: %s" + err.Error())
 	}
 	return &StringIdEntityAsyncBox{AsyncBox: async}
 }
 
 // Put inserts/updates a single object asynchronously.
 // When inserting a new object, the Id property on the passed object will be assigned the new ID the entity would hold
-// if the insert will be successful.
+// if the insert is ultimately successful.
 func (asyncBox *StringIdEntityAsyncBox) Put(object *StringIdEntity) (uint64, error) {
 	return asyncBox.AsyncBox.Put(object)
+}
+
+// Insert a single object asynchronously.
+// The Id property on the passed object will be assigned the new ID the entity would hold if the insert is ultimately
+// successful. Fails silently if an object with the same ID already exists (this error is not returned).
+func (asyncBox *StringIdEntityAsyncBox) Insert(object *StringIdEntity) (id uint64, err error) {
+	return asyncBox.AsyncBox.Insert(object)
+}
+
+// Update a single object asynchronously.
+// The object must already exists or the update fails silently (without an error returned).
+func (asyncBox *StringIdEntityAsyncBox) Update(object *StringIdEntity) error {
+	return asyncBox.AsyncBox.Update(object)
 }
 
 // Remove deletes a single object asynchronously.

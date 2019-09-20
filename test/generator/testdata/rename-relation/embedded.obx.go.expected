@@ -56,7 +56,7 @@ func (taskRelEmbedded_EntityInfo) GeneratorVersion() int {
 func (taskRelEmbedded_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("TaskRelEmbedded", 4, 7837839688282259259)
 	model.Property("Id", 6, 1, 2518412263346885298)
-	model.PropertyFlags(8193)
+	model.PropertyFlags(1)
 	model.Property("Group", 11, 2, 5617773211005988520)
 	model.PropertyFlags(8712)
 	model.PropertyRelation("Group", 4, 2339563716805116249)

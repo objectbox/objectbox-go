@@ -16,9 +16,9 @@ type stringIdEntity_EntityInfo struct {
 
 var StringIdEntityBinding = stringIdEntity_EntityInfo{
 	Entity: objectbox.Entity{
-		Id: 4,
+		Id: 5,
 	},
-	Uid: 6044372234677422456,
+	Uid: 1543572285742637646,
 }
 
 // StringIdEntity_ contains type-based Property helpers to facilitate some common operations such as Queries.
@@ -40,10 +40,10 @@ func (stringIdEntity_EntityInfo) GeneratorVersion() int {
 
 // AddToModel is called by ObjectBox during model build
 func (stringIdEntity_EntityInfo) AddToModel(model *objectbox.Model) {
-	model.Entity("StringIdEntity", 4, 6044372234677422456)
-	model.Property("Id", 6, 1, 8274930044578894929)
+	model.Entity("StringIdEntity", 5, 1543572285742637646)
+	model.Property("Id", 6, 1, 2661732831099943416)
 	model.PropertyFlags(8193)
-	model.EntityLastPropertyId(1, 8274930044578894929)
+	model.EntityLastPropertyId(1, 2661732831099943416)
 }
 
 // GetId is called by ObjectBox during Put operations to check for existing ID on an object
@@ -101,7 +101,7 @@ type StringIdEntityBox struct {
 // BoxForStringIdEntity opens a box of StringIdEntity objects
 func BoxForStringIdEntity(ob *objectbox.ObjectBox) *StringIdEntityBox {
 	return &StringIdEntityBox{
-		Box: ob.InternalBox(4),
+		Box: ob.InternalBox(5),
 	}
 }
 

@@ -79,7 +79,7 @@ type Property struct {
 	ObName      string // name of the field in DB
 	Annotations map[string]*Annotation
 	ObType      int
-	ObFlags     []int
+	obFlags     map[int]bool
 	GoType      string
 	FbType      string
 	IsPointer   bool
@@ -253,11 +253,14 @@ func (binding *Binding) createEntityFromAst(strct *ast.StructType, name string, 
 	if entity.IdProperty == nil {
 		// try to find an ID property automatically based on it's name and type
 		for _, property := range entity.Properties {
-			if strings.ToLower(property.Name) == "id" &&
-				(strings.ToLower(property.GoType) == "uint64" || strings.ToLower(property.GoType) == "string") {
+			var goType = strings.ToLower(property.GoType)
+			if strings.ToLower(property.Name) == "id" && (goType == "int64" || goType == "uint64" || goType == "string") {
 				if entity.IdProperty == nil {
 					entity.IdProperty = property
 					property.addObFlag(PropertyFlagId)
+					// IDs must not be tagged unsigned for compatibility reasons
+                                        // initially set for uint types by setBasicType()
+					property.removeObFlag(PropertyFlagUnsigned)
 				} else {
 					// fail in case multiple fields match this condition
 					return fmt.Errorf(
@@ -268,8 +271,8 @@ func (binding *Binding) createEntityFromAst(strct *ast.StructType, name string, 
 		}
 
 		if entity.IdProperty == nil {
-			return fmt.Errorf("id field is missing on entity %s - either annotate a field with `objectbox:\"id\"` "+
-				"tag or use an uint64 field named 'Id/id/ID'", entity.Name)
+			return fmt.Errorf("id field is missing on entity %s - either annotate a field with "+
+				"`objectbox:\"id\"` tag or use an (u)int64 field named 'Id/id/ID'", entity.Name)
 		}
 	}
 
@@ -301,8 +304,9 @@ func (entity *Entity) addFields(fields fieldList, fieldPath, prefix string, recu
 		f := fields.Field(i)
 
 		var property = &Property{
-			entity: entity,
-			path:   fieldPath,
+			entity:  entity,
+			path:    fieldPath,
+			obFlags: map[int]bool{},
 		}
 
 		if name, err := f.Name(); err != nil {
@@ -830,7 +834,11 @@ func (property *Property) setBasicType(baseType string) error {
 }
 
 func (property *Property) addObFlag(flag int) {
-	property.ObFlags = append(property.ObFlags, flag)
+	property.obFlags[flag] = true
+}
+
+func (property *Property) removeObFlag(flag int) {
+	property.obFlags[flag] = false
 }
 
 func (property *Property) setIndex() error {
@@ -926,8 +934,10 @@ func (property *Property) ObTypeString() string {
 func (property *Property) ObFlagsCombined() int {
 	var result = 0
 
-	for _, flag := range property.ObFlags {
-		result = result | flag
+	for flag, isSet := range property.obFlags {
+		if isSet {
+			result = result | flag
+		}
 	}
 
 	return result

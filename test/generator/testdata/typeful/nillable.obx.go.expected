@@ -175,7 +175,7 @@ func (nillable_EntityInfo) GeneratorVersion() int {
 func (nillable_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("Nillable", 2, 8274930044578894929)
 	model.Property("Id", 6, 1, 1543572285742637646)
-	model.PropertyFlags(8193)
+	model.PropertyFlags(1)
 	model.Property("Int", 6, 2, 2661732831099943416)
 	model.Property("Int8", 2, 3, 8325060299420976708)
 	model.Property("Int16", 3, 4, 7837839688282259259)

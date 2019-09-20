@@ -273,10 +273,6 @@ func (binding *Binding) createEntityFromAst(strct *ast.StructType, name string, 
 		}
 	}
 
-	// IDs must not be tagged unsigned for compatibility reasons
-	// initially set for uint types by setBasicType()
-	entity.IdProperty.removeObFlag(PropertyFlagUnsigned)
-
 	// special handling for string IDs = they are transformed to uint64 in the binding
 	if entity.IdProperty.GoType == "string" {
 		if err := entity.IdProperty.setBasicType("uint64"); err != nil {
@@ -288,6 +284,10 @@ func (binding *Binding) createEntityFromAst(strct *ast.StructType, name string, 
 			entity.IdProperty.Converter = &converter
 		}
 	}
+
+	// IDs must not be tagged unsigned for compatibility reasons
+	// initially set for uint types by setBasicType()
+	entity.IdProperty.removeObFlag(PropertyFlagUnsigned)
 
 	binding.Entities = append(binding.Entities, entity)
 

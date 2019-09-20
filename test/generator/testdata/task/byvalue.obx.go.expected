@@ -315,7 +315,7 @@ func (taskStringByValue_EntityInfo) GeneratorVersion() int {
 func (taskStringByValue_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("TaskStringByValue", 4, 8325060299420976708)
 	model.Property("Id", 6, 1, 5617773211005988520)
-	model.PropertyFlags(8193)
+	model.PropertyFlags(1)
 	model.Property("Name", 9, 2, 2339563716805116249)
 	model.EntityLastPropertyId(2, 2339563716805116249)
 }

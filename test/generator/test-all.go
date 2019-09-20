@@ -54,7 +54,6 @@ func generateAllDirs(t *testing.T, overwriteExpected bool) {
 func generateOneDir(t *testing.T, overwriteExpected bool, dir string) {
 	modelInfoFile := generator.ModelInfoFile(dir)
 	modelInfoExpectedFile := modelInfoFile + ".expected"
-	modelInfoInitialFile := modelInfoFile + ".initial"
 
 	modelFile := generator.ModelFile(modelInfoFile)
 	modelExpectedFile := modelFile + ".expected"
@@ -68,8 +67,11 @@ func generateOneDir(t *testing.T, overwriteExpected bool, dir string) {
 			t.Logf("Testing %s with previous model info JSON", filepath.Base(dir))
 		}
 
-		if fileExists(modelInfoInitialFile) {
-			assert.NoErr(t, copyFile(modelInfoInitialFile, modelInfoFile))
+		// setup the desired directory contents by copying "*.initial" files to their name without the extension
+		initialFiles, err := filepath.Glob(filepath.Join(dir, "*.initial"))
+		assert.NoErr(t, err)
+		for _, initialFile := range initialFiles {
+			assert.NoErr(t, copyFile(initialFile, initialFile[0:len(initialFile)-len(".initial")]))
 		}
 
 		generateAllFiles(t, overwriteExpected, dir, modelInfoFile)

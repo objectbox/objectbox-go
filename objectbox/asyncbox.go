@@ -67,7 +67,9 @@ func NewAsyncBox(ob *ObjectBox, entityId TypeId, timeoutMs uint64) (*AsyncBox, e
 	return async, nil
 }
 
-// Close frees the AsyncBox resources
+// Closes a customized AsyncBox to free its resources (e.g. customized timeout).
+// Not necessary for the standard (shared) instance from box.Async(); Close() can still be called for those:
+// it just won't have any effect.
 func (async *AsyncBox) Close() error {
 	if !async.cOwned {
 		return nil
@@ -81,12 +83,14 @@ func (async *AsyncBox) Close() error {
 // When inserting a new object, the ID property on the passed object will be assigned the new ID the entity would hold
 // if the insert will be successful.
 func (async *AsyncBox) Put(object interface{}) (id uint64, err error) {
-	idFromObject, err := async.box.entity.binding.GetId(object)
+	entity := async.box.entity
+	idFromObject, err := entity.binding.GetId(object)
 	if err != nil {
 		return 0, err
 	}
 
-	if async.box.entity.hasRelations {
+	if entity.hasRelations {
+		// TODO: give a short comment why that is
 		return 0, errors.New("asynchronous Put is currently not supported on entities that have relations")
 	}
 
@@ -108,7 +112,7 @@ func (async *AsyncBox) Put(object interface{}) (id uint64, err error) {
 
 	// update the id on the object
 	if idFromObject != id {
-		async.box.entity.binding.SetId(object, id)
+		entity.binding.SetId(object, id)
 	}
 
 	return id, nil

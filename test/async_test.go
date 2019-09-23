@@ -66,7 +66,7 @@ func testAsync(t *testing.T, asyncF func(box *model.TestEntityInlineBox) *model.
 	}()
 
 	var waitAndCount = func(expected uint64) {
-		assert.NoErr(t, ob.AwaitAsyncCompletion())
+		assert.NoErr(t, async.AwaitSubmitted())
 		count, err := box.Count()
 		assert.NoErr(t, err)
 		assert.Eq(t, expected, count)

@@ -53,7 +53,7 @@ func showUsage() {
 
 or
 
-	objectbox-gogen [flags] clean [path-pattern]
+	objectbox-gogen clean [path-pattern]
 		to remove the generated files instead of creating them - this removes *.obx.go and objectbox-model.go but keeps objectbox-model.json
 
 path-pattern:

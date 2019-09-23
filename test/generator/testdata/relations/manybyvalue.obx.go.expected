@@ -261,14 +261,15 @@ func AsyncBoxForTaskRelManyValue(ob *objectbox.ObjectBox, timeoutMs uint64) *Tas
 
 // Put inserts/updates a single object asynchronously.
 // When inserting a new object, the Id property on the passed object will be assigned the new ID the entity would hold
-// if the insert is ultimately successful.
+// if the insert is ultimately successful. The newly assigned ID may not become valid if the insert fails.
 func (asyncBox *TaskRelManyValueAsyncBox) Put(object *TaskRelManyValue) (uint64, error) {
 	return asyncBox.AsyncBox.Put(object)
 }
 
 // Insert a single object asynchronously.
 // The Id property on the passed object will be assigned the new ID the entity would hold if the insert is ultimately
-// successful. Fails silently if an object with the same ID already exists (this error is not returned).
+// successful. The newly assigned ID may not become valid if the insert fails.
+// Fails silently if an object with the same ID already exists (this error is not returned).
 func (asyncBox *TaskRelManyValueAsyncBox) Insert(object *TaskRelManyValue) (id uint64, err error) {
 	return asyncBox.AsyncBox.Insert(object)
 }

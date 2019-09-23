@@ -118,15 +118,16 @@ func (async *AsyncBox) put(object interface{}, mode int) (uint64, error) {
 }
 
 // Put inserts/updates a single object asynchronously.
-// When inserting a new object, the ID property on the passed object will be assigned the new ID the entity would hold
-// if the insert is ultimately successful.
+// When inserting a new object, the ID property on the passed object will be assigned a new ID the entity would hold
+// if the insert is ultimately successful. The newly assigned ID may not become valid if the insert fails.
 func (async *AsyncBox) Put(object interface{}) (id uint64, err error) {
 	return async.put(object, cPutModePut)
 }
 
 // Insert a single object asynchronously.
-// The ID property on the passed object will be assigned the new ID the entity would hold if the insert is ultimately
-// successful. Fails silently if an object with the same ID already exists (this error is not returned).
+// The ID property on the passed object will be assigned a new ID the entity would hold if the insert is ultimately
+// successful. The newly assigned ID may not become valid if the insert fails.
+// Fails silently if an object with the same ID already exists (this error is not returned).
 func (async *AsyncBox) Insert(object interface{}) (id uint64, err error) {
 	return async.put(object, cPutModeInsert)
 }

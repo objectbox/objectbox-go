@@ -367,10 +367,9 @@ func (entity *Entity) addFields(fields fieldList, fieldPath, prefix string, recu
 			// first, try to handle time.Time struct - automatically set a converter if it's declared a date by the user
 			if property.Annotations["date"] == nil {
 				property.Annotations["date"] = &Annotation{}
-				propertyLog("Warning: using `objectbox.TimeInt64Convert` with millisecond precision and implying "+
-					"`date` annotation on", property)
-				log.Printf("To avoid this warning: either define your own converter using `converter` and " +
-					"`type` annotations or define the `date` annotation explicitly")
+				propertyLog("Notice: time.Time is stored and read using millisecond precision in UTC by default on", property)
+				log.Printf("To silence this notice either define your own converter using `converter` and " +
+					"`type` annotations or add a `date` annotation explicitly")
 			}
 
 			// store the field as an int64

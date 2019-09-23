@@ -53,3 +53,38 @@ func TimeInt64ConvertToDatabaseValue(goValue time.Time) int64 {
 	var ms = int64(goValue.Nanosecond()) / 1000000
 	return goValue.Unix()*1000 + ms
 }
+
+
+// TimeTextConvertToEntityProperty uses time.Time.UnmarshalText() to decode RFC 3339 formatted string to time.Time.
+func TimeTextConvertToEntityProperty(dbValue string) (goValue time.Time) {
+	if err := goValue.UnmarshalText([]byte(dbValue)); err != nil {
+		panic(fmt.Errorf("error unmarshalling time %v: %v", dbValue, err))
+	}
+	return goValue
+}
+
+// TimeTextConvertToEntityProperty uses time.Time.MarshalText() to encode time.Time into RFC 3339 formatted string.
+func TimeTextConvertToDatabaseValue(goValue time.Time) string {
+	bytes, err := goValue.MarshalText()
+	if err != nil {
+		panic(fmt.Errorf("error marshalling time %v: %v", goValue, err))
+	}
+	return string(bytes)
+}
+
+// TimeBinaryConvertToEntityProperty uses time.Time.UnmarshalBinary() to decode time.Time.
+func TimeBinaryConvertToEntityProperty(dbValue []byte) (goValue time.Time) {
+	if err := goValue.UnmarshalBinary(dbValue); err != nil {
+		panic(fmt.Errorf("error unmarshalling time %v: %v", dbValue, err))
+	}
+	return goValue
+}
+
+// TimeBinaryConvertToEntityProperty uses time.Time.MarshalBinary() to encode time.Time.
+func TimeBinaryConvertToDatabaseValue(goValue time.Time) []byte {
+	bytes, err := goValue.MarshalBinary()
+	if err != nil {
+		panic(fmt.Errorf("error marshalling time %v: %v", goValue, err))
+	}
+	return bytes
+}

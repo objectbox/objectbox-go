@@ -158,6 +158,19 @@ func (box *EventBox) Put(object *Event) (uint64, error) {
 	return box.Box.Put(object)
 }
 
+// Insert synchronously inserts a single object. As opposed to Put, Insert will fail if given an ID that already exists.
+// In case the Id is not specified, it would be assigned automatically (auto-increment).
+// When inserting, the Event.Id property on the passed object will be assigned the new ID as well.
+func (box *EventBox) Insert(object *Event) (uint64, error) {
+	return box.Box.Insert(object)
+}
+
+// Update synchronously updates a single object.
+// As opposed to Put, Update will fail if an object with the same ID is not found in the database.
+func (box *EventBox) Update(object *Event) error {
+	return box.Box.Update(object)
+}
+
 // PutAsync asynchronously inserts/updates a single object.
 // Deprecated: use box.Async().Put() instead
 func (box *EventBox) PutAsync(object *Event) (uint64, error) {
@@ -528,6 +541,19 @@ func BoxForReading(ob *objectbox.ObjectBox) *ReadingBox {
 // When inserting, the Reading.Id property on the passed object will be assigned the new ID as well.
 func (box *ReadingBox) Put(object *Reading) (uint64, error) {
 	return box.Box.Put(object)
+}
+
+// Insert synchronously inserts a single object. As opposed to Put, Insert will fail if given an ID that already exists.
+// In case the Id is not specified, it would be assigned automatically (auto-increment).
+// When inserting, the Reading.Id property on the passed object will be assigned the new ID as well.
+func (box *ReadingBox) Insert(object *Reading) (uint64, error) {
+	return box.Box.Insert(object)
+}
+
+// Update synchronously updates a single object.
+// As opposed to Put, Update will fail if an object with the same ID is not found in the database.
+func (box *ReadingBox) Update(object *Reading) error {
+	return box.Box.Update(object)
 }
 
 // PutAsync asynchronously inserts/updates a single object.

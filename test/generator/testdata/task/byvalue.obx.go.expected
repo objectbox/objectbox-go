@@ -140,6 +140,19 @@ func (box *TaskByValueBox) Put(object *TaskByValue) (uint64, error) {
 	return box.Box.Put(object)
 }
 
+// Insert synchronously inserts a single object. As opposed to Put, Insert will fail if given an ID that already exists.
+// In case the Id is not specified, it would be assigned automatically (auto-increment).
+// When inserting, the TaskByValue.Id property on the passed object will be assigned the new ID as well.
+func (box *TaskByValueBox) Insert(object *TaskByValue) (uint64, error) {
+	return box.Box.Insert(object)
+}
+
+// Update synchronously updates a single object.
+// As opposed to Put, Update will fail if an object with the same ID is not found in the database.
+func (box *TaskByValueBox) Update(object *TaskByValue) error {
+	return box.Box.Update(object)
+}
+
 // PutAsync asynchronously inserts/updates a single object.
 // Deprecated: use box.Async().Put() instead
 func (box *TaskByValueBox) PutAsync(object *TaskByValue) (uint64, error) {
@@ -450,6 +463,19 @@ func BoxForTaskStringByValue(ob *objectbox.ObjectBox) *TaskStringByValueBox {
 // When inserting, the TaskStringByValue.Id property on the passed object will be assigned the new ID as well.
 func (box *TaskStringByValueBox) Put(object *TaskStringByValue) (uint64, error) {
 	return box.Box.Put(object)
+}
+
+// Insert synchronously inserts a single object. As opposed to Put, Insert will fail if given an ID that already exists.
+// In case the Id is not specified, it would be assigned automatically (auto-increment).
+// When inserting, the TaskStringByValue.Id property on the passed object will be assigned the new ID as well.
+func (box *TaskStringByValueBox) Insert(object *TaskStringByValue) (uint64, error) {
+	return box.Box.Insert(object)
+}
+
+// Update synchronously updates a single object.
+// As opposed to Put, Update will fail if an object with the same ID is not found in the database.
+func (box *TaskStringByValueBox) Update(object *TaskStringByValue) error {
+	return box.Box.Update(object)
 }
 
 // PutAsync asynchronously inserts/updates a single object.

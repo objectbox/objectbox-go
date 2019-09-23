@@ -23,6 +23,7 @@ package objectbox
 import "C"
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"runtime"
@@ -140,24 +141,31 @@ func (box *Box) idsForPut(count int) (firstId uint64, err error) {
 	return uint64(cFirstID), nil
 }
 
-func (box *Box) put(object interface{}, alreadyInTx bool) (id uint64, err error) {
+func (box *Box) put(object interface{}, alreadyInTx bool, putMode C.OBXPutMode) (id uint64, err error) {
 	idFromObject, err := box.entity.binding.GetId(object)
 	if err != nil {
 		return 0, err
 	}
 
-	id, err = box.idForPut(idFromObject)
-	if err != nil {
-		return 0, err
+	if putMode == cPutModeUpdate {
+		id = idFromObject
+		if idFromObject == 0 {
+			return 0, errors.New("cannot update an object with ID 0 - if it's a new object use Put or Insert instead")
+		}
+	} else {
+		id, err = box.idForPut(idFromObject)
+		if err != nil {
+			return 0, err
+		}
 	}
 
 	// for entities with relations, execute all Put/PutRelated inside a single transaction
 	if box.entity.hasRelations && !alreadyInTx {
 		err = box.ObjectBox.RunInWriteTx(func() error {
-			return box.putOne(id, object)
+			return box.putOne(id, object, putMode)
 		})
 	} else {
-		err = box.putOne(id, object)
+		err = box.putOne(id, object, putMode)
 	}
 
 	if err != nil {
@@ -172,7 +180,7 @@ func (box *Box) put(object interface{}, alreadyInTx bool) (id uint64, err error)
 	return id, nil
 }
 
-func (box *Box) putOne(id uint64, object interface{}) error {
+func (box *Box) putOne(id uint64, object interface{}, putMode C.OBXPutMode) error {
 	if box.entity.hasRelations { // In that case, the caller already ensured to be inside a TX
 		if err := box.entity.binding.PutRelated(box.ObjectBox, object, id); err != nil {
 			return err
@@ -181,8 +189,7 @@ func (box *Box) putOne(id uint64, object interface{}) error {
 
 	return box.withObjectBytes(object, id, func(bytes []byte) error {
 		return cCall(func() C.obx_err {
-			return C.obx_box_put(box.cBox, C.obx_id(id), unsafe.Pointer(&bytes[0]), C.size_t(len(bytes)),
-				C.OBXPutMode(cPutModePut))
+			return C.obx_box_put(box.cBox, C.obx_id(id), unsafe.Pointer(&bytes[0]), C.size_t(len(bytes)), putMode)
 		})
 	})
 }
@@ -216,7 +223,22 @@ func (box *Box) PutAsync(object interface{}) (id uint64, err error) {
 // In case the ID is not specified, it would be assigned automatically (auto-increment).
 // When inserting, the ID property on the passed object will be assigned the new ID as well.
 func (box *Box) Put(object interface{}) (id uint64, err error) {
-	return box.put(object, false)
+	return box.put(object, false, cPutModePut)
+}
+
+// Insert synchronously inserts a single object.
+// As opposed to Put, Insert will fail if an object with the same ID already exists.
+// In case the ID is not specified, it would be assigned automatically (auto-increment).
+// When inserting, the ID property on the passed object will be assigned the new ID as well.
+func (box *Box) Insert(object interface{}) (id uint64, err error) {
+	return box.put(object, false, cPutModeInsert)
+}
+
+// Update synchronously updates a single object.
+// As opposed to Put, Update will fail if an object with the same ID is not found in the database.
+func (box *Box) Update(object interface{}) error {
+	_, err := box.put(object, false, cPutModeUpdate)
+	return err
 }
 
 // PutMany inserts multiple objects in a single transaction.
@@ -266,7 +288,7 @@ func (box *Box) PutMany(objects interface{}) (ids []uint64, err error) {
 			}
 		} else {
 			for i := 0; i < count; i++ {
-				id, err := box.put(slice.Index(i).Interface(), true)
+				id, err := box.put(slice.Index(i).Interface(), true, cPutModePut)
 				if err != nil {
 					return err
 				}

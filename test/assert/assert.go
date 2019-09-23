@@ -101,6 +101,12 @@ func NotEq(t *testing.T, notThisValue interface{}, actual interface{}) {
 	}
 }
 
+func Err(t *testing.T, err error) {
+	if err == nil {
+		Failf(t, "Expected error hasn't occurred: %v", err)
+	}
+}
+
 func NoErr(t *testing.T, err error) {
 	if err != nil {
 		Failf(t, "Unexpected error occurred: %v", err)

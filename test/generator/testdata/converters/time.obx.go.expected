@@ -123,6 +123,19 @@ func (box *TimeEntityBox) Put(object *TimeEntity) (uint64, error) {
 	return box.Box.Put(object)
 }
 
+// Insert synchronously inserts a single object. As opposed to Put, Insert will fail if given an ID that already exists.
+// In case the Id is not specified, it would be assigned automatically (auto-increment).
+// When inserting, the TimeEntity.Id property on the passed object will be assigned the new ID as well.
+func (box *TimeEntityBox) Insert(object *TimeEntity) (uint64, error) {
+	return box.Box.Insert(object)
+}
+
+// Update synchronously updates a single object.
+// As opposed to Put, Update will fail if an object with the same ID is not found in the database.
+func (box *TimeEntityBox) Update(object *TimeEntity) error {
+	return box.Box.Update(object)
+}
+
 // PutAsync asynchronously inserts/updates a single object.
 // Deprecated: use box.Async().Put() instead
 func (box *TimeEntityBox) PutAsync(object *TimeEntity) (uint64, error) {

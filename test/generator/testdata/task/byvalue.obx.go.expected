@@ -141,23 +141,7 @@ func (box *TaskByValueBox) Put(object *TaskByValue) (uint64, error) {
 }
 
 // PutAsync asynchronously inserts/updates a single object.
-// When inserting, the TaskByValue.Id property on the passed object will be assigned the new ID as well.
-//
-// It's executed on a separate internal thread for better performance.
-//
-// There are two main use cases:
-//
-// 1) "Put & Forget:" you gain faster puts as you don't have to wait for the transaction to finish.
-//
-// 2) Many small transactions: if your write load is typically a lot of individual puts that happen in parallel,
-// this will merge small transactions into bigger ones. This results in a significant gain in overall throughput.
-//
-//
-// In situations with (extremely) high async load, this method may be throttled (~1ms) or delayed (<1s).
-// In the unlikely event that the object could not be enqueued after delaying, an error will be returned.
-//
-// Note that this method does not give you hard durability guarantees like the synchronous Put provides.
-// There is a small time window (typically 3 ms) in which the data may not have been committed durably yet.
+// Deprecated: use box.Async().Put() instead
 func (box *TaskByValueBox) PutAsync(object *TaskByValue) (uint64, error) {
 	return box.Box.PutAsync(object)
 }
@@ -244,6 +228,68 @@ func (box *TaskByValueBox) QueryOrError(conditions ...objectbox.Condition) (*Tas
 	} else {
 		return &TaskByValueQuery{query}, nil
 	}
+}
+
+// Async provides access to the default Async Box for asynchronous operations. See TaskByValueAsyncBox for more information.
+func (box *TaskByValueBox) Async() *TaskByValueAsyncBox {
+	return &TaskByValueAsyncBox{AsyncBox: box.Box.Async()}
+}
+
+// TaskByValueAsyncBox provides asynchronous operations on TaskByValue objects.
+//
+// Asynchronous operations are executed on a separate internal thread for better performance.
+//
+// There are two main use cases:
+//
+// 1) "execute & forget:" you gain faster put/remove operations as you don't have to wait for the transaction to finish.
+//
+// 2) Many small transactions: if your write load is typically a lot of individual puts that happen in parallel,
+// this will merge small transactions into bigger ones. This results in a significant gain in overall throughput.
+//
+// In situations with (extremely) high async load, an async method may be throttled (~1ms) or delayed up to 1 second.
+// In the unlikely event that the object could still not be enqueued (full queue), an error will be returned.
+//
+// Note that async methods do not give you hard durability guarantees like the synchronous Box provides.
+// There is a small time window in which the data may not have been committed durably yet.
+type TaskByValueAsyncBox struct {
+	*objectbox.AsyncBox
+}
+
+// AsyncBoxForTaskByValue creates a new async box with the given operation timeout in case an async queue is full.
+// The returned struct must be freed explicitly using the Close() method.
+// It's usually preferable to use TaskByValueBox::Async() which takes care of resource management and doesn't require closing.
+func AsyncBoxForTaskByValue(ob *objectbox.ObjectBox, timeoutMs uint64) *TaskByValueAsyncBox {
+	var async, err = objectbox.NewAsyncBox(ob, 3, timeoutMs)
+	if err != nil {
+		panic("Could not create async box for entity ID 3: %s" + err.Error())
+	}
+	return &TaskByValueAsyncBox{AsyncBox: async}
+}
+
+// Put inserts/updates a single object asynchronously.
+// When inserting a new object, the Id property on the passed object will be assigned the new ID the entity would hold
+// if the insert is ultimately successful. The newly assigned ID may not become valid if the insert fails.
+func (asyncBox *TaskByValueAsyncBox) Put(object *TaskByValue) (uint64, error) {
+	return asyncBox.AsyncBox.Put(object)
+}
+
+// Insert a single object asynchronously.
+// The Id property on the passed object will be assigned the new ID the entity would hold if the insert is ultimately
+// successful. The newly assigned ID may not become valid if the insert fails.
+// Fails silently if an object with the same ID already exists (this error is not returned).
+func (asyncBox *TaskByValueAsyncBox) Insert(object *TaskByValue) (id uint64, err error) {
+	return asyncBox.AsyncBox.Insert(object)
+}
+
+// Update a single object asynchronously.
+// The object must already exists or the update fails silently (without an error returned).
+func (asyncBox *TaskByValueAsyncBox) Update(object *TaskByValue) error {
+	return asyncBox.AsyncBox.Update(object)
+}
+
+// Remove deletes a single object asynchronously.
+func (asyncBox *TaskByValueAsyncBox) Remove(object *TaskByValue) error {
+	return asyncBox.AsyncBox.Remove(object)
 }
 
 // Query provides a way to search stored objects
@@ -407,23 +453,7 @@ func (box *TaskStringByValueBox) Put(object *TaskStringByValue) (uint64, error) 
 }
 
 // PutAsync asynchronously inserts/updates a single object.
-// When inserting, the TaskStringByValue.Id property on the passed object will be assigned the new ID as well.
-//
-// It's executed on a separate internal thread for better performance.
-//
-// There are two main use cases:
-//
-// 1) "Put & Forget:" you gain faster puts as you don't have to wait for the transaction to finish.
-//
-// 2) Many small transactions: if your write load is typically a lot of individual puts that happen in parallel,
-// this will merge small transactions into bigger ones. This results in a significant gain in overall throughput.
-//
-//
-// In situations with (extremely) high async load, this method may be throttled (~1ms) or delayed (<1s).
-// In the unlikely event that the object could not be enqueued after delaying, an error will be returned.
-//
-// Note that this method does not give you hard durability guarantees like the synchronous Put provides.
-// There is a small time window (typically 3 ms) in which the data may not have been committed durably yet.
+// Deprecated: use box.Async().Put() instead
 func (box *TaskStringByValueBox) PutAsync(object *TaskStringByValue) (uint64, error) {
 	return box.Box.PutAsync(object)
 }
@@ -510,6 +540,68 @@ func (box *TaskStringByValueBox) QueryOrError(conditions ...objectbox.Condition)
 	} else {
 		return &TaskStringByValueQuery{query}, nil
 	}
+}
+
+// Async provides access to the default Async Box for asynchronous operations. See TaskStringByValueAsyncBox for more information.
+func (box *TaskStringByValueBox) Async() *TaskStringByValueAsyncBox {
+	return &TaskStringByValueAsyncBox{AsyncBox: box.Box.Async()}
+}
+
+// TaskStringByValueAsyncBox provides asynchronous operations on TaskStringByValue objects.
+//
+// Asynchronous operations are executed on a separate internal thread for better performance.
+//
+// There are two main use cases:
+//
+// 1) "execute & forget:" you gain faster put/remove operations as you don't have to wait for the transaction to finish.
+//
+// 2) Many small transactions: if your write load is typically a lot of individual puts that happen in parallel,
+// this will merge small transactions into bigger ones. This results in a significant gain in overall throughput.
+//
+// In situations with (extremely) high async load, an async method may be throttled (~1ms) or delayed up to 1 second.
+// In the unlikely event that the object could still not be enqueued (full queue), an error will be returned.
+//
+// Note that async methods do not give you hard durability guarantees like the synchronous Box provides.
+// There is a small time window in which the data may not have been committed durably yet.
+type TaskStringByValueAsyncBox struct {
+	*objectbox.AsyncBox
+}
+
+// AsyncBoxForTaskStringByValue creates a new async box with the given operation timeout in case an async queue is full.
+// The returned struct must be freed explicitly using the Close() method.
+// It's usually preferable to use TaskStringByValueBox::Async() which takes care of resource management and doesn't require closing.
+func AsyncBoxForTaskStringByValue(ob *objectbox.ObjectBox, timeoutMs uint64) *TaskStringByValueAsyncBox {
+	var async, err = objectbox.NewAsyncBox(ob, 4, timeoutMs)
+	if err != nil {
+		panic("Could not create async box for entity ID 4: %s" + err.Error())
+	}
+	return &TaskStringByValueAsyncBox{AsyncBox: async}
+}
+
+// Put inserts/updates a single object asynchronously.
+// When inserting a new object, the Id property on the passed object will be assigned the new ID the entity would hold
+// if the insert is ultimately successful. The newly assigned ID may not become valid if the insert fails.
+func (asyncBox *TaskStringByValueAsyncBox) Put(object *TaskStringByValue) (uint64, error) {
+	return asyncBox.AsyncBox.Put(object)
+}
+
+// Insert a single object asynchronously.
+// The Id property on the passed object will be assigned the new ID the entity would hold if the insert is ultimately
+// successful. The newly assigned ID may not become valid if the insert fails.
+// Fails silently if an object with the same ID already exists (this error is not returned).
+func (asyncBox *TaskStringByValueAsyncBox) Insert(object *TaskStringByValue) (id uint64, err error) {
+	return asyncBox.AsyncBox.Insert(object)
+}
+
+// Update a single object asynchronously.
+// The object must already exists or the update fails silently (without an error returned).
+func (asyncBox *TaskStringByValueAsyncBox) Update(object *TaskStringByValue) error {
+	return asyncBox.AsyncBox.Update(object)
+}
+
+// Remove deletes a single object asynchronously.
+func (asyncBox *TaskStringByValueAsyncBox) Remove(object *TaskStringByValue) error {
+	return asyncBox.AsyncBox.Remove(object)
 }
 
 // Query provides a way to search stored objects

@@ -125,23 +125,7 @@ func (box *CBox) Put(object *C) (uint64, error) {
 }
 
 // PutAsync asynchronously inserts/updates a single object.
-// When inserting, the C.identifier property on the passed object will be assigned the new ID as well.
-//
-// It's executed on a separate internal thread for better performance.
-//
-// There are two main use cases:
-//
-// 1) "Put & Forget:" you gain faster puts as you don't have to wait for the transaction to finish.
-//
-// 2) Many small transactions: if your write load is typically a lot of individual puts that happen in parallel,
-// this will merge small transactions into bigger ones. This results in a significant gain in overall throughput.
-//
-//
-// In situations with (extremely) high async load, this method may be throttled (~1ms) or delayed (<1s).
-// In the unlikely event that the object could not be enqueued after delaying, an error will be returned.
-//
-// Note that this method does not give you hard durability guarantees like the synchronous Put provides.
-// There is a small time window (typically 3 ms) in which the data may not have been committed durably yet.
+// Deprecated: use box.Async().Put() instead
 func (box *CBox) PutAsync(object *C) (uint64, error) {
 	return box.Box.PutAsync(object)
 }
@@ -228,6 +212,68 @@ func (box *CBox) QueryOrError(conditions ...objectbox.Condition) (*CQuery, error
 	} else {
 		return &CQuery{query}, nil
 	}
+}
+
+// Async provides access to the default Async Box for asynchronous operations. See CAsyncBox for more information.
+func (box *CBox) Async() *CAsyncBox {
+	return &CAsyncBox{AsyncBox: box.Box.Async()}
+}
+
+// CAsyncBox provides asynchronous operations on C objects.
+//
+// Asynchronous operations are executed on a separate internal thread for better performance.
+//
+// There are two main use cases:
+//
+// 1) "execute & forget:" you gain faster put/remove operations as you don't have to wait for the transaction to finish.
+//
+// 2) Many small transactions: if your write load is typically a lot of individual puts that happen in parallel,
+// this will merge small transactions into bigger ones. This results in a significant gain in overall throughput.
+//
+// In situations with (extremely) high async load, an async method may be throttled (~1ms) or delayed up to 1 second.
+// In the unlikely event that the object could still not be enqueued (full queue), an error will be returned.
+//
+// Note that async methods do not give you hard durability guarantees like the synchronous Box provides.
+// There is a small time window in which the data may not have been committed durably yet.
+type CAsyncBox struct {
+	*objectbox.AsyncBox
+}
+
+// AsyncBoxForC creates a new async box with the given operation timeout in case an async queue is full.
+// The returned struct must be freed explicitly using the Close() method.
+// It's usually preferable to use CBox::Async() which takes care of resource management and doesn't require closing.
+func AsyncBoxForC(ob *objectbox.ObjectBox, timeoutMs uint64) *CAsyncBox {
+	var async, err = objectbox.NewAsyncBox(ob, 3, timeoutMs)
+	if err != nil {
+		panic("Could not create async box for entity ID 3: %s" + err.Error())
+	}
+	return &CAsyncBox{AsyncBox: async}
+}
+
+// Put inserts/updates a single object asynchronously.
+// When inserting a new object, the identifier property on the passed object will be assigned the new ID the entity would hold
+// if the insert is ultimately successful. The newly assigned ID may not become valid if the insert fails.
+func (asyncBox *CAsyncBox) Put(object *C) (uint64, error) {
+	return asyncBox.AsyncBox.Put(object)
+}
+
+// Insert a single object asynchronously.
+// The identifier property on the passed object will be assigned the new ID the entity would hold if the insert is ultimately
+// successful. The newly assigned ID may not become valid if the insert fails.
+// Fails silently if an object with the same ID already exists (this error is not returned).
+func (asyncBox *CAsyncBox) Insert(object *C) (id uint64, err error) {
+	return asyncBox.AsyncBox.Insert(object)
+}
+
+// Update a single object asynchronously.
+// The object must already exists or the update fails silently (without an error returned).
+func (asyncBox *CAsyncBox) Update(object *C) error {
+	return asyncBox.AsyncBox.Update(object)
+}
+
+// Remove deletes a single object asynchronously.
+func (asyncBox *CAsyncBox) Remove(object *C) error {
+	return asyncBox.AsyncBox.Remove(object)
 }
 
 // Query provides a way to search stored objects

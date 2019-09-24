@@ -156,7 +156,7 @@ func ({{$entityNameCamel}}_EntityInfo) PutRelated(ob *objectbox.ObjectBox, objec
 	{{- block "put-relations" $entity}}
 	{{- range $field := .Fields}}
 		{{- if $field.SimpleRelation}}
-			if rel := {{if not $field.IsPointer}}&{{end}}object.(*{{$field.Entity.Name}}).{{$field.Name}}; rel != nil {
+			if rel := {{if not $field.IsPointer}}&{{end}}object.(*{{$field.Entity.Name}}).{{$field.Path}}; rel != nil {
 				if rId, err := {{$field.SimpleRelation.Target.Name}}Binding.GetId(rel); err != nil {
 					return err
 				} else if rId == 0 {
@@ -167,8 +167,8 @@ func ({{$entityNameCamel}}_EntityInfo) PutRelated(ob *objectbox.ObjectBox, objec
 				}
 			}
 		{{- else if $field.StandaloneRelation}}
-			{{- if $field.IsLazyLoaded}} if object.(*{{$field.Entity.Name}}).{{$field.Name}} != nil { // lazy-loaded relations without {{$field.Entity.Name}}Box::Fetch{{$field.Name}}() called are nil {{end}}  
-			if err := BoxFor{{$field.Entity.Name}}(ob).RelationReplace({{.Entity.Name}}_.{{$field.Name}}, id, object, object.(*{{$field.Entity.Name}}).{{$field.Name}}); err != nil {
+			{{- if $field.IsLazyLoaded}} if object.(*{{$field.Entity.Name}}).{{$field.Path}} != nil { // lazy-loaded relations without {{$field.Entity.Name}}Box::Fetch{{$field.Name}}() called are nil {{end}}  
+			if err := BoxFor{{$field.Entity.Name}}(ob).RelationReplace({{.Entity.Name}}_.{{$field.Name}}, id, object, object.(*{{$field.Entity.Name}}).{{$field.Path}}); err != nil {
 				return err
 			}
 			{{if $field.IsLazyLoaded}} } {{end}}
@@ -205,7 +205,7 @@ func ({{$entityNameCamel}}_EntityInfo) Flatten(object interface{}, fbb *flatbuff
 	{{- range $field := .Fields}}
 		{{if $field.SimpleRelation}}
 			var rId{{$field.Property.Name}} uint64
-			if rel := {{if not $field.IsPointer}}&{{end}}obj.{{$field.Name}}; rel != nil {
+			if rel := {{if not $field.IsPointer}}&{{end}}obj.{{$field.Path}}; rel != nil {
 				if rId, err := {{$field.SimpleRelation.Target.Name}}Binding.GetId(rel); err != nil {
 					return err
 				} else {
@@ -261,7 +261,7 @@ func ({{$entityNameCamel}}_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byt
 		{{else if $field.StandaloneRelation -}}
 			{{if not $field.IsLazyLoaded -}}
 			var rel{{$field.Name}} {{$field.Type}} 
-			if rIds, err := BoxFor{{$field.Entity.Name}}(ob).RelationIds({{.Entity.Name}}_.{{$field.Name}}, id); err != nil {
+			if rIds, err := BoxFor{{$field.Entity.Name}}(ob).RelationIds({{.Entity.Name}}_.{{$field.Path}}, id); err != nil {
 				return nil, err
 			} else if rSlice, err := BoxFor{{$field.StandaloneRelation.Target.Name}}(ob).GetMany(rIds...); err != nil {
 				return nil, err

@@ -74,7 +74,6 @@ type Entity struct {
 
 type Property struct {
 	Identifier
-	BaseName    string // name in the containing struct (might be embedded)
 	Name        string // prefixed name (unique)
 	ObName      string // name of the field in DB
 	Annotations map[string]*Annotation
@@ -91,9 +90,9 @@ type Property struct {
 	CastOnRead  string
 	CastOnWrite string
 
+	field      *Field
 	entity     *Entity
 	uidRequest bool
-	path       string // relative addressing path for embedded structs
 }
 
 type Relation struct {
@@ -131,6 +130,8 @@ type Field struct {
 	SimpleRelation     *Relation
 	StandaloneRelation *StandaloneRelation // to-many relation stored as a standalone relation in the model
 	IsLazyLoaded       bool                // only standalone (to-many) relations currently support lazy loading
+
+	path string // relative addressing path for embedded structs
 }
 
 type Identifier struct {
@@ -306,7 +307,6 @@ func (entity *Entity) addFields(fields fieldList, fieldPath, prefix string, recu
 
 		var property = &Property{
 			entity:  entity,
-			path:    fieldPath,
 			obFlags: map[int]bool{},
 		}
 
@@ -322,7 +322,9 @@ func (entity *Entity) addFields(fields fieldList, fieldPath, prefix string, recu
 			Entity:   entity,
 			Name:     property.Name,
 			Property: property,
+			path:     fieldPath,
 		}
+		property.field = field
 
 		if tag := f.Tag(); tag != "" {
 			if err := property.setAnnotations(tag); err != nil {
@@ -424,7 +426,6 @@ func (entity *Entity) addFields(fields fieldList, fieldPath, prefix string, recu
 			property.ObName = property.Name
 		}
 
-		property.BaseName = property.Name
 		if len(prefix) != 0 {
 			property.ObName = prefix + "_" + property.ObName
 			property.Name = prefix + "_" + property.Name
@@ -1004,6 +1005,18 @@ func (field *Field) HasLazyLoadedRelations() bool {
 	return false
 }
 
+// Path returns full path to the field (in embedded struct)
+// called from the template
+func (field *Field) Path() string {
+	var parts = strings.Split(field.path, ".")
+
+	// strip the first component
+	parts = parts[1:]
+
+	parts = append(parts, field.Name)
+	return strings.Join(parts, ".")
+}
+
 // called from the template
 func (field *Field) IsId() bool {
 	return field.Property == field.Entity.IdProperty
@@ -1032,13 +1045,7 @@ func (property *Property) FbSlot() int {
 // returns full path to the property (in embedded struct)
 // called from the template
 func (property *Property) Path() string {
-	var parts = strings.Split(property.path, ".")
-
-	// strip the first component
-	parts = parts[1:]
-
-	parts = append(parts, property.BaseName)
-	return strings.Join(parts, ".")
+	return property.field.Path()
 }
 
 func typeBaseName(name string) string {

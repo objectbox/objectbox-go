@@ -76,7 +76,7 @@ func (taskRelEmbedded_EntityInfo) SetId(object interface{}, id uint64) {
 
 // PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
 func (taskRelEmbedded_EntityInfo) PutRelated(ob *objectbox.ObjectBox, object interface{}, id uint64) error {
-	if rel := object.(*TaskRelEmbedded).Group; rel != nil {
+	if rel := object.(*TaskRelEmbedded).WithGroup.Group; rel != nil {
 		if rId, err := GroupBinding.GetId(rel); err != nil {
 			return err
 		} else if rId == 0 {
@@ -86,7 +86,7 @@ func (taskRelEmbedded_EntityInfo) PutRelated(ob *objectbox.ObjectBox, object int
 			}
 		}
 	}
-	if err := BoxForTaskRelEmbedded(ob).RelationReplace(TaskRelEmbedded_.Groups, id, object, object.(*TaskRelEmbedded).Groups); err != nil {
+	if err := BoxForTaskRelEmbedded(ob).RelationReplace(TaskRelEmbedded_.Groups, id, object, object.(*TaskRelEmbedded).WithGroup.Groups); err != nil {
 		return err
 	}
 
@@ -98,7 +98,7 @@ func (taskRelEmbedded_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.B
 	obj := object.(*TaskRelEmbedded)
 
 	var rIdGroup uint64
-	if rel := obj.Group; rel != nil {
+	if rel := obj.WithGroup.Group; rel != nil {
 		if rId, err := GroupBinding.GetId(rel); err != nil {
 			return err
 		} else {
@@ -133,7 +133,7 @@ func (taskRelEmbedded_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (i
 	}
 
 	var relGroups []*Group
-	if rIds, err := BoxForTaskRelEmbedded(ob).RelationIds(TaskRelEmbedded_.Groups, id); err != nil {
+	if rIds, err := BoxForTaskRelEmbedded(ob).RelationIds(TaskRelEmbedded_.WithGroup.Groups, id); err != nil {
 		return nil, err
 	} else if rSlice, err := BoxForGroup(ob).GetMany(rIds...); err != nil {
 		return nil, err

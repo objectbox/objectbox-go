@@ -54,7 +54,6 @@ func TimeInt64ConvertToDatabaseValue(goValue time.Time) int64 {
 	return goValue.Unix()*1000 + ms
 }
 
-
 // TimeTextConvertToEntityProperty uses time.Time.UnmarshalText() to decode RFC 3339 formatted string to time.Time.
 func TimeTextConvertToEntityProperty(dbValue string) (goValue time.Time) {
 	if err := goValue.UnmarshalText([]byte(dbValue)); err != nil {
@@ -63,7 +62,7 @@ func TimeTextConvertToEntityProperty(dbValue string) (goValue time.Time) {
 	return goValue
 }
 
-// TimeTextConvertToEntityProperty uses time.Time.MarshalText() to encode time.Time into RFC 3339 formatted string.
+// TimeTextConvertToDatabaseValue uses time.Time.MarshalText() to encode time.Time into RFC 3339 formatted string.
 func TimeTextConvertToDatabaseValue(goValue time.Time) string {
 	bytes, err := goValue.MarshalText()
 	if err != nil {
@@ -80,7 +79,7 @@ func TimeBinaryConvertToEntityProperty(dbValue []byte) (goValue time.Time) {
 	return goValue
 }
 
-// TimeBinaryConvertToEntityProperty uses time.Time.MarshalBinary() to encode time.Time.
+// TimeBinaryConvertToDatabaseValue uses time.Time.MarshalBinary() to encode time.Time.
 func TimeBinaryConvertToDatabaseValue(goValue time.Time) []byte {
 	bytes, err := goValue.MarshalBinary()
 	if err != nil {

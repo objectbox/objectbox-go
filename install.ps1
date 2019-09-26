@@ -1,10 +1,11 @@
-# terminate on exceptions
+# remove the space in the following to require running this script as administrator
+# Requires -RunAsAdministrator
+
+# terminate on uncought exceptions
 $ErrorActionPreference = "Stop"
 
-# Configure supported protocols
+# Configure supported HTTPS protocols
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12, [Net.SecurityProtocolType]::Tls11, [Net.SecurityProtocolType]::Tls
-
-#Write-Host "Following relative paths start within the current directory $pwd"
 
 function DownloadLibrary {
     $libVersion = '0.6.0'
@@ -42,18 +43,51 @@ function DownloadLibrary {
     return $targetDir
 }
 
+function ValdiateInstallation {
+    param ($sourceFile, $targetFile)
+    
+    if ((Get-Item $sourceFile).Length -eq (Get-Item $targetFile).Length) {
+        Write-Host "Succesfully installed $targetFile" -ForegroundColor Green
+    } else {
+        throw "Installation to $targetFile failed - source and target contents don't match"
+    }
+}
+
 function InstallWithPrompt {
     param ($downloadDir, $libDir)
 
-    $reply = Read-Host -Prompt "Would you like to install ObjectBox library into $($libDir)? [y/n]"  
+    $reply = Read-Host -Prompt "Would you like to install ObjectBox library into $($libDir)? [y/N]"  
     if (!($reply -match "[yY]")) { 
         Write-Host "OK, skipping installation to $libDir"
         return
     }
     
-    $srcFile = "$downloadDir\lib\objectbox.dll"
-    Write-Host "Copying $srcFile to $libDir"
-    Copy-Item $srcFile $libDir
+    $sourceFile = "$downloadDir\lib\objectbox.dll"
+    $targetFile = "$libDir\objectbox.dll"
+    
+    Write-Host "Copying $sourceFile to $libDir"
+    try {
+        Copy-Item $sourceFile $libDir
+        ValdiateInstallation $sourceFile $targetFile
+        return
+    } catch [System.UnauthorizedAccessException] {
+        Write-Host "Can't copy: $($_.Exception.Message)" -ForegroundColor Yellow
+    }
+
+    # reaches here only when copying fails because of UnauthorizedAccessException
+    $reply = Read-Host -Prompt "Would you like to retry as adminstrator? [y/N]" 
+    if (!($reply -match "[yY]")) {
+        Write-Host "OK, skipping installation to $libDir"
+        return
+    }
+    
+    $sourceFile = "$pwd\$sourceFile" # sub-shell requires an asbolute path. -WorkingDirectory argument doesn't work either.
+    $expectedSize = (Get-Item $sourceFile).Length
+    $verifyCmd = "if ((Get-Item $targetFile).Length -ne $expectedSize) {Write-Host 'Installation failed.'; Read-Host -Prompt 'Press any key to exit this window'}"
+    $cmd = "Copy-Item $sourceFile $libDir ; $verifyCmd"
+    Start-Process powershell.exe -Verb runas -ArgumentList $cmd 
+
+    ValdiateInstallation $sourceFile $targetFile
 }
 
 function InstallIntoGCC {
@@ -81,10 +115,24 @@ function InstallIntoGCC {
 function InstallIntoSys32 {
     param ($downloadDir)
 
-    Write-Host "Windows needs to find your library during runtime (incl. tests execution). The simplest way to achieve this is to install the library globally."
+    Write-Host "Windows needs to find your library during runtime (incl. tests execution)." 
+    Write-Host "The simplest way to achieve this is to install the library globally."
     InstallWithPrompt $downloadDir "C:\Windows\System32"
 }
 
-$downloadDir = DownloadLibrary
-InstallIntoGCC $downloadDir
-InstallIntoSys32 $downloadDir
+try {
+    $downloadDir = DownloadLibrary
+    Write-Host ""
+
+    InstallIntoGCC $downloadDir
+    Write-Host ""
+
+    InstallIntoSys32 $downloadDir
+    Write-Host ""
+
+    Write-Host "Installation complete" -ForegroundColor Green
+} catch {
+    Write-Error $error[0].Exception -ErrorAction Continue
+}
+
+Read-Host -Prompt 'Press any key to exit'

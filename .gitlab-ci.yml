@@ -20,7 +20,7 @@ test:linux:x64:go1.13:
 
 test:linux:ARMv7hf:
   stage: test
-  image: arm32v7/golang
+  image: golang
   tags: [armv7hf, linux, docker]
   script:
     - 'cd /usr/local/lib && { curl -o libobjectbox.so -H "PRIVATE-TOKEN: $CI_API_TOKEN" "${OBXLIB_URL_LinuxARMv7hf}" ; ldconfig ; cd - ; }'

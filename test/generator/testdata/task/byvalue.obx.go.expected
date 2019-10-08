@@ -437,7 +437,7 @@ func (taskStringByValue_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) 
 
 	valId, err := objectbox.StringIdConvertToEntityProperty(fbutils.GetUint64Slot(table, 4))
 	if err != nil {
-		return nil, err
+		return nil, errors.New("converter objectbox.StringIdConvertToEntityProperty() failed on TaskStringByValue.Id: " + err.Error())
 	}
 
 	return &TaskStringByValue{
@@ -556,7 +556,7 @@ func (box *TaskStringByValueBox) RemoveMany(objects ...*TaskStringByValue) (uint
 	for k, object := range objects {
 		ids[k], err = objectbox.StringIdConvertToDatabaseValue(object.Id)
 		if err != nil {
-			return 0, err
+			return 0, errors.New("converter objectbox.StringIdConvertToDatabaseValue() failed on TaskStringByValue.Id: " + err.Error())
 		}
 	}
 	return box.Box.RemoveIds(ids...)

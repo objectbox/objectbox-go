@@ -405,6 +405,9 @@ func (entity *Entity) addFields(fields fieldList, fieldPath, prefix string, recu
 				return nil, propertyError(errors.New("type annotation has to be specified when using converters"), property)
 			}
 			property.Converter = &property.Annotations["converter"].Value
+
+			// converters use errors.New in the template
+			entity.binding.Imports["errors"] = "errors"
 		}
 
 		// if this is an ID, set it as entity.IdProperty

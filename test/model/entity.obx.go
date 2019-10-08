@@ -4,6 +4,7 @@
 package model
 
 import (
+	"errors"
 	"github.com/google/flatbuffers/go"
 	"github.com/objectbox/objectbox-go/objectbox"
 	"github.com/objectbox/objectbox-go/objectbox/fbutils"
@@ -467,12 +468,12 @@ func (entity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, i
 
 	valDate, err := timeInt64ToDatabaseValue(obj.Date)
 	if err != nil {
-		return err
+		return errors.New("converter timeInt64ToDatabaseValue() failed on Entity.Date: " + err.Error())
 	}
 
 	valComplex128, err := complex128BytesToDatabaseValue(obj.Complex128)
 	if err != nil {
-		return err
+		return errors.New("converter complex128BytesToDatabaseValue() failed on Entity.Complex128: " + err.Error())
 	}
 
 	var offsetString = fbutils.CreateStringOffset(fbb, obj.String)
@@ -620,12 +621,12 @@ func (entity_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{
 
 	valDate, err := timeInt64ToEntityProperty(fbutils.GetInt64Slot(table, 40))
 	if err != nil {
-		return nil, err
+		return nil, errors.New("converter timeInt64ToEntityProperty() failed on Entity.Date: " + err.Error())
 	}
 
 	valComplex128, err := complex128BytesToEntityProperty(fbutils.GetByteVectorSlot(table, 42))
 	if err != nil {
-		return nil, err
+		return nil, errors.New("converter complex128BytesToEntityProperty() failed on Entity.Complex128: " + err.Error())
 	}
 
 	var relRelated *TestEntityRelated
@@ -1037,7 +1038,7 @@ func (testStringIdEntity_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte)
 
 	valId, err := objectbox.StringIdConvertToEntityProperty(fbutils.GetUint64Slot(table, 4))
 	if err != nil {
-		return nil, err
+		return nil, errors.New("converter objectbox.StringIdConvertToEntityProperty() failed on TestStringIdEntity.Id: " + err.Error())
 	}
 
 	return &TestStringIdEntity{
@@ -1155,7 +1156,7 @@ func (box *TestStringIdEntityBox) RemoveMany(objects ...*TestStringIdEntity) (ui
 	for k, object := range objects {
 		ids[k], err = objectbox.StringIdConvertToDatabaseValue(object.Id)
 		if err != nil {
-			return 0, err
+			return 0, errors.New("converter objectbox.StringIdConvertToDatabaseValue() failed on TestStringIdEntity.Id: " + err.Error())
 		}
 	}
 	return box.Box.RemoveIds(ids...)

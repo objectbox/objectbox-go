@@ -4,6 +4,7 @@
 package object
 
 import (
+	"errors"
 	"github.com/google/flatbuffers/go"
 	"github.com/objectbox/objectbox-go/objectbox"
 	"github.com/objectbox/objectbox-go/objectbox/fbutils"
@@ -76,7 +77,7 @@ func (timeEntity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builde
 
 	valTime, err := timeInt64ToDatabaseValue(obj.Time)
 	if err != nil {
-		return err
+		return errors.New("converter timeInt64ToDatabaseValue() failed on TimeEntity.Time: " + err.Error())
 	}
 
 	// build the FlatBuffers object
@@ -97,7 +98,7 @@ func (timeEntity_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interf
 
 	valTime, err := timeInt64ToEntityProperty(fbutils.GetInt64Slot(table, 6))
 	if err != nil {
-		return nil, err
+		return nil, errors.New("converter timeInt64ToEntityProperty() failed on TimeEntity.Time: " + err.Error())
 	}
 
 	return &TimeEntity{

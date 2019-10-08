@@ -199,7 +199,7 @@ func ({{$entityNameCamel}}_EntityInfo) Flatten(object interface{}, fbb *flatbuff
 	if obj.{{$property.Path}} != nil { {{end}}
 	val{{$property.Name}}, err := {{$property.Converter}}ToDatabaseValue(obj.{{$property.Path}})
 	if err != nil {
-		return err {{/* TODO return errors.New("conversion failed on {{$entity.Name}}.{{$property.Path}}: " + err.Error()) */}}
+		return errors.New("converter {{$property.Converter}}ToDatabaseValue() failed on {{$entity.Name}}.{{$property.Path}}: " + err.Error())
 	}
 	{{- if $property.IsPointer -}} } {{- end}}
 	{{end}}{{end}}
@@ -261,7 +261,7 @@ func ({{$entityNameCamel}}_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byt
 	{{range $property := $entity.Properties}}{{if $property.Converter}}
 	val{{$property.Name}}, err := {{$property.Converter}}ToEntityProperty({{template "property-getter" $property}})
 	if err != nil {
-		return nil, err {{/* TODO return errors.New("conversion failed on {{$entity.Name}}.{{$property.Path}}: " + err.Error()) */}}
+		return nil, errors.New("converter {{$property.Converter}}ToEntityProperty() failed on {{$entity.Name}}.{{$property.Path}}: " + err.Error())
 	}
 	{{end}}{{end}}
 	
@@ -469,7 +469,7 @@ func (box *{{$entity.Name}}Box) RemoveMany(objects ...*{{$entity.Name}}) (uint64
 		{{if $entity.IdProperty.Converter -}}
 			ids[k], err = {{$entity.IdProperty.TplReadValue "object" ""}}
 			if err != nil {
-				return 0, err {{/* TODO error context */}}
+				return 0, errors.New("converter {{$entity.IdProperty.Converter}}ToDatabaseValue() failed on {{$entity.Name}}.{{$entity.IdProperty.Path}}: " + err.Error())
 			}
 		{{else -}}
 			ids[k] = object.{{$entity.IdProperty.Path}}

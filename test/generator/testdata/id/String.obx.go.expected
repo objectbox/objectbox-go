@@ -81,7 +81,7 @@ func (stringIdEntity_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (in
 
 	valId, err := objectbox.StringIdConvertToEntityProperty(fbutils.GetUint64Slot(table, 4))
 	if err != nil {
-		return nil, err
+		return nil, errors.New("converter objectbox.StringIdConvertToEntityProperty() failed on StringIdEntity.Id: " + err.Error())
 	}
 
 	return &StringIdEntity{
@@ -199,7 +199,7 @@ func (box *StringIdEntityBox) RemoveMany(objects ...*StringIdEntity) (uint64, er
 	for k, object := range objects {
 		ids[k], err = objectbox.StringIdConvertToDatabaseValue(object.Id)
 		if err != nil {
-			return 0, err
+			return 0, errors.New("converter objectbox.StringIdConvertToDatabaseValue() failed on StringIdEntity.Id: " + err.Error())
 		}
 	}
 	return box.Box.RemoveIds(ids...)

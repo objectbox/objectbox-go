@@ -4,6 +4,7 @@
 package object
 
 import (
+	"errors"
 	"github.com/google/flatbuffers/go"
 	"github.com/objectbox/objectbox-go/objectbox"
 	"github.com/objectbox/objectbox-go/objectbox/fbutils"
@@ -81,7 +82,7 @@ func (runeIdEntity_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (inte
 
 	valId, err := runeIdToEntityProperty(fbutils.GetUint64Slot(table, 4))
 	if err != nil {
-		return nil, err
+		return nil, errors.New("converter runeIdToEntityProperty() failed on RuneIdEntity.Id: " + err.Error())
 	}
 
 	return &RuneIdEntity{
@@ -199,7 +200,7 @@ func (box *RuneIdEntityBox) RemoveMany(objects ...*RuneIdEntity) (uint64, error)
 	for k, object := range objects {
 		ids[k], err = runeIdToDatabaseValue(object.Id)
 		if err != nil {
-			return 0, err
+			return 0, errors.New("converter runeIdToDatabaseValue() failed on RuneIdEntity.Id: " + err.Error())
 		}
 	}
 	return box.Box.RemoveIds(ids...)

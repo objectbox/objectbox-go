@@ -39,7 +39,7 @@ type ObjectBinding interface {
 	GetId(object interface{}) (id uint64, err error)
 
 	// SetId sets the ID field on the given object.
-	SetId(object interface{}, id uint64)
+	SetId(object interface{}, id uint64) error
 
 	// PutRelated updates/inserts objects related to the given object, based on the available object data.
 	PutRelated(ob *ObjectBox, object interface{}, id uint64) error

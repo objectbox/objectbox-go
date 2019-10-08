@@ -17,25 +17,19 @@
 package objectbox
 
 import (
-	"fmt"
 	"strconv"
 )
 
 // implements "StringIdConvert" property value converter
-func StringIdConvertToEntityProperty(dbValue uint64) (goValue string) {
-	return strconv.FormatUint(dbValue, 10)
+func StringIdConvertToEntityProperty(dbValue uint64) (string, error) {
+	return strconv.FormatUint(dbValue, 10), nil
 }
 
 // implements "StringIdConvert" property value converter
-func StringIdConvertToDatabaseValue(goValue string) uint64 {
+func StringIdConvertToDatabaseValue(goValue string) (uint64, error) {
 	// in case the object was initialized by the user without setting the ID explicitly
 	if goValue == "" {
-		return 0
+		return 0, nil
 	}
-
-	if id, err := strconv.ParseUint(goValue, 10, 64); err != nil {
-		panic(fmt.Errorf("error parsing numeric ID represented as string: %s", err))
-	} else {
-		return uint64(id)
-	}
+	return strconv.ParseUint(goValue, 10, 64)
 }

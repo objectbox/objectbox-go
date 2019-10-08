@@ -112,8 +112,9 @@ func (taskIndexed_EntityInfo) GetId(object interface{}) (uint64, error) {
 }
 
 // SetId is called by ObjectBox during Put to update an ID on an object that has just been inserted
-func (taskIndexed_EntityInfo) SetId(object interface{}, id uint64) {
+func (taskIndexed_EntityInfo) SetId(object interface{}, id uint64) error {
 	object.(*TaskIndexed).Id = id
+	return nil
 }
 
 // PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
@@ -148,10 +149,11 @@ func (taskIndexed_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (inter
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
-	var id = table.GetUint64Slot(4, 0)
+
+	var valId = table.GetUint64Slot(4, 0)
 
 	return &TaskIndexed{
-		Id:       id,
+		Id:       valId,
 		Uid:      fbutils.GetStringSlot(table, 6),
 		Name:     fbutils.GetStringSlot(table, 8),
 		Priority: fbutils.GetIntSlot(table, 10),

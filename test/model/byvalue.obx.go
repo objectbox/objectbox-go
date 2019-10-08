@@ -64,12 +64,14 @@ func (entityByValue_EntityInfo) GetId(object interface{}) (uint64, error) {
 }
 
 // SetId is called by ObjectBox during Put to update an ID on an object that has just been inserted
-func (entityByValue_EntityInfo) SetId(object interface{}, id uint64) {
+func (entityByValue_EntityInfo) SetId(object interface{}, id uint64) error {
 	if obj, ok := object.(*EntityByValue); ok {
 		obj.Id = id
+		return nil
 	} else {
 		// NOTE while this can't update, it will at least behave consistently (panic in case of a wrong type)
 		_ = object.(EntityByValue).Id
+		return nil
 	}
 }
 
@@ -103,10 +105,11 @@ func (entityByValue_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (int
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
-	var id = table.GetUint64Slot(4, 0)
+
+	var valId = table.GetUint64Slot(4, 0)
 
 	return &EntityByValue{
-		Id:   id,
+		Id:   valId,
 		Text: fbutils.GetStringSlot(table, 6),
 	}, nil
 }

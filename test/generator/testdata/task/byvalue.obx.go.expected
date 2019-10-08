@@ -64,12 +64,14 @@ func (taskByValue_EntityInfo) GetId(object interface{}) (uint64, error) {
 }
 
 // SetId is called by ObjectBox during Put to update an ID on an object that has just been inserted
-func (taskByValue_EntityInfo) SetId(object interface{}, id uint64) {
+func (taskByValue_EntityInfo) SetId(object interface{}, id uint64) error {
 	if obj, ok := object.(*TaskByValue); ok {
 		obj.Id = id
+		return nil
 	} else {
 		// NOTE while this can't update, it will at least behave consistently (panic in case of a wrong type)
 		_ = object.(TaskByValue).Id
+		return nil
 	}
 }
 
@@ -103,10 +105,11 @@ func (taskByValue_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (inter
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
-	var id = table.GetUint64Slot(4, 0)
+
+	var valId = table.GetUint64Slot(4, 0)
 
 	return &TaskByValue{
-		Id:   id,
+		Id:   valId,
 		Name: fbutils.GetStringSlot(table, 6),
 	}, nil
 }
@@ -382,19 +385,22 @@ func (taskStringByValue_EntityInfo) AddToModel(model *objectbox.Model) {
 // GetId is called by ObjectBox during Put operations to check for existing ID on an object
 func (taskStringByValue_EntityInfo) GetId(object interface{}) (uint64, error) {
 	if obj, ok := object.(*TaskStringByValue); ok {
-		return objectbox.StringIdConvertToDatabaseValue(obj.Id), nil
+		return objectbox.StringIdConvertToDatabaseValue(obj.Id)
 	} else {
-		return objectbox.StringIdConvertToDatabaseValue(object.(TaskStringByValue).Id), nil
+		return objectbox.StringIdConvertToDatabaseValue(object.(TaskStringByValue).Id)
 	}
 }
 
 // SetId is called by ObjectBox during Put to update an ID on an object that has just been inserted
-func (taskStringByValue_EntityInfo) SetId(object interface{}, id uint64) {
+func (taskStringByValue_EntityInfo) SetId(object interface{}, id uint64) error {
 	if obj, ok := object.(*TaskStringByValue); ok {
-		obj.Id = objectbox.StringIdConvertToEntityProperty(id)
+		var err error
+		obj.Id, err = objectbox.StringIdConvertToEntityProperty(id)
+		return err
 	} else {
 		// NOTE while this can't update, it will at least behave consistently (panic in case of a wrong type)
 		_ = object.(TaskStringByValue).Id
+		return nil
 	}
 }
 
@@ -428,10 +434,14 @@ func (taskStringByValue_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) 
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
-	var id = table.GetUint64Slot(4, 0)
+
+	valId, err := objectbox.StringIdConvertToEntityProperty(fbutils.GetUint64Slot(table, 4))
+	if err != nil {
+		return nil, err
+	}
 
 	return &TaskStringByValue{
-		Id:   objectbox.StringIdConvertToEntityProperty(id),
+		Id:   valId,
 		Name: fbutils.GetStringSlot(table, 6),
 	}, nil
 }
@@ -542,8 +552,12 @@ func (box *TaskStringByValueBox) Remove(object *TaskStringByValue) error {
 // you can execute multiple box.Contains() and box.Remove() inside a single write transaction.
 func (box *TaskStringByValueBox) RemoveMany(objects ...*TaskStringByValue) (uint64, error) {
 	var ids = make([]uint64, len(objects))
+	var err error
 	for k, object := range objects {
-		ids[k] = objectbox.StringIdConvertToDatabaseValue(object.Id)
+		ids[k], err = objectbox.StringIdConvertToDatabaseValue(object.Id)
+		if err != nil {
+			return 0, err
+		}
 	}
 	return box.Box.RemoveIds(ids...)
 }

@@ -1048,6 +1048,52 @@ func (property *Property) Path() string {
 	return property.field.Path()
 }
 
+// AnnotatedType returns "type" annotation value
+func (property *Property) AnnotatedType() string {
+	return property.Annotations["type"].Value
+}
+
+// TplReadValue returns a code to read the property value on a given object.
+func (property *Property) TplReadValue(objVar, castType string) string {
+	var valueAccessor = objVar
+
+	if castType == "ptr-cast" {
+		valueAccessor = valueAccessor + ".(*" + property.entity.Name + ")"
+	} else if castType == "val-cast" {
+		valueAccessor = valueAccessor + ".(" + property.entity.Name + ")"
+	}
+
+	valueAccessor = valueAccessor + "." + property.Path()
+
+	if property.Converter != nil {
+		return *property.Converter + "ToDatabaseValue(" + valueAccessor + ")" // returns value & error
+	}
+
+	return valueAccessor + ", nil" // return value & err=nil
+}
+
+// TplSetAndReturn returns a code to write the property value on a given object.
+func (property *Property) TplSetAndReturn(objVar, castType, rhs string) string {
+	var lhs = objVar
+
+	if castType == "ptr-cast" {
+		lhs = lhs + ".(*" + property.entity.Name + ")"
+	} else if castType == "val-cast" {
+		lhs = lhs + ".(" + property.entity.Name + ")"
+	}
+
+	lhs = lhs + "." + property.Path()
+
+	if property.Converter != nil {
+		return `var err error
+` + lhs + ", err = " + *property.Converter + "ToEntityProperty(" + rhs + ")" + `
+return err`
+	}
+
+	return lhs + " = " + rhs + `
+return nil`
+}
+
 func typeBaseName(name string) string {
 	// strip the '*' if it's a pointer type
 	name = strings.TrimPrefix(name, "*")

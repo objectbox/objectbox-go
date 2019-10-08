@@ -70,8 +70,9 @@ func (taskRelEmbedded_EntityInfo) GetId(object interface{}) (uint64, error) {
 }
 
 // SetId is called by ObjectBox during Put to update an ID on an object that has just been inserted
-func (taskRelEmbedded_EntityInfo) SetId(object interface{}, id uint64) {
+func (taskRelEmbedded_EntityInfo) SetId(object interface{}, id uint64) error {
 	object.(*TaskRelEmbedded).Id = id
+	return nil
 }
 
 // PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
@@ -121,7 +122,8 @@ func (taskRelEmbedded_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (i
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
-	var id = table.GetUint64Slot(4, 0)
+
+	var valId = table.GetUint64Slot(4, 0)
 
 	var relGroup *Group
 	if rId := fbutils.GetUint64PtrSlot(table, 6); rId != nil && *rId > 0 {
@@ -133,7 +135,7 @@ func (taskRelEmbedded_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (i
 	}
 
 	var relGroupsNew []*Group
-	if rIds, err := BoxForTaskRelEmbedded(ob).RelationIds(TaskRelEmbedded_.WithGroup.GroupsNew, id); err != nil {
+	if rIds, err := BoxForTaskRelEmbedded(ob).RelationIds(TaskRelEmbedded_.WithGroup.GroupsNew, valId); err != nil {
 		return nil, err
 	} else if rSlice, err := BoxForGroup(ob).GetMany(rIds...); err != nil {
 		return nil, err
@@ -142,7 +144,7 @@ func (taskRelEmbedded_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (i
 	}
 
 	return &TaskRelEmbedded{
-		Id: id,
+		Id: valId,
 		WithGroup: WithGroup{
 			Group:     relGroup,
 			GroupsNew: relGroupsNew,

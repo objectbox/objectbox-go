@@ -48,12 +48,14 @@ func (runeIdEntity_EntityInfo) AddToModel(model *objectbox.Model) {
 
 // GetId is called by ObjectBox during Put operations to check for existing ID on an object
 func (runeIdEntity_EntityInfo) GetId(object interface{}) (uint64, error) {
-	return runeIdToDatabaseValue(object.(*RuneIdEntity).Id), nil
+	return runeIdToDatabaseValue(object.(*RuneIdEntity).Id)
 }
 
 // SetId is called by ObjectBox during Put to update an ID on an object that has just been inserted
-func (runeIdEntity_EntityInfo) SetId(object interface{}, id uint64) {
-	object.(*RuneIdEntity).Id = runeIdToEntityProperty(id)
+func (runeIdEntity_EntityInfo) SetId(object interface{}, id uint64) error {
+	var err error
+	object.(*RuneIdEntity).Id, err = runeIdToEntityProperty(id)
+	return err
 }
 
 // PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
@@ -76,10 +78,14 @@ func (runeIdEntity_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (inte
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
-	var id = table.GetUint64Slot(4, 0)
+
+	valId, err := runeIdToEntityProperty(fbutils.GetUint64Slot(table, 4))
+	if err != nil {
+		return nil, err
+	}
 
 	return &RuneIdEntity{
-		Id: runeIdToEntityProperty(id),
+		Id: valId,
 	}, nil
 }
 
@@ -189,8 +195,12 @@ func (box *RuneIdEntityBox) Remove(object *RuneIdEntity) error {
 // you can execute multiple box.Contains() and box.Remove() inside a single write transaction.
 func (box *RuneIdEntityBox) RemoveMany(objects ...*RuneIdEntity) (uint64, error) {
 	var ids = make([]uint64, len(objects))
+	var err error
 	for k, object := range objects {
-		ids[k] = runeIdToDatabaseValue(object.Id)
+		ids[k], err = runeIdToDatabaseValue(object.Id)
+		if err != nil {
+			return 0, err
+		}
 	}
 	return box.Box.RemoveIds(ids...)
 }

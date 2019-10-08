@@ -413,8 +413,9 @@ func (entity_EntityInfo) GetId(object interface{}) (uint64, error) {
 }
 
 // SetId is called by ObjectBox during Put to update an ID on an object that has just been inserted
-func (entity_EntityInfo) SetId(object interface{}, id uint64) {
+func (entity_EntityInfo) SetId(object interface{}, id uint64) error {
 	object.(*Entity).Id = id
+	return nil
 }
 
 // PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
@@ -463,18 +464,32 @@ func (entity_EntityInfo) PutRelated(ob *objectbox.ObjectBox, object interface{},
 // Flatten is called by ObjectBox to transform an object to a FlatBuffer
 func (entity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) error {
 	obj := object.(*Entity)
+
+	valDate, err := timeInt64ToDatabaseValue(obj.Date)
+	if err != nil {
+		return err
+	}
+
+	valComplex128, err := complex128BytesToDatabaseValue(obj.Complex128)
+	if err != nil {
+		return err
+	}
+
 	var offsetString = fbutils.CreateStringOffset(fbb, obj.String)
 	var offsetStringVector = fbutils.CreateStringVectorOffset(fbb, obj.StringVector)
 	var offsetByteVector = fbutils.CreateByteVectorOffset(fbb, obj.ByteVector)
-	var offsetComplex128 = fbutils.CreateByteVectorOffset(fbb, complex128BytesToDatabaseValue(obj.Complex128))
+	var offsetComplex128 = fbutils.CreateByteVectorOffset(fbb, valComplex128)
+
 	var offsetStringPtr flatbuffers.UOffsetT
 	if obj.StringPtr != nil {
 		offsetStringPtr = fbutils.CreateStringOffset(fbb, *obj.StringPtr)
 	}
+
 	var offsetStringVectorPtr flatbuffers.UOffsetT
 	if obj.StringVectorPtr != nil {
 		offsetStringVectorPtr = fbutils.CreateStringVectorOffset(fbb, *obj.StringVectorPtr)
 	}
+
 	var offsetByteVectorPtr flatbuffers.UOffsetT
 	if obj.ByteVectorPtr != nil {
 		offsetByteVectorPtr = fbutils.CreateByteVectorOffset(fbb, *obj.ByteVectorPtr)
@@ -528,7 +543,7 @@ func (entity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, i
 	fbutils.SetInt32Slot(fbb, 15, obj.Rune)
 	fbutils.SetFloat32Slot(fbb, 16, obj.Float32)
 	fbutils.SetFloat64Slot(fbb, 17, obj.Float64)
-	fbutils.SetInt64Slot(fbb, 18, timeInt64ToDatabaseValue(obj.Date))
+	fbutils.SetInt64Slot(fbb, 18, valDate)
 	fbutils.SetUOffsetTSlot(fbb, 19, offsetComplex128)
 	fbutils.SetUint64Slot(fbb, 21, rIdRelated)
 	if obj.RelatedPtr != nil {
@@ -600,7 +615,18 @@ func (entity_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
-	var id = table.GetUint64Slot(4, 0)
+
+	var valId = table.GetUint64Slot(4, 0)
+
+	valDate, err := timeInt64ToEntityProperty(fbutils.GetInt64Slot(table, 40))
+	if err != nil {
+		return nil, err
+	}
+
+	valComplex128, err := complex128BytesToEntityProperty(fbutils.GetByteVectorSlot(table, 42))
+	if err != nil {
+		return nil, err
+	}
 
 	var relRelated *TestEntityRelated
 	if rId := fbutils.GetUint64Slot(table, 46); rId > 0 {
@@ -632,7 +658,7 @@ func (entity_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{
 	}
 
 	var relRelatedSlice []EntityByValue
-	if rIds, err := BoxForEntity(ob).RelationIds(Entity_.RelatedSlice, id); err != nil {
+	if rIds, err := BoxForEntity(ob).RelationIds(Entity_.RelatedSlice, valId); err != nil {
 		return nil, err
 	} else if rSlice, err := BoxForEntityByValue(ob).GetMany(rIds...); err != nil {
 		return nil, err
@@ -641,7 +667,7 @@ func (entity_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{
 	}
 
 	return &Entity{
-		Id:              id,
+		Id:              valId,
 		Int:             fbutils.GetIntSlot(table, 6),
 		Int8:            fbutils.GetInt8Slot(table, 8),
 		Int16:           fbutils.GetInt16Slot(table, 10),
@@ -660,13 +686,13 @@ func (entity_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{
 		Rune:            fbutils.GetRuneSlot(table, 34),
 		Float32:         fbutils.GetFloat32Slot(table, 36),
 		Float64:         fbutils.GetFloat64Slot(table, 38),
-		Date:            timeInt64ToEntityProperty(fbutils.GetInt64Slot(table, 40)),
-		Complex128:      complex128BytesToEntityProperty(fbutils.GetByteVectorSlot(table, 42)),
+		Date:            valDate,
+		Complex128:      valComplex128,
 		Related:         *relRelated,
 		RelatedPtr:      relRelatedPtr,
 		RelatedPtr2:     relRelatedPtr2,
 		RelatedSlice:    relRelatedSlice,
-		RelatedPtrSlice: nil, // use EntityBox::FetchRelatedPtrSlice() to fetch this lazy-loaded relation
+		RelatedPtrSlice: nil, // use EntityBox::FetchRelatedPtrSlice() to fetch this lazy-loaded relation,
 		IntPtr:          fbutils.GetIntPtrSlot(table, 52),
 		Int8Ptr:         fbutils.GetInt8PtrSlot(table, 54),
 		Int16Ptr:        fbutils.GetInt16PtrSlot(table, 56),
@@ -978,12 +1004,14 @@ func (testStringIdEntity_EntityInfo) AddToModel(model *objectbox.Model) {
 
 // GetId is called by ObjectBox during Put operations to check for existing ID on an object
 func (testStringIdEntity_EntityInfo) GetId(object interface{}) (uint64, error) {
-	return objectbox.StringIdConvertToDatabaseValue(object.(*TestStringIdEntity).Id), nil
+	return objectbox.StringIdConvertToDatabaseValue(object.(*TestStringIdEntity).Id)
 }
 
 // SetId is called by ObjectBox during Put to update an ID on an object that has just been inserted
-func (testStringIdEntity_EntityInfo) SetId(object interface{}, id uint64) {
-	object.(*TestStringIdEntity).Id = objectbox.StringIdConvertToEntityProperty(id)
+func (testStringIdEntity_EntityInfo) SetId(object interface{}, id uint64) error {
+	var err error
+	object.(*TestStringIdEntity).Id, err = objectbox.StringIdConvertToEntityProperty(id)
+	return err
 }
 
 // PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
@@ -1006,10 +1034,14 @@ func (testStringIdEntity_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte)
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
-	var id = table.GetUint64Slot(4, 0)
+
+	valId, err := objectbox.StringIdConvertToEntityProperty(fbutils.GetUint64Slot(table, 4))
+	if err != nil {
+		return nil, err
+	}
 
 	return &TestStringIdEntity{
-		Id: objectbox.StringIdConvertToEntityProperty(id),
+		Id: valId,
 	}, nil
 }
 
@@ -1119,8 +1151,12 @@ func (box *TestStringIdEntityBox) Remove(object *TestStringIdEntity) error {
 // you can execute multiple box.Contains() and box.Remove() inside a single write transaction.
 func (box *TestStringIdEntityBox) RemoveMany(objects ...*TestStringIdEntity) (uint64, error) {
 	var ids = make([]uint64, len(objects))
+	var err error
 	for k, object := range objects {
-		ids[k] = objectbox.StringIdConvertToDatabaseValue(object.Id)
+		ids[k], err = objectbox.StringIdConvertToDatabaseValue(object.Id)
+		if err != nil {
+			return 0, err
+		}
 	}
 	return box.Box.RemoveIds(ids...)
 }
@@ -1295,8 +1331,9 @@ func (testEntityInline_EntityInfo) GetId(object interface{}) (uint64, error) {
 }
 
 // SetId is called by ObjectBox during Put to update an ID on an object that has just been inserted
-func (testEntityInline_EntityInfo) SetId(object interface{}, id uint64) {
+func (testEntityInline_EntityInfo) SetId(object interface{}, id uint64) error {
 	object.(*TestEntityInline).Id = id
+	return nil
 }
 
 // PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
@@ -1322,7 +1359,8 @@ func (testEntityInline_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
-	var id = table.GetUint64Slot(8, 0)
+
+	var valId = table.GetUint64Slot(8, 0)
 
 	return &TestEntityInline{
 		BaseWithDate: BaseWithDate{
@@ -1331,7 +1369,7 @@ func (testEntityInline_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (
 		BaseWithValue: &BaseWithValue{
 			Value: fbutils.GetFloat64Slot(table, 6),
 		},
-		Id: id,
+		Id: valId,
 	}, nil
 }
 
@@ -1627,8 +1665,9 @@ func (testEntityRelated_EntityInfo) GetId(object interface{}) (uint64, error) {
 }
 
 // SetId is called by ObjectBox during Put to update an ID on an object that has just been inserted
-func (testEntityRelated_EntityInfo) SetId(object interface{}, id uint64) {
+func (testEntityRelated_EntityInfo) SetId(object interface{}, id uint64) error {
 	object.(*TestEntityRelated).Id = id
+	return nil
 }
 
 // PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
@@ -1680,7 +1719,8 @@ func (testEntityRelated_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) 
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
-	var id = table.GetUint64Slot(4, 0)
+
+	var valId = table.GetUint64Slot(4, 0)
 
 	var relNext *EntityByValue
 	if rId := fbutils.GetUint64PtrSlot(table, 8); rId != nil && *rId > 0 {
@@ -1692,7 +1732,7 @@ func (testEntityRelated_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) 
 	}
 
 	var relNextSlice []EntityByValue
-	if rIds, err := BoxForTestEntityRelated(ob).RelationIds(TestEntityRelated_.NextSlice, id); err != nil {
+	if rIds, err := BoxForTestEntityRelated(ob).RelationIds(TestEntityRelated_.NextSlice, valId); err != nil {
 		return nil, err
 	} else if rSlice, err := BoxForEntityByValue(ob).GetMany(rIds...); err != nil {
 		return nil, err
@@ -1701,7 +1741,7 @@ func (testEntityRelated_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) 
 	}
 
 	return &TestEntityRelated{
-		Id:        id,
+		Id:        valId,
 		Name:      fbutils.GetStringSlot(table, 6),
 		Next:      relNext,
 		NextSlice: relNextSlice,

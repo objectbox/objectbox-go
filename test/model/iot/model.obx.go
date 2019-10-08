@@ -86,8 +86,9 @@ func (event_EntityInfo) GetId(object interface{}) (uint64, error) {
 }
 
 // SetId is called by ObjectBox during Put to update an ID on an object that has just been inserted
-func (event_EntityInfo) SetId(object interface{}, id uint64) {
+func (event_EntityInfo) SetId(object interface{}, id uint64) error {
 	object.(*Event).Id = id
+	return nil
 }
 
 // PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
@@ -118,10 +119,11 @@ func (event_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{}
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
-	var id = table.GetUint64Slot(4, 0)
+
+	var valId = table.GetUint64Slot(4, 0)
 
 	return &Event{
-		Id:      id,
+		Id:      valId,
 		Uid:     fbutils.GetStringSlot(table, 10),
 		Device:  fbutils.GetStringSlot(table, 6),
 		Date:    fbutils.GetInt64Slot(table, 8),
@@ -462,8 +464,9 @@ func (reading_EntityInfo) GetId(object interface{}) (uint64, error) {
 }
 
 // SetId is called by ObjectBox during Put to update an ID on an object that has just been inserted
-func (reading_EntityInfo) SetId(object interface{}, id uint64) {
+func (reading_EntityInfo) SetId(object interface{}, id uint64) error {
 	object.(*Reading).Id = id
+	return nil
 }
 
 // PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
@@ -499,10 +502,11 @@ func (reading_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
-	var id = table.GetUint64Slot(4, 0)
+
+	var valId = table.GetUint64Slot(4, 0)
 
 	return &Reading{
-		Id:              id,
+		Id:              valId,
 		Date:            fbutils.GetInt64Slot(table, 6),
 		EventId:         fbutils.GetUint64Slot(table, 8),
 		ValueName:       fbutils.GetStringSlot(table, 10),

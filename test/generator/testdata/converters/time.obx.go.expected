@@ -60,8 +60,9 @@ func (timeEntity_EntityInfo) GetId(object interface{}) (uint64, error) {
 }
 
 // SetId is called by ObjectBox during Put to update an ID on an object that has just been inserted
-func (timeEntity_EntityInfo) SetId(object interface{}, id uint64) {
+func (timeEntity_EntityInfo) SetId(object interface{}, id uint64) error {
 	object.(*TimeEntity).Id = id
+	return nil
 }
 
 // PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
@@ -73,10 +74,15 @@ func (timeEntity_EntityInfo) PutRelated(ob *objectbox.ObjectBox, object interfac
 func (timeEntity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) error {
 	obj := object.(*TimeEntity)
 
+	valTime, err := timeInt64ToDatabaseValue(obj.Time)
+	if err != nil {
+		return err
+	}
+
 	// build the FlatBuffers object
 	fbb.StartObject(2)
 	fbutils.SetUint64Slot(fbb, 0, id)
-	fbutils.SetInt64Slot(fbb, 1, timeInt64ToDatabaseValue(obj.Time))
+	fbutils.SetInt64Slot(fbb, 1, valTime)
 	return nil
 }
 
@@ -86,11 +92,17 @@ func (timeEntity_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interf
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
-	var id = table.GetUint64Slot(4, 0)
+
+	var valId = table.GetUint64Slot(4, 0)
+
+	valTime, err := timeInt64ToEntityProperty(fbutils.GetInt64Slot(table, 6))
+	if err != nil {
+		return nil, err
+	}
 
 	return &TimeEntity{
-		Id:   id,
-		Time: timeInt64ToEntityProperty(fbutils.GetInt64Slot(table, 6)),
+		Id:   valId,
+		Time: valTime,
 	}, nil
 }
 

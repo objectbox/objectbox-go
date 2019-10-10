@@ -24,16 +24,18 @@ import (
 	"go/token"
 	"go/types"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 )
 
 type file struct {
-	f              *ast.File
+	ast            *ast.File
 	info           *types.Info
 	fileset        *token.FileSet
 	files          []*ast.File
 	dir            string
+	pkgName        string
 	typeCheckError error
 }
 
@@ -44,9 +46,10 @@ func parseFile(sourceFile string) (f *file, err error) {
 	}
 
 	// get the main file's package name
-	pkgName, err := getPackageName(sourceFile)
-	if err != nil {
+	if parsed, err := parser.ParseFile(f.fileset, sourceFile, nil, 0); err != nil {
 		return nil, err
+	} else {
+		f.pkgName = parsed.Name.Name
 	}
 
 	// parse the whole directory to read & understand the used types
@@ -62,31 +65,23 @@ func parseFile(sourceFile string) (f *file, err error) {
 		return nil, err
 	}
 
-	if pkgs[pkgName] == nil {
-		return nil, fmt.Errorf("couldn't find package %s in directory %s", pkgName, f.dir)
+	if pkgs[f.pkgName] == nil {
+		return nil, fmt.Errorf("couldn't find package %s in directory %s", f.pkgName, f.dir)
 	}
 
 	// create a list of types in the package the original file belongs to and
-	for name, file := range pkgs[pkgName].Files {
+	for name, file := range pkgs[f.pkgName].Files {
 		if name == sourceFile {
-			f.f = file
+			f.ast = file
 		}
 		f.files = append(f.files, file)
 	}
 
-	if f.f == nil {
+	if f.ast == nil {
 		return nil, fmt.Errorf("the source file %s not found among the files processed in the directory", sourceFile)
 	}
 
 	return f, nil
-}
-
-func getPackageName(filePath string) (string, error) {
-	f, err := parser.ParseFile(&token.FileSet{}, filePath, nil, 0)
-	if err != nil {
-		return "", err
-	}
-	return f.Name.Name, nil
 }
 
 func parserFilter(file os.FileInfo) bool {
@@ -101,6 +96,24 @@ func parserFilter(file os.FileInfo) bool {
 	}
 
 	return true
+}
+
+func (f *file) importedPackage(name string) (*types.Package, error) {
+	for _, imp := range f.ast.Imports {
+		if imp.Path == nil {
+			return nil, fmt.Errorf("encountered an import without a path: %v", *imp)
+		}
+
+		var impPath = strings.Trim(imp.Path.Value, "\"'`")
+
+		if imp.Name != nil && name == imp.Name.Name {
+			return types.NewPackage(impPath, name), nil
+		}
+		if name == path.Base(impPath) {
+			return types.NewPackage(impPath, name), nil
+		}
+	}
+	return nil, fmt.Errorf("package %s not imported in the source file", name)
 }
 
 func (f *file) getType(expr ast.Expr) (types.Type, error) {
@@ -141,7 +154,7 @@ func (f *file) getType(expr ast.Expr) (types.Type, error) {
 }
 
 func (f *file) walk(fn func(ast.Node) bool) {
-	ast.Walk(fnAsVisitor(fn), f.f)
+	ast.Walk(fnAsVisitor(fn), f.ast)
 }
 
 // walker adapts a function to satisfy the ast.Visitor interface.

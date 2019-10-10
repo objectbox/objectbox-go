@@ -154,7 +154,7 @@ func newBinding() (*Binding, error) {
 
 func (binding *Binding) createFromAst(f *file) (err error) {
 	binding.source = f
-	binding.Package = types.NewPackage(f.dir, f.f.Name.Name)
+	binding.Package = types.NewPackage(f.dir, f.pkgName)
 	binding.Imports = make(map[string]string)
 
 	// this will hold the pointer to the latest GenDecl encountered (parent of the current struct)
@@ -349,15 +349,27 @@ func (entity *Entity) addFields(fields fieldList, fieldPath, prefix string, recu
 			continue
 		}
 
-		// if the embedded field is from a different package, check if it's available (starts with an upercase letter)
-		if f.Package().Path() != entity.binding.Package.Path() {
+		// if a field (type) is from a different package
+		pkg, err := f.Package()
+		if err != nil {
+			return nil, propertyError(err, property)
+		}
+		var addImportPath = func(){} // called later when other info is available
+		if pkg.Path() != entity.binding.Package.Path() {
+			// check if it's available (starts with an uppercase letter)
 			if len(field.Name) == 0 || field.Name[0] < 65 || field.Name[0] > 90 {
 				log.Printf("Note - skipping unavailable field '%s' on entity %s", property.Name, fieldPath)
 				continue
 			}
 
-			// import the package. Note that package aliases are not supported yet
-			entity.binding.Imports[f.Package().Path()] = f.Package().Path()
+			// prepare the function for importing the package (if necessary, decided bellow)
+			addImportPath = func() {
+				if pkg.Name() == path.Base(pkg.Path()) {
+					entity.binding.Imports[pkg.Path()] = pkg.Path()
+				} else {
+					entity.binding.Imports[pkg.Name()] = pkg.Path()
+				}
+			}
 		}
 
 		fieldsTree = append(fieldsTree, field)
@@ -397,11 +409,18 @@ func (entity *Entity) addFields(fields fieldList, fieldPath, prefix string, recu
 				return nil, err
 			}
 
+			addImportPath() // for structs, we're explicitly using the type so add the import
+
 			delete(*recursionStack, field.Type)
 
 			// this struct itself is not added, just the inner properties
 			// so skip the the following steps of adding the property
 			continue
+		}
+
+		// add import if necessary, i.e. we're explicitly using the type (but not for converters)
+		if property.Annotations["converter"] == nil && property.CastOnWrite != "" {
+			addImportPath()
 		}
 
 		if err := property.setObFlags(); err != nil {

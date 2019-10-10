@@ -47,8 +47,8 @@ import (
 	"github.com/google/flatbuffers/go"
 	"github.com/objectbox/objectbox-go/objectbox"
 	"github.com/objectbox/objectbox-go/objectbox/fbutils"
-	{{range $path := .Binding.Imports -}}
-		"{{$path}}"
+	{{range $alias, $path := .Binding.Imports -}}
+		{{if not (eq $alias $path)}}{{$alias}}{{end}} "{{$path}}"
 	{{end}}
 )
 

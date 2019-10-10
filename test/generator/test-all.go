@@ -19,9 +19,11 @@ package generator
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"math/rand"
 	"os"
+	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -87,11 +89,26 @@ func generateOneDir(t *testing.T, overwriteExpected bool, dir string) {
 	if !testing.Short() {
 		t.Run("compile", func(t *testing.T) {
 			t.Parallel()
-			if stdOut, stdErr, err := build.Package("./" + dir); err != nil {
-				t.Logf("%s", stdOut)
-				t.Logf("%s", stdErr)
+
+			var expectedError error
+			if fileExists(path.Join(dir, "compile-error.expected")) {
+				content, err := ioutil.ReadFile(path.Join(dir, "compile-error.expected"))
 				assert.NoErr(t, err)
+				expectedError = errors.New(string(content))
 			}
+
+			stdOut, stdErr, err := build.Package("./" + dir)
+			if err == nil && expectedError == nil {
+				// successful
+				return
+			}
+
+			if err == nil && expectedError != nil {
+				assert.Failf(t, "Unexpected PASS during compilation")
+			}
+
+			var receivedError = fmt.Errorf("%s\n%s\n%s", stdOut, stdErr, err)
+			assert.Eq(t, expectedError, receivedError)
 		})
 	}
 }

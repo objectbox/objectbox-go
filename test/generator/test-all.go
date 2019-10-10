@@ -19,6 +19,7 @@ package generator
 import (
 	"bytes"
 	"errors"
+	"github.com/objectbox/objectbox-go/test/build"
 	"io/ioutil"
 	"math/rand"
 	"os"
@@ -80,6 +81,15 @@ func generateOneDir(t *testing.T, overwriteExpected bool, dir string) {
 
 		assertSameFile(t, modelInfoFile, modelInfoExpectedFile, overwriteExpected)
 		assertSameFile(t, modelFile, modelExpectedFile, overwriteExpected)
+	}
+
+	// verify the result can be built
+	if !testing.Short() {
+		if stdOut, stdErr, err := build.Package("./" + dir); err != nil {
+			t.Logf("%s", stdOut)
+			t.Logf("%s", stdErr)
+			assert.NoErr(t, err)
+		}
 	}
 }
 

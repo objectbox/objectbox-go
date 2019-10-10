@@ -354,7 +354,7 @@ func (entity *Entity) addFields(fields fieldList, fieldPath, prefix string, recu
 		if err != nil {
 			return nil, propertyError(err, property)
 		}
-		var addImportPath = func(){} // called later when other info is available
+		var addImportPath = func() {} // called later when other info is available
 		if pkg.Path() != entity.binding.Package.Path() {
 			// check if it's available (starts with an uppercase letter)
 			if len(field.Name) == 0 || field.Name[0] < 65 || field.Name[0] > 90 {

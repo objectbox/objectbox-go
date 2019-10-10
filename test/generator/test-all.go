@@ -19,7 +19,6 @@ package generator
 import (
 	"bytes"
 	"errors"
-	"github.com/objectbox/objectbox-go/test/build"
 	"io/ioutil"
 	"math/rand"
 	"os"
@@ -30,6 +29,7 @@ import (
 
 	"github.com/objectbox/objectbox-go/internal/generator"
 	"github.com/objectbox/objectbox-go/test/assert"
+	"github.com/objectbox/objectbox-go/test/build"
 )
 
 // generateAllDirs walks through the "data" and generates bindings for each subdirectory
@@ -85,11 +85,14 @@ func generateOneDir(t *testing.T, overwriteExpected bool, dir string) {
 
 	// verify the result can be built
 	if !testing.Short() {
-		if stdOut, stdErr, err := build.Package("./" + dir); err != nil {
-			t.Logf("%s", stdOut)
-			t.Logf("%s", stdErr)
-			assert.NoErr(t, err)
-		}
+		t.Run("compile", func(t *testing.T) {
+			t.Parallel()
+			if stdOut, stdErr, err := build.Package("./" + dir); err != nil {
+				t.Logf("%s", stdOut)
+				t.Logf("%s", stdErr)
+				assert.NoErr(t, err)
+			}
+		})
 	}
 }
 
@@ -149,7 +152,7 @@ func generateAllFiles(t *testing.T, overwriteExpected bool, dir string, modelInf
 		err = generator.Process(sourceFile, getOptions(t, sourceFile, modelInfoFile))
 
 		// handle negative test
-		var shouldFail = strings.HasPrefix(filepath.Base(sourceFile), "!")
+		var shouldFail = strings.HasSuffix(filepath.Base(sourceFile), ".fail.go")
 		if shouldFail {
 			if err == nil {
 				assert.Failf(t, "Unexpected PASS on a negative test %s", sourceFile)

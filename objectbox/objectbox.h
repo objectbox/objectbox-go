@@ -41,7 +41,7 @@ extern "C" {
 /// When using ObjectBox as a dynamic library, you should verify that a compatible version was linked using obx_version() or obx_version_is_at_least().
 #define OBX_VERSION_MAJOR 0
 #define OBX_VERSION_MINOR 7
-#define OBX_VERSION_PATCH 0  // values >= 100 are reserved for dev releases leading to the next minor/major increase
+#define OBX_VERSION_PATCH 100  // values >= 100 are reserved for dev releases leading to the next minor/major increase
 
 /// Returns the version of the library as ints. Pointers may be null.
 void obx_version(int* major, int* minor, int* patch);
@@ -96,6 +96,8 @@ bool obx_supports_bytes_array(void);
 #define OBX_ERROR_UNIQUE_VIOLATED 10201
 #define OBX_ERROR_NON_UNIQUE_RESULT 10202
 #define OBX_ERROR_PROPERTY_TYPE_MISMATCH 10203
+#define OBX_ERROR_ID_ALREADY_EXISTS 10210
+#define OBX_ERROR_ID_NOT_FOUND 10211
 #define OBX_ERROR_CONSTRAINT_VIOLATED 10299
 
 // STD errors
@@ -188,9 +190,11 @@ typedef enum {
     OBXPropertyType_StringVector = 30,
 } OBXPropertyType;
 
-/// Not really an enum, but binary flags to use across languages
+/// Bit-flags defining the behavior of properties.
+/// Note: Numbers indicate the bit position
 typedef enum {
-    /// One long property on an entity must be the ID
+    /// 64 bit long property (internally unsigned) representing the ID of the entity.
+    /// May be combined with: NON_PRIMITIVE_TYPE, ID_MONOTONIC_SEQUENCE, ID_SELF_ASSIGNABLE.
     OBXPropertyFlags_ID = 1,
 
     /// On languages like Java, a non-primitive type is used (aka wrapper types, allowing null)
@@ -230,7 +234,9 @@ typedef enum {
     /// recommended mostly for 64 bit machines with values longer >200 bytes; small values are faster with a 32 bit hash
     OBXPropertyFlags_INDEX_HASH64 = 4096,
 
-    /// The actual type of the variable is unsigned (used in combination with numeric OBXPropertyType_*)
+    /// Unused yet: While our default are signed ints, queries & indexes need do know signing info.
+    /// Note: Don't combine with ID (IDs are always unsigned internally).
+    /// Used in combination with integer types defined in OBXPropertyType_*.
     OBXPropertyFlags_UNSIGNED = 8192,
 } OBXPropertyFlags;
 
@@ -556,14 +562,15 @@ OBX_id_array* obx_cursor_rel_ids(OBX_cursor* cursor, obx_schema_id relation_id, 
 struct OBX_box;
 typedef struct OBX_box OBX_box;
 
-/// Gets access to to the box for the given entity. A box may be used across threads.
-/// Boxes are managed by the store so there's no need to close/free them manually.
+/// Gets the box for the given entity type. A box may be used across threads.
+/// Boxes are shared instances and managed by the store; so there's no need to close/free boxes manually.
 OBX_box* obx_box(OBX_store* store, obx_schema_id entity_id);
 
 /// Checks whether a given object exists in the box.
 obx_err obx_box_contains(OBX_box* box, obx_id id, bool* out_contains);
 
-/// Checks whether a given object exists in the box.
+/// Checks whether this box contains objects with all of the IDs given
+/// @param out_contains is set to true if all of the IDs are present, otherwise false
 obx_err obx_box_contains_many(OBX_box* box, const OBX_id_array* ids, bool* out_contains);
 
 /// Fetch a single object from the box; must be called inside a (reentrant) transaction.

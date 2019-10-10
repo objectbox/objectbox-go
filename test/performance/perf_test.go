@@ -28,6 +28,10 @@ func TestPerformanceSimple(t *testing.T) {
 	var dbName = "db"
 	var count = 100000
 
+	if testing.Short() {
+		count = 1000
+	}
+
 	log.Printf("running the test with %d objects", count)
 
 	// remove old database in case it already exists (and remove it after the test as well)

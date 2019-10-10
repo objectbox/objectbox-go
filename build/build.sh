@@ -31,9 +31,9 @@ function test {
 
     # on amd64, we run extended tests (memory sanitizer & race checks)
     if [[ $(go env GOARCH) == "amd64" ]]; then
-        ./build/test.sh -race
+        ./build/test.sh "$@" -race
     else
-        ./build/test.sh
+        ./build/test.sh "$@"
     fi
 }
 

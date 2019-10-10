@@ -262,7 +262,7 @@ func ({{$entityNameCamel}}_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byt
 		{{else if $field.StandaloneRelation -}}
 			{{if not $field.IsLazyLoaded -}}
 			var rel{{$field.Name}} {{$field.Type}} 
-			if rIds, err := BoxFor{{$field.Entity.Name}}(ob).RelationIds({{.Entity.Name}}_.{{$field.Path}}, id); err != nil {
+			if rIds, err := BoxFor{{$field.Entity.Name}}(ob).RelationIds({{.Entity.Name}}_.{{$field.Name}}, id); err != nil {
 				return nil, err
 			} else if rSlice, err := BoxFor{{$field.StandaloneRelation.Target.Name}}(ob).GetMany(rIds...); err != nil {
 				return nil, err

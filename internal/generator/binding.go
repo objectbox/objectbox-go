@@ -298,6 +298,7 @@ func (binding *Binding) createEntityFromAst(strct *ast.StructType, name string, 
 	// IDs must not be tagged unsigned for compatibility reasons
 	// initially set for uint types by setBasicType()
 	entity.IdProperty.removeObFlag(propertyFlagUnsigned)
+	entity.IdProperty.FbType = "Uint64" // always stored as Uint64
 
 	binding.Entities = append(binding.Entities, entity)
 

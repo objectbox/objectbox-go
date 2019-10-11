@@ -2,7 +2,7 @@
   stage: test
   tags: [x64, linux, docker]
   before_script:
-    - 'cd /usr/local/lib && { curl -o libobjectbox.so -H "PRIVATE-TOKEN: $CI_API_TOKEN" "${OBXLIB_URL_Linux64}" ; ldconfig ; cd - ; }'
+    - 'cd /usr/local/lib && { curl --fail -o libobjectbox.so -H "PRIVATE-TOKEN: $CI_API_TOKEN" "${OBXLIB_URL_Linux64}" ; ldconfig ; cd - ; }'
   script:
     - ./build/build.sh
 
@@ -28,12 +28,20 @@ test:linux:ARMv7hf:
   image: golang
   tags: [armv7hf, linux, docker]
   script:
-    - 'cd /usr/local/lib && { curl -o libobjectbox.so -H "PRIVATE-TOKEN: $CI_API_TOKEN" "${OBXLIB_URL_LinuxARMv7hf}" ; ldconfig ; cd - ; }'
+    - 'cd /usr/local/lib && { curl --fail -o libobjectbox.so -H "PRIVATE-TOKEN: $CI_API_TOKEN" "${OBXLIB_URL_LinuxARMv7hf}" ; ldconfig ; cd - ; }'
     - ./build/build.sh -test.short
 
 test:mac:x64:
   stage: test
   tags: [x64, mac, go]
   script:
-    - 'curl -o /usr/local/lib/libobjectbox.dylib -H "PRIVATE-TOKEN: $CI_API_TOKEN" "$OBXLIB_URL_Mac64"'
+    - 'curl --fail -o /usr/local/lib/libobjectbox.dylib -H "PRIVATE-TOKEN: $CI_API_TOKEN" "$OBXLIB_URL_Mac64"'
+    - ./build/build.sh
+
+test:win:x64:
+  stage: test
+  tags: [x64, windows, go]
+  script:
+    - libDir=$(realpath $(dirname $(which gcc))/../lib)
+    - 'curl --fail -o $libDir/objectbox.dll -H "PRIVATE-TOKEN: $CI_API_TOKEN" "$OBXLIB_URL_Win64"'
     - ./build/build.sh

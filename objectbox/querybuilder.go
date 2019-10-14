@@ -101,7 +101,6 @@ func (qb *QueryBuilder) Close() error {
 }
 
 func (qb *QueryBuilder) Build(box *Box) (*Query, error) {
-	qb.checkForCError() // TODO why is this called here? It could lead to incorrect error messages in a parallel app
 	if qb.Err != nil {
 		return nil, qb.Err
 	}
@@ -213,16 +212,21 @@ func (qb *QueryBuilder) LinkManyToMany(relation *RelationToMany, conditions []Co
 }
 
 func (qb *QueryBuilder) checkForCError() {
-	if qb.Err != nil { // TODO why if err != nil, doesn't make sense at a first glance
-		errCode := C.obx_qb_error_code(qb.cqb)
-		if errCode != 0 {
-			msg := C.obx_qb_error_message(qb.cqb)
-			if msg == nil {
-				qb.Err = fmt.Errorf("could not create query builder (code %v)", int(errCode))
-			} else {
-				qb.Err = errors.New(C.GoString(msg))
-			}
-		}
+	// if there's already an error logged, don't overwrite it
+	if qb.Err != nil {
+		return
+	}
+
+	code := C.obx_qb_error_code(qb.cqb)
+	if code == 0 {
+		return
+	}
+
+	msg := C.obx_qb_error_message(qb.cqb)
+	if msg == nil {
+		qb.Err = fmt.Errorf("unknown query builder error (code %v)", int(code))
+	} else {
+		qb.Err = errors.New(C.GoString(msg))
 	}
 }
 

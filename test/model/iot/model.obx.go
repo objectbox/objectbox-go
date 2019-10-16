@@ -63,7 +63,7 @@ var Event_ = struct {
 
 // GeneratorVersion is called by ObjectBox to verify the compatibility of the generator used to generate this code
 func (event_EntityInfo) GeneratorVersion() int {
-	return 3
+	return 4
 }
 
 // AddToModel is called by ObjectBox during model build
@@ -435,7 +435,7 @@ var Reading_ = struct {
 
 // GeneratorVersion is called by ObjectBox to verify the compatibility of the generator used to generate this code
 func (reading_EntityInfo) GeneratorVersion() int {
-	return 3
+	return 4
 }
 
 // AddToModel is called by ObjectBox during model build

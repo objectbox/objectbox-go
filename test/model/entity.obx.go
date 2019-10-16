@@ -337,7 +337,7 @@ var Entity_ = struct {
 
 // GeneratorVersion is called by ObjectBox to verify the compatibility of the generator used to generate this code
 func (entity_EntityInfo) GeneratorVersion() int {
-	return 3
+	return 4
 }
 
 // AddToModel is called by ObjectBox during model build
@@ -965,7 +965,7 @@ var TestStringIdEntity_ = struct {
 
 // GeneratorVersion is called by ObjectBox to verify the compatibility of the generator used to generate this code
 func (testStringIdEntity_EntityInfo) GeneratorVersion() int {
-	return 3
+	return 4
 }
 
 // AddToModel is called by ObjectBox during model build
@@ -1276,7 +1276,7 @@ var TestEntityInline_ = struct {
 
 // GeneratorVersion is called by ObjectBox to verify the compatibility of the generator used to generate this code
 func (testEntityInline_EntityInfo) GeneratorVersion() int {
-	return 3
+	return 4
 }
 
 // AddToModel is called by ObjectBox during model build
@@ -1605,7 +1605,7 @@ var TestEntityRelated_ = struct {
 
 // GeneratorVersion is called by ObjectBox to verify the compatibility of the generator used to generate this code
 func (testEntityRelated_EntityInfo) GeneratorVersion() int {
-	return 3
+	return 4
 }
 
 // AddToModel is called by ObjectBox during model build

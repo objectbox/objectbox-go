@@ -33,7 +33,7 @@ import (
 	"github.com/objectbox/objectbox-go/internal/generator/templates"
 )
 
-const Version = 3
+const Version = 4
 
 func BindingFile(sourceFile string) string {
 	var extension = filepath.Ext(sourceFile)

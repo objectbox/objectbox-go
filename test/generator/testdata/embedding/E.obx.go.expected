@@ -110,13 +110,13 @@ func (e_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{}, er
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
 
-	var valid = table.GetUint64Slot(6, 0)
+	var propid = table.GetUint64Slot(6, 0)
 
 	return &E{
 		Trackable: other.Trackable{
 			Location: fbutils.GetStringSlot(table, 4),
 		},
-		id:           valid,
+		id:           propid,
 		ForeignAlias: fbutils.GetStringSlot(table, 8),
 		ForeignNamed: other.ForeignNamed(fbutils.GetStringSlot(table, 10)),
 	}, nil

@@ -79,13 +79,13 @@ func (stringIdEntity_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (in
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
 
-	valId, err := objectbox.StringIdConvertToEntityProperty(fbutils.GetUint64Slot(table, 4))
+	propId, err := objectbox.StringIdConvertToEntityProperty(fbutils.GetUint64Slot(table, 4))
 	if err != nil {
 		return nil, errors.New("converter objectbox.StringIdConvertToEntityProperty() failed on StringIdEntity.Id: " + err.Error())
 	}
 
 	return &StringIdEntity{
-		Id: valId,
+		Id: propId,
 	}, nil
 }
 

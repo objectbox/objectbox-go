@@ -120,10 +120,10 @@ func (event_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{}
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
 
-	var valId = table.GetUint64Slot(4, 0)
+	var propId = table.GetUint64Slot(4, 0)
 
 	return &Event{
-		Id:      valId,
+		Id:      propId,
 		Uid:     fbutils.GetStringSlot(table, 10),
 		Device:  fbutils.GetStringSlot(table, 6),
 		Date:    fbutils.GetInt64Slot(table, 8),
@@ -503,10 +503,10 @@ func (reading_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
 
-	var valId = table.GetUint64Slot(4, 0)
+	var propId = table.GetUint64Slot(4, 0)
 
 	return &Reading{
-		Id:              valId,
+		Id:              propId,
 		Date:            fbutils.GetInt64Slot(table, 6),
 		EventId:         fbutils.GetUint64Slot(table, 8),
 		ValueName:       fbutils.GetStringSlot(table, 10),

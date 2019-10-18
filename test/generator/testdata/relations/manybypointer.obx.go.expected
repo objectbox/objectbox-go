@@ -90,10 +90,10 @@ func (taskRelManyPtr_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (in
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
 
-	var valId = table.GetUint64Slot(4, 0)
+	var propId = table.GetUint64Slot(4, 0)
 
 	return &TaskRelManyPtr{
-		Id:     valId,
+		Id:     propId,
 		Groups: nil, // use TaskRelManyPtrBox::FetchGroups() to fetch this lazy-loaded relation,
 
 	}, nil

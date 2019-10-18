@@ -137,10 +137,10 @@ func (aliases_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
 
-	var valId = table.GetUint64Slot(4, 0)
+	var propId = table.GetUint64Slot(4, 0)
 
 	return &Aliases{
-		Id:            valId,
+		Id:            propId,
 		SameFile:      fbutils.GetStringSlot(table, 6),
 		SamePackage:   fbutils.GetIntSlot(table, 8),
 		SameFile2:     sameFileNamed(fbutils.GetStringSlot(table, 10)),

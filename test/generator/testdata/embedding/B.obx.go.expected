@@ -110,14 +110,14 @@ func (b_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{}, er
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
 
-	var valId = table.GetUint64Slot(6, 0)
+	var propId = table.GetUint64Slot(6, 0)
 
 	return &B{
 		Combined: Combined{
 			Text:  fbutils.GetStringSlot(table, 4),
 			Empty: Empty{},
 			Id: Id{
-				Id: valId,
+				Id: propId,
 			},
 			Float64Value: Float64Value{
 				Value: fbutils.GetFloat64Slot(table, 8),

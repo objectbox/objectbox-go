@@ -466,12 +466,12 @@ func (entity_EntityInfo) PutRelated(ob *objectbox.ObjectBox, object interface{},
 func (entity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) error {
 	obj := object.(*Entity)
 
-	valDate, err := timeInt64ToDatabaseValue(obj.Date)
+	propDate, err := timeInt64ToDatabaseValue(obj.Date)
 	if err != nil {
 		return errors.New("converter timeInt64ToDatabaseValue() failed on Entity.Date: " + err.Error())
 	}
 
-	valComplex128, err := complex128BytesToDatabaseValue(obj.Complex128)
+	propComplex128, err := complex128BytesToDatabaseValue(obj.Complex128)
 	if err != nil {
 		return errors.New("converter complex128BytesToDatabaseValue() failed on Entity.Complex128: " + err.Error())
 	}
@@ -479,7 +479,7 @@ func (entity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, i
 	var offsetString = fbutils.CreateStringOffset(fbb, obj.String)
 	var offsetStringVector = fbutils.CreateStringVectorOffset(fbb, obj.StringVector)
 	var offsetByteVector = fbutils.CreateByteVectorOffset(fbb, obj.ByteVector)
-	var offsetComplex128 = fbutils.CreateByteVectorOffset(fbb, valComplex128)
+	var offsetComplex128 = fbutils.CreateByteVectorOffset(fbb, propComplex128)
 
 	var offsetStringPtr flatbuffers.UOffsetT
 	if obj.StringPtr != nil {
@@ -544,7 +544,7 @@ func (entity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, i
 	fbutils.SetInt32Slot(fbb, 15, obj.Rune)
 	fbutils.SetFloat32Slot(fbb, 16, obj.Float32)
 	fbutils.SetFloat64Slot(fbb, 17, obj.Float64)
-	fbutils.SetInt64Slot(fbb, 18, valDate)
+	fbutils.SetInt64Slot(fbb, 18, propDate)
 	fbutils.SetUOffsetTSlot(fbb, 19, offsetComplex128)
 	fbutils.SetUint64Slot(fbb, 21, rIdRelated)
 	if obj.RelatedPtr != nil {
@@ -617,14 +617,14 @@ func (entity_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
 
-	var valId = table.GetUint64Slot(4, 0)
+	var propId = table.GetUint64Slot(4, 0)
 
-	valDate, err := timeInt64ToEntityProperty(fbutils.GetInt64Slot(table, 40))
+	propDate, err := timeInt64ToEntityProperty(fbutils.GetInt64Slot(table, 40))
 	if err != nil {
 		return nil, errors.New("converter timeInt64ToEntityProperty() failed on Entity.Date: " + err.Error())
 	}
 
-	valComplex128, err := complex128BytesToEntityProperty(fbutils.GetByteVectorSlot(table, 42))
+	propComplex128, err := complex128BytesToEntityProperty(fbutils.GetByteVectorSlot(table, 42))
 	if err != nil {
 		return nil, errors.New("converter complex128BytesToEntityProperty() failed on Entity.Complex128: " + err.Error())
 	}
@@ -659,7 +659,7 @@ func (entity_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{
 	}
 
 	var relRelatedSlice []EntityByValue
-	if rIds, err := BoxForEntity(ob).RelationIds(Entity_.RelatedSlice, valId); err != nil {
+	if rIds, err := BoxForEntity(ob).RelationIds(Entity_.RelatedSlice, propId); err != nil {
 		return nil, err
 	} else if rSlice, err := BoxForEntityByValue(ob).GetMany(rIds...); err != nil {
 		return nil, err
@@ -668,7 +668,7 @@ func (entity_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{
 	}
 
 	return &Entity{
-		Id:              valId,
+		Id:              propId,
 		Int:             fbutils.GetIntSlot(table, 6),
 		Int8:            fbutils.GetInt8Slot(table, 8),
 		Int16:           fbutils.GetInt16Slot(table, 10),
@@ -687,8 +687,8 @@ func (entity_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{
 		Rune:            fbutils.GetRuneSlot(table, 34),
 		Float32:         fbutils.GetFloat32Slot(table, 36),
 		Float64:         fbutils.GetFloat64Slot(table, 38),
-		Date:            valDate,
-		Complex128:      valComplex128,
+		Date:            propDate,
+		Complex128:      propComplex128,
 		Related:         *relRelated,
 		RelatedPtr:      relRelatedPtr,
 		RelatedPtr2:     relRelatedPtr2,
@@ -1036,13 +1036,13 @@ func (testStringIdEntity_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte)
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
 
-	valId, err := objectbox.StringIdConvertToEntityProperty(fbutils.GetUint64Slot(table, 4))
+	propId, err := objectbox.StringIdConvertToEntityProperty(fbutils.GetUint64Slot(table, 4))
 	if err != nil {
 		return nil, errors.New("converter objectbox.StringIdConvertToEntityProperty() failed on TestStringIdEntity.Id: " + err.Error())
 	}
 
 	return &TestStringIdEntity{
-		Id: valId,
+		Id: propId,
 	}, nil
 }
 
@@ -1361,7 +1361,7 @@ func (testEntityInline_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
 
-	var valId = table.GetUint64Slot(8, 0)
+	var propId = table.GetUint64Slot(8, 0)
 
 	return &TestEntityInline{
 		BaseWithDate: BaseWithDate{
@@ -1370,7 +1370,7 @@ func (testEntityInline_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (
 		BaseWithValue: &BaseWithValue{
 			Value: fbutils.GetFloat64Slot(table, 6),
 		},
-		Id: valId,
+		Id: propId,
 	}, nil
 }
 
@@ -1721,7 +1721,7 @@ func (testEntityRelated_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) 
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
 
-	var valId = table.GetUint64Slot(4, 0)
+	var propId = table.GetUint64Slot(4, 0)
 
 	var relNext *EntityByValue
 	if rId := fbutils.GetUint64PtrSlot(table, 8); rId != nil && *rId > 0 {
@@ -1733,7 +1733,7 @@ func (testEntityRelated_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) 
 	}
 
 	var relNextSlice []EntityByValue
-	if rIds, err := BoxForTestEntityRelated(ob).RelationIds(TestEntityRelated_.NextSlice, valId); err != nil {
+	if rIds, err := BoxForTestEntityRelated(ob).RelationIds(TestEntityRelated_.NextSlice, propId); err != nil {
 		return nil, err
 	} else if rSlice, err := BoxForEntityByValue(ob).GetMany(rIds...); err != nil {
 		return nil, err
@@ -1742,7 +1742,7 @@ func (testEntityRelated_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) 
 	}
 
 	return &TestEntityRelated{
-		Id:        valId,
+		Id:        propId,
 		Name:      fbutils.GetStringSlot(table, 6),
 		Next:      relNext,
 		NextSlice: relNextSlice,

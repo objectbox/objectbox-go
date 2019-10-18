@@ -110,7 +110,7 @@ func (taskRelValue_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (inte
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
 
-	var valId = table.GetUint64Slot(4, 0)
+	var propId = table.GetUint64Slot(4, 0)
 
 	var relGroup *Group
 	if rId := fbutils.GetUint64Slot(table, 6); rId > 0 {
@@ -124,7 +124,7 @@ func (taskRelValue_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (inte
 	}
 
 	return &TaskRelValue{
-		Id:    valId,
+		Id:    propId,
 		Group: *relGroup,
 	}, nil
 }

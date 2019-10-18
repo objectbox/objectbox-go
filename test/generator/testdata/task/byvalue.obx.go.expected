@@ -106,10 +106,10 @@ func (taskByValue_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (inter
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
 
-	var valId = table.GetUint64Slot(4, 0)
+	var propId = table.GetUint64Slot(4, 0)
 
 	return &TaskByValue{
-		Id:   valId,
+		Id:   propId,
 		Name: fbutils.GetStringSlot(table, 6),
 	}, nil
 }
@@ -435,13 +435,13 @@ func (taskStringByValue_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) 
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
 
-	valId, err := objectbox.StringIdConvertToEntityProperty(fbutils.GetUint64Slot(table, 4))
+	propId, err := objectbox.StringIdConvertToEntityProperty(fbutils.GetUint64Slot(table, 4))
 	if err != nil {
 		return nil, errors.New("converter objectbox.StringIdConvertToEntityProperty() failed on TaskStringByValue.Id: " + err.Error())
 	}
 
 	return &TaskStringByValue{
-		Id:   valId,
+		Id:   propId,
 		Name: fbutils.GetStringSlot(table, 6),
 	}, nil
 }

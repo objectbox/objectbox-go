@@ -25,7 +25,7 @@ var BindingTemplate = template.Must(template.New("binding").Funcs(funcMap).Parse
 // Learn more about defining entities and generating this file - visit https://golang.objectbox.io/entity-annotations
 
 {{define "property-getter-with-converter-val"}}{{/* used in Load*/}}
-	{{- if .Converter}} val{{.Name}}
+	{{- if .Converter}} prop{{.Name}}
 	{{- else}} {{template "property-getter" .}}
 	{{- end}}
 {{- end -}}
@@ -38,7 +38,7 @@ var BindingTemplate = template.Must(template.New("binding").Funcs(funcMap).Parse
 {{- end -}}
 
 {{define "property-access"}}{{/* used in Flatten*/ -}}
-	{{- if .Converter}} val{{.Name}}
+	{{- if .Converter}} prop{{.Name}}
 	{{- else if .CastOnRead}}{{.CastOnRead}}(obj.{{.Path}})
 	{{- else}}{{if .IsPointer}}*{{end}}obj.{{.Path}}{{end}}
 {{- end -}}
@@ -195,9 +195,9 @@ func ({{$entityNameCamel}}_EntityInfo) Flatten(object interface{}, fbb *flatbuff
 	{{- end -}}
 	
 	{{- range $property := $entity.Properties}}{{if and $property.Converter (not (eq $property.Name $entity.IdProperty.Name))}}
-	{{if $property.IsPointer}}var val{{$property.Name}} {{$property.AnnotatedType}}
+	{{if $property.IsPointer}}var prop{{$property.Name}} {{$property.AnnotatedType}}
 	if obj.{{$property.Path}} != nil { {{end}}
-	val{{$property.Name}}, err := {{$property.Converter}}ToDatabaseValue(obj.{{$property.Path}})
+	prop{{$property.Name}}, err := {{$property.Converter}}ToDatabaseValue(obj.{{$property.Path}})
 	if err != nil {
 		return errors.New("converter {{$property.Converter}}ToDatabaseValue() failed on {{$entity.Name}}.{{$property.Path}}: " + err.Error())
 	}
@@ -255,11 +255,11 @@ func ({{$entityNameCamel}}_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byt
 	}
 
 	{{if not $entity.IdProperty.Converter}}
-	var val{{$entity.IdProperty.Name}} = table.Get{{$entity.IdProperty.GoType | StringTitle}}Slot({{$entity.IdProperty.FbvTableOffset}}, 0)
+	var prop{{$entity.IdProperty.Name}} = table.Get{{$entity.IdProperty.GoType | StringTitle}}Slot({{$entity.IdProperty.FbvTableOffset}}, 0)
 	{{end -}}
 
 	{{range $property := $entity.Properties}}{{if $property.Converter}}
-	val{{$property.Name}}, err := {{$property.Converter}}ToEntityProperty({{template "property-getter" $property}})
+	prop{{$property.Name}}, err := {{$property.Converter}}ToEntityProperty({{template "property-getter" $property}})
 	if err != nil {
 		return nil, errors.New("converter {{$property.Converter}}ToEntityProperty() failed on {{$entity.Name}}.{{$property.Path}}: " + err.Error())
 	}
@@ -283,7 +283,7 @@ func ({{$entityNameCamel}}_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byt
 		{{else if $field.StandaloneRelation -}}
 			{{if not $field.IsLazyLoaded -}}
 			var rel{{$field.Name}} {{$field.Type}} 
-			if rIds, err := BoxFor{{$field.Entity.Name}}(ob).RelationIds({{.Entity.Name}}_.{{$field.Path}}, val{{.Entity.IdProperty.Name}}); err != nil {
+			if rIds, err := BoxFor{{$field.Entity.Name}}(ob).RelationIds({{.Entity.Name}}_.{{$field.Path}}, prop{{.Entity.IdProperty.Name}}); err != nil {
 				return nil, err
 			} else if rSlice, err := BoxFor{{$field.StandaloneRelation.Target.Name}}(ob).GetMany(rIds...); err != nil {
 				return nil, err
@@ -304,7 +304,7 @@ func ({{$entityNameCamel}}_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byt
 					{{- if $field.IsLazyLoaded}}nil, // use {{$field.Entity.Name}}Box::Fetch{{$field.Name}}() to fetch this lazy-loaded relation
 					{{- else}}rel{{$field.Name}}
 					{{- end}}
-				{{- else if $field.IsId}} val{{$field.Property.Name}}
+				{{- else if $field.IsId}} prop{{$field.Property.Name}}
         		{{- else if $field.Property}}{{template "property-getter-with-converter-val" $field.Property}}
 				{{- else}}{{if $field.IsPointer}}&{{end}}{{$field.Type}}{ {{template "fields-initializer" $field}} }
 				{{- end}},

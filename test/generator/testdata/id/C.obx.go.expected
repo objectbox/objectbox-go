@@ -89,11 +89,11 @@ func (c_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{}, er
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
 
-	var validentifier = table.GetUint64Slot(6, 0)
+	var propidentifier = table.GetUint64Slot(6, 0)
 
 	return &C{
 		Id:         fbutils.GetUint64Slot(table, 4),
-		identifier: validentifier,
+		identifier: propidentifier,
 	}, nil
 }
 

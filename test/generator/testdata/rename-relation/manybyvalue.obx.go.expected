@@ -89,10 +89,10 @@ func (taskRelManyValue_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
 
-	var valId = table.GetUint64Slot(4, 0)
+	var propId = table.GetUint64Slot(4, 0)
 
 	var relGroupsNew []Group
-	if rIds, err := BoxForTaskRelManyValue(ob).RelationIds(TaskRelManyValue_.GroupsNew, valId); err != nil {
+	if rIds, err := BoxForTaskRelManyValue(ob).RelationIds(TaskRelManyValue_.GroupsNew, propId); err != nil {
 		return nil, err
 	} else if rSlice, err := BoxForGroup(ob).GetMany(rIds...); err != nil {
 		return nil, err
@@ -101,7 +101,7 @@ func (taskRelManyValue_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (
 	}
 
 	return &TaskRelManyValue{
-		Id:        valId,
+		Id:        propId,
 		GroupsNew: relGroupsNew,
 	}, nil
 }

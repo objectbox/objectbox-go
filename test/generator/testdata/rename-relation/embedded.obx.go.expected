@@ -123,7 +123,7 @@ func (taskRelEmbedded_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (i
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
 
-	var valId = table.GetUint64Slot(4, 0)
+	var propId = table.GetUint64Slot(4, 0)
 
 	var relGroup *Group
 	if rId := fbutils.GetUint64PtrSlot(table, 6); rId != nil && *rId > 0 {
@@ -135,7 +135,7 @@ func (taskRelEmbedded_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (i
 	}
 
 	var relGroupsNew []*Group
-	if rIds, err := BoxForTaskRelEmbedded(ob).RelationIds(TaskRelEmbedded_.WithGroup.GroupsNew, valId); err != nil {
+	if rIds, err := BoxForTaskRelEmbedded(ob).RelationIds(TaskRelEmbedded_.WithGroup.GroupsNew, propId); err != nil {
 		return nil, err
 	} else if rSlice, err := BoxForGroup(ob).GetMany(rIds...); err != nil {
 		return nil, err
@@ -144,7 +144,7 @@ func (taskRelEmbedded_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (i
 	}
 
 	return &TaskRelEmbedded{
-		Id: valId,
+		Id: propId,
 		WithGroup: WithGroup{
 			Group:     relGroup,
 			GroupsNew: relGroupsNew,

@@ -150,10 +150,10 @@ func (taskIndexed_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (inter
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
 
-	var valId = table.GetUint64Slot(4, 0)
+	var propId = table.GetUint64Slot(4, 0)
 
 	return &TaskIndexed{
-		Id:       valId,
+		Id:       propId,
 		Uid:      fbutils.GetStringSlot(table, 6),
 		Name:     fbutils.GetStringSlot(table, 8),
 		Priority: fbutils.GetIntSlot(table, 10),

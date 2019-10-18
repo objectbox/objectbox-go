@@ -80,13 +80,13 @@ func (runeIdEntity_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (inte
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
 
-	valId, err := runeIdToEntityProperty(fbutils.GetUint64Slot(table, 4))
+	propId, err := runeIdToEntityProperty(fbutils.GetUint64Slot(table, 4))
 	if err != nil {
 		return nil, errors.New("converter runeIdToEntityProperty() failed on RuneIdEntity.Id: " + err.Error())
 	}
 
 	return &RuneIdEntity{
-		Id: valId,
+		Id: propId,
 	}, nil
 }
 

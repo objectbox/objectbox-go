@@ -258,10 +258,10 @@ func (typeful_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
 
-	var valId = table.GetUint64Slot(4, 0)
+	var propId = table.GetUint64Slot(4, 0)
 
 	return &Typeful{
-		Id:           valId,
+		Id:           propId,
 		Int:          fbutils.GetIntSlot(table, 6),
 		Int8:         fbutils.GetInt8Slot(table, 8),
 		Int16:        fbutils.GetInt16Slot(table, 10),

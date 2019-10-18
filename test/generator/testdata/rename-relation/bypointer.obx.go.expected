@@ -112,7 +112,7 @@ func (taskRelPtr_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interf
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
 
-	var valId = table.GetUint64Slot(4, 0)
+	var propId = table.GetUint64Slot(4, 0)
 
 	var relGroupNew *Group
 	if rId := fbutils.GetUint64PtrSlot(table, 6); rId != nil && *rId > 0 {
@@ -124,7 +124,7 @@ func (taskRelPtr_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interf
 	}
 
 	return &TaskRelPtr{
-		Id:       valId,
+		Id:       propId,
 		GroupNew: relGroupNew,
 	}, nil
 }

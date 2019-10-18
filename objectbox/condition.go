@@ -16,7 +16,9 @@
 
 package objectbox
 
-import "errors"
+import (
+	"errors"
+)
 
 // Condition is used by Query to limit object selection
 type Condition interface {

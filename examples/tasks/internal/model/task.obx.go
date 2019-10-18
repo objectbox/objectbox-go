@@ -107,10 +107,10 @@ func (task_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{},
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
 
-	var valId = table.GetUint64Slot(4, 0)
+	var propId = table.GetUint64Slot(4, 0)
 
 	return &Task{
-		Id:           valId,
+		Id:           propId,
 		Text:         fbutils.GetStringSlot(table, 6),
 		DateCreated:  fbutils.GetInt64Slot(table, 8),
 		DateFinished: fbutils.GetInt64Slot(table, 10),

@@ -93,10 +93,10 @@ func (taskRelId_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interfa
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
 
-	var valId = table.GetUint64Slot(4, 0)
+	var propId = table.GetUint64Slot(4, 0)
 
 	return &TaskRelId{
-		Id:       valId,
+		Id:       propId,
 		GroupNew: fbutils.GetUint64Slot(table, 6),
 	}, nil
 }

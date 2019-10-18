@@ -125,10 +125,10 @@ func (task_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{},
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
 
-	var valId = table.GetUint64Slot(4, 0)
+	var propId = table.GetUint64Slot(4, 0)
 
 	return &Task{
-		Id:      valId,
+		Id:      propId,
 		Uid:     fbutils.GetStringSlot(table, 6),
 		Text:    fbutils.GetStringSlot(table, 8),
 		Date:    fbutils.GetUint64Slot(table, 10),
@@ -428,10 +428,10 @@ func (group_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{}
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
 
-	var valId = table.GetUint64Slot(4, 0)
+	var propId = table.GetUint64Slot(4, 0)
 
 	return &Group{
-		Id: valId,
+		Id: propId,
 	}, nil
 }
 

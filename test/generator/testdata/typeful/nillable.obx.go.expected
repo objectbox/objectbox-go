@@ -308,10 +308,10 @@ func (nillable_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interfac
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
 
-	var valId = table.GetUint64Slot(4, 0)
+	var propId = table.GetUint64Slot(4, 0)
 
 	return &Nillable{
-		Id:           valId,
+		Id:           propId,
 		Int:          fbutils.GetIntPtrSlot(table, 6),
 		Int8:         fbutils.GetInt8PtrSlot(table, 8),
 		Int16:        fbutils.GetInt16PtrSlot(table, 10),

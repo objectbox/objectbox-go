@@ -16,13 +16,26 @@
 
 package objectbox
 
+import "errors"
+
 type conditionRelationOneToMany struct {
-	relation   *RelationToOne
-	conditions []Condition
+	relation    *RelationToOne
+	conditions  []Condition
+	aliasCalled bool
 }
 
 func (condition *conditionRelationOneToMany) applyTo(qb *QueryBuilder, isRoot bool) (ConditionId, error) {
+	if condition.aliasCalled {
+		return 0, errors.New("using Alias on a OneToMany relation link is not supported")
+	}
+
 	return 0, qb.LinkOneToMany(condition.relation, condition.conditions)
+}
+
+// Alias sets a string alias for the given condition. It can later be used in Query.Set*Params() methods
+func (condition *conditionRelationOneToMany) Alias(alias string) Condition {
+	condition.aliasCalled = true
+	return condition
 }
 
 // RelationToOne holds information about a relation link on a property.
@@ -43,12 +56,12 @@ func (relation RelationToOne) propertyId() TypeId {
 
 // Link creates a connection and takes inner conditions to evaluate on the linked entity.
 func (relation *RelationToOne) Link(conditions ...Condition) Condition {
-	return &conditionRelationOneToMany{relation, conditions}
+	return &conditionRelationOneToMany{relation: relation, conditions: conditions}
 }
 
 func (relation RelationToOne) Equals(value uint64) Condition {
 	return &conditionClosure{
-		func(qb *QueryBuilder) (ConditionId, error) {
+		apply: func(qb *QueryBuilder) (ConditionId, error) {
 			return qb.IntEqual(relation.Property, int64(value))
 		},
 	}
@@ -56,7 +69,7 @@ func (relation RelationToOne) Equals(value uint64) Condition {
 
 func (relation RelationToOne) NotEquals(value uint64) Condition {
 	return &conditionClosure{
-		func(qb *QueryBuilder) (ConditionId, error) {
+		apply: func(qb *QueryBuilder) (ConditionId, error) {
 			return qb.IntNotEqual(relation.Property, int64(value))
 		},
 	}
@@ -74,7 +87,7 @@ func (relation RelationToOne) int64Slice(values []uint64) []int64 {
 
 func (relation RelationToOne) In(values ...uint64) Condition {
 	return &conditionClosure{
-		func(qb *QueryBuilder) (ConditionId, error) {
+		apply: func(qb *QueryBuilder) (ConditionId, error) {
 			return qb.Int64In(relation.Property, relation.int64Slice(values))
 		},
 	}
@@ -82,19 +95,30 @@ func (relation RelationToOne) In(values ...uint64) Condition {
 
 func (relation RelationToOne) NotIn(values ...uint64) Condition {
 	return &conditionClosure{
-		func(qb *QueryBuilder) (ConditionId, error) {
+		apply: func(qb *QueryBuilder) (ConditionId, error) {
 			return qb.Int64NotIn(relation.Property, relation.int64Slice(values))
 		},
 	}
 }
 
 type conditionRelationManyToMany struct {
-	relation   *RelationToMany
-	conditions []Condition
+	relation    *RelationToMany
+	conditions  []Condition
+	aliasCalled bool
 }
 
 func (condition *conditionRelationManyToMany) applyTo(qb *QueryBuilder, isRoot bool) (ConditionId, error) {
+	if condition.aliasCalled {
+		return 0, errors.New("using Alias on a ManyToMany relation link is not supported")
+	}
+
 	return 0, qb.LinkManyToMany(condition.relation, condition.conditions)
+}
+
+// Alias sets a string alias for the given condition. It can later be used in Query.Set*Params() methods
+func (condition *conditionRelationManyToMany) Alias(alias string) Condition {
+	condition.aliasCalled = true
+	return condition
 }
 
 // RelationToMany holds information about a standalone relation link between two entities.
@@ -108,7 +132,7 @@ type RelationToMany struct {
 
 // Link creates a connection and takes inner conditions to evaluate on the linked entity.
 func (relation *RelationToMany) Link(conditions ...Condition) Condition {
-	return &conditionRelationManyToMany{relation, conditions}
+	return &conditionRelationManyToMany{relation: relation, conditions: conditions}
 }
 
 // TODO contains() would make sense for many-to-many (slice)

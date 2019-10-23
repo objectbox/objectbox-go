@@ -21,22 +21,45 @@ import "errors"
 // Condition is used by Query to limit object selection
 type Condition interface {
 	applyTo(qb *QueryBuilder, isRoot bool) (ConditionId, error)
+
+	// Alias sets a string alias for the given condition. It can later be used in Query.Set*Params() methods
+	Alias(alias string) Condition
 }
 
 type ConditionId = int32
 
 type conditionClosure struct {
-	applyFun func(qb *QueryBuilder) (ConditionId, error)
+	apply func(qb *QueryBuilder) (ConditionId, error)
+	alias *string
 }
 
 func (condition *conditionClosure) applyTo(qb *QueryBuilder, isRoot bool) (ConditionId, error) {
-	return condition.applyFun(qb)
+	cid, err := condition.apply(qb)
+	if err != nil {
+		return 0, err
+	}
+
+	if condition.alias != nil {
+		err = qb.Alias(*condition.alias)
+		if err != nil {
+			return 0, err
+		}
+	}
+
+	return cid, nil
+}
+
+// Alias sets a string alias for the given condition. It can later be used in Query.Set*Params() methods
+func (condition *conditionClosure) Alias(alias string) Condition {
+	condition.alias = &alias
+	return condition
 }
 
 // Combines multiple conditions with an operator
 type conditionCombination struct {
-	or         bool // AND by default
-	conditions []Condition
+	or          bool // AND by default
+	conditions  []Condition
+	aliasCalled bool
 }
 
 // assertNoLinks makes sure there are no links (0 condition IDs) among given conditions
@@ -50,6 +73,10 @@ func (*conditionCombination) assertNoLinks(conditionIds []ConditionId) error {
 }
 
 func (condition *conditionCombination) applyTo(qb *QueryBuilder, isRoot bool) (ConditionId, error) {
+	if condition.aliasCalled {
+		return 0, errors.New("using Alias on a combination of conditions is not supported")
+	}
+
 	if len(condition.conditions) == 0 {
 		return 0, nil
 	} else if len(condition.conditions) == 1 {
@@ -79,6 +106,12 @@ func (condition *conditionCombination) applyTo(qb *QueryBuilder, isRoot bool) (C
 	}
 
 	return qb.All(ids)
+}
+
+// Alias sets a string alias for the given condition. It can later be used in Query.Set*Params() methods
+func (condition *conditionCombination) Alias(alias string) Condition {
+	condition.aliasCalled = true // this is invalid on condition-combinations
+	return condition
 }
 
 // Any provides a way to combine multiple query conditions (equivalent to OR logical operator)

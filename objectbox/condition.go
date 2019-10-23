@@ -22,8 +22,10 @@ import "errors"
 type Condition interface {
 	applyTo(qb *QueryBuilder, isRoot bool) (ConditionId, error)
 
-	// Alias sets a string alias for the given condition. It can later be used in Query.Set*Params() methods
+	// Alias sets a string alias for the given condition. It can later be used in Query.Set*Params() methods.
 	Alias(alias string) Condition
+
+	// As sets a string alias for the given condition. It can later be used in Query.Set*Params() methods.
 	As(alias *alias) Condition
 }
 

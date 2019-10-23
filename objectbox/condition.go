@@ -64,7 +64,6 @@ func (condition *conditionClosure) As(alias *alias) Condition {
 	return condition
 }
 
-
 // Combines multiple conditions with an operator
 type conditionCombination struct {
 	or          bool // AND by default

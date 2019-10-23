@@ -24,6 +24,7 @@ type Condition interface {
 
 	// Alias sets a string alias for the given condition. It can later be used in Query.Set*Params() methods
 	Alias(alias string) Condition
+	As(alias *alias) Condition
 }
 
 type ConditionId = int32
@@ -54,6 +55,13 @@ func (condition *conditionClosure) Alias(alias string) Condition {
 	condition.alias = &alias
 	return condition
 }
+
+// As sets an alias for the given condition. It can later be used in Query.Set*Params() methods.
+func (condition *conditionClosure) As(alias *alias) Condition {
+	condition.alias = alias.alias()
+	return condition
+}
+
 
 // Combines multiple conditions with an operator
 type conditionCombination struct {
@@ -108,9 +116,17 @@ func (condition *conditionCombination) applyTo(qb *QueryBuilder, isRoot bool) (C
 	return qb.All(ids)
 }
 
-// Alias sets a string alias for the given condition. It can later be used in Query.Set*Params() methods
+// Alias sets a string alias for the given condition. It can later be used in Query.Set*Params() methods.
+// This is an invalid call on a combination of conditions and will result in an error.
 func (condition *conditionCombination) Alias(alias string) Condition {
-	condition.aliasCalled = true // this is invalid on condition-combinations
+	condition.aliasCalled = true
+	return condition
+}
+
+// As sets an alias for the given condition. It can later be used in Query.Set*Params() methods.
+// This is an invalid call on a combination of conditions and will result in an error.
+func (condition *conditionCombination) As(alias *alias) Condition {
+	condition.aliasCalled = true
 	return condition
 }
 
@@ -127,4 +143,26 @@ func All(conditions ...Condition) Condition {
 	return &conditionCombination{
 		conditions: conditions,
 	}
+}
+
+// implements propertyOrAlias
+type alias struct {
+	string
+}
+
+func (alias) propertyId() TypeId {
+	return 0
+}
+
+func (alias) entityId() TypeId {
+	return 0
+}
+
+func (as *alias) alias() *string {
+	return &as.string
+}
+
+// Alias wraps a string as an identifier usable for Query.Set*Params*() methods.
+func Alias(value string) *alias {
+	return &alias{value}
 }

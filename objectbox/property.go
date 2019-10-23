@@ -29,6 +29,11 @@ func (property BaseProperty) entityId() TypeId {
 	return property.Entity.Id
 }
 
+// implementing propertyOrAlias
+func (property BaseProperty) alias() *string {
+	return nil
+}
+
 func (property BaseProperty) IsNil() Condition {
 	return &conditionClosure{
 		apply: func(qb *QueryBuilder) (ConditionId, error) {

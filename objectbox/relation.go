@@ -32,9 +32,17 @@ func (condition *conditionRelationOneToMany) applyTo(qb *QueryBuilder, isRoot bo
 	return 0, qb.LinkOneToMany(condition.relation, condition.conditions)
 }
 
-// Alias sets a string alias for the given condition. It can later be used in Query.Set*Params() methods
+// Alias sets a string alias for the given condition. It can later be used in Query.Set*Params() methods.
+// This is an invalid call on Relation links and will result in an error.
 func (condition *conditionRelationOneToMany) Alias(alias string) Condition {
-	condition.aliasCalled = true
+	condition.aliasCalled = true // this is invalid on this condition type
+	return condition
+}
+
+// As sets an alias for the given condition. It can later be used in Query.Set*Params() methods.
+// This is an invalid call on Relation links and will result in an error.
+func (condition *conditionRelationOneToMany) As(alias *alias) Condition {
+	condition.aliasCalled = true // this is invalid on this condition type
 	return condition
 }
 
@@ -115,8 +123,16 @@ func (condition *conditionRelationManyToMany) applyTo(qb *QueryBuilder, isRoot b
 	return 0, qb.LinkManyToMany(condition.relation, condition.conditions)
 }
 
-// Alias sets a string alias for the given condition. It can later be used in Query.Set*Params() methods
+// Alias sets a string alias for the given condition. It can later be used in Query.Set*Params() methods.
+// This is an invalid call on Relation links and will result in an error.
 func (condition *conditionRelationManyToMany) Alias(alias string) Condition {
+	condition.aliasCalled = true // this is invalid on this condition type
+	return condition
+}
+
+// As sets an alias for the given condition. It can later be used in Query.Set*Params() methods.
+// This is an invalid call on Relation links and will result in an error.
+func (condition *conditionRelationManyToMany) As(alias *alias) Condition {
 	condition.aliasCalled = true
 	return condition
 }

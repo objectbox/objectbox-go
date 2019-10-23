@@ -92,3 +92,27 @@ func BenchmarkErrorVsPanicRecover(b *testing.B) {
 		}
 	})
 }
+
+// How heavy it is to return IDs from PutMany(), even if a caller doesn't need them.
+func BenchmarkNumberSlice(b *testing.B) {
+	var tester = func(b *testing.B, size int) {
+		for n := 0; n < b.N; n++ {
+			var items = make([]uint64, size)
+			for i := 0; i < size; i++ {
+				items[i] = uint64(i)
+			}
+		}
+	}
+
+	b.Run("1k items", func(b *testing.B) {
+		tester(b, 1000)
+	})
+
+	b.Run("10k items", func(b *testing.B) {
+		tester(b, 10*1000)
+	})
+
+	b.Run("1m items", func(b *testing.B) {
+		tester(b, 1000*1000)
+	})
+}

@@ -66,6 +66,7 @@ type benchmarkEnv struct {
 
 func newBenchEnv(b *testing.B) *benchmarkEnv {
 	b.StopTimer()
+	b.SetBytes(1) // report speed in MB/s where one B is one object; overridden in bulk ops
 
 	var env = &benchmarkEnv{
 		dbName: "testdata",
@@ -102,6 +103,7 @@ func BenchmarkPutMany(b *testing.B) {
 	var inserts = prepareBenchData(b, bulkCount)
 
 	b.Run(fmt.Sprintf("count=%v", bulkCount), func(b *testing.B) {
+		b.SetBytes(int64(bulkCount)) // report speed in MB/s where one B is one object
 		b.ReportAllocs()
 		for n := 0; n < b.N; n++ {
 			_, err := env.box.PutMany(inserts)
@@ -125,6 +127,7 @@ func BenchmarkGetAll(b *testing.B) {
 	b.StartTimer()
 
 	b.Run("GetAll", func(b *testing.B) {
+		b.SetBytes(int64(bulkCount)) // report speed in MB/s where one B is one object
 		b.ReportAllocs()
 		for n := 0; n < b.N; n++ {
 			objects, err := env.box.GetAll()
@@ -143,6 +146,7 @@ func BenchmarkRemoveAll(b *testing.B) {
 	var inserts = prepareBenchData(b, bulkCount)
 
 	b.Run("count=%v", func(b *testing.B) {
+		b.SetBytes(int64(bulkCount)) // report speed in MB/s where one B is one object
 		b.ReportAllocs()
 		for n := 0; n < b.N; n++ {
 			b.StopTimer()

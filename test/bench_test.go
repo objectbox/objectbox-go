@@ -17,6 +17,7 @@
 package objectbox
 
 import (
+	"flag"
 	"fmt"
 	"github.com/objectbox/objectbox-go/objectbox"
 	"github.com/objectbox/objectbox-go/test/performance/perf"
@@ -26,6 +27,18 @@ import (
 
 // Implements simple benchmarks as an alternative to the "test/performance". However, it doesn't achieve the optimal
 // performance as the standalone one so the following benchmarks are only for quick regression testing.
+
+var bulkCount = 10000
+
+func init() {
+	// need to do the following two manually in init() function order to have access to testing.Short()
+	testing.Init()
+	flag.Parse()
+
+	if testing.Short() {
+		bulkCount = 100
+	}
+}
 
 func prepareBenchData(b *testing.B, count int) []*perf.Entity {
 	b.StopTimer()
@@ -83,14 +96,12 @@ func (env *benchmarkEnv) check(err error) {
 	}
 }
 
-func benchmarkBulk(b *testing.B, count int) {
+func BenchmarkPutMany(b *testing.B) {
 	var env = newBenchEnv(b)
 	defer env.close()
+	var inserts = prepareBenchData(b, bulkCount)
 
-	// prepare the data first
-	var inserts = prepareBenchData(b, count)
-
-	b.Run("PutMany", func(b *testing.B) {
+	b.Run(fmt.Sprintf("count=%v", bulkCount), func(b *testing.B) {
 		b.ReportAllocs()
 		for n := 0; n < b.N; n++ {
 			_, err := env.box.PutMany(inserts)
@@ -101,24 +112,37 @@ func benchmarkBulk(b *testing.B, count int) {
 			b.StartTimer()
 		}
 	})
+}
+
+func BenchmarkGetAll(b *testing.B) {
+	var env = newBenchEnv(b)
+	defer env.close()
+	var inserts = prepareBenchData(b, bulkCount)
+
+	b.StopTimer()
+	_, err := env.box.PutMany(inserts)
+	env.check(err)
+	b.StartTimer()
 
 	b.Run("GetAll", func(b *testing.B) {
 		b.ReportAllocs()
-		b.StopTimer()
-		_, err := env.box.PutMany(inserts)
-		env.check(err)
-		b.StartTimer()
 		for n := 0; n < b.N; n++ {
 			objects, err := env.box.GetAll()
 			if err != nil {
 				b.Error(err)
-			} else if len(objects) != count {
-				b.Errorf("invalid number of objects received: %v instead of %v", len(objects), count)
+			} else if len(objects) != bulkCount {
+				b.Errorf("invalid number of objects received: %v instead of %v", len(objects), bulkCount)
 			}
 		}
 	})
+}
 
-	b.Run("RemoveAll", func(b *testing.B) {
+func BenchmarkRemoveAll(b *testing.B) {
+	var env = newBenchEnv(b)
+	defer env.close()
+	var inserts = prepareBenchData(b, bulkCount)
+
+	b.Run("count=%v", func(b *testing.B) {
 		b.ReportAllocs()
 		for n := 0; n < b.N; n++ {
 			b.StopTimer()
@@ -128,25 +152,6 @@ func benchmarkBulk(b *testing.B, count int) {
 			err = env.box.RemoveAll()
 			env.check(err)
 		}
-	})
-}
-
-// BenchmarkBulk tests bulk put, read & remove.
-func BenchmarkBulk(b *testing.B) {
-	b.Run("count=1000", func(b *testing.B) {
-		benchmarkBulk(b, 1000)
-	})
-
-	if testing.Short() {
-		return
-	}
-
-	b.Run("count=10000", func(b *testing.B) {
-		benchmarkBulk(b, 10*1000)
-	})
-
-	b.Run("count=1000000", func(b *testing.B) {
-		benchmarkBulk(b, 1000*1000)
 	})
 }
 

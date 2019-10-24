@@ -61,10 +61,7 @@ func newBenchEnv(b *testing.B) *benchmarkEnv {
 
 	var err error
 	env.ob, err = objectbox.NewBuilder().Directory(env.dbName).Model(perf.ObjectBoxModel()).Build()
-	if err != nil {
-		b.Error(err)
-		b.FailNow()
-	}
+	env.check(err)
 
 	env.box = perf.BoxForEntity(env.ob)
 
@@ -80,6 +77,12 @@ func (env *benchmarkEnv) close() {
 	env.b.StartTimer()
 }
 
+func (env *benchmarkEnv) check(err error) {
+	if err != nil {
+		env.b.Error(err)
+	}
+}
+
 func benchmarkBulk(b *testing.B, count int) {
 	var env = newBenchEnv(b)
 	defer env.close()
@@ -91,9 +94,7 @@ func benchmarkBulk(b *testing.B, count int) {
 		b.ReportAllocs()
 		for n := 0; n < b.N; n++ {
 			_, err := env.box.PutMany(inserts)
-			if err != nil {
-				b.Error(err)
-			}
+			env.check(err)
 
 			b.StopTimer()
 			env.box.RemoveAll()
@@ -105,9 +106,7 @@ func benchmarkBulk(b *testing.B, count int) {
 		b.ReportAllocs()
 		b.StopTimer()
 		_, err := env.box.PutMany(inserts)
-		if err != nil {
-			b.Error(err)
-		}
+		env.check(err)
 		b.StartTimer()
 		for n := 0; n < b.N; n++ {
 			objects, err := env.box.GetAll()
@@ -124,14 +123,10 @@ func benchmarkBulk(b *testing.B, count int) {
 		for n := 0; n < b.N; n++ {
 			b.StopTimer()
 			_, err := env.box.PutMany(inserts)
-			if err != nil {
-				b.Error(err)
-			}
+			env.check(err)
 			b.StartTimer()
 			err = env.box.RemoveAll()
-			if err != nil {
-				b.Error(err)
-			}
+			env.check(err)
 		}
 	})
 }
@@ -164,18 +159,13 @@ func BenchmarkTxPut(b *testing.B) {
 	var inserts = prepareBenchData(b, b.N)
 
 	// execute in a single transaction
-	err := env.ob.RunInWriteTx(func() error {
+	env.check(env.ob.RunInWriteTx(func() error {
 		for n := 0; n < b.N; n++ {
 			_, err := env.box.Put(inserts[n])
-			if err != nil {
-				b.Error(err)
-			}
+			env.check(err)
 		}
 		return nil
-	})
-	if err != nil {
-		b.Error(err)
-	}
+	}))
 }
 
 // BenchmarkSlowPut executes many individual puts, each in its own transaction (internally).
@@ -188,14 +178,12 @@ func BenchmarkSlowPut(b *testing.B) {
 
 	for n := 0; n < b.N; n++ {
 		_, err := env.box.Put(inserts[n])
-		if err != nil {
-			b.Error(err)
-		}
+		env.check(err)
 	}
 }
 
-// BenchmarkGet reads a single object from DB many times
-func BenchmarkGet(b *testing.B) {
+// BenchmarkTxGet reads a single object from DB many times, all in a single transaction
+func BenchmarkTxGet(b *testing.B) {
 	var env = newBenchEnv(b)
 	defer env.close()
 
@@ -203,15 +191,32 @@ func BenchmarkGet(b *testing.B) {
 	var inserts = prepareBenchData(b, 1)
 	b.StopTimer()
 	_, err := env.box.Put(inserts[0])
-	if err != nil {
-		b.Error(err)
-	}
+	env.check(err)
+	b.StartTimer()
+
+	env.check(env.ob.RunInReadTx(func() error {
+		for n := 0; n < b.N; n++ {
+			_, err := env.box.Get(inserts[0].Id)
+			env.check(err)
+		}
+		return nil
+	}))
+}
+
+// BenchmarkGet reads a single object from DB many times, each in its own transaction (internally)
+func BenchmarkSlowGet(b *testing.B) {
+	var env = newBenchEnv(b)
+	defer env.close()
+
+	// prepare the data first
+	var inserts = prepareBenchData(b, 1)
+	b.StopTimer()
+	_, err := env.box.Put(inserts[0])
+	env.check(err)
 	b.StartTimer()
 
 	for n := 0; n < b.N; n++ {
 		_, err := env.box.Get(inserts[0].Id)
-		if err != nil {
-			b.Error(err)
-		}
+		env.check(err)
 	}
 }

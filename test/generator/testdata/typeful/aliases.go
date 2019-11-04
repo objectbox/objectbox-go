@@ -1,6 +1,9 @@
 package object
 
-import "github.com/objectbox/objectbox-go/test/generator/testdata/typeful/other"
+import (
+	"github.com/objectbox/objectbox-go/test/generator/testdata/embedding/other"
+	ot "github.com/objectbox/objectbox-go/test/generator/testdata/embedding/other"
+)
 
 // Tests type aliases and definitions of named types
 
@@ -14,5 +17,5 @@ type Aliases struct {
 	SameFile2     sameFileNamed
 	SamePackage2  samePackageNamed
 	OtherPackage  other.ForeignAlias
-	OtherPackage2 other.ForeignNamed
+	OtherPackage2 ot.ForeignNamed
 }

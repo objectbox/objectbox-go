@@ -16,9 +16,9 @@ type taskRelManyPtr_EntityInfo struct {
 
 var TaskRelManyPtrBinding = taskRelManyPtr_EntityInfo{
 	Entity: objectbox.Entity{
-		Id: 6,
+		Id: 7,
 	},
-	Uid: 3287288577352441706,
+	Uid: 2217592893536642650,
 }
 
 // TaskRelManyPtr_ contains type-based Property helpers to facilitate some common operations such as Queries.
@@ -46,11 +46,11 @@ func (taskRelManyPtr_EntityInfo) GeneratorVersion() int {
 
 // AddToModel is called by ObjectBox during model build
 func (taskRelManyPtr_EntityInfo) AddToModel(model *objectbox.Model) {
-	model.Entity("TaskRelManyPtr", 6, 3287288577352441706)
-	model.Property("Id", 6, 1, 3930927879439176946)
+	model.Entity("TaskRelManyPtr", 7, 2217592893536642650)
+	model.Property("Id", 6, 1, 1929546706668609706)
 	model.PropertyFlags(1)
-	model.EntityLastPropertyId(1, 3930927879439176946)
-	model.Relation(2, 4706154865122290029, GroupBinding.Id, GroupBinding.Uid)
+	model.EntityLastPropertyId(1, 1929546706668609706)
+	model.Relation(2, 6392442863481646880, GroupBinding.Id, GroupBinding.Uid)
 }
 
 // GetId is called by ObjectBox during Put operations to check for existing ID on an object
@@ -115,7 +115,7 @@ type TaskRelManyPtrBox struct {
 // BoxForTaskRelManyPtr opens a box of TaskRelManyPtr objects
 func BoxForTaskRelManyPtr(ob *objectbox.ObjectBox) *TaskRelManyPtrBox {
 	return &TaskRelManyPtrBox{
-		Box: ob.InternalBox(6),
+		Box: ob.InternalBox(7),
 	}
 }
 
@@ -286,9 +286,9 @@ type TaskRelManyPtrAsyncBox struct {
 // The returned struct must be freed explicitly using the Close() method.
 // It's usually preferable to use TaskRelManyPtrBox::Async() which takes care of resource management and doesn't require closing.
 func AsyncBoxForTaskRelManyPtr(ob *objectbox.ObjectBox, timeoutMs uint64) *TaskRelManyPtrAsyncBox {
-	var async, err = objectbox.NewAsyncBox(ob, 6, timeoutMs)
+	var async, err = objectbox.NewAsyncBox(ob, 7, timeoutMs)
 	if err != nil {
-		panic("Could not create async box for entity ID 6: %s" + err.Error())
+		panic("Could not create async box for entity ID 7: %s" + err.Error())
 	}
 	return &TaskRelManyPtrAsyncBox{AsyncBox: async}
 }

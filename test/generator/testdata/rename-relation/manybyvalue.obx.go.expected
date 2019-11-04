@@ -35,7 +35,7 @@ var TaskRelManyValue_ = struct {
 	GroupsNew: &objectbox.RelationToMany{
 		Id:     2,
 		Source: &TaskRelManyValueBinding.Entity,
-		Target: &GroupBinding.Entity,
+		Target: &GroupByValBinding.Entity,
 	},
 }
 
@@ -50,7 +50,7 @@ func (taskRelManyValue_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Property("Id", 6, 1, 2217592893536642650)
 	model.PropertyFlags(1)
 	model.EntityLastPropertyId(1, 2217592893536642650)
-	model.Relation(2, 1929546706668609706, GroupBinding.Id, GroupBinding.Uid)
+	model.Relation(2, 1929546706668609706, GroupByValBinding.Id, GroupByValBinding.Uid)
 }
 
 // GetId is called by ObjectBox during Put operations to check for existing ID on an object
@@ -89,10 +89,10 @@ func (taskRelManyValue_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (
 	}
 	var id = table.GetUint64Slot(4, 0)
 
-	var relGroupsNew []Group
+	var relGroupsNew []GroupByVal
 	if rIds, err := BoxForTaskRelManyValue(ob).RelationIds(TaskRelManyValue_.GroupsNew, id); err != nil {
 		return nil, err
-	} else if rSlice, err := BoxForGroup(ob).GetMany(rIds...); err != nil {
+	} else if rSlice, err := BoxForGroupByVal(ob).GetMany(rIds...); err != nil {
 		return nil, err
 	} else {
 		relGroupsNew = rSlice

@@ -7,6 +7,7 @@ import (
 	"github.com/google/flatbuffers/go"
 	"github.com/objectbox/objectbox-go/objectbox"
 	"github.com/objectbox/objectbox-go/objectbox/fbutils"
+	ot "github.com/objectbox/objectbox-go/test/generator/testdata/embedding/other"
 )
 
 type aliases_EntityInfo struct {
@@ -144,7 +145,7 @@ func (aliases_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface
 		SameFile2:     sameFileNamed(fbutils.GetStringSlot(table, 10)),
 		SamePackage2:  samePackageNamed(fbutils.GetIntSlot(table, 12)),
 		OtherPackage:  fbutils.GetStringSlot(table, 14),
-		OtherPackage2: other.ForeignNamed(fbutils.GetStringSlot(table, 16)),
+		OtherPackage2: ot.ForeignNamed(fbutils.GetStringSlot(table, 16)),
 	}, nil
 }
 

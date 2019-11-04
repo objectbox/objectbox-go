@@ -19,9 +19,11 @@ package generator
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"math/rand"
 	"os"
+	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -29,6 +31,7 @@ import (
 
 	"github.com/objectbox/objectbox-go/internal/generator"
 	"github.com/objectbox/objectbox-go/test/assert"
+	"github.com/objectbox/objectbox-go/test/build"
 )
 
 // generateAllDirs walks through the "data" and generates bindings for each subdirectory
@@ -80,6 +83,33 @@ func generateOneDir(t *testing.T, overwriteExpected bool, dir string) {
 
 		assertSameFile(t, modelInfoFile, modelInfoExpectedFile, overwriteExpected)
 		assertSameFile(t, modelFile, modelExpectedFile, overwriteExpected)
+	}
+
+	// verify the result can be built
+	if !testing.Short() {
+		t.Run("compile", func(t *testing.T) {
+			t.Parallel()
+
+			var expectedError error
+			if fileExists(path.Join(dir, "compile-error.expected")) {
+				content, err := ioutil.ReadFile(path.Join(dir, "compile-error.expected"))
+				assert.NoErr(t, err)
+				expectedError = errors.New(string(content))
+			}
+
+			stdOut, stdErr, err := build.Package("./" + dir)
+			if err == nil && expectedError == nil {
+				// successful
+				return
+			}
+
+			if err == nil && expectedError != nil {
+				assert.Failf(t, "Unexpected PASS during compilation")
+			}
+
+			var receivedError = fmt.Errorf("%s\n%s\n%s", stdOut, stdErr, err)
+			assert.Eq(t, expectedError, receivedError)
+		})
 	}
 }
 
@@ -139,7 +169,7 @@ func generateAllFiles(t *testing.T, overwriteExpected bool, dir string, modelInf
 		err = generator.Process(sourceFile, getOptions(t, sourceFile, modelInfoFile))
 
 		// handle negative test
-		var shouldFail = strings.HasPrefix(filepath.Base(sourceFile), "!")
+		var shouldFail = strings.HasSuffix(filepath.Base(sourceFile), ".fail.go")
 		if shouldFail {
 			if err == nil {
 				assert.Failf(t, "Unexpected PASS on a negative test %s", sourceFile)

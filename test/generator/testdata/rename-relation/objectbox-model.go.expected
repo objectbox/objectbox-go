@@ -25,7 +25,8 @@ func ObjectBoxModel() *objectbox.Model {
 	model.RegisterBinding(NegTaskRelEmbeddedBinding)
 	model.RegisterBinding(NegTaskRelManyPtrBinding)
 	model.RegisterBinding(NegTaskRelManyValueBinding)
-	model.LastEntityId(13, 2914295034816259174)
+	model.RegisterBinding(GroupByValBinding)
+	model.LastEntityId(14, 7699391924090763411)
 	model.LastIndexId(8, 5558237345453186302)
 	model.LastRelationId(6, 4345851588384648695)
 

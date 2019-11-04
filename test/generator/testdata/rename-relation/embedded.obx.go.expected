@@ -133,7 +133,7 @@ func (taskRelEmbedded_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (i
 	}
 
 	var relGroupsNew []*Group
-	if rIds, err := BoxForTaskRelEmbedded(ob).RelationIds(TaskRelEmbedded_.WithGroup.GroupsNew, id); err != nil {
+	if rIds, err := BoxForTaskRelEmbedded(ob).RelationIds(TaskRelEmbedded_.GroupsNew, id); err != nil {
 		return nil, err
 	} else if rSlice, err := BoxForGroup(ob).GetMany(rIds...); err != nil {
 		return nil, err

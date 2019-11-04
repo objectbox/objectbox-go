@@ -47,8 +47,8 @@ import (
 	"github.com/google/flatbuffers/go"
 	"github.com/objectbox/objectbox-go/objectbox"
 	"github.com/objectbox/objectbox-go/objectbox/fbutils"
-	{{range $path := .Binding.Imports -}}
-		"{{$path}}"
+	{{range $alias, $path := .Binding.Imports -}}
+		{{if not (eq $alias $path)}}{{$alias}}{{end}} "{{$path}}"
 	{{end}}
 )
 
@@ -125,14 +125,14 @@ func ({{$entityNameCamel}}_EntityInfo) AddToModel(model *objectbox.Model) {
 func ({{$entityNameCamel}}_EntityInfo) GetId(object interface{}) (uint64, error) {
 	{{- if $.Options.ByValue}}
 		if obj, ok := object.(*{{$entity.Name}}); ok {
-			return {{template "property-converter-encode" $entity.IdProperty}}, nil
+			return {{if not (eq $entity.IdProperty.GoType "uint64")}}uint64({{end}}{{template "property-converter-encode" $entity.IdProperty}}{{if not (eq $entity.IdProperty.GoType "uint64")}}){{end}}, nil
 		} else {
-			return {{if $entity.IdProperty.Converter}}{{$entity.IdProperty.Converter}}ToDatabaseValue({{end -}}
-					object.({{$entity.Name}}).{{$entity.IdProperty.Path}}{{if $entity.IdProperty.Converter}}){{end}}, nil
+			return {{if not (eq $entity.IdProperty.GoType "uint64")}}uint64({{end}}{{if $entity.IdProperty.Converter}}{{$entity.IdProperty.Converter}}ToDatabaseValue({{end -}}
+					object.({{$entity.Name}}).{{$entity.IdProperty.Path}}{{if $entity.IdProperty.Converter}}){{end}}{{if not (eq $entity.IdProperty.GoType "uint64")}}){{end}}, nil
 		}
 	{{- else -}}
-		return {{if $entity.IdProperty.Converter}}{{$entity.IdProperty.Converter}}ToDatabaseValue({{end -}}
-				object.(*{{$entity.Name}}).{{$entity.IdProperty.Path}}{{if $entity.IdProperty.Converter}}){{end}}, nil
+		return {{if not (eq $entity.IdProperty.GoType "uint64")}}uint64({{end}}{{if $entity.IdProperty.Converter}}{{$entity.IdProperty.Converter}}ToDatabaseValue({{end -}}
+				object.(*{{$entity.Name}}).{{$entity.IdProperty.Path}}{{if $entity.IdProperty.Converter}}){{end}}{{if not (eq $entity.IdProperty.GoType "uint64")}}){{end}}, nil
 	{{- end}}
 }
 
@@ -140,15 +140,19 @@ func ({{$entityNameCamel}}_EntityInfo) GetId(object interface{}) (uint64, error)
 func ({{$entityNameCamel}}_EntityInfo) SetId(object interface{}, id uint64) {
 	{{- if $.Options.ByValue}}
 		if obj, ok := object.(*{{$entity.Name}}); ok {
-			obj.{{$entity.IdProperty.Path}} =   
+			obj.{{$entity.IdProperty.Path}} =
+				{{- if not (eq $entity.IdProperty.GoType "uint64")}}{{$entity.IdProperty.GoType}}({{end}}
 				{{- if $entity.IdProperty.Converter}}{{$entity.IdProperty.Converter}}ToEntityProperty({{end}}id{{if $entity.IdProperty.Converter}}){{end}}
+				{{- if not (eq $entity.IdProperty.GoType "uint64")}}){{end}}
 		} else {
 			// NOTE while this can't update, it will at least behave consistently (panic in case of a wrong type)
 			_ = object.({{$entity.Name}}).{{$entity.IdProperty.Path}}
 		}
 	{{- else -}}
-		object.(*{{$entity.Name}}).{{$entity.IdProperty.Path}} =  
+		object.(*{{$entity.Name}}).{{$entity.IdProperty.Path}} =
+			{{- if not (eq $entity.IdProperty.GoType "uint64")}}{{$entity.IdProperty.GoType}}({{end}}
 			{{- if $entity.IdProperty.Converter}}{{$entity.IdProperty.Converter}}ToEntityProperty({{end}}id{{if $entity.IdProperty.Converter}}){{end}}
+			{{- if not (eq $entity.IdProperty.GoType "uint64")}}){{end}}
 	{{- end}}
 }
 
@@ -262,7 +266,7 @@ func ({{$entityNameCamel}}_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byt
 		{{else if $field.StandaloneRelation -}}
 			{{if not $field.IsLazyLoaded -}}
 			var rel{{$field.Name}} {{$field.Type}} 
-			if rIds, err := BoxFor{{$field.Entity.Name}}(ob).RelationIds({{.Entity.Name}}_.{{$field.Path}}, id); err != nil {
+			if rIds, err := BoxFor{{$field.Entity.Name}}(ob).RelationIds({{.Entity.Name}}_.{{$field.Name}}, id); err != nil {
 				return nil, err
 			} else if rSlice, err := BoxFor{{$field.StandaloneRelation.Target.Name}}(ob).GetMany(rIds...); err != nil {
 				return nil, err
@@ -441,8 +445,11 @@ func (box *{{$entity.Name}}Box) Remove(object *{{$entity.Name}}) error {
 func (box *{{$entity.Name}}Box) RemoveMany(objects ...*{{$entity.Name}}) (uint64, error) {
 	var ids = make([]uint64, len(objects))
 	for k, object := range objects {
-		ids[k] = {{if $entity.IdProperty.Converter}}{{$entity.IdProperty.Converter}}ToDatabaseValue({{end -}}
+		ids[k] = 
+			{{- if not (eq $entity.IdProperty.GoType "uint64")}}uint64({{end}}
+			{{- if $entity.IdProperty.Converter}}{{$entity.IdProperty.Converter}}ToDatabaseValue({{end -}}
 					object.{{$entity.IdProperty.Path}}{{if $entity.IdProperty.Converter}}){{end}}
+			{{- if not (eq $entity.IdProperty.GoType "uint64")}}){{end}}
 	}
 	return box.Box.RemoveIds(ids...)
 }

@@ -263,8 +263,7 @@ func (binding *Binding) createEntityFromAst(strct *ast.StructType, name string, 
 	if entity.IdProperty == nil {
 		// try to find an ID property automatically based on it's name and type
 		for _, property := range entity.Properties {
-			var goType = strings.ToLower(property.GoType)
-			if strings.ToLower(property.Name) == "id" && (goType == "int64" || goType == "uint64" || goType == "string") {
+			if strings.ToLower(property.Name) == "id" && property.hasValidTypeAsId() {
 				if entity.IdProperty == nil {
 					entity.IdProperty = property
 					property.addObFlag(propertyFlagId)
@@ -299,6 +298,11 @@ func (binding *Binding) createEntityFromAst(strct *ast.StructType, name string, 
 	// initially set for uint types by setBasicType()
 	entity.IdProperty.removeObFlag(propertyFlagUnsigned)
 	entity.IdProperty.FbType = "Uint64" // always stored as Uint64
+
+	if !entity.IdProperty.hasValidTypeAsId() {
+		return fmt.Errorf("id field '%s' has unsupported type '%s' on entity %s - must be one of [int64, uint64, string]",
+			entity.IdProperty.Name, entity.IdProperty.GoType, entity.Name)
+	}
 
 	binding.Entities = append(binding.Entities, entity)
 
@@ -668,6 +672,11 @@ func parseCommentsLines(comments []*ast.Comment) []string {
 	}
 
 	return lines
+}
+
+func (property *Property) hasValidTypeAsId() bool {
+	var goType = strings.ToLower(property.GoType)
+	return goType == "int64" || goType == "uint64" || goType == "string"
 }
 
 func (property *Property) setAnnotations(tags string) error {

@@ -12,14 +12,14 @@
           "id": "1:2259404117704393152",
           "name": "Id",
           "type": 6,
-          "flags": 8193
+          "flags": 1
         },
         {
           "id": "2:6050128673802995827",
           "name": "GroupNew",
           "indexId": "1:501233450539197794",
           "type": 11,
-          "flags": 8192,
+          "flags": 8712,
           "relationTarget": "Group"
         }
       ]
@@ -33,14 +33,14 @@
           "id": "1:2669985732393126063",
           "name": "Id",
           "type": 6,
-          "flags": 8193
+          "flags": 1
         },
         {
           "id": "2:1774932891286980153",
           "name": "GroupNew",
           "indexId": "2:6044372234677422456",
           "type": 11,
-          "flags": 8192,
+          "flags": 8712,
           "relationTarget": "Group"
         }
       ]
@@ -54,14 +54,14 @@
           "id": "1:1543572285742637646",
           "name": "Id",
           "type": 6,
-          "flags": 8193
+          "flags": 1
         },
         {
           "id": "2:2661732831099943416",
           "name": "GroupNew",
           "indexId": "3:8325060299420976708",
           "type": 11,
-          "flags": 8192,
+          "flags": 8712,
           "relationTarget": "Group"
         }
       ]
@@ -75,14 +75,14 @@
           "id": "1:2518412263346885298",
           "name": "Id",
           "type": 6,
-          "flags": 8193
+          "flags": 1
         },
         {
           "id": "2:5617773211005988520",
           "name": "Group",
           "indexId": "4:2339563716805116249",
           "type": 11,
-          "flags": 8192,
+          "flags": 8712,
           "relationTarget": "Group"
         }
       ],
@@ -103,7 +103,7 @@
           "id": "1:161231572858529631",
           "name": "Id",
           "type": 6,
-          "flags": 8193
+          "flags": 1
         },
         {
           "id": "2:7259475919510918339",
@@ -121,7 +121,7 @@
           "id": "1:3287288577352441706",
           "name": "Id",
           "type": 6,
-          "flags": 8193
+          "flags": 1
         }
       ],
       "relations": [
@@ -141,7 +141,7 @@
           "id": "1:2217592893536642650",
           "name": "Id",
           "type": 6,
-          "flags": 8193
+          "flags": 1
         }
       ],
       "relations": [

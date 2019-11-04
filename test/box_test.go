@@ -200,6 +200,46 @@ func TestPut(t *testing.T) {
 	assert.Eq(t, &event2, all[1])
 }
 
+func TestBoxInsert(t *testing.T) {
+	var env = model.NewTestEnv(t)
+	defer env.Close()
+
+	var object = model.Entity47()
+	id, err := env.Box.Insert(object)
+	assert.NoErr(t, err)
+	assert.True(t, id == 1 && object.Id == 1)
+
+	id, err = env.Box.Insert(object)
+	assert.Err(t, err)
+	assert.True(t, id == 0 && object.Id == 1)
+}
+
+func TestBoxUpdate(t *testing.T) {
+	var env = model.NewTestEnv(t)
+	defer env.Close()
+
+	var object = model.Entity47()
+
+	// update will fail without an ID
+	assert.Err(t, env.Box.Update(object))
+
+	// update will also fail with a non-existent ID
+	object.Id = 1
+	assert.Err(t, env.Box.Update(object))
+
+	object = model.Entity47()
+	id, err := env.Box.Insert(object)
+	assert.NoErr(t, err)
+	assert.True(t, id == 1 && object.Id == 1)
+
+	// finally, update will be successful after we have inserted the object first
+	object.String = "foo"
+	assert.NoErr(t, env.Box.Update(object))
+
+	objectRead, err := env.Box.Get(id)
+	assert.Eq(t, object, objectRead)
+}
+
 func TestBoxCount(t *testing.T) {
 	var env = model.NewTestEnv(t)
 	defer env.Close()

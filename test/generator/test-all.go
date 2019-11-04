@@ -54,7 +54,6 @@ func generateAllDirs(t *testing.T, overwriteExpected bool) {
 func generateOneDir(t *testing.T, overwriteExpected bool, dir string) {
 	modelInfoFile := generator.ModelInfoFile(dir)
 	modelInfoExpectedFile := modelInfoFile + ".expected"
-	modelInfoInitialFile := modelInfoFile + ".initial"
 
 	modelFile := generator.ModelFile(modelInfoFile)
 	modelExpectedFile := modelFile + ".expected"
@@ -64,12 +63,17 @@ func generateOneDir(t *testing.T, overwriteExpected bool, dir string) {
 		if i == 0 {
 			t.Logf("Testing %s without model info JSON", filepath.Base(dir))
 			os.Remove(modelInfoFile)
+		} else if testing.Short() {
+			continue // don't test twice in "short" tests
 		} else {
 			t.Logf("Testing %s with previous model info JSON", filepath.Base(dir))
 		}
 
-		if fileExists(modelInfoInitialFile) {
-			assert.NoErr(t, copyFile(modelInfoInitialFile, modelInfoFile))
+		// setup the desired directory contents by copying "*.initial" files to their name without the extension
+		initialFiles, err := filepath.Glob(filepath.Join(dir, "*.initial"))
+		assert.NoErr(t, err)
+		for _, initialFile := range initialFiles {
+			assert.NoErr(t, copyFile(initialFile, initialFile[0:len(initialFile)-len(".initial")]))
 		}
 
 		generateAllFiles(t, overwriteExpected, dir, modelInfoFile)
@@ -187,6 +191,7 @@ func getExpectedError(t *testing.T, sourceFile string) error {
 		return errors.New(strings.TrimSpace(string(match[1])))
 	}
 
+	assert.Failf(t, "missing error declaration in %s - add comment to the file // ERROR = expected error text", sourceFile)
 	return nil
 }
 

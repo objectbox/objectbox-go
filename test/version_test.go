@@ -17,6 +17,7 @@
 package objectbox_test
 
 import (
+	"regexp"
 	"strings"
 	"testing"
 
@@ -26,12 +27,18 @@ import (
 
 func TestVersion(t *testing.T) {
 	versionInfo := objectbox.VersionInfo()
-	println(versionInfo)
+	t.Log(versionInfo)
+
+	var format = regexp.MustCompile(`^[0-9]+\.[0-9]+\.[0-9]+(-[a-z]+\.[0-9]+)?$`)
 
 	versionGo := objectbox.VersionGo().String()
-	assert.Eq(t, 2, strings.Count(versionGo, "."))
+	if !format.MatchString(versionGo) {
+		t.Errorf("ObjectBox-Go version %v doesn't match expected regexp %v", versionGo, format)
+	}
 	versionLib := objectbox.VersionLib().String()
-	assert.Eq(t, 2, strings.Count(versionLib, "."))
+	if !format.MatchString(versionGo) {
+		t.Errorf("ObjectBox-C version %v doesn't match expected regexp %v", versionLib, format)
+	}
 	assert.Eq(t, true, strings.Contains(versionInfo, versionGo))
 	assert.Eq(t, true, strings.Contains(versionInfo, versionLib))
 }

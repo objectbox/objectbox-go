@@ -37,7 +37,7 @@ type Box struct {
 	ObjectBox *ObjectBox
 	entity    *entity
 	cBox      *C.OBX_box
-	cAsync    *C.OBX_async
+	async     *AsyncBox
 }
 
 const defaultSliceCapacity = 16
@@ -55,14 +55,24 @@ func newBox(ob *ObjectBox, entityId TypeId) (*Box, error) {
 		return nil, err
 	}
 
+	// NOTE this is different than NewAsyncBox in that it doesn't require explicit closing
+	box.async = &AsyncBox{
+		box:    box,
+		cOwned: false,
+	}
 	if err := cCallBool(func() bool {
-		box.cAsync = C.obx_async(box.cBox)
-		return box.cAsync != nil
+		box.async.cAsync = C.obx_async(box.cBox)
+		return box.async.cAsync != nil
 	}); err != nil {
 		return nil, err
 	}
 
 	return box, nil
+}
+
+// Async provides access to the default Async Box for asynchronous operations. See AsyncBox for more information.
+func (box *Box) Async() *AsyncBox {
+	return box.async
 }
 
 // Query creates a query with the given conditions. Use generated properties to create conditions.
@@ -120,38 +130,42 @@ func (box *Box) idsForPut(count int) (firstId uint64, err error) {
 		return 0, nil
 	}
 
-	var cFirstId C.obx_id
+	var cFirstID C.obx_id
 	if err := cCall(func() C.obx_err {
-		return C.obx_box_ids_for_put(box.cBox, C.uint64_t(count), &cFirstId)
+		return C.obx_box_ids_for_put(box.cBox, C.uint64_t(count), &cFirstID)
 
 	}); err != nil {
 		return 0, err
 	}
 
-	return uint64(cFirstId), nil
+	return uint64(cFirstID), nil
 }
 
-func (box *Box) put(object interface{}, async bool, alreadyInTx bool) (id uint64, err error) {
+func (box *Box) put(object interface{}, alreadyInTx bool, putMode C.OBXPutMode) (id uint64, err error) {
 	idFromObject, err := box.entity.binding.GetId(object)
 	if err != nil {
 		return 0, err
 	}
 
-	if async && box.entity.hasRelations {
-		return 0, errors.New("PutAsync is currently not supported on entities that have relations")
-	}
-
-	if id, err = box.idForPut(idFromObject); err != nil {
-		return 0, err
+	if putMode == cPutModeUpdate {
+		id = idFromObject
+		if idFromObject == 0 {
+			return 0, errors.New("cannot update an object with ID 0 - if it's a new object use Put or Insert instead")
+		}
+	} else {
+		id, err = box.idForPut(idFromObject)
+		if err != nil {
+			return 0, err
+		}
 	}
 
 	// for entities with relations, execute all Put/PutRelated inside a single transaction
 	if box.entity.hasRelations && !alreadyInTx {
 		err = box.ObjectBox.RunInWriteTx(func() error {
-			return box.putOne(id, object, async)
+			return box.putOne(id, object, putMode)
 		})
 	} else {
-		err = box.putOne(id, object, async)
+		err = box.putOne(id, object, putMode)
 	}
 
 	if err != nil {
@@ -166,7 +180,7 @@ func (box *Box) put(object interface{}, async bool, alreadyInTx bool) (id uint64
 	return id, nil
 }
 
-func (box *Box) putOne(id uint64, object interface{}, async bool) error {
+func (box *Box) putOne(id uint64, object interface{}, putMode C.OBXPutMode) error {
 	if box.entity.hasRelations { // In that case, the caller already ensured to be inside a TX
 		if err := box.entity.binding.PutRelated(box.ObjectBox, object, id); err != nil {
 			return err
@@ -175,11 +189,7 @@ func (box *Box) putOne(id uint64, object interface{}, async bool) error {
 
 	return box.withObjectBytes(object, id, func(bytes []byte) error {
 		return cCall(func() C.obx_err {
-			if async {
-				return C.obx_async_put(box.cAsync, C.obx_id(id), unsafe.Pointer(&bytes[0]), C.size_t(len(bytes)))
-			}
-			return C.obx_box_put(box.cBox, C.obx_id(id), unsafe.Pointer(&bytes[0]), C.size_t(len(bytes)),
-				C.OBXPutMode(cPutModePut))
+			return C.obx_box_put(box.cBox, C.obx_id(id), unsafe.Pointer(&bytes[0]), C.size_t(len(bytes)), putMode)
 		})
 	})
 }
@@ -204,33 +214,31 @@ func (box *Box) withObjectBytes(object interface{}, id uint64, fn func([]byte) e
 }
 
 // PutAsync asynchronously inserts/updates a single object.
-// Temporary API note: it is likely that this function will move (e.g. into new "Async" struct).
-// When inserting, the ID property on the passed object will be assigned the new ID as well.
-//
-// It's executed on a separate internal thread for better performance.
-//
-// There are two main use cases:
-//
-// 1) "Put & Forget:" you gain faster puts as you don't have to wait for the transaction to finish.
-//
-// 2) Many small transactions: if your write load is typically a lot of individual puts that happen in parallel,
-// this will merge small transactions into bigger ones. This results in a significant gain in overall throughput.
-//
-//
-// In situations with (extremely) high async load, this method may be throttled (~1ms) or delayed up to 1 second.
-// In the unlikely event that the object could still not be enqueued (full queue), an error will be returned.
-//
-// Note that this method does not give you hard durability guarantees like the synchronous Put provides.
-// There is a small time window in which the data may not have been committed durably yet.
+// Deprecated: use box.Async().Put() instead
 func (box *Box) PutAsync(object interface{}) (id uint64, err error) {
-	return box.put(object, true, false)
+	return box.async.Put(object)
 }
 
 // Put synchronously inserts/updates a single object.
 // In case the ID is not specified, it would be assigned automatically (auto-increment).
 // When inserting, the ID property on the passed object will be assigned the new ID as well.
 func (box *Box) Put(object interface{}) (id uint64, err error) {
-	return box.put(object, false, false)
+	return box.put(object, false, cPutModePut)
+}
+
+// Insert synchronously inserts a single object.
+// As opposed to Put, Insert will fail if an object with the same ID already exists.
+// In case the ID is not specified, it would be assigned automatically (auto-increment).
+// When inserting, the ID property on the passed object will be assigned the new ID as well.
+func (box *Box) Insert(object interface{}) (id uint64, err error) {
+	return box.put(object, false, cPutModeInsert)
+}
+
+// Update synchronously updates a single object.
+// As opposed to Put, Update will fail if an object with the same ID is not found in the database.
+func (box *Box) Update(object interface{}) error {
+	_, err := box.put(object, false, cPutModeUpdate)
+	return err
 }
 
 // PutMany inserts multiple objects in a single transaction.
@@ -280,7 +288,7 @@ func (box *Box) PutMany(objects interface{}) (ids []uint64, err error) {
 			}
 		} else {
 			for i := 0; i < count; i++ {
-				id, err := box.put(slice.Index(i).Interface(), false, true)
+				id, err := box.put(slice.Index(i).Interface(), true, cPutModePut)
 				if err != nil {
 					return err
 				}
@@ -604,8 +612,12 @@ func (box *Box) ContainsIds(ids ...uint64) (bool, error) {
 
 // RelationIds returns IDs of all target objects related to the given source object ID
 func (box *Box) RelationIds(relation *RelationToMany, sourceId uint64) ([]uint64, error) {
+	targetBox, err := box.ObjectBox.box(relation.Target.Id)
+	if err != nil {
+		return nil, err
+	}
 	return cGetIds(func() *C.OBX_id_array {
-		return C.obx_box_rel_targets_ids(box.cBox, C.obx_schema_id(relation.Id), C.obx_id(sourceId))
+		return C.obx_box_rel_get_ids(targetBox.cBox, C.obx_schema_id(relation.Id), C.obx_id(sourceId))
 	})
 }
 

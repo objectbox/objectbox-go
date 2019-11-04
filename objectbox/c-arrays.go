@@ -82,7 +82,7 @@ func goBytesArrayToC(goArray [][]byte) (*bytesArray, error) {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 
-	var cArray = C.obx_bytes_array_create(C.size_t(len(goArray)))
+	var cArray = C.obx_bytes_array(C.size_t(len(goArray)))
 	if cArray == nil {
 		return nil, createError()
 	}
@@ -129,7 +129,7 @@ func goIdsArrayToC(ids []uint64) (*idsArray, error) {
 	runtime.LockOSThread()
 
 	var err error
-	var cArray = C.obx_id_array_create(goUint64ArrayToCObxId(ids), C.size_t(len(ids)))
+	var cArray = C.obx_id_array(goUint64ArrayToCObxId(ids), C.size_t(len(ids)))
 	if cArray == nil {
 		err = createError()
 	}

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -eu
 
-cLibVersion=0.6.0
+cLibVersion=0.7.1
 os=$(uname)
 
 goVersion=$(go version | cut -d' ' -f 3)
@@ -20,14 +20,20 @@ elif [[ "${goVersionMinor}" == "11" ]] && [[ "${goVersionPatch}" -lt "4" ]]; the
   exit 1
 fi
 
+# if there's no tty this is probably part of a docker build - therefore we install the c-api explicitly
+cLibArgs=
+if [[ "$os" != MINGW* ]] && [[ "$os" != CYGWIN* ]]; then
+  tty -s || cLibArgs="${cLibArgs} --install"
+fi
+
 # install the ObjectBox-C library
 mkdir -p objectboxlib && cd objectboxlib
-bash <(curl -s https://raw.githubusercontent.com/objectbox/objectbox-c/master/download.sh) ${cLibVersion}
+bash <(curl -s https://raw.githubusercontent.com/objectbox/objectbox-c/master/download.sh) ${cLibArgs} ${cLibVersion}
 if [[ "$os" == MINGW* ]] || [[ "$os" == CYGWIN* ]]; then
-    localLibDir=$(realpath lib)
-    echo "Windows must be able to find the objectbox.dll when executing ObjectBox based programs (even tests)."
-    echo "One way to accomplish that is to manually copy the objectbox.dll from ${localLibDir} to C:/Windows/System32/ folder."
-    echo "See https://golang.objectbox.io/install#objectbox-library-on-windows for more details."
+  localLibDir=$(realpath lib)
+  echo "Windows must be able to find the objectbox.dll when executing ObjectBox based programs (even tests)."
+  echo "One way to accomplish that is to manually copy the objectbox.dll from ${localLibDir} to C:/Windows/System32/ folder."
+  echo "See https://golang.objectbox.io/install#objectbox-library-on-windows for more details."
 fi
 cd -
 

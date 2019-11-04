@@ -87,7 +87,7 @@ type options struct {
 // constant during runtime so no need to call this each time it's necessary
 var supportsBytesArray = bool(C.obx_supports_bytes_array())
 
-// Close fully closes the database and free's resources
+// Close fully closes the database and frees resources
 func (ob *ObjectBox) Close() {
 	storeToClose := ob.store
 	ob.store = nil
@@ -148,7 +148,7 @@ func (ob *ObjectBox) runInTxn(readOnly bool, fn func() error) (err error) {
 	err = fn()
 
 	if !readOnly && err == nil {
-		if rc := C.obx_txn_success(cTxn); rc != 0 {
+		if rc := C.obx_txn_mark_success(cTxn, true); rc != 0 {
 			err = createError()
 		}
 	}

@@ -8,7 +8,7 @@ The scripts and sources in this directory are needed to setup ObjectBox Go as ea
 To get started right away, just execute `./setup.sh` in your shell and you're basically done. 
 This command creates the following subdirectories in your home directory:
 
-- `goroot` with the binaries of Go 1.12.7 (only if Go wasn't installed before or the installed version was <1.12)
+- `goroot` with the binaries of Go 1.12.9 (only if Go wasn't installed before or the installed version was <1.12)
 - `objectbox` with the shell script `update-objectbox.sh` you can execute to easily update ObjectBox upon a new release
 - `projects/objectbox-go-test` mainly with the file `main.go` (also part of this directory) which contains a tiny demo application, based on the Tasks example found in ObjectBox GitHub repo 
 

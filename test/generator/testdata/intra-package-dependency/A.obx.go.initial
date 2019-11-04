@@ -1,0 +1,3 @@
+package object
+
+// we set up the package with this empty file at first to make sure a_EntityInfo is undefined when the generator runs

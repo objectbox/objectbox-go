@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -eu
-
+args="$@"
 buildDir=${PWD}/build-artifacts
 
 function preBuild {
@@ -32,9 +32,9 @@ function test {
 
     # on amd64, we run extended tests (memory sanitizer & race checks)
     if [[ $(go env GOARCH) == "amd64" ]]; then
-        ./build/test.sh -race
+        ./build/test.sh $args -race
     else
-        ./build/test.sh
+        ./build/test.sh $args
     fi
 }
 

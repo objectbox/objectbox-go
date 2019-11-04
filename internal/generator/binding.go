@@ -77,12 +77,11 @@ type Entity struct {
 // Property represents a mapping between a struct field and a DB field
 type Property struct {
 	Identifier
-	BaseName    string // name in the containing struct (might be embedded)
 	Name        string // prefixed name (unique)
 	ObName      string // name of the field in DB
 	Annotations map[string]*Annotation
 	ObType      int
-	ObFlags     []int
+	obFlags     map[int]bool
 	GoType      string
 	FbType      string
 	IsPointer   bool
@@ -94,9 +93,9 @@ type Property struct {
 	CastOnRead  string
 	CastOnWrite string
 
+	field      *Field
 	entity     *Entity
 	uidRequest bool
-	path       string // relative addressing path for embedded structs
 }
 
 // Relation contains information about a "to-one" relation
@@ -139,6 +138,8 @@ type Field struct {
 	SimpleRelation     *Relation
 	StandaloneRelation *StandaloneRelation // to-many relation stored as a standalone relation in the model
 	IsLazyLoaded       bool                // only standalone (to-many) relations currently support lazy loading
+
+	path string // relative addressing path for embedded structs
 }
 
 // Identifier combines DB ID and UID into a single structure
@@ -244,10 +245,15 @@ func (binding *Binding) createEntityFromAst(strct *ast.StructType, name string, 
 		}
 	}
 
-	var err error
-	entity.Fields, err = entity.addFields(astStructFieldList{strct, binding.source}, entity.Name, "")
-	if err != nil {
-		return err
+	{
+		var fieldList = astStructFieldList{strct, binding.source}
+		var recursionStack = map[string]bool{}
+		recursionStack[entity.Name] = true
+		var err error
+		entity.Fields, err = entity.addFields(fieldList, entity.Name, "", &recursionStack)
+		if err != nil {
+			return err
+		}
 	}
 
 	if len(entity.Properties) == 0 {
@@ -257,8 +263,8 @@ func (binding *Binding) createEntityFromAst(strct *ast.StructType, name string, 
 	if entity.IdProperty == nil {
 		// try to find an ID property automatically based on it's name and type
 		for _, property := range entity.Properties {
-			if strings.ToLower(property.Name) == "id" &&
-				(strings.ToLower(property.GoType) == "uint64" || strings.ToLower(property.GoType) == "string") {
+			var goType = strings.ToLower(property.GoType)
+			if strings.ToLower(property.Name) == "id" && (goType == "int64" || goType == "uint64" || goType == "string") {
 				if entity.IdProperty == nil {
 					entity.IdProperty = property
 					property.addObFlag(propertyFlagId)
@@ -272,8 +278,8 @@ func (binding *Binding) createEntityFromAst(strct *ast.StructType, name string, 
 		}
 
 		if entity.IdProperty == nil {
-			return fmt.Errorf("id field is missing on entity %s - either annotate a field with `objectbox:\"id\"` "+
-				"tag or use an uint64 field named 'Id/id/ID'", entity.Name)
+			return fmt.Errorf("id field is missing on entity %s - either annotate a field with "+
+				"`objectbox:\"id\"` tag or use an (u)int64 field named 'Id/id/ID'", entity.Name)
 		}
 	}
 
@@ -289,14 +295,18 @@ func (binding *Binding) createEntityFromAst(strct *ast.StructType, name string, 
 		}
 	}
 
+	// IDs must not be tagged unsigned for compatibility reasons
+	// initially set for uint types by setBasicType()
+	entity.IdProperty.removeObFlag(PropertyFlagUnsigned)
+
 	binding.Entities = append(binding.Entities, entity)
 
 	return nil
 }
 
-func (entity *Entity) addFields(fields fieldList, fieldPath, prefix string) ([]*Field, error) {
+func (entity *Entity) addFields(fields fieldList, fieldPath, prefix string, recursionStack *map[string]bool) ([]*Field, error) {
 	var propertyError = func(err error, property *Property) error {
-		return fmt.Errorf("%s on property %s, entity %s", err, property.Name, fieldPath)
+		return fmt.Errorf("%s on property %s found in %s", err, property.Name, fieldPath)
 	}
 
 	var fieldsTree []*Field
@@ -306,8 +316,8 @@ func (entity *Entity) addFields(fields fieldList, fieldPath, prefix string) ([]*
 		f := fields.Field(i)
 
 		var property = &Property{
-			entity: entity,
-			path:   fieldPath,
+			entity:  entity,
+			obFlags: map[int]bool{},
 		}
 
 		property.Name, err = f.Name()
@@ -321,7 +331,9 @@ func (entity *Entity) addFields(fields fieldList, fieldPath, prefix string) ([]*
 			Entity:   entity,
 			Name:     property.Name,
 			Property: property,
+			path:     fieldPath,
 		}
+		property.field = field
 
 		if tag := f.Tag(); tag != "" {
 			if err := property.setAnnotations(tag); err != nil {
@@ -369,12 +381,23 @@ func (entity *Entity) addFields(fields fieldList, fieldPath, prefix string) ([]*
 				}
 			}
 
+			// Structs may be chained in a cycle (using pointers), causing an infinite recursion.
+			// Let's make sure this doesn't happen because it causes the generator (and a whole OS) to "freeze".
+			if field.Type != "" {
+				if (*recursionStack)[field.Type] {
+					return nil, propertyError(fmt.Errorf("embedded struct cycle detected: %v", fieldPath), property)
+				}
+				(*recursionStack)[field.Type] = true
+			}
+
 			// apply some struct-related settings to the field
 			field.Property = nil
-			field.Fields, err = entity.addFields(innerStructFields, fieldPath+"."+property.Name, innerPrefix)
+			field.Fields, err  = entity.addFields(innerStructFields, fieldPath+"."+property.Name, innerPrefix, recursionStack)
 			if err != nil {
 				return nil, err
 			}
+
+			delete(*recursionStack, field.Type)
 
 			// this struct itself is not added, just the inner properties
 			// so skip the the following steps of adding the property
@@ -410,7 +433,6 @@ func (entity *Entity) addFields(fields fieldList, fieldPath, prefix string) ([]*
 			property.ObName = property.Name
 		}
 
-		property.BaseName = property.Name
 		if len(prefix) != 0 {
 			property.ObName = prefix + "_" + property.ObName
 			property.Name = prefix + "_" + property.Name
@@ -817,7 +839,11 @@ func (property *Property) setBasicType(baseType string) error {
 }
 
 func (property *Property) addObFlag(flag int) {
-	property.ObFlags = append(property.ObFlags, flag)
+	property.obFlags[flag] = true
+}
+
+func (property *Property) removeObFlag(flag int) {
+	property.obFlags[flag] = false
 }
 
 func (property *Property) setIndex() error {
@@ -866,6 +892,8 @@ func (property *Property) setObFlags() error {
 	}
 
 	if property.Relation != nil {
+		property.addObFlag(PropertyFlagIndexed)
+		property.addObFlag(PropertyFlagIndexPartialSkipZero)
 		if err := property.setIndex(); err != nil {
 			return err
 		}
@@ -912,8 +940,10 @@ func (property *Property) ObTypeString() string {
 func (property *Property) ObFlagsCombined() int {
 	var result = 0
 
-	for _, flag := range property.ObFlags {
-		result = result | flag
+	for flag, isSet := range property.obFlags {
+		if isSet {
+			result = result | flag
+		}
 	}
 
 	return result
@@ -982,6 +1012,18 @@ func (field *Field) HasLazyLoadedRelations() bool {
 	return false
 }
 
+// Path returns full path to the field (in embedded struct)
+// called from the template
+func (field *Field) Path() string {
+	var parts = strings.Split(field.path, ".")
+
+	// strip the first component
+	parts = parts[1:]
+
+	parts = append(parts, field.Name)
+	return strings.Join(parts, ".")
+}
+
 // IsId called from the template.
 func (field *Field) IsId() bool {
 	return field.Property == field.Entity.IdProperty
@@ -1007,13 +1049,7 @@ func (property *Property) FbSlot() int {
 
 // Path is called from the template. It returns full path to the property (in embedded struct).
 func (property *Property) Path() string {
-	var parts = strings.Split(property.path, ".")
-
-	// strip the first component
-	parts = parts[1:]
-
-	parts = append(parts, property.BaseName)
-	return strings.Join(parts, ".")
+	return property.field.Path()
 }
 
 func typeBaseName(name string) string {

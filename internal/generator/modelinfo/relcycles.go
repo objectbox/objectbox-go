@@ -21,12 +21,9 @@ import "fmt"
 // CheckRelationCycles finds relations cycles
 func (model *ModelInfo) CheckRelationCycles() error {
 	// DFS cycle check, storing relation path in the recursion stack
-	var visited = make(map[*Entity]bool)
-	var recursionStack = make(map[*Entity]string)
-
-	// call the recursive check starting in each entity
+	var recursionStack = make(map[*Entity]bool)
 	for _, entity := range model.Entities {
-		if err := entity.checkRelationCycles(&visited, &recursionStack); err != nil {
+		if err := entity.checkRelationCycles(&recursionStack, entity.Name); err != nil {
 			return err
 		}
 	}
@@ -34,38 +31,42 @@ func (model *ModelInfo) CheckRelationCycles() error {
 	return nil
 }
 
-func (entity *Entity) checkRelationCycles(visited *map[*Entity]bool, recursionStack *map[*Entity]string) error {
-	if !(*visited)[entity] {
-		(*visited)[entity] = true
+func (entity *Entity) checkRelationCycles(recursionStack *map[*Entity]bool, path string) error {
+	(*recursionStack)[entity] = true
 
-		for _, rel := range entity.Relations {
-			// overwrite this for each relation
-			(*recursionStack)[entity] = rel.Name
+	// to-many relations
+	for _, rel := range entity.Relations {
+		if err := checkRelationCycle(recursionStack, path+"."+rel.Name, rel.Target); err != nil {
+			return err
+		}
+	}
 
-			// this happens if the entity containing this relation haven't been defined in this file
-			if rel.Target == nil {
-				continue
-			}
+	// to-one relations
+	for _, prop := range entity.Properties {
+		if prop.RelationTarget == "" {
+			continue
+		}
 
-			if !(*visited)[rel.Target] {
-				if err := rel.Target.checkRelationCycles(visited, recursionStack); err != nil {
-					return err
-				}
-			}
+		relTarget, _ := entity.model.FindEntityByName(prop.RelationTarget)
 
-			if (*recursionStack)[rel.Target] != "" {
-				var cycle []string
-				for ent, name := range *recursionStack {
-					if name != "" {
-						cycle = append(cycle, ent.Name+"."+name)
-					}
-				}
-				return fmt.Errorf("relation cycle detected: %v", cycle)
-			}
+		if err := checkRelationCycle(recursionStack, path+"."+prop.Name, relTarget); err != nil {
+			return err
 		}
 	}
 
 	delete(*recursionStack, entity)
 	return nil
+}
 
+func checkRelationCycle(recursionStack *map[*Entity]bool, path string, relTarget *Entity) error {
+	// this happens if the entity containing this relation haven't been defined in this file
+	if relTarget == nil {
+		return nil
+	}
+
+	if (*recursionStack)[relTarget] {
+		return fmt.Errorf("relation cycle detected: %s (%s)", path, relTarget.Name)
+	}
+
+	return relTarget.checkRelationCycles(recursionStack, path)
 }

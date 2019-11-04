@@ -29,11 +29,12 @@ import (
 )
 
 type file struct {
-	f       *ast.File
-	info    *types.Info
-	fileset *token.FileSet
-	files   []*ast.File
-	dir     string
+	f              *ast.File
+	info           *types.Info
+	fileset        *token.FileSet
+	files          []*ast.File
+	dir            string
+	typeCheckError error
 }
 
 func parseFile(sourceFile string) (f *file, err error) {
@@ -115,17 +116,25 @@ func (f *file) getType(expr ast.Expr) (types.Type, error) {
 		var conf = types.Config{
 			IgnoreFuncBodies:         true,
 			DisableUnusedImportCheck: true,
-			// TODO switch to the new method (available since Go 1.12)
-			//  Importer:                 importer.ForCompiler(f.fileset, "source", nil),
+			// NOTE there is importer.ForCompiler() since 1.12 but it breaks our compatibility with 1.11.4
+			// NOTE importer.Default() doesn't seem to work for local files - run the generator tests for more details
 			Importer: importer.For("source", nil),
 		}
+
 		if _, err := conf.Check(f.dir, f.fileset, f.files, f.info); err != nil {
-			return nil, fmt.Errorf("error running type-check: %s", err)
+			// The type checker tries to go on even in case of an error to find out as much as it can.
+			// Therefore, this may be an error on an unrelated field and we may still be able to get all the info we
+			// need. If the type still can't be determined, we well fail bellow, printing this error as well.
+			f.typeCheckError = err
 		}
 	}
 
 	t := f.info.TypeOf(expr)
 	if t == nil {
+		if f.typeCheckError != nil {
+			// report the type checker error for more context
+			return nil, fmt.Errorf("type-check error in %v, therefore type %s could not be resolved", f.typeCheckError, expr)
+		}
 		return nil, fmt.Errorf("type %s could not be resolved", expr)
 	}
 	return t, nil

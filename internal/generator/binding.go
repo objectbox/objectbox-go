@@ -93,7 +93,7 @@ type Property struct {
 	CastOnRead  string
 	CastOnWrite string
 
-	field      *Field
+	Field      *Field // actual code field this property represents
 	entity     *Entity
 	uidRequest bool
 }
@@ -139,7 +139,8 @@ type Field struct {
 	StandaloneRelation *StandaloneRelation // to-many relation stored as a standalone relation in the model
 	IsLazyLoaded       bool                // only standalone (to-many) relations currently support lazy loading
 
-	path string // relative addressing path for embedded structs
+	path   string // relative addressing path for embedded structs
+	parent *Field // when included in parent.Fields[], nil for top-level fields (directly in the entity)
 }
 
 // Identifier combines DB ID and UID into a single structure
@@ -250,7 +251,7 @@ func (binding *Binding) createEntityFromAst(strct *ast.StructType, name string, 
 		var recursionStack = map[string]bool{}
 		recursionStack[entity.Name] = true
 		var err error
-		entity.Fields, err = entity.addFields(fieldList, entity.Name, "", &recursionStack)
+		entity.Fields, err = entity.addFields(nil, fieldList, entity.Name, "", &recursionStack)
 		if err != nil {
 			return err
 		}
@@ -309,12 +310,12 @@ func (binding *Binding) createEntityFromAst(strct *ast.StructType, name string, 
 	return nil
 }
 
-func (entity *Entity) addFields(fields fieldList, fieldPath, prefix string, recursionStack *map[string]bool) ([]*Field, error) {
+func (entity *Entity) addFields(parent *Field, fields fieldList, fieldPath, prefix string, recursionStack *map[string]bool) ([]*Field, error) {
 	var propertyError = func(err error, property *Property) error {
 		return fmt.Errorf("%s on property %s found in %s", err, property.Name, fieldPath)
 	}
 
-	var fieldsTree []*Field
+	var children []*Field
 	var err error // not a function-wise error, just to avoid later redeclarations
 
 	for i := 0; i < fields.Length(); i++ {
@@ -337,8 +338,9 @@ func (entity *Entity) addFields(fields fieldList, fieldPath, prefix string, recu
 			Name:     property.Name,
 			Property: property,
 			path:     fieldPath,
+			parent:   parent,
 		}
-		property.field = field
+		property.Field = field
 
 		if tag := f.Tag(); tag != "" {
 			if err := property.setAnnotations(tag); err != nil {
@@ -377,7 +379,7 @@ func (entity *Entity) addFields(fields fieldList, fieldPath, prefix string, recu
 			}
 		}
 
-		fieldsTree = append(fieldsTree, field)
+		children = append(children, field)
 
 		if property.Annotations["type"] != nil {
 			if err := property.setBasicType(property.Annotations["type"].Value); err != nil {
@@ -409,7 +411,7 @@ func (entity *Entity) addFields(fields fieldList, fieldPath, prefix string, recu
 
 			// apply some struct-related settings to the field
 			field.Property = nil
-			field.Fields, err = entity.addFields(innerStructFields, fieldPath+"."+property.Name, innerPrefix, recursionStack)
+			field.Fields, err = entity.addFields(field, innerStructFields, fieldPath+"."+property.Name, innerPrefix, recursionStack)
 			if err != nil {
 				return nil, err
 			}
@@ -477,7 +479,7 @@ func (entity *Entity) addFields(fields fieldList, fieldPath, prefix string, recu
 		entity.Properties = append(entity.Properties, property)
 	}
 
-	return fieldsTree, nil
+	return children, nil
 }
 
 // processType analyzes field type information and configures it.
@@ -1053,12 +1055,34 @@ func (field *Field) Path() string {
 	return strings.Join(parts, ".")
 }
 
-// IsId called from the template.
+// IsId returns true if the given field is an ID.
+// Called from the template.
 func (field *Field) IsId() bool {
 	return field.Property == field.Entity.IdProperty
 }
 
-// FbvTableOffset called from the template. Calculates flatbuffers vTableOffset.
+// IsId returns true if the given field is an ID.
+// Called from the template.
+func (property *Property) IsId() bool {
+	return property == property.entity.IdProperty
+}
+
+// HasPointersInPath checks whether there are any pointer-based fields in the path.
+// Called from the template.
+func (field *Field) HasPointersInPath() bool {
+	if field.IsPointer {
+		return true
+	}
+
+	if field.parent == nil {
+		return false
+	}
+
+	return field.parent.HasPointersInPath()
+}
+
+// FbvTableOffset calculates flatbuffers vTableOffset.
+// Called from the template.
 func (property *Property) FbvTableOffset() uint16 {
 	// derived from the FB generated code & https://google.github.io/flatbuffers/md__internals.html
 	var result = 4 + 2*uint32(property.FbSlot())
@@ -1078,7 +1102,7 @@ func (property *Property) FbSlot() int {
 
 // Path is called from the template. It returns full path to the property (in embedded struct).
 func (property *Property) Path() string {
-	return property.field.Path()
+	return property.Field.Path()
 }
 
 func typeBaseName(name string) string {

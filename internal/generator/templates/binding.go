@@ -225,18 +225,26 @@ func ({{$entityNameCamel}}_EntityInfo) Flatten(object interface{}, fbb *flatbuff
 
     // build the FlatBuffers object
     fbb.StartObject({{$entity.LastPropertyId.GetId}})
-    {{range $property := $entity.Properties -}}
-	{{- if $property.IsPointer}}if obj.{{$property.Path}} != nil { {{- end -}}
-	fbutils.Set{{$property.FbType}}Slot(fbb, {{$property.FbSlot}},
-		{{- if $property.Relation}}rId{{$property.Name}})
-        {{- else if eq $property.FbType "UOffsetT"}} offset{{$property.Name}})
-        {{- else if eq $property.Name $entity.IdProperty.Name}} id)
-        {{- else if eq $property.GoType "int"}} int64({{template "property-converter-encode" $property}}))
-        {{- else if eq $property.GoType "uint"}} uint64({{template "property-converter-encode" $property}}))
-        {{- else}} {{template "property-converter-encode" $property}})
-        {{- end}}
-	{{- if $property.IsPointer -}} } {{- end}}
-    {{end -}}
+	{{- if $entity.IdProperty.Field.HasPointersInPath }}{{/* when Id property's path (embedded) contains pointers, make sure it's always set */}} 
+		fbutils.Set{{$entity.IdProperty.FbType}}Slot(fbb, {{$entity.IdProperty.FbSlot}}, id) 
+	{{- end}}
+	{{- block "fields-setter" $entity -}}
+		{{- range $field := .Fields}}
+			{{- if $field.IsPointer}}
+			if obj.{{$field.Path}} != nil { {{- end -}}
+			{{with $field.Property}}{{if or (not .IsId) (not .Field.HasPointersInPath) }} 
+				fbutils.Set{{.FbType}}Slot(fbb, {{.FbSlot}},
+				{{- if .Relation}}rId{{.Name}})
+				{{- else if eq .FbType "UOffsetT"}} offset{{.Name}})
+				{{- else if .IsId}} id)
+				{{- else if eq .GoType "int"}} int64({{template "property-converter-encode" .}}))
+				{{- else if eq .GoType "uint"}} uint64({{template "property-converter-encode" .}}))
+				{{- else}} {{template "property-converter-encode" .}})
+				{{- end}}{{end}}
+			{{- else}}{{template "fields-setter" $field}}{{end -}}
+			{{- if $field.IsPointer -}} } {{- end -}}
+		{{- end -}}
+	{{end}}
 	return nil
 }
 

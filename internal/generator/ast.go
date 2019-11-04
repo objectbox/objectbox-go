@@ -45,10 +45,11 @@ func parseFile(sourceFile string) (f *file, err error) {
 		fileset: token.NewFileSet(),
 	}
 
-	// get the main file's package name
-	if parsed, err := parser.ParseFile(f.fileset, sourceFile, nil, 0); err != nil {
-		return nil, err
-	} else {
+	{ // get the main file's package name
+		parsed, err := parser.ParseFile(f.fileset, sourceFile, nil, 0)
+		if err != nil {
+			return nil, err
+		}
 		f.pkgName = parsed.Name.Name
 	}
 

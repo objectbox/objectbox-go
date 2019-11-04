@@ -205,7 +205,7 @@ func BenchmarkTxGet(b *testing.B) {
 
 	env.check(env.ob.RunInReadTx(func() error {
 		for n := 0; n < b.N; n++ {
-			_, err := env.box.Get(inserts[0].Id)
+			_, err := env.box.Get(inserts[0].ID)
 			env.check(err)
 		}
 		return nil
@@ -225,7 +225,7 @@ func BenchmarkSlowGet(b *testing.B) {
 	b.StartTimer()
 
 	for n := 0; n < b.N; n++ {
-		_, err := env.box.Get(inserts[0].Id)
+		_, err := env.box.Get(inserts[0].ID)
 		env.check(err)
 	}
 }

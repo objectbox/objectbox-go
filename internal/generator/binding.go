@@ -405,7 +405,7 @@ func (entity *Entity) addFields(fields fieldList, fieldPath, prefix string, recu
 
 			// apply some struct-related settings to the field
 			field.Property = nil
-			field.Fields, err  = entity.addFields(innerStructFields, fieldPath+"."+property.Name, innerPrefix, recursionStack)
+			field.Fields, err = entity.addFields(innerStructFields, fieldPath+"."+property.Name, innerPrefix, recursionStack)
 			if err != nil {
 				return nil, err
 			}

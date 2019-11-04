@@ -164,7 +164,11 @@ func entity47(coef int64, options *TestEnvOptions) *Entity {
 		Rune:         47 * rune(coef),
 		Float32:      47.74 * float32(coef),
 		Float64:      47.74 * float64(coef),
-		Date:         timeInt64ToEntityProperty(47 * int64(coef)),
+	}
+	var err error
+	object.Date, err = timeInt64ToEntityProperty(47 * int64(coef))
+	if err != nil {
+		panic(err)
 	}
 
 	if options != nil && options.PopulateRelations {

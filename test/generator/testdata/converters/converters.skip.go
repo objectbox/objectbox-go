@@ -6,23 +6,23 @@ import (
 )
 
 // converts Unix timestamp in milliseconds (ObjectBox date field) to time.Time
-func timeInt64ToEntityProperty(dbValue int64) (goValue time.Time) {
-	return time.Unix(dbValue/1000, dbValue%1000*1000000)
+func timeInt64ToEntityProperty(dbValue int64) (goValue time.Time, err error) {
+	return time.Unix(dbValue/1000, dbValue%1000*1000000), nil
 }
 
 // converts time.Time to Unix timestamp in milliseconds (internal format expected by ObjectBox on a date field)
-func timeInt64ToDatabaseValue(goValue time.Time) int64 {
+func timeInt64ToDatabaseValue(goValue time.Time) (int64, error) {
 	var ms = int64(goValue.Nanosecond()) / 1000000
-	return goValue.Unix()*1000 + ms
+	return goValue.Unix()*1000 + ms, nil
 }
 
-func runeIdToEntityProperty(dbValue uint64) (goValue rune) {
+func runeIdToEntityProperty(dbValue uint64) (goValue rune, err error) {
 	if uint64(rune(dbValue)) != dbValue {
-		panic(fmt.Errorf("ID %d out of range for the used type (rune)", dbValue))
+		return 0, fmt.Errorf("ID %d out of range for the used type (rune)", dbValue)
 	}
-	return rune(dbValue)
+	return rune(dbValue), nil
 }
 
-func runeIdToDatabaseValue(goValue rune) uint64 {
-	return uint64(goValue)
+func runeIdToDatabaseValue(goValue rune) (uint64, error) {
+	return uint64(goValue), nil
 }

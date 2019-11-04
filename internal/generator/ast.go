@@ -117,7 +117,7 @@ func (f *file) importedPackage(name string) (*types.Package, error) {
 	return nil, fmt.Errorf("package %s not imported in the source file", name)
 }
 
-func (f *file) getType(expr ast.Expr) (types.Type, error) {
+func (f *file) analyze() {
 	// load file info (resolved types) JiT if necessary
 	if f.info == nil {
 		// call types.Config.Check() to fill types.Info
@@ -141,7 +141,25 @@ func (f *file) getType(expr ast.Expr) (types.Type, error) {
 			// need. If the type still can't be determined, we well fail bellow, printing this error as well.
 			f.typeCheckError = err
 		}
+
+		// find all non-receiver functions (i.e. not related to any struct)
+		// this can be used to verify converters exist and have correct signatures, however it only shows functions
+		// imported in the package, e.g. it won't show `objectbox.StringIdConvertToEntityProperty`
+		// TODO finish verification
+		//for _, v := range f.info.Defs {
+		//	if def, isFn := v.(*types.Func); isFn {
+		//		if signature, isSig := def.Type().(*types.Signature); isSig {
+		//			if signature.Recv() == nil {
+		//				fmt.Println(def.Pkg().Name(), def.Name(), signature)
+		//			}
+		//		}
+		//	}
+		//}
 	}
+}
+
+func (f *file) getType(expr ast.Expr) (types.Type, error) {
+	f.analyze()
 
 	t := f.info.TypeOf(expr)
 	if t == nil {
@@ -153,6 +171,11 @@ func (f *file) getType(expr ast.Expr) (types.Type, error) {
 	}
 	return t, nil
 }
+
+/// funcSignature returns signature of a function. Can be used to verify converters - see unfinished code in analyze()
+//func (f *file) funcSignature(name string) (*types.Signature, error) {
+//	return nil, nil
+//}
 
 func (f *file) walk(fn func(ast.Node) bool) {
 	ast.Walk(fnAsVisitor(fn), f.ast)

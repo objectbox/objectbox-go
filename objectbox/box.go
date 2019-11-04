@@ -168,16 +168,16 @@ func (box *Box) put(object interface{}, alreadyInTx bool, putMode C.OBXPutMode) 
 		err = box.putOne(id, object, putMode)
 	}
 
-	if err != nil {
-		return 0, err
-	}
-
 	// update the id on the object
-	if idFromObject != id {
-		box.entity.binding.SetId(object, id)
+	if err == nil && idFromObject != id {
+		err = box.entity.binding.SetId(object, id)
 	}
 
-	return id, nil
+	if err != nil {
+		id = 0
+	}
+
+	return id, err
 }
 
 func (box *Box) putOne(id uint64, object interface{}, putMode C.OBXPutMode) error {
@@ -383,7 +383,9 @@ func (box *Box) putManyObjects(objects reflect.Value, outIds []uint64, start, en
 
 	// set IDs on the new objects
 	for _, index := range indexesNewObjects {
-		binding.SetId(objects.Index(index).Interface(), outIds[index])
+		if err := binding.SetId(objects.Index(index).Interface(), outIds[index]); err != nil {
+			return fmt.Errorf("setting ID on objects[%v] failed: %s", index, err)
+		}
 	}
 
 	return nil

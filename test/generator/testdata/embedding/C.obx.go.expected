@@ -70,8 +70,9 @@ func (c_EntityInfo) GetId(object interface{}) (uint64, error) {
 }
 
 // SetId is called by ObjectBox during Put to update an ID on an object that has just been inserted
-func (c_EntityInfo) SetId(object interface{}, id uint64) {
+func (c_EntityInfo) SetId(object interface{}, id uint64) error {
 	object.(*C).Id.Id = id
+	return nil
 }
 
 // PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
@@ -101,13 +102,14 @@ func (c_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{}, er
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
-	var id = table.GetUint64Slot(8, 0)
+
+	var propId = table.GetUint64Slot(8, 0)
 
 	return &C{
 		int64: fbutils.GetInt64Slot(table, 4),
 		val:   val(fbutils.GetUint64Slot(table, 6)),
 		Id: Id{
-			Id: id,
+			Id: propId,
 		},
 	}, nil
 }

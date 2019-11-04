@@ -4,7 +4,6 @@
 package perf
 
 import (
-	"errors"
 	"github.com/google/flatbuffers/go"
 	"github.com/objectbox/objectbox-go/objectbox"
 	"github.com/objectbox/objectbox-go/objectbox/fbutils"
@@ -24,13 +23,13 @@ var EntityBinding = entity_EntityInfo{
 
 // Entity_ contains type-based Property helpers to facilitate some common operations such as Queries.
 var Entity_ = struct {
-	ID      *objectbox.PropertyUint64
+	Id      *objectbox.PropertyUint64
 	Int32   *objectbox.PropertyInt32
 	Int64   *objectbox.PropertyInt64
 	String  *objectbox.PropertyString
 	Float64 *objectbox.PropertyFloat64
 }{
-	ID: &objectbox.PropertyUint64{
+	Id: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
 			Id:     1,
 			Entity: &EntityBinding.Entity,
@@ -70,7 +69,7 @@ func (entity_EntityInfo) GeneratorVersion() int {
 // AddToModel is called by ObjectBox during model build
 func (entity_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("Entity", 1, 1737161401460991620)
-	model.Property("ID", 6, 1, 7373286741377356014)
+	model.Property("Id", 6, 1, 7373286741377356014)
 	model.PropertyFlags(1)
 	model.Property("Int32", 5, 2, 4837914178321008766)
 	model.Property("Int64", 6, 3, 3841825182616422591)
@@ -81,12 +80,13 @@ func (entity_EntityInfo) AddToModel(model *objectbox.Model) {
 
 // GetId is called by ObjectBox during Put operations to check for existing ID on an object
 func (entity_EntityInfo) GetId(object interface{}) (uint64, error) {
-	return object.(*Entity).ID, nil
+	return object.(*Entity).Id, nil
 }
 
 // SetId is called by ObjectBox during Put to update an ID on an object that has just been inserted
-func (entity_EntityInfo) SetId(object interface{}, id uint64) {
-	object.(*Entity).ID = id
+func (entity_EntityInfo) SetId(object interface{}, id uint64) error {
+	object.(*Entity).Id = id
+	return nil
 }
 
 // PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
@@ -111,18 +111,15 @@ func (entity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, i
 
 // Load is called by ObjectBox to load an object from a FlatBuffer
 func (entity_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{}, error) {
-	if len(bytes) == 0 { // sanity check, should "never" happen
-		return nil, errors.New("can't deserialize an object of type 'Entity' - no data received")
-	}
-
 	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
-	var id = table.GetUint64Slot(4, 0)
+
+	var propId = table.GetUint64Slot(4, 0)
 
 	return &Entity{
-		ID:      id,
+		Id:      propId,
 		Int32:   fbutils.GetInt32Slot(table, 6),
 		Int64:   fbutils.GetInt64Slot(table, 8),
 		String:  fbutils.GetStringSlot(table, 10),
@@ -137,9 +134,6 @@ func (entity_EntityInfo) MakeSlice(capacity int) interface{} {
 
 // AppendToSlice is called by ObjectBox to fill the slice of the read objects
 func (entity_EntityInfo) AppendToSlice(slice interface{}, object interface{}) interface{} {
-	if object == nil {
-		return append(slice.([]*Entity), nil)
-	}
 	return append(slice.([]*Entity), object.(*Entity))
 }
 
@@ -156,8 +150,8 @@ func BoxForEntity(ob *objectbox.ObjectBox) *EntityBox {
 }
 
 // Put synchronously inserts/updates a single object.
-// In case the ID is not specified, it would be assigned automatically (auto-increment).
-// When inserting, the Entity.ID property on the passed object will be assigned the new ID as well.
+// In case the Id is not specified, it would be assigned automatically (auto-increment).
+// When inserting, the Entity.Id property on the passed object will be assigned the new ID as well.
 func (box *EntityBox) Put(object *Entity) (uint64, error) {
 	return box.Box.Put(object)
 }
@@ -182,12 +176,12 @@ func (box *EntityBox) PutAsync(object *Entity) (uint64, error) {
 }
 
 // PutMany inserts multiple objects in single transaction.
-// In case IDs are not set on the objects, they would be assigned automatically (auto-increment).
+// In case Ids are not set on the objects, they would be assigned automatically (auto-increment).
 //
 // Returns: IDs of the put objects (in the same order).
-// When inserting, the Entity.ID property on the objects in the slice will be assigned the new IDs as well.
+// When inserting, the Entity.Id property on the objects in the slice will be assigned the new IDs as well.
 //
-// Note: In case an error occurs during the transaction, some of the objects may already have the Entity.ID assigned
+// Note: In case an error occurs during the transaction, some of the objects may already have the Entity.Id assigned
 // even though the transaction has been rolled back and the objects are not stored under those IDs.
 //
 // Note: The slice may be empty or even nil; in both cases, an empty IDs slice and no error is returned.
@@ -218,15 +212,6 @@ func (box *EntityBox) GetMany(ids ...uint64) ([]*Entity, error) {
 	return objects.([]*Entity), nil
 }
 
-// GetManyExisting reads multiple objects at once, skipping those that do not exist.
-func (box *EntityBox) GetManyExisting(ids ...uint64) ([]*Entity, error) {
-	objects, err := box.Box.GetManyExisting(ids...)
-	if err != nil {
-		return nil, err
-	}
-	return objects.([]*Entity), nil
-}
-
 // GetAll reads all stored objects
 func (box *EntityBox) GetAll() ([]*Entity, error) {
 	objects, err := box.Box.GetAll()
@@ -249,7 +234,7 @@ func (box *EntityBox) Remove(object *Entity) error {
 func (box *EntityBox) RemoveMany(objects ...*Entity) (uint64, error) {
 	var ids = make([]uint64, len(objects))
 	for k, object := range objects {
-		ids[k] = object.ID
+		ids[k] = object.Id
 	}
 	return box.Box.RemoveIds(ids...)
 }
@@ -338,8 +323,8 @@ func (asyncBox *EntityAsyncBox) Remove(object *Entity) error {
 
 // Query provides a way to search stored objects
 //
-// For example, you can find all Entity which ID is either 42 or 47:
-// 		box.Query(Entity_.ID.In(42, 47)).Find()
+// For example, you can find all Entity which Id is either 42 or 47:
+// 		box.Query(Entity_.Id.In(42, 47)).Find()
 type EntityQuery struct {
 	*objectbox.Query
 }

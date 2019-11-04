@@ -49,12 +49,14 @@ func (stringIdEntity_EntityInfo) AddToModel(model *objectbox.Model) {
 
 // GetId is called by ObjectBox during Put operations to check for existing ID on an object
 func (stringIdEntity_EntityInfo) GetId(object interface{}) (uint64, error) {
-	return objectbox.StringIdConvertToDatabaseValue(object.(*StringIdEntity).Id), nil
+	return objectbox.StringIdConvertToDatabaseValue(object.(*StringIdEntity).Id)
 }
 
 // SetId is called by ObjectBox during Put to update an ID on an object that has just been inserted
-func (stringIdEntity_EntityInfo) SetId(object interface{}, id uint64) {
-	object.(*StringIdEntity).Id = objectbox.StringIdConvertToEntityProperty(id)
+func (stringIdEntity_EntityInfo) SetId(object interface{}, id uint64) error {
+	var err error
+	object.(*StringIdEntity).Id, err = objectbox.StringIdConvertToEntityProperty(id)
+	return err
 }
 
 // PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
@@ -81,10 +83,14 @@ func (stringIdEntity_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (in
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
-	var id = table.GetUint64Slot(4, 0)
+
+	propId, err := objectbox.StringIdConvertToEntityProperty(fbutils.GetUint64Slot(table, 4))
+	if err != nil {
+		return nil, errors.New("converter objectbox.StringIdConvertToEntityProperty() failed on StringIdEntity.Id: " + err.Error())
+	}
 
 	return &StringIdEntity{
-		Id: objectbox.StringIdConvertToEntityProperty(id),
+		Id: propId,
 	}, nil
 }
 
@@ -206,8 +212,12 @@ func (box *StringIdEntityBox) Remove(object *StringIdEntity) error {
 // you can execute multiple box.Contains() and box.Remove() inside a single write transaction.
 func (box *StringIdEntityBox) RemoveMany(objects ...*StringIdEntity) (uint64, error) {
 	var ids = make([]uint64, len(objects))
+	var err error
 	for k, object := range objects {
-		ids[k] = objectbox.StringIdConvertToDatabaseValue(object.Id)
+		ids[k], err = objectbox.StringIdConvertToDatabaseValue(object.Id)
+		if err != nil {
+			return 0, errors.New("converter objectbox.StringIdConvertToDatabaseValue() failed on StringIdEntity.Id: " + err.Error())
+		}
 	}
 	return box.Box.RemoveIds(ids...)
 }

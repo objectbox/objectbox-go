@@ -4,7 +4,6 @@
 package object
 
 import (
-	"errors"
 	"github.com/google/flatbuffers/go"
 	"github.com/objectbox/objectbox-go/objectbox"
 	"github.com/objectbox/objectbox-go/objectbox/fbutils"
@@ -49,12 +48,13 @@ func (d_EntityInfo) AddToModel(model *objectbox.Model) {
 
 // GetId is called by ObjectBox during Put operations to check for existing ID on an object
 func (d_EntityInfo) GetId(object interface{}) (uint64, error) {
-	return uint64(object.(*D).Id), nil
+	return object.(*D).Id, nil
 }
 
 // SetId is called by ObjectBox during Put to update an ID on an object that has just been inserted
-func (d_EntityInfo) SetId(object interface{}, id uint64) {
-	object.(*D).Id = int64(id)
+func (d_EntityInfo) SetId(object interface{}, id uint64) error {
+	object.(*D).Id = id
+	return nil
 }
 
 // PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
@@ -67,24 +67,21 @@ func (d_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uin
 
 	// build the FlatBuffers object
 	fbb.StartObject(1)
-	fbutils.SetUint64Slot(fbb, 0, id)
+	fbutils.SetInt64Slot(fbb, 0, id)
 	return nil
 }
 
 // Load is called by ObjectBox to load an object from a FlatBuffer
 func (d_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{}, error) {
-	if len(bytes) == 0 { // sanity check, should "never" happen
-		return nil, errors.New("can't deserialize an object of type 'D' - no data received")
-	}
-
 	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
-	var id = table.GetInt64Slot(4, 0)
+
+	var propId = table.GetInt64Slot(4, 0)
 
 	return &D{
-		Id: id,
+		Id: propId,
 	}, nil
 }
 
@@ -95,9 +92,6 @@ func (d_EntityInfo) MakeSlice(capacity int) interface{} {
 
 // AppendToSlice is called by ObjectBox to fill the slice of the read objects
 func (d_EntityInfo) AppendToSlice(slice interface{}, object interface{}) interface{} {
-	if object == nil {
-		return append(slice.([]*D), nil)
-	}
 	return append(slice.([]*D), object.(*D))
 }
 
@@ -176,15 +170,6 @@ func (box *DBox) GetMany(ids ...uint64) ([]*D, error) {
 	return objects.([]*D), nil
 }
 
-// GetManyExisting reads multiple objects at once, skipping those that do not exist.
-func (box *DBox) GetManyExisting(ids ...uint64) ([]*D, error) {
-	objects, err := box.Box.GetManyExisting(ids...)
-	if err != nil {
-		return nil, err
-	}
-	return objects.([]*D), nil
-}
-
 // GetAll reads all stored objects
 func (box *DBox) GetAll() ([]*D, error) {
 	objects, err := box.Box.GetAll()
@@ -207,7 +192,7 @@ func (box *DBox) Remove(object *D) error {
 func (box *DBox) RemoveMany(objects ...*D) (uint64, error) {
 	var ids = make([]uint64, len(objects))
 	for k, object := range objects {
-		ids[k] = uint64(object.Id)
+		ids[k] = object.Id
 	}
 	return box.Box.RemoveIds(ids...)
 }

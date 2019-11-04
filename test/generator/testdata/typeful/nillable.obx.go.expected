@@ -210,8 +210,9 @@ func (nillable_EntityInfo) GetId(object interface{}) (uint64, error) {
 }
 
 // SetId is called by ObjectBox during Put to update an ID on an object that has just been inserted
-func (nillable_EntityInfo) SetId(object interface{}, id uint64) {
+func (nillable_EntityInfo) SetId(object interface{}, id uint64) error {
 	object.(*Nillable).Id = id
+	return nil
 }
 
 // PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
@@ -222,14 +223,17 @@ func (nillable_EntityInfo) PutRelated(ob *objectbox.ObjectBox, object interface{
 // Flatten is called by ObjectBox to transform an object to a FlatBuffer
 func (nillable_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) error {
 	obj := object.(*Nillable)
+
 	var offsetString flatbuffers.UOffsetT
 	if obj.String != nil {
 		offsetString = fbutils.CreateStringOffset(fbb, *obj.String)
 	}
+
 	var offsetStringVector flatbuffers.UOffsetT
 	if obj.StringVector != nil {
 		offsetStringVector = fbutils.CreateStringVectorOffset(fbb, *obj.StringVector)
 	}
+
 	var offsetByteVector flatbuffers.UOffsetT
 	if obj.ByteVector != nil {
 		offsetByteVector = fbutils.CreateByteVectorOffset(fbb, *obj.ByteVector)
@@ -308,10 +312,11 @@ func (nillable_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interfac
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
-	var id = table.GetUint64Slot(4, 0)
+
+	var propId = table.GetUint64Slot(4, 0)
 
 	return &Nillable{
-		Id:           id,
+		Id:           propId,
 		Int:          fbutils.GetIntPtrSlot(table, 6),
 		Int8:         fbutils.GetInt8PtrSlot(table, 8),
 		Int16:        fbutils.GetInt16PtrSlot(table, 10),

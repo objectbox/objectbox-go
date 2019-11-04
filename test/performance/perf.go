@@ -14,69 +14,69 @@
  * limitations under the License.
  */
 
-package perf
+package main
 
 import (
 	"fmt"
+	"github.com/objectbox/objectbox-go/objectbox"
+	"github.com/objectbox/objectbox-go/test/performance/perf"
 	"path/filepath"
 	"runtime"
 	"time"
-
-	"github.com/objectbox/objectbox-go/objectbox"
 )
 
-type Executor struct {
+type executor struct {
 	ob    *objectbox.ObjectBox
-	box   *EntityBox
+	box   *perf.EntityBox
 	times map[string][]time.Duration // arrays of runtimes indexed by function name
 }
 
-func CreateExecutor(dbName string) *Executor {
-	result := &Executor{
+func createExecutor(dbName string) *executor {
+	result := &executor{
 		times: map[string][]time.Duration{},
 	}
 	result.initObjectBox(dbName)
 	return result
 }
 
-func (perf *Executor) initObjectBox(dbName string) {
-	defer perf.trackTime(time.Now())
+func (exec *executor) initObjectBox(dbName string) {
+	defer exec.trackTime(time.Now())
 
-	objectBox, err := objectbox.NewBuilder().Directory(dbName).Model(ObjectBoxModel()).Build()
+	objectBox, err := objectbox.NewBuilder().Directory(dbName).Model(perf.ObjectBoxModel()).Build()
 	if err != nil {
 		panic(err)
 	}
 
-	perf.ob = objectBox
-	perf.box = BoxForEntity(objectBox)
+	exec.ob = objectBox
+	exec.box = perf.BoxForEntity(objectBox)
 }
 
-func (perf *Executor) Close() {
-	defer perf.trackTime(time.Now())
+func (exec *executor) close() {
+	defer exec.trackTime(time.Now())
 
-	perf.ob.Close()
+	exec.ob.Close()
 }
 
-func (perf *Executor) trackTime(start time.Time) {
+func (exec *executor) trackTime(start time.Time) {
 	elapsed := time.Since(start)
 
 	pc, _, _, _ := runtime.Caller(1)
 	fun := filepath.Ext(runtime.FuncForPC(pc).Name())[1:]
-	perf.times[fun] = append(perf.times[fun], elapsed)
+	exec.times[fun] = append(exec.times[fun], elapsed)
 }
 
-func (perf *Executor) PrintTimes(functions []string) {
+func (exec *executor) printTimes(functions []string) {
 	// print the whole data as a table
 	fmt.Println("Function\tRuns\tAverage ms\tAll times")
 
 	if len(functions) == 0 {
-		for fun := range perf.times {
+		for fun := range exec.times {
 			functions = append(functions, fun)
 		}
 	}
 
 	for _, fun := range functions {
-		times := perf.times[fun]
+		times := exec.times[fun]
 
 		sum := int64(0)
 		for _, duration := range times {
@@ -91,20 +91,20 @@ func (perf *Executor) PrintTimes(functions []string) {
 	}
 }
 
-func (perf *Executor) RemoveAll() {
-	defer perf.trackTime(time.Now())
-	err := perf.box.RemoveAll()
+func (exec *executor) removeAll() {
+	defer exec.trackTime(time.Now())
+	err := exec.box.RemoveAll()
 	if err != nil {
 		panic(err)
 	}
 }
 
-func (perf *Executor) PrepareData(count int) []*Entity {
-	defer perf.trackTime(time.Now())
+func (exec *executor) prepareData(count int) []*perf.Entity {
+	defer exec.trackTime(time.Now())
 
-	var result = make([]*Entity, count)
+	var result = make([]*perf.Entity, count)
 	for i := 0; i < count; i++ {
-		result[i] = &Entity{
+		result[i] = &perf.Entity{
 			String:  fmt.Sprintf("Entity no. %d", i),
 			Float64: float64(i),
 			Int32:   int32(i),
@@ -115,15 +115,15 @@ func (perf *Executor) PrepareData(count int) []*Entity {
 	return result
 }
 
-func (perf *Executor) PutAsync(items []*Entity) {
-	defer perf.trackTime(time.Now())
+func (exec *executor) putAsync(items []*perf.Entity) {
+	defer exec.trackTime(time.Now())
 
 	const retries = 20
 
 	var putErr error
 	for _, item := range items {
 		for i := 0; i < retries; i++ {
-			if _, putErr = perf.box.PutAsync(item); putErr != nil {
+			if _, putErr = exec.box.PutAsync(item); putErr != nil {
 				// before each retry we sleep for a little more
 				time.Sleep(time.Duration(i+1) * time.Second)
 			} else {
@@ -137,7 +137,7 @@ func (perf *Executor) PutAsync(items []*Entity) {
 		}
 	}
 
-	if err := perf.ob.AwaitAsyncCompletion(); err != nil {
+	if err := exec.ob.AwaitAsyncCompletion(); err != nil {
 		panic(err)
 	}
 
@@ -147,18 +147,18 @@ func (perf *Executor) PutAsync(items []*Entity) {
 	}
 }
 
-func (perf *Executor) PutMany(items []*Entity) {
-	defer perf.trackTime(time.Now())
+func (exec *executor) putMany(items []*perf.Entity) {
+	defer exec.trackTime(time.Now())
 
-	if _, err := perf.box.PutMany(items); err != nil {
+	if _, err := exec.box.PutMany(items); err != nil {
 		panic(err)
 	}
 }
 
-func (perf *Executor) ReadAll(count int) []*Entity {
-	defer perf.trackTime(time.Now())
+func (exec *executor) readAll(count int) []*perf.Entity {
+	defer exec.trackTime(time.Now())
 
-	if items, err := perf.box.GetAll(); err != nil {
+	if items, err := exec.box.GetAll(); err != nil {
 		panic(err)
 	} else if len(items) != count {
 		panic("invalid number of objects read")
@@ -167,8 +167,8 @@ func (perf *Executor) ReadAll(count int) []*Entity {
 	}
 }
 
-func (perf *Executor) ChangeValues(items []*Entity) {
-	defer perf.trackTime(time.Now())
+func (exec *executor) changeValues(items []*perf.Entity) {
+	defer exec.trackTime(time.Now())
 
 	count := len(items)
 	for i := 0; i < count; i++ {
@@ -176,10 +176,10 @@ func (perf *Executor) ChangeValues(items []*Entity) {
 	}
 }
 
-func (perf *Executor) UpdateAll(items []*Entity) {
-	defer perf.trackTime(time.Now())
+func (exec *executor) updateAll(items []*perf.Entity) {
+	defer exec.trackTime(time.Now())
 
-	if _, err := perf.box.PutMany(items); err != nil {
+	if _, err := exec.box.PutMany(items); err != nil {
 		panic(err)
 	}
 }

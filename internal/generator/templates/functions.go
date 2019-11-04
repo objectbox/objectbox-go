@@ -30,8 +30,7 @@ var funcMap = template.FuncMap{
 	"TypeIdentifier": func(s string) string {
 		if strings.HasPrefix(s, "[]") {
 			return strings.Title(s[2:]) + "Vector"
-		} else {
-			return strings.Title(s)
 		}
+		return strings.Title(s)
 	},
 }

@@ -29,7 +29,7 @@ import (
 	"unsafe"
 )
 
-// Internal class; use Box.Query instead.
+// QueryBuilder is an internal class; use Box.Query instead.
 // Allows construction of queries; just check queryBuilder.Error or err from Build()
 type QueryBuilder struct {
 	objectBox     *ObjectBox
@@ -74,6 +74,7 @@ func (qb *QueryBuilder) newInnerBuilder(typeId TypeId, cqb *C.OBX_query_builder)
 	return iqb
 }
 
+// Close is called internally
 func (qb *QueryBuilder) Close() error {
 	// close inner builders while collecting errors
 	var errs []string
@@ -100,6 +101,7 @@ func (qb *QueryBuilder) Close() error {
 	return nil
 }
 
+// Build is called internally
 func (qb *QueryBuilder) Build(box *Box) (*Query, error) {
 	if qb.Err != nil {
 		return nil, qb.Err
@@ -148,6 +150,7 @@ func (qb *QueryBuilder) applyConditions(conditions []Condition) error {
 	return qb.Err
 }
 
+// LinkOneToMany is called internally
 func (qb *QueryBuilder) LinkOneToMany(relation *RelationToOne, conditions []Condition) error {
 	if qb.Err != nil {
 		return qb.Err
@@ -182,6 +185,7 @@ func (qb *QueryBuilder) LinkOneToMany(relation *RelationToOne, conditions []Cond
 	return iqb.applyConditions(conditions)
 }
 
+// LinkManyToMany is called internally
 func (qb *QueryBuilder) LinkManyToMany(relation *RelationToMany, conditions []Condition) error {
 	if qb.Err != nil {
 		return qb.Err
@@ -251,6 +255,7 @@ func (qb *QueryBuilder) getConditionId(cid C.obx_qb_cond) ConditionId {
 	return ConditionId(cid)
 }
 
+// Any is called internally
 func (qb *QueryBuilder) Any(ids []ConditionId) (ConditionId, error) {
 	var cid ConditionId
 
@@ -261,6 +266,7 @@ func (qb *QueryBuilder) Any(ids []ConditionId) (ConditionId, error) {
 	return cid, qb.Err
 }
 
+// All is called internally
 func (qb *QueryBuilder) All(ids []ConditionId) (ConditionId, error) {
 	var cid ConditionId
 
@@ -271,6 +277,7 @@ func (qb *QueryBuilder) All(ids []ConditionId) (ConditionId, error) {
 	return cid, qb.Err
 }
 
+// IsNil is called internally
 func (qb *QueryBuilder) IsNil(property *BaseProperty) (ConditionId, error) {
 	var cid ConditionId
 
@@ -281,6 +288,7 @@ func (qb *QueryBuilder) IsNil(property *BaseProperty) (ConditionId, error) {
 	return cid, qb.Err
 }
 
+// IsNotNil is called internally
 func (qb *QueryBuilder) IsNotNil(property *BaseProperty) (ConditionId, error) {
 	var cid ConditionId
 
@@ -291,6 +299,7 @@ func (qb *QueryBuilder) IsNotNil(property *BaseProperty) (ConditionId, error) {
 	return cid, qb.Err
 }
 
+// StringEquals is called internally
 func (qb *QueryBuilder) StringEquals(property *BaseProperty, value string, caseSensitive bool) (ConditionId, error) {
 	var cid ConditionId
 
@@ -303,6 +312,7 @@ func (qb *QueryBuilder) StringEquals(property *BaseProperty, value string, caseS
 	return cid, qb.Err
 }
 
+// StringIn is called internally
 func (qb *QueryBuilder) StringIn(property *BaseProperty, values []string, caseSensitive bool) (ConditionId, error) {
 	var cid ConditionId
 
@@ -319,6 +329,7 @@ func (qb *QueryBuilder) StringIn(property *BaseProperty, values []string, caseSe
 	return cid, qb.Err
 }
 
+// StringContains is called internally
 func (qb *QueryBuilder) StringContains(property *BaseProperty, value string, caseSensitive bool) (ConditionId, error) {
 	var cid ConditionId
 
@@ -331,6 +342,7 @@ func (qb *QueryBuilder) StringContains(property *BaseProperty, value string, cas
 	return cid, qb.Err
 }
 
+// StringHasPrefix is called internally
 func (qb *QueryBuilder) StringHasPrefix(property *BaseProperty, value string, caseSensitive bool) (ConditionId, error) {
 	var cid ConditionId
 
@@ -343,6 +355,7 @@ func (qb *QueryBuilder) StringHasPrefix(property *BaseProperty, value string, ca
 	return cid, qb.Err
 }
 
+// StringHasSuffix is called internally
 func (qb *QueryBuilder) StringHasSuffix(property *BaseProperty, value string, caseSensitive bool) (ConditionId, error) {
 	var cid ConditionId
 
@@ -355,6 +368,7 @@ func (qb *QueryBuilder) StringHasSuffix(property *BaseProperty, value string, ca
 	return cid, qb.Err
 }
 
+// StringNotEquals is called internally
 func (qb *QueryBuilder) StringNotEquals(property *BaseProperty, value string, caseSensitive bool) (ConditionId, error) {
 	var cid ConditionId
 
@@ -367,6 +381,7 @@ func (qb *QueryBuilder) StringNotEquals(property *BaseProperty, value string, ca
 	return cid, qb.Err
 }
 
+// StringGreater is called internally
 func (qb *QueryBuilder) StringGreater(property *BaseProperty, value string, caseSensitive bool, withEqual bool) (ConditionId, error) {
 	var cid ConditionId
 
@@ -379,6 +394,7 @@ func (qb *QueryBuilder) StringGreater(property *BaseProperty, value string, case
 	return cid, qb.Err
 }
 
+// StringLess is called internally
 func (qb *QueryBuilder) StringLess(property *BaseProperty, value string, caseSensitive bool, withEqual bool) (ConditionId, error) {
 	var cid ConditionId
 
@@ -391,6 +407,7 @@ func (qb *QueryBuilder) StringLess(property *BaseProperty, value string, caseSen
 	return cid, qb.Err
 }
 
+// StringVectorContains is called internally
 func (qb *QueryBuilder) StringVectorContains(property *BaseProperty, value string, caseSensitive bool) (ConditionId, error) {
 	var cid ConditionId
 
@@ -403,6 +420,7 @@ func (qb *QueryBuilder) StringVectorContains(property *BaseProperty, value strin
 	return cid, qb.Err
 }
 
+// IntBetween is called internally
 func (qb *QueryBuilder) IntBetween(property *BaseProperty, value1 int64, value2 int64) (ConditionId, error) {
 	var cid ConditionId
 
@@ -413,6 +431,7 @@ func (qb *QueryBuilder) IntBetween(property *BaseProperty, value1 int64, value2 
 	return cid, qb.Err
 }
 
+// IntEqual is called internally
 func (qb *QueryBuilder) IntEqual(property *BaseProperty, value int64) (ConditionId, error) {
 	var cid ConditionId
 
@@ -423,6 +442,7 @@ func (qb *QueryBuilder) IntEqual(property *BaseProperty, value int64) (Condition
 	return cid, qb.Err
 }
 
+// IntNotEqual is called internally
 func (qb *QueryBuilder) IntNotEqual(property *BaseProperty, value int64) (ConditionId, error) {
 	var cid ConditionId
 
@@ -433,6 +453,7 @@ func (qb *QueryBuilder) IntNotEqual(property *BaseProperty, value int64) (Condit
 	return cid, qb.Err
 }
 
+// IntGreater is called internally
 func (qb *QueryBuilder) IntGreater(property *BaseProperty, value int64) (ConditionId, error) {
 	var cid ConditionId
 
@@ -443,6 +464,7 @@ func (qb *QueryBuilder) IntGreater(property *BaseProperty, value int64) (Conditi
 	return cid, qb.Err
 }
 
+// IntLess is called internally
 func (qb *QueryBuilder) IntLess(property *BaseProperty, value int64) (ConditionId, error) {
 	var cid ConditionId
 
@@ -453,6 +475,7 @@ func (qb *QueryBuilder) IntLess(property *BaseProperty, value int64) (ConditionI
 	return cid, qb.Err
 }
 
+// Int64In is called internally
 func (qb *QueryBuilder) Int64In(property *BaseProperty, values []int64) (ConditionId, error) {
 	var cid ConditionId
 
@@ -463,6 +486,7 @@ func (qb *QueryBuilder) Int64In(property *BaseProperty, values []int64) (Conditi
 	return cid, qb.Err
 }
 
+// Int64NotIn is called internally
 func (qb *QueryBuilder) Int64NotIn(property *BaseProperty, values []int64) (ConditionId, error) {
 	var cid ConditionId
 
@@ -473,6 +497,7 @@ func (qb *QueryBuilder) Int64NotIn(property *BaseProperty, values []int64) (Cond
 	return cid, qb.Err
 }
 
+// Int32In is called internally
 func (qb *QueryBuilder) Int32In(property *BaseProperty, values []int32) (ConditionId, error) {
 	var cid ConditionId
 
@@ -483,6 +508,7 @@ func (qb *QueryBuilder) Int32In(property *BaseProperty, values []int32) (Conditi
 	return cid, qb.Err
 }
 
+// Int32NotIn is called internally
 func (qb *QueryBuilder) Int32NotIn(property *BaseProperty, values []int32) (ConditionId, error) {
 	var cid ConditionId
 
@@ -493,6 +519,7 @@ func (qb *QueryBuilder) Int32NotIn(property *BaseProperty, values []int32) (Cond
 	return cid, qb.Err
 }
 
+// DoubleGreater is called internally
 func (qb *QueryBuilder) DoubleGreater(property *BaseProperty, value float64) (ConditionId, error) {
 	var cid ConditionId
 
@@ -503,6 +530,7 @@ func (qb *QueryBuilder) DoubleGreater(property *BaseProperty, value float64) (Co
 	return cid, qb.Err
 }
 
+// DoubleLess is called internally
 func (qb *QueryBuilder) DoubleLess(property *BaseProperty, value float64) (ConditionId, error) {
 	var cid ConditionId
 
@@ -513,6 +541,7 @@ func (qb *QueryBuilder) DoubleLess(property *BaseProperty, value float64) (Condi
 	return cid, qb.Err
 }
 
+// DoubleBetween is called internally
 func (qb *QueryBuilder) DoubleBetween(property *BaseProperty, valueA float64, valueB float64) (ConditionId, error) {
 	var cid ConditionId
 
@@ -523,6 +552,7 @@ func (qb *QueryBuilder) DoubleBetween(property *BaseProperty, valueA float64, va
 	return cid, qb.Err
 }
 
+// BytesEqual is called internally
 func (qb *QueryBuilder) BytesEqual(property *BaseProperty, value []byte) (ConditionId, error) {
 	var cid ConditionId
 
@@ -533,6 +563,7 @@ func (qb *QueryBuilder) BytesEqual(property *BaseProperty, value []byte) (Condit
 	return cid, qb.Err
 }
 
+// BytesGreater is called internally
 func (qb *QueryBuilder) BytesGreater(property *BaseProperty, value []byte, withEqual bool) (ConditionId, error) {
 	var cid ConditionId
 
@@ -543,6 +574,7 @@ func (qb *QueryBuilder) BytesGreater(property *BaseProperty, value []byte, withE
 	return cid, qb.Err
 }
 
+// BytesLess is called internally
 func (qb *QueryBuilder) BytesLess(property *BaseProperty, value []byte, withEqual bool) (ConditionId, error) {
 	var cid ConditionId
 

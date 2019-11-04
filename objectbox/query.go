@@ -45,7 +45,7 @@ type Query struct {
 	linkedEntityIds []TypeId
 }
 
-// Frees (native) resources held by this Query.
+// Close frees (native) resources held by this Query.
 // Note that this is optional and not required because the GC invokes a finalizer automatically.
 func (query *Query) Close() error {
 	query.closeMutex.Lock()
@@ -89,14 +89,13 @@ func (query *Query) Find() (objects interface{}, err error) {
 			return C.obx_query_find(query.cQuery, C.uint64_t(query.offset), C.uint64_t(query.limit))
 		}
 		return query.box.readManyObjects(cFn)
-
-	} else {
-		var cFn = func(visitorArg unsafe.Pointer) C.obx_err {
-			return C.obx_query_visit(query.cQuery, dataVisitor, visitorArg,
-				C.uint64_t(query.offset), C.uint64_t(query.limit))
-		}
-		return query.box.readUsingVisitor(cFn)
 	}
+
+	var cFn = func(visitorArg unsafe.Pointer) C.obx_err {
+		return C.obx_query_visit(query.cQuery, dataVisitor, visitorArg,
+			C.uint64_t(query.offset), C.uint64_t(query.limit))
+	}
+	return query.box.readUsingVisitor(cFn)
 }
 
 // Offset defines the index of the first object to process (how many objects to skip)
@@ -188,11 +187,13 @@ func (query *Query) checkEntityId(entityId TypeId) error {
 	return fmt.Errorf("property from a different entity %d passed, expected %d", entityId, query.entity.id)
 }
 
+// Property is a base class for all property types. It is used mainly for queries.
 type Property interface {
 	propertyId() TypeId
 	entityId() TypeId
 }
 
+// SetStringParams changes query parameter values on the given property
 func (query *Query) SetStringParams(property Property, values ...string) error {
 	if err := query.checkEntityId(property.entityId()); err != nil {
 		return err
@@ -212,6 +213,7 @@ func (query *Query) SetStringParams(property Property, values ...string) error {
 	return fmt.Errorf("too many values given")
 }
 
+// SetStringParamsIn changes query parameter values on the given property
 func (query *Query) SetStringParamsIn(property Property, values ...string) error {
 	if err := query.checkEntityId(property.entityId()); err != nil {
 		return err
@@ -229,6 +231,7 @@ func (query *Query) SetStringParamsIn(property Property, values ...string) error
 	})
 }
 
+// SetInt64Params changes query parameter values on the given property
 func (query *Query) SetInt64Params(property Property, values ...int64) error {
 	if err := query.checkEntityId(property.entityId()); err != nil {
 		return err
@@ -252,6 +255,7 @@ func (query *Query) SetInt64Params(property Property, values ...int64) error {
 	return fmt.Errorf("too many values given")
 }
 
+// SetInt64ParamsIn changes query parameter values on the given property
 func (query *Query) SetInt64ParamsIn(property Property, values ...int64) error {
 	if err := query.checkEntityId(property.entityId()); err != nil {
 		return err
@@ -266,6 +270,7 @@ func (query *Query) SetInt64ParamsIn(property Property, values ...int64) error {
 	})
 }
 
+// SetInt32ParamsIn changes query parameter values on the given property
 func (query *Query) SetInt32ParamsIn(property Property, values ...int32) error {
 	if err := query.checkEntityId(property.entityId()); err != nil {
 		return err
@@ -280,6 +285,7 @@ func (query *Query) SetInt32ParamsIn(property Property, values ...int32) error {
 	})
 }
 
+// SetFloat64Params changes query parameter values on the given property
 func (query *Query) SetFloat64Params(property Property, values ...float64) error {
 	if err := query.checkEntityId(property.entityId()); err != nil {
 		return err
@@ -303,6 +309,7 @@ func (query *Query) SetFloat64Params(property Property, values ...float64) error
 	return fmt.Errorf("too many values given")
 }
 
+// SetBytesParams changes query parameter values on the given property
 func (query *Query) SetBytesParams(property Property, values ...[]byte) error {
 	if err := query.checkEntityId(property.entityId()); err != nil {
 		return err

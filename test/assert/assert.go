@@ -25,13 +25,14 @@ import (
 	"testing"
 )
 
+// True asserts that the given value is a boolean true
 func True(t *testing.T, actual interface{}) {
 	if actual != true {
 		Failf(t, "Expected: true\nReceived: %v", actual)
 	}
 }
 
-// Uses reflect.DeepEqual to test for equality
+// Eq asserts the values are equal. Uses reflect.DeepEqual to test for equality
 func Eq(t *testing.T, expected interface{}, actual interface{}) {
 	if expected == nil && actual == nil {
 		return
@@ -41,7 +42,7 @@ func Eq(t *testing.T, expected interface{}, actual interface{}) {
 	}
 }
 
-// EqItems checks whether two slices have the same elements (regardless of their order)
+// EqItems asserts the given slices have the same elements (regardless of their order)
 func EqItems(t *testing.T, expected interface{}, actual interface{}) {
 	var exp = reflect.ValueOf(expected)
 	var act = reflect.ValueOf(actual)
@@ -94,29 +95,33 @@ func EqItems(t *testing.T, expected interface{}, actual interface{}) {
 	}
 }
 
-// Uses reflect.DeepEqual to test for equality
+// NotEq asserts the given values are not equal. Uses reflect.DeepEqual to test for equality
 func NotEq(t *testing.T, notThisValue interface{}, actual interface{}) {
 	if reflect.DeepEqual(notThisValue, actual) {
 		Failf(t, "Expected a value other than %v", notThisValue)
 	}
 }
 
+// Err asserts the error is not nil
 func Err(t *testing.T, err error) {
 	if err == nil {
 		Failf(t, "Expected error hasn't occurred: %v", err)
 	}
 }
 
+// NoErr asserts the error is nil
 func NoErr(t *testing.T, err error) {
 	if err != nil {
 		Failf(t, "Unexpected error occurred: %v", err)
 	}
 }
 
+// Failf fails immediately
 func Failf(t *testing.T, format string, args ...interface{}) {
 	Fail(t, fmt.Sprintf(format, args...))
 }
 
+// Fail fails immediately
 func Fail(t *testing.T, text string) {
 	stackString := "Call stack:\n"
 	for idx := 1; ; idx++ {
@@ -140,7 +145,7 @@ func Fail(t *testing.T, text string) {
 	}
 }
 
-// mustPanic ensures that the caller's context will panic and that the panic will match the given regular expression
+// MustPanic ensures that the caller's context will panic and that the panic will match the given regular expression
 //   func() {
 //   	defer mustPanic(t, regexp.MustCompile("+*"))
 //		panic("some text")

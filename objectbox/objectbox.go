@@ -31,11 +31,20 @@ import (
 )
 
 const (
-	DebugflagsLogTransactionsRead  = 1
+	// DebugflagsLogTransactionsRead enable read transaction logging
+	DebugflagsLogTransactionsRead = 1
+
+	// DebugflagsLogTransactionsWrite enable write transaction logging
 	DebugflagsLogTransactionsWrite = 2
-	DebugflagsLogQueries           = 4
-	DebugflagsLogQueryParameters   = 8
-	DebugflagsLogAsyncQueue        = 16
+
+	// DebugflagsLogQueries enable query logging
+	DebugflagsLogQueries = 4
+
+	// DebugflagsLogQueryParameters enable query parameters logging
+	DebugflagsLogQueryParameters = 8
+
+	// DebugflagsLogAsyncQueue enable async operations logging
+	DebugflagsLogAsyncQueue = 16
 )
 
 const (
@@ -58,8 +67,10 @@ const (
 const aTrue = 1
 const aFalse = 0
 
+// TypeId is a type of an internal ID on model/property/relation/index
 type TypeId uint32
 
+// ObjectBox provides super-fast object storage
 type ObjectBox struct {
 	store          *C.OBX_store
 	entitiesById   map[TypeId]*entity
@@ -145,20 +156,20 @@ func (ob *ObjectBox) runInTxn(readOnly bool, fn func() error) (err error) {
 	return err
 }
 
-func (ob *ObjectBox) getEntityById(typeId TypeId) *entity {
-	entity := ob.entitiesById[typeId]
+func (ob *ObjectBox) getEntityById(id TypeId) *entity {
+	entity := ob.entitiesById[id]
 	if entity == nil {
 		// Configuration error by the dev, OK to panic
-		panic("Configuration error; no entity registered for type ID " + strconv.Itoa(int(typeId)))
+		panic("Configuration error; no entity registered for entity ID " + strconv.Itoa(int(id)))
 	}
 	return entity
 }
 
-func (ob *ObjectBox) getEntityByName(typeName string) *entity {
-	entity := ob.entitiesByName[typeName]
+func (ob *ObjectBox) getEntityByName(name string) *entity {
+	entity := ob.entitiesByName[name]
 	if entity == nil {
 		// Configuration error by the dev, OK to panic
-		panic("Configuration error; no entity registered for type name " + typeName)
+		panic("Configuration error; no entity registered for entity name " + name)
 	}
 	return entity
 }
@@ -172,29 +183,30 @@ func (ob *ObjectBox) SetDebugFlags(flags uint) error {
 }
 
 // InternalBox returns an Entity Box or panics on error (in case entity with the given ID doesn't exist)
-func (ob *ObjectBox) InternalBox(typeId TypeId) *Box {
-	box, err := ob.box(typeId)
+func (ob *ObjectBox) InternalBox(entityId TypeId) *Box {
+	box, err := ob.box(entityId)
 	if err != nil {
-		panic(fmt.Sprintf("Could not create box for type ID %d: %s", typeId, err))
+		panic(fmt.Sprintf("Could not create box for entity ID %d: %s", entityId, err))
 	}
 	return box
 }
 
 // Gets an Entity Box which provides CRUD access to objects of the given type
-func (ob *ObjectBox) box(typeId TypeId) (*Box, error) {
+func (ob *ObjectBox) box(entityId TypeId) (*Box, error) {
 	ob.boxesMutex.Lock()
 	defer ob.boxesMutex.Unlock()
 
-	if box := ob.boxes[typeId]; box != nil {
+	if box := ob.boxes[entityId]; box != nil {
 		return box, nil
 	}
 
-	if box, err := newBox(ob, typeId); err != nil {
+	box, err := newBox(ob, entityId)
+	if err != nil {
 		return nil, err
-	} else {
-		ob.boxes[typeId] = box
-		return box, nil
 	}
+
+	ob.boxes[entityId] = box
+	return box, nil
 }
 
 // AwaitAsyncCompletion blocks until all PutAsync insert have been processed

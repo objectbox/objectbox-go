@@ -156,16 +156,16 @@ func (async *AsyncBox) RemoveId(id uint64) error {
 	})
 }
 
-// Awaits for all (including future) async submissions to be completed (the async queue becomes idle for a moment).
-// Currently this is not limited to the single entity this AsyncBox is working on but all entities in the store.
-// Returns an error if shutting down or an error occurred
+// AwaitCompletion waits for all (including future) async submissions to be completed (the async queue becomes idle for
+// a moment). Currently this is not limited to the single entity this AsyncBox is working on but all entities in the
+// store. Returns an error if shutting down or an error occurred
 func (async *AsyncBox) AwaitCompletion() error {
 	return cCallBool(func() bool {
 		return bool(C.obx_store_await_async_completion(async.box.ObjectBox.store))
 	})
 }
 
-// Awaits for previously submitted async operations to be completed (the async queue does not have to become idle).
+// AwaitSubmitted for previously submitted async operations to be completed (the async queue does not have to become idle).
 // Currently this is not limited to the single entity this AsyncBox is working on but all entities in the store.
 // Returns an error if shutting down or an error occurred
 func (async *AsyncBox) AwaitSubmitted() error {

@@ -23,6 +23,7 @@ type Condition interface {
 	applyTo(qb *QueryBuilder, isRoot bool) (ConditionId, error)
 }
 
+// ConditionId is a condition identifier type, used when building queries
 type ConditionId = int32
 
 type conditionClosure struct {

@@ -81,6 +81,7 @@ type Model struct {
 	generatorVersion int
 }
 
+// NewModel creates a model
 func NewModel() *Model {
 	var model = &Model{
 		entitiesById:   make(map[TypeId]*entity),
@@ -95,6 +96,7 @@ func NewModel() *Model {
 	return model
 }
 
+// GeneratorVersion configures version of the generator used to create this model
 func (model *Model) GeneratorVersion(version int) {
 	if model.Error != nil {
 		return
@@ -103,6 +105,8 @@ func (model *Model) GeneratorVersion(version int) {
 	model.generatorVersion = version
 }
 
+// LastEntityId declares an entity with the highest ID.
+// Used as a compatibility check when opening DB with an older model version.
 func (model *Model) LastEntityId(id TypeId, uid uint64) {
 	if model.Error != nil {
 		return
@@ -112,6 +116,8 @@ func (model *Model) LastEntityId(id TypeId, uid uint64) {
 	C.obx_model_last_entity_id(model.cModel, C.obx_schema_id(id), C.obx_uid(uid))
 }
 
+// LastIndexId declares an index with the highest ID.
+// Used as a compatibility check when opening DB with an older model version.
 func (model *Model) LastIndexId(id TypeId, uid uint64) {
 	if model.Error != nil {
 		return
@@ -121,6 +127,8 @@ func (model *Model) LastIndexId(id TypeId, uid uint64) {
 	C.obx_model_last_index_id(model.cModel, C.obx_schema_id(id), C.obx_uid(uid))
 }
 
+// LastRelationId declares a relation with the highest ID.
+// Used as a compatibility check when opening DB with an older model version.
 func (model *Model) LastRelationId(id TypeId, uid uint64) {
 	if model.Error != nil {
 		return
@@ -130,6 +138,7 @@ func (model *Model) LastRelationId(id TypeId, uid uint64) {
 	C.obx_model_last_relation_id(model.cModel, C.obx_schema_id(id), C.obx_uid(uid))
 }
 
+// Entity creates an entity in a model
 func (model *Model) Entity(name string, id TypeId, uid uint64) {
 	if model.Error != nil {
 		return
@@ -166,6 +175,8 @@ func (model *Model) Relation(relationId TypeId, relationUid uint64, targetEntity
 	model.currentEntity.hasRelations = true
 }
 
+// EntityLastPropertyId declares a property with the highest ID.
+// Used as a compatibility check when opening DB with an older model version.
 func (model *Model) EntityLastPropertyId(id TypeId, uid uint64) {
 	if model.Error != nil {
 		return
@@ -176,6 +187,7 @@ func (model *Model) EntityLastPropertyId(id TypeId, uid uint64) {
 	})
 }
 
+// Property creates a property in an Entity
 func (model *Model) Property(name string, propertyType int, id TypeId, uid uint64) {
 	if model.Error != nil {
 		return
@@ -188,6 +200,7 @@ func (model *Model) Property(name string, propertyType int, id TypeId, uid uint6
 	})
 }
 
+// PropertyFlags configures type and other information about the property
 func (model *Model) PropertyFlags(propertyFlags int) {
 	if model.Error != nil {
 		return
@@ -197,6 +210,7 @@ func (model *Model) PropertyFlags(propertyFlags int) {
 	})
 }
 
+// PropertyIndex creates a new index on the property
 func (model *Model) PropertyIndex(id TypeId, uid uint64) {
 	if model.Error != nil {
 		return
@@ -206,6 +220,7 @@ func (model *Model) PropertyIndex(id TypeId, uid uint64) {
 	})
 }
 
+// PropertyRelation adds a property-based (i.e. to-one) relation
 func (model *Model) PropertyRelation(targetEntityName string, indexId TypeId, indexUid uint64) {
 	if model.Error != nil {
 		return
@@ -221,6 +236,8 @@ func (model *Model) PropertyRelation(targetEntityName string, indexId TypeId, in
 	model.currentEntity.hasRelations = true
 }
 
+// RegisterBinding attaches generated binding code to the model.
+// The binding is used by ObjectBox for marshalling and other typed operations.
 func (model *Model) RegisterBinding(binding ObjectBinding) {
 	if model.Error != nil {
 		return

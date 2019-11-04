@@ -6,15 +6,16 @@ buildDir=${PWD}/build-artifacts
 function preBuild {
     echo "******** Preparing build ********"
     echo "Creating build artifacts directory '$buildDir'"
-    mkdir -p $buildDir
+    mkdir -p "$buildDir"
 }
 
 function build {
     echo "******** Building ********"
-    for CMD in `ls cmd`; do
-        echo "building cmd/${CMD}"
-        cd cmd/${CMD}
-        go build -o ${buildDir}/${CMD}
+    for path in cmd/*; do
+        echo "building ${path}"
+        cd "${path}"
+        cmd=$(basename "${path}")
+        go build -o "${buildDir}/${cmd}"
         cd -
     done
 }
@@ -23,7 +24,7 @@ function postBuild {
     echo "******** Collecting artifacts ********"
 
     echo "The $buildDir contains the following files: "
-    ls -l $buildDir
+    ls -l "$buildDir"
 }
 
 function test {

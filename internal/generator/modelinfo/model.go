@@ -23,10 +23,14 @@ import (
 	"strings"
 )
 
+// Id identifies a model element locally (e.g. property inside an entity)
 type Id = uint32
+
+// Uid identifies an element globally (i.e. is unique across the whole model)
 type Uid = uint64
 
 const (
+	// ModelVersion specifies current version of the model JSON file generated
 	ModelVersion = 5
 
 	// modelVersion supported by this parser & generator
@@ -34,6 +38,7 @@ const (
 	maxModelVersion = ModelVersion
 )
 
+// ModelInfo is a serialization interface for the model JSON file
 type ModelInfo struct {
 	// NOTE don't change order of these json exported properties because it will change users' model.json files
 	Note1                string    `json:"_note1"`
@@ -84,7 +89,7 @@ func (model *ModelInfo) fillMissing() {
 	model.Note3 = defaultModel.Note3
 }
 
-// performs initial validation of loaded data so that it doesn't have to be checked in each function
+// Validate performs initial validation of loaded data so that it doesn't have to be checked in each function
 func (model *ModelInfo) Validate() (err error) {
 	if model.ModelVersion < minModelVersion {
 		return fmt.Errorf("the loaded model is too old - version %d while the minimum supported is %d - "+
@@ -210,6 +215,7 @@ func (model *ModelInfo) hasRelations() bool {
 	return false
 }
 
+// FindEntityByUid finds entity by Uid
 func (model *ModelInfo) FindEntityByUid(uid Uid) (*Entity, error) {
 	for _, entity := range model.Entities {
 		entityUid, _ := entity.Id.GetUid()
@@ -221,6 +227,7 @@ func (model *ModelInfo) FindEntityByUid(uid Uid) (*Entity, error) {
 	return nil, fmt.Errorf("entity with uid %d was not found", uid)
 }
 
+// FindEntityByName finds entity by name
 func (model *ModelInfo) FindEntityByName(name string) (*Entity, error) {
 	for _, entity := range model.Entities {
 		if strings.ToLower(entity.Name) == strings.ToLower(name) {
@@ -231,6 +238,7 @@ func (model *ModelInfo) FindEntityByName(name string) (*Entity, error) {
 	return nil, fmt.Errorf("entity named %s was not found", name)
 }
 
+// CreateEntity creates an entity
 func (model *ModelInfo) CreateEntity(name string) (*Entity, error) {
 	var id Id = 1
 	if len(model.Entities) > 0 {

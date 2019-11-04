@@ -33,17 +33,23 @@ import (
 	"github.com/objectbox/objectbox-go/internal/generator/templates"
 )
 
+// Version specifies the current generator version.
+// It is used to validate generated code compatibility and is increased when there are changes in the generated code.
+// Internal generator changes that don't change the output do not cause an increase.
 const Version = 4
 
+// BindingFile returns a name of the binding file for the given entity file.
 func BindingFile(sourceFile string) string {
 	var extension = filepath.Ext(sourceFile)
 	return sourceFile[0:len(sourceFile)-len(extension)] + ".obx" + extension
 }
 
+// ModelInfoFile returns the model info JSON file name in the given directory
 func ModelInfoFile(dir string) string {
 	return filepath.Join(dir, "objectbox-model.json")
 }
 
+// ModelFile returns the model GO file for the given JSON info file path
 func ModelFile(modelInfoFile string) string {
 	var extension = filepath.Ext(modelInfoFile)
 	return modelInfoFile[0:len(modelInfoFile)-len(extension)] + ".go"
@@ -69,12 +75,14 @@ func Process(sourceFile string, options Options) error {
 	}
 
 	var modelInfo *modelinfo.ModelInfo
-	if modelInfo, err = modelinfo.LoadOrCreateModel(options.ModelInfoFile); err != nil {
+
+	modelInfo, err = modelinfo.LoadOrCreateModel(options.ModelInfoFile)
+	if err != nil {
 		return fmt.Errorf("can't init ModelInfo: %s", err)
-	} else {
-		modelInfo.Rand = options.Rand
-		defer modelInfo.Close()
 	}
+
+	modelInfo.Rand = options.Rand
+	defer modelInfo.Close()
 
 	if err = modelInfo.Validate(); err != nil {
 		return fmt.Errorf("invalid ModelInfo loaded: %s", err)

@@ -87,7 +87,6 @@ func createError() error {
 	msg := C.obx_last_error_message()
 	if msg == nil {
 		return errors.New("no error info available; please report")
-	} else {
-		return errors.New(C.GoString(msg))
 	}
+	return errors.New(C.GoString(msg))
 }

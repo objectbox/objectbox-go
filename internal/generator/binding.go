@@ -48,6 +48,7 @@ var supportedAnnotations = map[string]bool{
 	"unique":    true,
 }
 
+// Binding contains information about the processed set of Entities
 type Binding struct {
 	Package  *types.Package
 	Entities []*Entity
@@ -57,6 +58,7 @@ type Binding struct {
 	source *file
 }
 
+// Entity holds the model information necessary to generate the binding code
 type Entity struct {
 	Identifier
 	Name           string
@@ -72,6 +74,7 @@ type Entity struct {
 	propertiesByName map[string]bool
 }
 
+// Property represents a mapping between a struct field and a DB field
 type Property struct {
 	Identifier
 	Name        string // prefixed name (unique)
@@ -95,12 +98,14 @@ type Property struct {
 	uidRequest bool
 }
 
+// Relation contains information about a "to-one" relation
 type Relation struct {
 	Target struct {
 		Name string
 	}
 }
 
+// StandaloneRelation contains information about a "to-many" relation
 type StandaloneRelation struct {
 	Identifier
 	Target struct {
@@ -112,14 +117,17 @@ type StandaloneRelation struct {
 	uidRequest bool
 }
 
+// Index holds information for creating an indexed field in DB
 type Index struct {
 	Identifier
 }
 
+// Annotation is a tag on a struct-field
 type Annotation struct {
 	Value string
 }
 
+// Field is a field in an entity-struct. Not all fields become properties (e.g. to-many relations don't have a property)
 type Field struct {
 	Entity             *Entity // parent entity
 	Name               string
@@ -134,6 +142,7 @@ type Field struct {
 	path string // relative addressing path for embedded structs
 }
 
+// Identifier combines DB ID and UID into a single structure
 type Identifier struct {
 	Id  id
 	Uid uid
@@ -240,10 +249,10 @@ func (binding *Binding) createEntityFromAst(strct *ast.StructType, name string, 
 		var fieldList = astStructFieldList{strct, binding.source}
 		var recursionStack = map[string]bool{}
 		recursionStack[entity.Name] = true
-		if fields, err := entity.addFields(fieldList, entity.Name, "", &recursionStack); err != nil {
+		var err error
+		entity.Fields, err = entity.addFields(fieldList, entity.Name, "", &recursionStack)
+		if err != nil {
 			return err
-		} else {
-			entity.Fields = fields
 		}
 	}
 
@@ -258,7 +267,7 @@ func (binding *Binding) createEntityFromAst(strct *ast.StructType, name string, 
 			if strings.ToLower(property.Name) == "id" && (goType == "int64" || goType == "uint64" || goType == "string") {
 				if entity.IdProperty == nil {
 					entity.IdProperty = property
-					property.addObFlag(PropertyFlagId)
+					property.addObFlag(propertyFlagId)
 				} else {
 					// fail in case multiple fields match this condition
 					return fmt.Errorf(
@@ -288,7 +297,7 @@ func (binding *Binding) createEntityFromAst(strct *ast.StructType, name string, 
 
 	// IDs must not be tagged unsigned for compatibility reasons
 	// initially set for uint types by setBasicType()
-	entity.IdProperty.removeObFlag(PropertyFlagUnsigned)
+	entity.IdProperty.removeObFlag(propertyFlagUnsigned)
 
 	binding.Entities = append(binding.Entities, entity)
 
@@ -301,6 +310,7 @@ func (entity *Entity) addFields(fields fieldList, fieldPath, prefix string, recu
 	}
 
 	var fieldsTree []*Field
+	var err error // not a function-wise error, just to avoid later redeclarations
 
 	for i := 0; i < fields.Length(); i++ {
 		f := fields.Field(i)
@@ -310,11 +320,10 @@ func (entity *Entity) addFields(fields fieldList, fieldPath, prefix string, recu
 			obFlags: map[int]bool{},
 		}
 
-		if name, err := f.Name(); err != nil {
+		property.Name, err = f.Name()
+		if err != nil {
 			property.Name = strconv.FormatInt(int64(i), 10) // just for the error message
 			return nil, propertyError(err, property)
-		} else {
-			property.Name = name
 		}
 
 		// this is used to correctly render embedded-structs initialization template
@@ -381,12 +390,11 @@ func (entity *Entity) addFields(fields fieldList, fieldPath, prefix string, recu
 				(*recursionStack)[field.Type] = true
 			}
 
-			if innerFields, err := entity.addFields(innerStructFields, fieldPath+"."+property.Name, innerPrefix, recursionStack); err != nil {
+			// apply some struct-related settings to the field
+			field.Property = nil
+			field.Fields, err  = entity.addFields(innerStructFields, fieldPath+"."+property.Name, innerPrefix, recursionStack)
+			if err != nil {
 				return nil, err
-			} else {
-				// apply some struct-related settings to the field
-				field.Property = nil
-				field.Fields = innerFields
 			}
 
 			delete(*recursionStack, field.Type)
@@ -419,9 +427,8 @@ func (entity *Entity) addFields(fields fieldList, fieldPath, prefix string, recu
 		if property.Annotations["name"] != nil {
 			if len(property.Annotations["name"].Value) == 0 {
 				return nil, propertyError(fmt.Errorf("name annotation value must not be empty - it's the field name in DB"), property)
-			} else {
-				property.ObName = property.Annotations["name"].Value
 			}
+			property.ObName = property.Annotations["name"].Value
 		} else {
 			property.ObName = property.Name
 		}
@@ -436,9 +443,8 @@ func (entity *Entity) addFields(fields fieldList, fieldPath, prefix string, recu
 		if entity.propertiesByName[realObName] {
 			return nil, propertyError(fmt.Errorf(
 				"duplicate name (note that property names are case insensitive)"), property)
-		} else {
-			entity.propertiesByName[realObName] = true
 		}
+		entity.propertiesByName[realObName] = true
 
 		if err := property.handleUid(); err != nil {
 			return nil, propertyError(err, property)
@@ -499,19 +505,18 @@ func (field *Field) processType(f field) (fields fieldList, err error) {
 		// fill in the field information
 		field.fillInfo(f, typ)
 
+		// if it's a one-to-many relation
 		if property.Annotations["link"] != nil {
-			// if it's a one-to-many relation
 			if err := property.setRelation(typeBaseName(typ.String()), false); err != nil {
 				return nil, err
 			}
 
 			field.SimpleRelation = property.Relation
 			return nil, nil
-
-		} else {
-			// otherwise inline all fields
-			return structFieldList{strct}, nil
 		}
+
+		// otherwise inline all fields
+		return structFieldList{strct}, nil
 	}
 
 	// check if it's a slice of a non-base type
@@ -762,72 +767,70 @@ func (property *Property) setBasicType(baseType string) error {
 
 	ts := property.GoType
 	if property.GoType == "string" {
-		property.ObType = PropertyTypeString
+		property.ObType = propertyTypeString
 		property.FbType = "UOffsetT"
 	} else if ts == "int" || ts == "int64" {
-		property.ObType = PropertyTypeLong
+		property.ObType = propertyTypeLong
 		property.FbType = "Int64"
 	} else if ts == "uint" || ts == "uint64" {
-		property.ObType = PropertyTypeLong
+		property.ObType = propertyTypeLong
 		property.FbType = "Uint64"
-		property.addObFlag(PropertyFlagUnsigned)
+		property.addObFlag(propertyFlagUnsigned)
 	} else if ts == "int32" || ts == "rune" {
-		property.ObType = PropertyTypeInt
+		property.ObType = propertyTypeInt
 		property.FbType = "Int32"
 	} else if ts == "uint32" {
-		property.ObType = PropertyTypeInt
+		property.ObType = propertyTypeInt
 		property.FbType = "Uint32"
-		property.addObFlag(PropertyFlagUnsigned)
+		property.addObFlag(propertyFlagUnsigned)
 	} else if ts == "int16" {
-		property.ObType = PropertyTypeShort
+		property.ObType = propertyTypeShort
 		property.FbType = "Int16"
 	} else if ts == "uint16" {
-		property.ObType = PropertyTypeShort
+		property.ObType = propertyTypeShort
 		property.FbType = "Uint16"
-		property.addObFlag(PropertyFlagUnsigned)
+		property.addObFlag(propertyFlagUnsigned)
 	} else if ts == "int8" {
-		property.ObType = PropertyTypeByte
+		property.ObType = propertyTypeByte
 		property.FbType = "Int8"
 	} else if ts == "uint8" {
-		property.ObType = PropertyTypeByte
+		property.ObType = propertyTypeByte
 		property.FbType = "Uint8"
-		property.addObFlag(PropertyFlagUnsigned)
+		property.addObFlag(propertyFlagUnsigned)
 	} else if ts == "byte" {
-		property.ObType = PropertyTypeByte
+		property.ObType = propertyTypeByte
 		property.FbType = "Byte"
 	} else if ts == "[]byte" {
-		property.ObType = PropertyTypeByteVector
+		property.ObType = propertyTypeByteVector
 		property.FbType = "UOffsetT"
 	} else if ts == "[]string" {
-		property.ObType = PropertyTypeStringVector
+		property.ObType = propertyTypeStringVector
 		property.FbType = "UOffsetT"
 	} else if ts == "float64" {
-		property.ObType = PropertyTypeDouble
+		property.ObType = propertyTypeDouble
 		property.FbType = "Float64"
 	} else if ts == "float32" {
-		property.ObType = PropertyTypeFloat
+		property.ObType = propertyTypeFloat
 		property.FbType = "Float32"
 	} else if ts == "bool" {
-		property.ObType = PropertyTypeBool
+		property.ObType = propertyTypeBool
 		property.FbType = "Bool"
 	} else {
 		return fmt.Errorf("unknown type %s", ts)
 	}
 
 	if property.Annotations["date"] != nil {
-		if property.ObType != PropertyTypeLong {
+		if property.ObType != propertyTypeLong {
 			return fmt.Errorf("invalid underlying type (PropertyType %v) for date field; expecting long", property.ObType)
-		} else {
-			property.ObType = PropertyTypeDate
 		}
+		property.ObType = propertyTypeDate
 	}
 
 	if property.Annotations["link"] != nil {
-		if property.ObType != PropertyTypeLong {
+		if property.ObType != propertyTypeLong {
 			return fmt.Errorf("invalid underlying type (PropertyType %v) for relation field; expecting long", property.ObType)
-		} else {
-			property.ObType = PropertyTypeRelation
 		}
+		property.ObType = propertyTypeRelation
 		property.Relation = &Relation{}
 		property.Relation.Target.Name = property.Annotations["link"].Value
 	}
@@ -846,32 +849,31 @@ func (property *Property) removeObFlag(flag int) {
 func (property *Property) setIndex() error {
 	if property.Index != nil {
 		return fmt.Errorf("index is already defined")
-	} else {
-		property.Index = &Index{}
-		return nil
 	}
+	property.Index = &Index{}
+	return nil
 }
 
 func (property *Property) setObFlags() error {
 	if property.Annotations["id"] != nil {
-		property.addObFlag(PropertyFlagId)
+		property.addObFlag(propertyFlagId)
 	}
 
 	if property.Annotations["index"] != nil {
 		switch strings.ToLower(property.Annotations["index"].Value) {
 		case "":
 			// if the user doesn't define index type use the default based on the data-type
-			if property.ObType == PropertyTypeString {
-				property.addObFlag(PropertyFlagIndexHash)
+			if property.ObType == propertyTypeString {
+				property.addObFlag(propertyFlagIndexHash)
 			} else {
-				property.addObFlag(PropertyFlagIndexed)
+				property.addObFlag(propertyFlagIndexed)
 			}
 		case "value":
-			property.addObFlag(PropertyFlagIndexed)
+			property.addObFlag(propertyFlagIndexed)
 		case "hash":
-			property.addObFlag(PropertyFlagIndexHash)
+			property.addObFlag(propertyFlagIndexHash)
 		case "hash64":
-			property.addObFlag(PropertyFlagIndexHash64)
+			property.addObFlag(propertyFlagIndexHash64)
 		default:
 			return fmt.Errorf("unknown index type %s", property.Annotations["index"].Value)
 		}
@@ -882,7 +884,7 @@ func (property *Property) setObFlags() error {
 	}
 
 	if property.Annotations["unique"] != nil {
-		property.addObFlag(PropertyFlagUnique)
+		property.addObFlag(propertyFlagUnique)
 
 		if err := property.setIndex(); err != nil {
 			return err
@@ -890,8 +892,8 @@ func (property *Property) setObFlags() error {
 	}
 
 	if property.Relation != nil {
-		property.addObFlag(PropertyFlagIndexed)
-		property.addObFlag(PropertyFlagIndexPartialSkipZero)
+		property.addObFlag(propertyFlagIndexed)
+		property.addObFlag(propertyFlagIndexPartialSkipZero)
 		if err := property.setIndex(); err != nil {
 			return err
 		}
@@ -900,39 +902,41 @@ func (property *Property) setObFlags() error {
 	return nil
 }
 
+// ObTypeString is called from the template
 func (property *Property) ObTypeString() string {
 	switch property.ObType {
-	case PropertyTypeBool:
+	case propertyTypeBool:
 		return "Bool"
-	case PropertyTypeByte:
+	case propertyTypeByte:
 		return "Byte"
-	case PropertyTypeShort:
+	case propertyTypeShort:
 		return "Short"
-	case PropertyTypeChar:
+	case propertyTypeChar:
 		return "Char"
-	case PropertyTypeInt:
+	case propertyTypeInt:
 		return "Int"
-	case PropertyTypeLong:
+	case propertyTypeLong:
 		return "Long"
-	case PropertyTypeFloat:
+	case propertyTypeFloat:
 		return "Float"
-	case PropertyTypeDouble:
+	case propertyTypeDouble:
 		return "Double"
-	case PropertyTypeString:
+	case propertyTypeString:
 		return "String"
-	case PropertyTypeDate:
+	case propertyTypeDate:
 		return "Date"
-	case PropertyTypeRelation:
+	case propertyTypeRelation:
 		return "Relation"
-	case PropertyTypeByteVector:
+	case propertyTypeByteVector:
 		return "ByteVector"
-	case PropertyTypeStringVector:
+	case propertyTypeStringVector:
 		return "StringVector"
 	default:
 		panic(fmt.Errorf("unrecognized type %v", property.ObType))
 	}
 }
 
+// ObFlagsCombined called from the template
 func (property *Property) ObFlagsCombined() int {
 	var result = 0
 
@@ -945,8 +949,7 @@ func (property *Property) ObFlagsCombined() int {
 	return result
 }
 
-// called from the template
-// avoid GO error "variable declared and not used"
+// HasNonIdProperty called from the template. The goal is to void GO error "variable declared and not used"
 func (entity *Entity) HasNonIdProperty() bool {
 	for _, prop := range entity.Properties {
 		if prop != entity.IdProperty {
@@ -957,6 +960,7 @@ func (entity *Entity) HasNonIdProperty() bool {
 	return false
 }
 
+// HasRelations called from the template.
 func (entity *Entity) HasRelations() bool {
 	for _, field := range entity.Fields {
 		if field.HasRelations() {
@@ -967,6 +971,7 @@ func (entity *Entity) HasRelations() bool {
 	return false
 }
 
+// HasLazyLoadedRelations called from the template.
 func (entity *Entity) HasLazyLoadedRelations() bool {
 	for _, field := range entity.Fields {
 		if field.HasLazyLoadedRelations() {
@@ -977,6 +982,7 @@ func (entity *Entity) HasLazyLoadedRelations() bool {
 	return false
 }
 
+// HasRelations called from the template.
 func (field *Field) HasRelations() bool {
 	if field.StandaloneRelation != nil || field.SimpleRelation != nil {
 		return true
@@ -991,6 +997,7 @@ func (field *Field) HasRelations() bool {
 	return false
 }
 
+// HasLazyLoadedRelations called from the template.
 func (field *Field) HasLazyLoadedRelations() bool {
 	if field.StandaloneRelation != nil && field.IsLazyLoaded {
 		return true
@@ -1017,13 +1024,12 @@ func (field *Field) Path() string {
 	return strings.Join(parts, ".")
 }
 
-// called from the template
+// IsId called from the template.
 func (field *Field) IsId() bool {
 	return field.Property == field.Entity.IdProperty
 }
 
-// calculates flatbuffers vTableOffset
-// called from the template
+// FbvTableOffset called from the template. Calculates flatbuffers vTableOffset.
 func (property *Property) FbvTableOffset() uint16 {
 	// derived from the FB generated code & https://google.github.io/flatbuffers/md__internals.html
 	var result = 4 + 2*uint32(property.FbSlot())
@@ -1036,14 +1042,12 @@ func (property *Property) FbvTableOffset() uint16 {
 	return uint16(result)
 }
 
-// calculates flatbuffers slot number
-// called from the template
+// FbSlot is called from the template. It calculates flatbuffers slot number.
 func (property *Property) FbSlot() int {
 	return int(property.Id - 1)
 }
 
-// returns full path to the property (in embedded struct)
-// called from the template
+// Path is called from the template. It returns full path to the property (in embedded struct).
 func (property *Property) Path() string {
 	return property.field.Path()
 }

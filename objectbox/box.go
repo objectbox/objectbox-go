@@ -540,7 +540,7 @@ func (box *Box) GetAll() (slice interface{}, err error) {
 	var cFn = func(visitorArg unsafe.Pointer) C.obx_err {
 		return C.obx_box_visit_all(box.cBox, dataVisitor, visitorArg)
 	}
-		return box.readUsingVisitor(existingOnly, cFn)
+	return box.readUsingVisitor(existingOnly, cFn)
 }
 
 func (box *Box) readManyObjects(existingOnly bool, cFn func() *C.OBX_bytes_array) (slice interface{}, err error) {

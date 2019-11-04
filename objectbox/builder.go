@@ -99,7 +99,7 @@ func (builder *Builder) MaxReaders(maxReaders uint) *Builder {
 	return builder
 }
 
-// AsyncTimeout configures the default enqueue timeout for async operations (default is 1 second).
+// asyncTimeoutTBD configures the default enqueue timeout for async operations (default is 1 second).
 // See Box.PutAsync method doc for more information.
 // TODO: implement this option in core and use it
 func (builder *Builder) asyncTimeoutTBD(milliseconds uint) *Builder {

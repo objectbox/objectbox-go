@@ -297,7 +297,7 @@ func (binding *Binding) createEntityFromAst(strct *ast.StructType, name string, 
 
 	// IDs must not be tagged unsigned for compatibility reasons
 	// initially set for uint types by setBasicType()
-	entity.IdProperty.removeObFlag(PropertyFlagUnsigned)
+	entity.IdProperty.removeObFlag(propertyFlagUnsigned)
 
 	binding.Entities = append(binding.Entities, entity)
 
@@ -892,8 +892,8 @@ func (property *Property) setObFlags() error {
 	}
 
 	if property.Relation != nil {
-		property.addObFlag(PropertyFlagIndexed)
-		property.addObFlag(PropertyFlagIndexPartialSkipZero)
+		property.addObFlag(propertyFlagIndexed)
+		property.addObFlag(propertyFlagIndexPartialSkipZero)
 		if err := property.setIndex(); err != nil {
 			return err
 		}

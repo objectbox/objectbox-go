@@ -218,8 +218,8 @@ func (model *ModelInfo) hasRelations() bool {
 // FindEntityByUid finds entity by Uid
 func (model *ModelInfo) FindEntityByUid(uid Uid) (*Entity, error) {
 	for _, entity := range model.Entities {
-		uid, _ := entity.Id.GetUid()
-		if uid == uid {
+		entityUid, _ := entity.Id.GetUid()
+		if entityUid == uid {
 			return entity, nil
 		}
 	}

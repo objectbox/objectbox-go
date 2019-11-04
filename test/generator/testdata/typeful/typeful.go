@@ -1,5 +1,7 @@
 package object
 
+import "time"
+
 // Tests all available GO & ObjectBox types
 type Typeful struct {
 	Id           uint64 `objectbox:"id"` // NOTE ID is currently required
@@ -21,5 +23,7 @@ type Typeful struct {
 	Rune         rune
 	Float32      float32
 	Float64      float64
-	Date         int64 `objectbox:"date"`
+	Date         int64     `objectbox:"date"`
+	Time         time.Time `objectbox:"date"`
+	Time2        time.Time // prints a warning, otherwise the same as with an annotation
 }

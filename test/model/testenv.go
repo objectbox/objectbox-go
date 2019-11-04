@@ -23,9 +23,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/objectbox/objectbox-go/test/assert"
-
 	"github.com/objectbox/objectbox-go/objectbox"
+	"github.com/objectbox/objectbox-go/test/assert"
 )
 
 // TestEnv provides environment for testing ObjectBox. It sets up the database and populates it with data.
@@ -166,7 +165,7 @@ func entity47(coef int64, options *TestEnvOptions) *Entity {
 		Float64:      47.74 * float64(coef),
 	}
 	var err error
-	object.Date, err = timeInt64ToEntityProperty(47 * int64(coef))
+	object.Date, err = objectbox.TimeInt64ConvertToEntityProperty(47 * int64(coef))
 	if err != nil {
 		panic(err)
 	}

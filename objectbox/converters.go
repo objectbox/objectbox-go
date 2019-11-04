@@ -18,6 +18,7 @@ package objectbox
 
 import (
 	"strconv"
+	"time"
 )
 
 // StringIdConvertToEntityProperty implements "StringIdConvert" property value converter
@@ -32,4 +33,51 @@ func StringIdConvertToDatabaseValue(goValue string) (uint64, error) {
 		return 0, nil
 	}
 	return strconv.ParseUint(goValue, 10, 64)
+}
+
+// TimeInt64ConvertToEntityProperty converts Unix timestamp in milliseconds (ObjectBox date field) to time.Time
+// NOTE - you lose precision - anything smaller then milliseconds is dropped
+func TimeInt64ConvertToEntityProperty(dbValue int64) (goValue time.Time) {
+	return time.Unix(dbValue/1000, dbValue%1000*1000000).UTC()
+}
+
+// TimeInt64ConvertToDatabaseValue converts time.Time to Unix timestamp in milliseconds (internal format expected by ObjectBox on a date field)
+// NOTE - you lose precision - anything smaller then milliseconds is dropped
+func TimeInt64ConvertToDatabaseValue(goValue time.Time) int64 {
+	var ms = int64(goValue.Nanosecond()) / 1000000
+	return goValue.Unix()*1000 + ms
+}
+
+// TimeTextConvertToEntityProperty uses time.Time.UnmarshalText() to decode RFC 3339 formatted string to time.Time.
+func TimeTextConvertToEntityProperty(dbValue string) (goValue time.Time) {
+	if err := goValue.UnmarshalText([]byte(dbValue)); err != nil {
+		panic(fmt.Errorf("error unmarshalling time %v: %v", dbValue, err))
+	}
+	return goValue
+}
+
+// TimeTextConvertToDatabaseValue uses time.Time.MarshalText() to encode time.Time into RFC 3339 formatted string.
+func TimeTextConvertToDatabaseValue(goValue time.Time) string {
+	bytes, err := goValue.MarshalText()
+	if err != nil {
+		panic(fmt.Errorf("error marshalling time %v: %v", goValue, err))
+	}
+	return string(bytes)
+}
+
+// TimeBinaryConvertToEntityProperty uses time.Time.UnmarshalBinary() to decode time.Time.
+func TimeBinaryConvertToEntityProperty(dbValue []byte) (goValue time.Time) {
+	if err := goValue.UnmarshalBinary(dbValue); err != nil {
+		panic(fmt.Errorf("error unmarshalling time %v: %v", dbValue, err))
+	}
+	return goValue
+}
+
+// TimeBinaryConvertToDatabaseValue uses time.Time.MarshalBinary() to encode time.Time.
+func TimeBinaryConvertToDatabaseValue(goValue time.Time) []byte {
+	bytes, err := goValue.MarshalBinary()
+	if err != nil {
+		panic(fmt.Errorf("error marshalling time %v: %v", goValue, err))
+	}
+	return bytes
 }

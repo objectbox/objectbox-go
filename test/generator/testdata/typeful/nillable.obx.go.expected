@@ -44,6 +44,7 @@ var Nillable_ = struct {
 	Float32      *objectbox.PropertyFloat32
 	Float64      *objectbox.PropertyFloat64
 	Date         *objectbox.PropertyInt64
+	Time         *objectbox.PropertyInt64
 }{
 	Id: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
@@ -165,6 +166,12 @@ var Nillable_ = struct {
 			Entity: &NillableBinding.Entity,
 		},
 	},
+	Time: &objectbox.PropertyInt64{
+		BaseProperty: &objectbox.BaseProperty{
+			Id:     21,
+			Entity: &NillableBinding.Entity,
+		},
+	},
 }
 
 // GeneratorVersion is called by ObjectBox to verify the compatibility of the generator used to generate this code
@@ -201,7 +208,8 @@ func (nillable_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Property("Float32", 7, 18, 3706853784096366226)
 	model.Property("Float64", 8, 19, 2627038740284806767)
 	model.Property("Date", 10, 20, 6303220950515014660)
-	model.EntityLastPropertyId(20, 6303220950515014660)
+	model.Property("Time", 10, 21, 4035568504096476779)
+	model.EntityLastPropertyId(21, 4035568504096476779)
 }
 
 // GetId is called by ObjectBox during Put operations to check for existing ID on an object
@@ -240,7 +248,7 @@ func (nillable_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder,
 	}
 
 	// build the FlatBuffers object
-	fbb.StartObject(20)
+	fbb.StartObject(21)
 	fbutils.SetUint64Slot(fbb, 0, id)
 	if obj.Int != nil {
 		fbutils.SetInt64Slot(fbb, 1, int64(*obj.Int))
@@ -299,6 +307,9 @@ func (nillable_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder,
 	if obj.Date != nil {
 		fbutils.SetInt64Slot(fbb, 19, *obj.Date)
 	}
+	if obj.Time != nil {
+		fbutils.SetInt64Slot(fbb, 20, objectbox.TimeInt64ConvertToDatabaseValue(obj.Time))
+	}
 	return nil
 }
 
@@ -336,6 +347,7 @@ func (nillable_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interfac
 		Float32:      fbutils.GetFloat32PtrSlot(table, 38),
 		Float64:      fbutils.GetFloat64PtrSlot(table, 40),
 		Date:         fbutils.GetInt64PtrSlot(table, 42),
+		Time:         objectbox.TimeInt64ConvertToEntityProperty(fbutils.GetInt64PtrSlot(table, 44)),
 	}, nil
 }
 

@@ -311,6 +311,9 @@ func (binding *Binding) createEntityFromAst(strct *ast.StructType, name string, 
 }
 
 func (entity *Entity) addFields(parent *Field, fields fieldList, fieldPath, prefix string, recursionStack *map[string]bool) ([]*Field, error) {
+	var propertyLog = func(text string, property *Property) {
+		log.Printf("%s property %s found in %s", text, property.Name, fieldPath)
+	}
 	var propertyError = func(err error, property *Property) error {
 		return fmt.Errorf("%s on property %s found in %s", err, property.Name, fieldPath)
 	}
@@ -322,8 +325,9 @@ func (entity *Entity) addFields(parent *Field, fields fieldList, fieldPath, pref
 		f := fields.Field(i)
 
 		var property = &Property{
-			entity:  entity,
-			obFlags: map[int]bool{},
+			entity:      entity,
+			obFlags:     map[int]bool{},
+			Annotations: make(map[string]*Annotation),
 		}
 
 		property.Name, err = f.Name()
@@ -365,7 +369,7 @@ func (entity *Entity) addFields(parent *Field, fields fieldList, fieldPath, pref
 		if pkg.Path() != entity.binding.Package.Path() {
 			// check if it's available (starts with an uppercase letter)
 			if len(field.Name) == 0 || field.Name[0] < 65 || field.Name[0] > 90 {
-				log.Printf("Note - skipping unavailable field '%s' on entity %s", property.Name, fieldPath)
+				propertyLog("Notice: skipping unavailable (private)", property)
 				continue
 			}
 
@@ -385,8 +389,30 @@ func (entity *Entity) addFields(parent *Field, fields fieldList, fieldPath, pref
 			if err := property.setBasicType(property.Annotations["type"].Value); err != nil {
 				return nil, propertyError(err, property)
 			}
+
 		} else if innerStructFields, err := field.processType(f); err != nil {
 			return nil, propertyError(err, property)
+
+		} else if field.Type == "time.Time" {
+			// first, try to handle time.Time struct - automatically set a converter if it's declared a date by the user
+			if property.Annotations["date"] == nil {
+				property.Annotations["date"] = &Annotation{}
+				propertyLog("Notice: time.Time is stored and read using millisecond precision in UTC by default on", property)
+				log.Printf("To silence this notice either define your own converter using `converter` and " +
+					"`type` annotations or add a `date` annotation explicitly")
+			}
+
+			// store the field as an int64
+			// Note - property.Annotations["type"] is not set or this code branch wouldn't be executed
+			if err := property.setBasicType("int64"); err != nil {
+				return nil, propertyError(err, property)
+			}
+
+			if property.Annotations["converter"] == nil {
+				var converter = "objectbox.TimeInt64Convert"
+				property.Converter = &converter
+			}
+
 		} else if innerStructFields != nil {
 			// if it was recognized as a struct that should be embedded, add all the fields
 
@@ -685,8 +711,6 @@ func (property *Property) hasValidTypeAsId() bool {
 }
 
 func (property *Property) setAnnotations(tags string) error {
-	property.Annotations = make(map[string]*Annotation)
-
 	if err := parseAnnotations(tags, &property.Annotations); err != nil {
 		property.Annotations = nil
 		return err

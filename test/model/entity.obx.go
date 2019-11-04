@@ -466,7 +466,7 @@ func (entity_EntityInfo) PutRelated(ob *objectbox.ObjectBox, object interface{},
 func (entity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) error {
 	obj := object.(*Entity)
 
-	propDate, err := timeInt64ToDatabaseValue(obj.Date)
+	propDate, err := objectbox.TimeInt64ConvertToDatabaseValue(obj.Date)
 	if err != nil {
 		return errors.New("converter timeInt64ToDatabaseValue() failed on Entity.Date: " + err.Error())
 	}
@@ -623,7 +623,7 @@ func (entity_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{
 
 	var propId = table.GetUint64Slot(4, 0)
 
-	propDate, err := timeInt64ToEntityProperty(fbutils.GetInt64Slot(table, 40))
+	propDate, err := objectbox.TimeInt64ConvertToEntityProperty(fbutils.GetInt64Slot(table, 40))
 	if err != nil {
 		return nil, errors.New("converter timeInt64ToEntityProperty() failed on Entity.Date: " + err.Error())
 	}

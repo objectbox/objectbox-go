@@ -4,6 +4,7 @@
 package object
 
 import (
+	"errors"
 	"github.com/google/flatbuffers/go"
 	"github.com/objectbox/objectbox-go/objectbox"
 	"github.com/objectbox/objectbox-go/objectbox/fbutils"
@@ -35,7 +36,7 @@ var TaskRelManyValue_ = struct {
 	GroupsNew: &objectbox.RelationToMany{
 		Id:     2,
 		Source: &TaskRelManyValueBinding.Entity,
-		Target: &GroupBinding.Entity,
+		Target: &GroupByValBinding.Entity,
 	},
 }
 
@@ -50,7 +51,7 @@ func (taskRelManyValue_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Property("Id", 6, 1, 2217592893536642650)
 	model.PropertyFlags(1)
 	model.EntityLastPropertyId(1, 2217592893536642650)
-	model.Relation(2, 1929546706668609706, GroupBinding.Id, GroupBinding.Uid)
+	model.Relation(2, 1929546706668609706, GroupByValBinding.Id, GroupByValBinding.Uid)
 }
 
 // GetId is called by ObjectBox during Put operations to check for existing ID on an object
@@ -84,6 +85,10 @@ func (taskRelManyValue_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.
 
 // Load is called by ObjectBox to load an object from a FlatBuffer
 func (taskRelManyValue_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{}, error) {
+	if len(bytes) == 0 { // sanity check, should "never" happen
+		return nil, errors.New("can't deserialize an object of type 'TaskRelManyValue' - no data received")
+	}
+
 	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
@@ -91,10 +96,10 @@ func (taskRelManyValue_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (
 
 	var propId = table.GetUint64Slot(4, 0)
 
-	var relGroupsNew []Group
+	var relGroupsNew []GroupByVal
 	if rIds, err := BoxForTaskRelManyValue(ob).RelationIds(TaskRelManyValue_.GroupsNew, propId); err != nil {
 		return nil, err
-	} else if rSlice, err := BoxForGroup(ob).GetMany(rIds...); err != nil {
+	} else if rSlice, err := BoxForGroupByVal(ob).GetManyExisting(rIds...); err != nil {
 		return nil, err
 	} else {
 		relGroupsNew = rSlice
@@ -113,6 +118,9 @@ func (taskRelManyValue_EntityInfo) MakeSlice(capacity int) interface{} {
 
 // AppendToSlice is called by ObjectBox to fill the slice of the read objects
 func (taskRelManyValue_EntityInfo) AppendToSlice(slice interface{}, object interface{}) interface{} {
+	if object == nil {
+		return append(slice.([]*TaskRelManyValue), nil)
+	}
 	return append(slice.([]*TaskRelManyValue), object.(*TaskRelManyValue))
 }
 
@@ -185,6 +193,15 @@ func (box *TaskRelManyValueBox) Get(id uint64) (*TaskRelManyValue, error) {
 // If any of the objects doesn't exist, its position in the return slice is nil
 func (box *TaskRelManyValueBox) GetMany(ids ...uint64) ([]*TaskRelManyValue, error) {
 	objects, err := box.Box.GetMany(ids...)
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*TaskRelManyValue), nil
+}
+
+// GetManyExisting reads multiple objects at once, skipping those that do not exist.
+func (box *TaskRelManyValueBox) GetManyExisting(ids ...uint64) ([]*TaskRelManyValue, error) {
+	objects, err := box.Box.GetManyExisting(ids...)
 	if err != nil {
 		return nil, err
 	}

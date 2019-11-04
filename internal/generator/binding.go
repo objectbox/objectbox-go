@@ -1129,6 +1129,12 @@ func (property *Property) TplReadValue(objVar, castType string) string {
 		return *property.Converter + "ToDatabaseValue(" + valueAccessor + ")" // returns value & error
 	}
 
+	// While not explicitly, this is currently only true if called from GetId() template part.
+	// NOTE: currently we don't handle this for converters - they should work on uint64 for IDs
+	if property.IsId() && property.GoType != "uint64" {
+		valueAccessor = "uint64(" + valueAccessor + ")"
+	}
+
 	return valueAccessor + ", nil" // return value & err=nil
 }
 
@@ -1144,14 +1150,22 @@ func (property *Property) TplSetAndReturn(objVar, castType, rhs string) string {
 
 	lhs = lhs + "." + property.Path()
 
+	var ret = "nil"
+
 	if property.Converter != nil {
-		return `var err error
-` + lhs + ", err = " + *property.Converter + "ToEntityProperty(" + rhs + ")" + `
-return err`
+		lhs = `var err error
+` + lhs + `, err`
+		rhs = *property.Converter + "ToEntityProperty(" + rhs + ")"
+		ret = "err"
+	}
+
+	// While not explicitly, this is currently only true if called from SetId() template part.
+	if property.IsId() && property.GoType != "uint64" {
+		rhs = property.GoType + "(" + rhs + ")"
 	}
 
 	return lhs + " = " + rhs + `
-return nil`
+return ` + ret
 }
 
 func typeBaseName(name string) string {

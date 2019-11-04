@@ -65,12 +65,14 @@ func (groupByVal_EntityInfo) GetId(object interface{}) (uint64, error) {
 }
 
 // SetId is called by ObjectBox during Put to update an ID on an object that has just been inserted
-func (groupByVal_EntityInfo) SetId(object interface{}, id uint64) {
+func (groupByVal_EntityInfo) SetId(object interface{}, id uint64) error {
 	if obj, ok := object.(*GroupByVal); ok {
 		obj.Id = id
+		return nil
 	} else {
 		// NOTE while this can't update, it will at least behave consistently (panic in case of a wrong type)
 		_ = object.(GroupByVal).Id
+		return nil
 	}
 }
 
@@ -108,10 +110,11 @@ func (groupByVal_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interf
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
-	var id = table.GetUint64Slot(4, 0)
+
+	var propId = table.GetUint64Slot(4, 0)
 
 	return &GroupByVal{
-		Id:   id,
+		Id:   propId,
 		Name: fbutils.GetStringSlot(table, 6),
 	}, nil
 }

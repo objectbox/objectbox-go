@@ -246,10 +246,11 @@ func ({{$entityNameCamel}}_EntityInfo) Flatten(object interface{}, fbb *flatbuff
 				{{- if .Relation}}rId{{.Name}})
 				{{- else if eq .FbType "UOffsetT"}} offset{{.Name}})
 				{{- else if .IsId}} id)
-				{{- else}}{{if or (eq $property.GoType "int") (eq $property.GoType "uint") }} {{$property.GoType}}64( {{end}} 
-					{{- template "property-access" $property -}})
-				{{if or (eq $property.GoType "int") (eq $property.GoType "uint")}} ) {{end}}
-				{{- end}}
+				{{- else -}}
+					{{- if or (eq .GoType "int") (eq .GoType "uint") }} {{.GoType}}64( {{end}} 
+					{{- template "property-access" . -}})
+					{{- if or (eq .GoType "int") (eq .GoType "uint")}} ) {{end}}
+				{{- end}}{{end}}
 			{{- else}}{{template "fields-setter" $field}}{{end -}}
 			{{- if $field.IsPointer -}} } {{- end -}}
 		{{- end -}}

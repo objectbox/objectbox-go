@@ -4,6 +4,7 @@
 package object
 
 import (
+	"errors"
 	"github.com/google/flatbuffers/go"
 	"github.com/objectbox/objectbox-go/objectbox"
 	"github.com/objectbox/objectbox-go/objectbox/fbutils"
@@ -84,6 +85,10 @@ func (taskRelManyPtr_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Bu
 
 // Load is called by ObjectBox to load an object from a FlatBuffer
 func (taskRelManyPtr_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{}, error) {
+	if len(bytes) == 0 { // sanity check, should "never" happen
+		return nil, errors.New("can't deserialize an object of type 'TaskRelManyPtr' - no data received")
+	}
+
 	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
@@ -104,6 +109,9 @@ func (taskRelManyPtr_EntityInfo) MakeSlice(capacity int) interface{} {
 
 // AppendToSlice is called by ObjectBox to fill the slice of the read objects
 func (taskRelManyPtr_EntityInfo) AppendToSlice(slice interface{}, object interface{}) interface{} {
+	if object == nil {
+		return append(slice.([]*TaskRelManyPtr), nil)
+	}
 	return append(slice.([]*TaskRelManyPtr), object.(*TaskRelManyPtr))
 }
 
@@ -182,6 +190,15 @@ func (box *TaskRelManyPtrBox) GetMany(ids ...uint64) ([]*TaskRelManyPtr, error) 
 	return objects.([]*TaskRelManyPtr), nil
 }
 
+// GetManyExisting reads multiple objects at once, skipping those that do not exist.
+func (box *TaskRelManyPtrBox) GetManyExisting(ids ...uint64) ([]*TaskRelManyPtr, error) {
+	objects, err := box.Box.GetManyExisting(ids...)
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*TaskRelManyPtr), nil
+}
+
 // GetAll reads all stored objects
 func (box *TaskRelManyPtrBox) GetAll() ([]*TaskRelManyPtr, error) {
 	objects, err := box.Box.GetAll()
@@ -192,7 +209,7 @@ func (box *TaskRelManyPtrBox) GetAll() ([]*TaskRelManyPtr, error) {
 }
 
 // FetchGroups reads target objects for relation TaskRelManyPtr::Groups.
-// It will "GetMany()" all related Group objects for each source object
+// It will "GetManyExisting()" all related Group objects for each source object
 // and set sourceObject.Groups to the slice of related objects, as currently stored in DB.
 func (box *TaskRelManyPtrBox) FetchGroups(sourceObjects ...*TaskRelManyPtr) error {
 	var slices = make([][]*Group, len(sourceObjects))
@@ -202,7 +219,7 @@ func (box *TaskRelManyPtrBox) FetchGroups(sourceObjects ...*TaskRelManyPtr) erro
 		for k, object := range sourceObjects {
 			rIds, err := box.RelationIds(TaskRelManyPtr_.Groups, object.Id)
 			if err == nil {
-				slices[k], err = BoxForGroup(box.ObjectBox).GetMany(rIds...)
+				slices[k], err = BoxForGroup(box.ObjectBox).GetManyExisting(rIds...)
 			}
 			if err != nil {
 				return err

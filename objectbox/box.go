@@ -496,15 +496,34 @@ func (box *Box) Get(id uint64) (object interface{}, err error) {
 // If any of the objects doesn't exist, its position in the return slice
 //  is nil or an empty object (depends on the binding)
 func (box *Box) GetMany(ids ...uint64) (slice interface{}, err error) {
+	const existingOnly = false
 	if cIds, err := goIdsArrayToC(ids); err != nil {
 		return nil, err
 	} else if supportsBytesArray {
-		return box.readManyObjects(func() *C.OBX_bytes_array { return C.obx_box_get_many(box.cBox, cIds.cArray) })
+		return box.readManyObjects(existingOnly, func() *C.OBX_bytes_array { return C.obx_box_get_many(box.cBox, cIds.cArray) })
 	} else {
 		var cFn = func(visitorArg unsafe.Pointer) C.obx_err {
 			return C.obx_box_visit_many(box.cBox, cIds.cArray, dataVisitor, visitorArg)
 		}
-		return box.readUsingVisitor(cFn)
+		return box.readUsingVisitor(existingOnly, cFn)
+	}
+}
+
+// GetManyExisting reads multiple objects at once, skipping those that do not exist.
+//
+// Returns a slice of objects that should be cast to the appropriate type.
+// The cast is done automatically when using the generated BoxFor* code.
+func (box *Box) GetManyExisting(ids ...uint64) (slice interface{}, err error) {
+	const existingOnly = true
+	if cIds, err := goIdsArrayToC(ids); err != nil {
+		return nil, err
+	} else if supportsBytesArray {
+		return box.readManyObjects(existingOnly, func() *C.OBX_bytes_array { return C.obx_box_get_many(box.cBox, cIds.cArray) })
+	} else {
+		var cFn = func(visitorArg unsafe.Pointer) C.obx_err {
+			return C.obx_box_visit_many(box.cBox, cIds.cArray, dataVisitor, visitorArg)
+		}
+		return box.readUsingVisitor(existingOnly, cFn)
 	}
 }
 
@@ -513,17 +532,18 @@ func (box *Box) GetMany(ids ...uint64) (slice interface{}, err error) {
 // Returns a slice of objects that should be cast to the appropriate type.
 // The cast is done automatically when using the generated BoxFor* code.
 func (box *Box) GetAll() (slice interface{}, err error) {
+	const existingOnly = true
 	if supportsBytesArray {
-		return box.readManyObjects(func() *C.OBX_bytes_array { return C.obx_box_get_all(box.cBox) })
+		return box.readManyObjects(existingOnly, func() *C.OBX_bytes_array { return C.obx_box_get_all(box.cBox) })
 	}
 
 	var cFn = func(visitorArg unsafe.Pointer) C.obx_err {
 		return C.obx_box_visit_all(box.cBox, dataVisitor, visitorArg)
 	}
-	return box.readUsingVisitor(cFn)
+		return box.readUsingVisitor(existingOnly, cFn)
 }
 
-func (box *Box) readManyObjects(cFn func() *C.OBX_bytes_array) (slice interface{}, err error) {
+func (box *Box) readManyObjects(existingOnly bool, cFn func() *C.OBX_bytes_array) (slice interface{}, err error) {
 	// we need a read-transaction to keep the data in dataPtr untouched (by concurrent write) until we can read it
 	// as well as making sure the relations read in binding.Load represent a consistent state
 	err = box.ObjectBox.RunInReadTx(func() error {
@@ -535,6 +555,14 @@ func (box *Box) readManyObjects(cFn func() *C.OBX_bytes_array) (slice interface{
 		var binding = box.entity.binding
 		slice = binding.MakeSlice(len(bytesArray))
 		for _, bytesData := range bytesArray {
+			if bytesData == nil {
+				// may be nil if an object on this index was not found (can happen with GetMany)
+				if !existingOnly {
+					slice = binding.AppendToSlice(slice, nil)
+				}
+				continue
+			}
+
 			object, err := binding.Load(box.ObjectBox, bytesData)
 			if err != nil {
 				return err
@@ -552,10 +580,18 @@ func (box *Box) readManyObjects(cFn func() *C.OBX_bytes_array) (slice interface{
 }
 
 // this is a utility function to fetch objects using an obx_data_visitor
-func (box *Box) readUsingVisitor(cFn func(visitorArg unsafe.Pointer) C.obx_err) (slice interface{}, err error) {
+func (box *Box) readUsingVisitor(existingOnly bool, cFn func(visitorArg unsafe.Pointer) C.obx_err) (slice interface{}, err error) {
 	var binding = box.entity.binding
 	var visitor uint32
 	visitor, err = dataVisitorRegister(func(bytes []byte) bool {
+		// may be nil if an object on this index was not found (can happen with GetMany)
+		if bytes == nil {
+			if !existingOnly {
+				slice = binding.AppendToSlice(slice, nil)
+			}
+			return true
+		}
+
 		object, err2 := binding.Load(box.ObjectBox, bytes)
 		if err2 != nil {
 			err = err2

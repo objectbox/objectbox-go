@@ -4,6 +4,7 @@
 package model
 
 import (
+	"errors"
 	"github.com/google/flatbuffers/go"
 	"github.com/objectbox/objectbox-go/objectbox"
 	"github.com/objectbox/objectbox-go/objectbox/fbutils"
@@ -99,6 +100,10 @@ func (entityByValue_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Bui
 
 // Load is called by ObjectBox to load an object from a FlatBuffer
 func (entityByValue_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{}, error) {
+	if len(bytes) == 0 { // sanity check, should "never" happen
+		return nil, errors.New("can't deserialize an object of type 'EntityByValue' - no data received")
+	}
+
 	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
@@ -118,6 +123,9 @@ func (entityByValue_EntityInfo) MakeSlice(capacity int) interface{} {
 
 // AppendToSlice is called by ObjectBox to fill the slice of the read objects
 func (entityByValue_EntityInfo) AppendToSlice(slice interface{}, object interface{}) interface{} {
+	if object == nil {
+		return append(slice.([]EntityByValue), EntityByValue{})
+	}
 	return append(slice.([]EntityByValue), *object.(*EntityByValue))
 }
 
@@ -190,6 +198,15 @@ func (box *EntityByValueBox) Get(id uint64) (*EntityByValue, error) {
 // If any of the objects doesn't exist, its position in the return slice is an empty object
 func (box *EntityByValueBox) GetMany(ids ...uint64) ([]EntityByValue, error) {
 	objects, err := box.Box.GetMany(ids...)
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]EntityByValue), nil
+}
+
+// GetManyExisting reads multiple objects at once, skipping those that do not exist.
+func (box *EntityByValueBox) GetManyExisting(ids ...uint64) ([]EntityByValue, error) {
+	objects, err := box.Box.GetManyExisting(ids...)
 	if err != nil {
 		return nil, err
 	}

@@ -84,18 +84,19 @@ func (query *Query) Find() (objects interface{}, err error) {
 		return 0, query.errorClosed()
 	}
 
+	const existingOnly = true
 	if supportsBytesArray {
 		var cFn = func() *C.OBX_bytes_array {
 			return C.obx_query_find(query.cQuery, C.uint64_t(query.offset), C.uint64_t(query.limit))
 		}
-		return query.box.readManyObjects(cFn)
+		return query.box.readManyObjects(existingOnly, cFn)
 	}
 
 	var cFn = func(visitorArg unsafe.Pointer) C.obx_err {
 		return C.obx_query_visit(query.cQuery, dataVisitor, visitorArg,
 			C.uint64_t(query.offset), C.uint64_t(query.limit))
 	}
-	return query.box.readUsingVisitor(cFn)
+	return query.box.readUsingVisitor(existingOnly, cFn)
 }
 
 // Offset defines the index of the first object to process (how many objects to skip)

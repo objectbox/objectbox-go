@@ -386,7 +386,14 @@ func (entity *Entity) addFields(parent *Field, fields fieldList, fieldPath, pref
 		children = append(children, field)
 
 		if property.Annotations["type"] != nil {
-			if err := property.setBasicType(property.Annotations["type"].Value); err != nil {
+			var annotatedType = property.Annotations["type"].Value
+			if len(annotatedType) > 1 && annotatedType[0] == '*' {
+				field.IsPointer = true
+				field.Property.IsPointer = true
+				annotatedType = annotatedType[1:]
+			}
+
+			if err := property.setBasicType(annotatedType); err != nil {
 				return nil, propertyError(err, property)
 			}
 
@@ -411,6 +418,7 @@ func (entity *Entity) addFields(parent *Field, fields fieldList, fieldPath, pref
 			if property.Annotations["converter"] == nil {
 				var converter = "objectbox.TimeInt64Convert"
 				property.Converter = &converter
+				property.Annotations["type"] = &Annotation{"int64"}
 			}
 
 		} else if innerStructFields != nil {

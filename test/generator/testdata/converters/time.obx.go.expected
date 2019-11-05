@@ -74,10 +74,13 @@ func (timeEntity_EntityInfo) PutRelated(ob *objectbox.ObjectBox, object interfac
 // Flatten is called by ObjectBox to transform an object to a FlatBuffer
 func (timeEntity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) error {
 	obj := object.(*TimeEntity)
-
-	propTime, err := timeInt64ToDatabaseValue(obj.Time)
-	if err != nil {
-		return errors.New("converter timeInt64ToDatabaseValue() failed on TimeEntity.Time: " + err.Error())
+	var propTime int64
+	{
+		var err error
+		propTime, err = timeInt64ToDatabaseValue(obj.Time)
+		if err != nil {
+			return errors.New("converter timeInt64ToDatabaseValue() failed on TimeEntity.Time: " + err.Error())
+		}
 	}
 
 	// build the FlatBuffers object

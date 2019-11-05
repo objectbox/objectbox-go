@@ -39,8 +39,8 @@ var BindingTemplate = template.Must(template.New("binding").Funcs(funcMap).Parse
 {{- end -}}
 
 {{define "property-access"}}{{/* used in Flatten*/ -}}
-	{{- if .Converter}} prop{{.Name}}
-	{{- else if .CastOnRead}}{{.CastOnRead}}(obj.{{.Path}})
+	{{- if .Converter}} {{if .IsPointer}}*{{end}}prop{{.Name}}
+	{{- else if .CastOnRead}}{{.CastOnRead}}({{if .IsPointer}}*{{end}}obj.{{.Path}})
 	{{- else}}{{if .IsPointer}}*{{end}}obj.{{.Path}}{{end}}
 {{- end -}}
 
@@ -197,13 +197,14 @@ func ({{$entityNameCamel}}_EntityInfo) Flatten(object interface{}, fbb *flatbuff
 	{{- end -}}
 	
 	{{- range $property := $entity.Properties}}{{if and $property.Converter (not (eq $property.Name $entity.IdProperty.Name))}}
-	{{if $property.IsPointer}}var prop{{$property.Name}} {{$property.AnnotatedType}}
-	if obj.{{$property.Path}} != nil { {{end}}
-	prop{{$property.Name}}, err := {{$property.Converter}}ToDatabaseValue(obj.{{$property.Path}})
-	if err != nil {
-		return errors.New("converter {{$property.Converter}}ToDatabaseValue() failed on {{$entity.Name}}.{{$property.Path}}: " + err.Error())
+	var prop{{$property.Name}} {{$property.AnnotatedType}}
+	{{if $property.IsPointer}}if obj.{{$property.Path}} != nil {{end}} { 
+		var err error
+		prop{{$property.Name}}, err = {{$property.Converter}}ToDatabaseValue(obj.{{$property.Path}})
+		if err != nil {
+			return errors.New("converter {{$property.Converter}}ToDatabaseValue() failed on {{$entity.Name}}.{{$property.Path}}: " + err.Error())
+		}
 	}
-	{{- if $property.IsPointer -}} } {{- end}}
 	{{end}}{{end}}
 
     {{- range $property := $entity.Properties}}{{if eq $property.FbType "UOffsetT"}}

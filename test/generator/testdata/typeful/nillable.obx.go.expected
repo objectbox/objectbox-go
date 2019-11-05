@@ -231,6 +231,14 @@ func (nillable_EntityInfo) PutRelated(ob *objectbox.ObjectBox, object interface{
 // Flatten is called by ObjectBox to transform an object to a FlatBuffer
 func (nillable_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) error {
 	obj := object.(*Nillable)
+	var propTime *int64
+	if obj.Time != nil {
+		var err error
+		propTime, err = timeInt64PtrToDatabaseValue(obj.Time)
+		if err != nil {
+			return errors.New("converter timeInt64PtrToDatabaseValue() failed on Nillable.Time: " + err.Error())
+		}
+	}
 
 	var offsetString flatbuffers.UOffsetT
 	if obj.String != nil {
@@ -308,7 +316,7 @@ func (nillable_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder,
 		fbutils.SetInt64Slot(fbb, 19, *obj.Date)
 	}
 	if obj.Time != nil {
-		fbutils.SetInt64Slot(fbb, 20, objectbox.TimeInt64ConvertToDatabaseValue(obj.Time))
+		fbutils.SetInt64Slot(fbb, 20, *propTime)
 	}
 	return nil
 }
@@ -325,6 +333,11 @@ func (nillable_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interfac
 	}
 
 	var propId = table.GetUint64Slot(4, 0)
+
+	propTime, err := timeInt64PtrToEntityProperty(fbutils.GetInt64PtrSlot(table, 44))
+	if err != nil {
+		return nil, errors.New("converter timeInt64PtrToEntityProperty() failed on Nillable.Time: " + err.Error())
+	}
 
 	return &Nillable{
 		Id:           propId,
@@ -347,7 +360,7 @@ func (nillable_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interfac
 		Float32:      fbutils.GetFloat32PtrSlot(table, 38),
 		Float64:      fbutils.GetFloat64PtrSlot(table, 40),
 		Date:         fbutils.GetInt64PtrSlot(table, 42),
-		Time:         objectbox.TimeInt64ConvertToEntityProperty(fbutils.GetInt64PtrSlot(table, 44)),
+		Time:         propTime,
 	}, nil
 }
 

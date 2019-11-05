@@ -17,6 +17,7 @@
 package objectbox
 
 import (
+	"fmt"
 	"strconv"
 	"time"
 )
@@ -37,47 +38,49 @@ func StringIdConvertToDatabaseValue(goValue string) (uint64, error) {
 
 // TimeInt64ConvertToEntityProperty converts Unix timestamp in milliseconds (ObjectBox date field) to time.Time
 // NOTE - you lose precision - anything smaller then milliseconds is dropped
-func TimeInt64ConvertToEntityProperty(dbValue int64) (goValue time.Time) {
-	return time.Unix(dbValue/1000, dbValue%1000*1000000).UTC()
+func TimeInt64ConvertToEntityProperty(dbValue int64) (time.Time, error) {
+	return time.Unix(dbValue/1000, dbValue%1000*1000000).UTC(), nil
 }
 
 // TimeInt64ConvertToDatabaseValue converts time.Time to Unix timestamp in milliseconds (internal format expected by ObjectBox on a date field)
 // NOTE - you lose precision - anything smaller then milliseconds is dropped
-func TimeInt64ConvertToDatabaseValue(goValue time.Time) int64 {
+func TimeInt64ConvertToDatabaseValue(goValue time.Time) (int64, error) {
 	var ms = int64(goValue.Nanosecond()) / 1000000
-	return goValue.Unix()*1000 + ms
+	return goValue.Unix()*1000 + ms, nil
 }
 
 // TimeTextConvertToEntityProperty uses time.Time.UnmarshalText() to decode RFC 3339 formatted string to time.Time.
-func TimeTextConvertToEntityProperty(dbValue string) (goValue time.Time) {
-	if err := goValue.UnmarshalText([]byte(dbValue)); err != nil {
-		panic(fmt.Errorf("error unmarshalling time %v: %v", dbValue, err))
+func TimeTextConvertToEntityProperty(dbValue string) (goValue time.Time, err error) {
+	err = goValue.UnmarshalText([]byte(dbValue))
+	if err != nil {
+		err = fmt.Errorf("error unmarshalling time %v: %v", dbValue, err)
 	}
-	return goValue
+	return goValue, err
 }
 
 // TimeTextConvertToDatabaseValue uses time.Time.MarshalText() to encode time.Time into RFC 3339 formatted string.
-func TimeTextConvertToDatabaseValue(goValue time.Time) string {
+func TimeTextConvertToDatabaseValue(goValue time.Time) (string, error) {
 	bytes, err := goValue.MarshalText()
 	if err != nil {
-		panic(fmt.Errorf("error marshalling time %v: %v", goValue, err))
+		err = fmt.Errorf("error marshalling time %v: %v", goValue, err)
 	}
-	return string(bytes)
+	return string(bytes), err
 }
 
 // TimeBinaryConvertToEntityProperty uses time.Time.UnmarshalBinary() to decode time.Time.
-func TimeBinaryConvertToEntityProperty(dbValue []byte) (goValue time.Time) {
-	if err := goValue.UnmarshalBinary(dbValue); err != nil {
-		panic(fmt.Errorf("error unmarshalling time %v: %v", dbValue, err))
+func TimeBinaryConvertToEntityProperty(dbValue []byte) (goValue time.Time, err error) {
+	err = goValue.UnmarshalBinary(dbValue)
+	if err != nil {
+		err = fmt.Errorf("error unmarshalling time %v: %v", dbValue, err)
 	}
-	return goValue
+	return goValue, err
 }
 
 // TimeBinaryConvertToDatabaseValue uses time.Time.MarshalBinary() to encode time.Time.
-func TimeBinaryConvertToDatabaseValue(goValue time.Time) []byte {
+func TimeBinaryConvertToDatabaseValue(goValue time.Time) ([]byte, error) {
 	bytes, err := goValue.MarshalBinary()
 	if err != nil {
-		panic(fmt.Errorf("error marshalling time %v: %v", goValue, err))
+		err = fmt.Errorf("error marshalling time %v: %v", goValue, err)
 	}
-	return bytes
+	return bytes, err
 }

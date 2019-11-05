@@ -25,5 +25,5 @@ type Nillable struct {
 	Float32      *float32
 	Float64      *float64
 	Date         *int64     `objectbox:"date"`
-	Time         *time.Time `objectbox:"date"`
+	Time         *time.Time `objectbox:"date converter:timeInt64Ptr type:*int64"`
 }

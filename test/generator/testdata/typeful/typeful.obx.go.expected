@@ -239,6 +239,24 @@ func (typeful_EntityInfo) PutRelated(ob *objectbox.ObjectBox, object interface{}
 // Flatten is called by ObjectBox to transform an object to a FlatBuffer
 func (typeful_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) error {
 	obj := object.(*Typeful)
+	var propTime int64
+	{
+		var err error
+		propTime, err = objectbox.TimeInt64ConvertToDatabaseValue(obj.Time)
+		if err != nil {
+			return errors.New("converter objectbox.TimeInt64ConvertToDatabaseValue() failed on Typeful.Time: " + err.Error())
+		}
+	}
+
+	var propTime2 int64
+	{
+		var err error
+		propTime2, err = objectbox.TimeInt64ConvertToDatabaseValue(obj.Time2)
+		if err != nil {
+			return errors.New("converter objectbox.TimeInt64ConvertToDatabaseValue() failed on Typeful.Time2: " + err.Error())
+		}
+	}
+
 	var offsetString = fbutils.CreateStringOffset(fbb, obj.String)
 	var offsetStringVector = fbutils.CreateStringVectorOffset(fbb, obj.StringVector)
 	var offsetByteVector = fbutils.CreateByteVectorOffset(fbb, obj.ByteVector)
@@ -265,8 +283,8 @@ func (typeful_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, 
 	fbutils.SetFloat32Slot(fbb, 17, obj.Float32)
 	fbutils.SetFloat64Slot(fbb, 18, obj.Float64)
 	fbutils.SetInt64Slot(fbb, 19, obj.Date)
-	fbutils.SetInt64Slot(fbb, 20, objectbox.TimeInt64ConvertToDatabaseValue(obj.Time))
-	fbutils.SetInt64Slot(fbb, 21, objectbox.TimeInt64ConvertToDatabaseValue(obj.Time2))
+	fbutils.SetInt64Slot(fbb, 20, propTime)
+	fbutils.SetInt64Slot(fbb, 21, propTime2)
 	return nil
 }
 
@@ -282,6 +300,16 @@ func (typeful_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface
 	}
 
 	var propId = table.GetUint64Slot(4, 0)
+
+	propTime, err := objectbox.TimeInt64ConvertToEntityProperty(fbutils.GetInt64Slot(table, 44))
+	if err != nil {
+		return nil, errors.New("converter objectbox.TimeInt64ConvertToEntityProperty() failed on Typeful.Time: " + err.Error())
+	}
+
+	propTime2, err := objectbox.TimeInt64ConvertToEntityProperty(fbutils.GetInt64Slot(table, 46))
+	if err != nil {
+		return nil, errors.New("converter objectbox.TimeInt64ConvertToEntityProperty() failed on Typeful.Time2: " + err.Error())
+	}
 
 	return &Typeful{
 		Id:           propId,
@@ -304,8 +332,8 @@ func (typeful_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface
 		Float32:      fbutils.GetFloat32Slot(table, 38),
 		Float64:      fbutils.GetFloat64Slot(table, 40),
 		Date:         fbutils.GetInt64Slot(table, 42),
-		Time:         objectbox.TimeInt64ConvertToEntityProperty(fbutils.GetInt64Slot(table, 44)),
-		Time2:        objectbox.TimeInt64ConvertToEntityProperty(fbutils.GetInt64Slot(table, 46)),
+		Time:         propTime,
+		Time2:        propTime2,
 	}, nil
 }
 

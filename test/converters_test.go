@@ -18,7 +18,6 @@ package objectbox_test
 
 import (
 	"github.com/objectbox/objectbox-go/objectbox"
-	"regexp"
 	"testing"
 	"time"
 
@@ -56,37 +55,88 @@ func TestComplex128Converter(t *testing.T) {
 }
 
 func TestStringIdConverter(t *testing.T) {
-	assert.Eq(t, "0", objectbox.StringIdConvertToEntityProperty(0))
-	assert.Eq(t, uint64(0), objectbox.StringIdConvertToDatabaseValue("0"))
-	assert.Eq(t, "10", objectbox.StringIdConvertToEntityProperty(10))
-	assert.Eq(t, uint64(10), objectbox.StringIdConvertToDatabaseValue("10"))
+	{
+		value, err := objectbox.StringIdConvertToEntityProperty(0)
+		assert.NoErr(t, err)
+		assert.Eq(t, "0", value)
+	}
 
-	func() {
-		defer assert.MustPanic(t, regexp.MustCompile("error parsing numeric ID represented as string"))
-		objectbox.StringIdConvertToDatabaseValue("invalid")
-	}()
+	{
+		value, err := objectbox.StringIdConvertToDatabaseValue("0")
+		assert.NoErr(t, err)
+		assert.Eq(t, uint64(0), value)
+	}
+
+	{
+		value, err := objectbox.StringIdConvertToEntityProperty(10)
+		assert.NoErr(t, err)
+		assert.Eq(t, "10", value)
+	}
+
+	{
+		value, err := objectbox.StringIdConvertToDatabaseValue("10")
+		assert.NoErr(t, err)
+		assert.Eq(t, uint64(10), value)
+	}
+
+	{
+		value, err := objectbox.StringIdConvertToDatabaseValue("invalid")
+		assert.Err(t, err)
+		assert.Eq(t, uint64(0), value)
+	}
 }
 
 func TestTimeInt64Converter(t *testing.T) {
-	assert.Eq(t, "1970-01-01 00:00:00 +0000 UTC", objectbox.TimeInt64ConvertToEntityProperty(0).String())
-	assert.Eq(t, "1970-01-01 00:00:01.234 +0000 UTC", objectbox.TimeInt64ConvertToEntityProperty(1234).String())
-	assert.Eq(t, "1969-12-31 23:59:54.322 +0000 UTC", objectbox.TimeInt64ConvertToEntityProperty(-5678).String())
-	var date = time.Now()
-	assert.Eq(t, date.UnixNano()/1000000, objectbox.TimeInt64ConvertToDatabaseValue(date))
+	var test = func(expected string, timestamp int64) {
+		value, err := objectbox.TimeInt64ConvertToEntityProperty(timestamp)
+		assert.NoErr(t, err)
+		assert.Eq(t, expected, value.String())
+	}
+
+	test("1970-01-01 00:00:00 +0000 UTC", 0)
+	test("1970-01-01 00:00:01.234 +0000 UTC", 1234)
+	test("1969-12-31 23:59:54.322 +0000 UTC", -5678)
+
+	{
+		var date = time.Now()
+		value, err := objectbox.TimeInt64ConvertToDatabaseValue(date)
+		assert.NoErr(t, err)
+		assert.Eq(t, date.UnixNano()/1000000, value)
+	}
 }
 
 func TestTimeTextConverter(t *testing.T) {
 	date := time.Unix(time.Now().Unix(), int64(time.Now().Nanosecond())) // get date without monotonic clock reading
 	bytes, err := date.MarshalText()
 	assert.NoErr(t, err)
-	assert.Eq(t, string(bytes), objectbox.TimeTextConvertToDatabaseValue(date))
-	assert.Eq(t, date.UnixNano(), objectbox.TimeTextConvertToEntityProperty(string(bytes)).UnixNano())
+
+	{
+		value, err := objectbox.TimeTextConvertToDatabaseValue(date)
+		assert.NoErr(t, err)
+		assert.Eq(t, string(bytes), value)
+	}
+
+	{
+		value, err := objectbox.TimeTextConvertToEntityProperty(string(bytes))
+		assert.NoErr(t, err)
+		assert.Eq(t, date.UnixNano(), value.UnixNano())
+	}
 }
 
 func TestTimeBinaryConverter(t *testing.T) {
 	date := time.Unix(time.Now().Unix(), int64(time.Now().Nanosecond())) // get date without monotonic clock reading
 	bytes, err := date.MarshalBinary()
 	assert.NoErr(t, err)
-	assert.Eq(t, bytes, objectbox.TimeBinaryConvertToDatabaseValue(date))
-	assert.Eq(t, date, objectbox.TimeBinaryConvertToEntityProperty(bytes))
+
+	{
+		value, err := objectbox.TimeBinaryConvertToDatabaseValue(date)
+		assert.NoErr(t, err)
+		assert.Eq(t, bytes, value)
+	}
+
+	{
+		value, err := objectbox.TimeBinaryConvertToEntityProperty(bytes)
+		assert.NoErr(t, err)
+		assert.Eq(t, date, value)
+	}
 }

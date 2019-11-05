@@ -465,15 +465,22 @@ func (entity_EntityInfo) PutRelated(ob *objectbox.ObjectBox, object interface{},
 // Flatten is called by ObjectBox to transform an object to a FlatBuffer
 func (entity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) error {
 	obj := object.(*Entity)
-
-	propDate, err := objectbox.TimeInt64ConvertToDatabaseValue(obj.Date)
-	if err != nil {
-		return errors.New("converter timeInt64ToDatabaseValue() failed on Entity.Date: " + err.Error())
+	var propDate int64
+	{
+		var err error
+		propDate, err = objectbox.TimeInt64ConvertToDatabaseValue(obj.Date)
+		if err != nil {
+			return errors.New("converter objectbox.TimeInt64ConvertToDatabaseValue() failed on Entity.Date: " + err.Error())
+		}
 	}
 
-	propComplex128, err := complex128BytesToDatabaseValue(obj.Complex128)
-	if err != nil {
-		return errors.New("converter complex128BytesToDatabaseValue() failed on Entity.Complex128: " + err.Error())
+	var propComplex128 []byte
+	{
+		var err error
+		propComplex128, err = complex128BytesToDatabaseValue(obj.Complex128)
+		if err != nil {
+			return errors.New("converter complex128BytesToDatabaseValue() failed on Entity.Complex128: " + err.Error())
+		}
 	}
 
 	var offsetString = fbutils.CreateStringOffset(fbb, obj.String)
@@ -625,7 +632,7 @@ func (entity_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{
 
 	propDate, err := objectbox.TimeInt64ConvertToEntityProperty(fbutils.GetInt64Slot(table, 40))
 	if err != nil {
-		return nil, errors.New("converter timeInt64ToEntityProperty() failed on Entity.Date: " + err.Error())
+		return nil, errors.New("converter objectbox.TimeInt64ConvertToEntityProperty() failed on Entity.Date: " + err.Error())
 	}
 
 	propComplex128, err := complex128BytesToEntityProperty(fbutils.GetByteVectorSlot(table, 42))

@@ -220,15 +220,19 @@ func getOptions(t *testing.T, sourceFile, modelInfoFile string) generator.Option
 	return options
 }
 
-var expectedErrorRegexp = regexp.MustCompile("// *ERROR *=(.+)[\n|\r]")
+var expectedErrorRegexp = regexp.MustCompile(`// *ERROR *=(.+)[\n|\r]`)
+var expectedErrorRegexpMulti = regexp.MustCompile(`(?sU)/\* *ERROR.*[\n|\r](.+)\*/`)
 
 func getExpectedError(t *testing.T, sourceFile string) error {
 	source, err := ioutil.ReadFile(sourceFile)
 	assert.NoErr(t, err)
 
-	var match = expectedErrorRegexp.FindSubmatch(source)
-	if len(match) > 1 {
-		return errors.New(strings.TrimSpace(string(match[1])))
+	if match := expectedErrorRegexp.FindSubmatch(source); len(match) > 1 {
+		return errors.New(strings.TrimSpace(string(match[1]))) // this is a "positive" return
+	}
+
+	if match := expectedErrorRegexpMulti.FindSubmatch(source); len(match) > 1 {
+		return errors.New(strings.TrimSpace(string(match[1]))) // this is a "positive" return
 	}
 
 	assert.Failf(t, "missing error declaration in %s - add comment to the file // ERROR = expected error text", sourceFile)

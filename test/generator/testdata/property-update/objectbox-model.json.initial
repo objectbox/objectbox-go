@@ -4,37 +4,40 @@
   "_note3": "If you have VCS merge conflicts, you must resolve them according to ObjectBox docs.",
   "entities": [
     {
-      "id": "2:6050128673802995827",
-      "lastPropertyId": "2:2669985732393126063",
-      "name": "B",
+      "id": "1:8274930044578894929",
+      "lastPropertyId": "2:7144924247938981575",
+      "name": "ChangeUid",
       "properties": [
         {
-          "id": "1:501233450539197794",
+          "id": "1:1543572285742637646",
           "name": "Id",
           "type": 6,
           "flags": 1
         },
         {
-          "id": "2:2669985732393126063",
-          "name": "New",
+          "id": "2:7144924247938981575",
+          "name": "Value",
           "type": 9
         }
       ]
     },
     {
-      "id": "3:1774932891286980153",
-      "lastPropertyId": "1:6044372234677422456",
-      "name": "C",
+      "id": "2:8717895732742165505",
+      "name": "A",
+      "lastPropertyId": "2:3390393562759376202",
       "properties": [
         {
-          "id": "1:6044372234677422456",
-          "name": "Id",
-          "type": 0
+          "id": "1:2259404117704393152",
+          "name": "Id"
+        },
+        {
+          "id": "2:3390393562759376202",
+          "name": "Old"
         }
       ]
     }
   ],
-  "lastEntityId": "3:1774932891286980153",
+  "lastEntityId": "2:8717895732742165505",
   "lastIndexId": "",
   "lastRelationId": "",
   "modelVersion": 5,
@@ -42,6 +45,6 @@
   "retiredEntityUids": [],
   "retiredIndexUids": [],
   "retiredPropertyUids": [],
-  "retiredRelationUids": null,
+  "retiredRelationUids": [],
   "version": 1
 }

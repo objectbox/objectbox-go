@@ -1,6 +1,5 @@
 
 # github.com/objectbox/objectbox-go/test/generator/testdata/rename-property
-testdata/rename-property/objectbox-model.go:15:24: undefined: ABinding
-testdata/rename-property/objectbox-model.go:17:24: undefined: CBinding
+testdata/rename-property/objectbox-model.go:16:24: undefined: CBinding
 
 exit status 2

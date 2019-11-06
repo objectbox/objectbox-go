@@ -235,7 +235,7 @@ func (model *ModelInfo) FindEntityByName(name string) (*Entity, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("entity named %s was not found", name)
+	return nil, fmt.Errorf("entity named '%s' was not found", name)
 }
 
 // CreateEntity creates an entity
@@ -245,7 +245,7 @@ func (model *ModelInfo) CreateEntity(name string) (*Entity, error) {
 		id = model.LastEntityId.getIdSafe() + 1
 	}
 
-	uniqueUid, err := model.generateUid()
+	uniqueUid, err := model.GenerateUid()
 
 	if err != nil {
 		return nil, err
@@ -260,7 +260,7 @@ func (model *ModelInfo) CreateEntity(name string) (*Entity, error) {
 	return entity, nil
 }
 
-func (model *ModelInfo) generateUid() (result Uid, err error) {
+func (model *ModelInfo) GenerateUid() (result Uid, err error) {
 	result = 0
 
 	for i := 0; i < 1000; i++ {
@@ -284,7 +284,7 @@ func (model *ModelInfo) createIndexId() (IdUid, error) {
 		id = model.LastIndexId.getIdSafe() + 1
 	}
 
-	uniqueUid, err := model.generateUid()
+	uniqueUid, err := model.GenerateUid()
 
 	if err != nil {
 		return "", err
@@ -300,7 +300,7 @@ func (model *ModelInfo) createRelationId() (IdUid, error) {
 		id = model.LastRelationId.getIdSafe() + 1
 	}
 
-	uniqueUid, err := model.generateUid()
+	uniqueUid, err := model.GenerateUid()
 
 	if err != nil {
 		return "", err

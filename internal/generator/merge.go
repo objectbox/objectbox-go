@@ -18,6 +18,7 @@ package generator
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/objectbox/objectbox-go/internal/generator/modelinfo"
 )
@@ -86,7 +87,7 @@ func mergeModelEntity(bindingEntity *Entity, modelEntity *modelinfo.Entity, mode
 
 		// add all properties from the bindings to the model and update/rename the changed ones
 		for _, bindingProperty := range bindingEntity.Properties {
-			if modelProperty, err := getModelProperty(bindingProperty, modelEntity); err != nil {
+			if modelProperty, err := getModelProperty(bindingProperty, modelEntity, modelInfo); err != nil {
 				return err
 			} else if err := mergeModelProperty(bindingProperty, modelProperty); err != nil {
 				return err
@@ -139,9 +140,21 @@ func mergeModelEntity(bindingEntity *Entity, modelEntity *modelinfo.Entity, mode
 	return nil
 }
 
-func getModelProperty(bindingProperty *Property, modelEntity *modelinfo.Entity) (*modelinfo.Property, error) {
+func getModelProperty(bindingProperty *Property, modelEntity *modelinfo.Entity, modelInfo *modelinfo.ModelInfo) (*modelinfo.Property, error) {
 	if bindingProperty.Uid != 0 {
-		return modelEntity.FindPropertyByUid(bindingProperty.Uid)
+		property, err := modelEntity.FindPropertyByUid(bindingProperty.Uid)
+		if err == nil {
+			return property, nil
+		}
+
+		// handle "reset property data" use-case - adding a new UID to an existing property
+		property, err2 := modelEntity.FindPropertyByName(bindingProperty.Name)
+		if err2 != nil {
+			return nil, fmt.Errorf("%v; %v", err, err2)
+		}
+
+		log.Printf("Notice - new UID was specified for the same property name '%s' - resetting value (recreating the property)", bindingProperty.Path())
+		return property, nil
 	}
 
 	// we don't care about this error, either the property is found or we create it
@@ -149,18 +162,24 @@ func getModelProperty(bindingProperty *Property, modelEntity *modelinfo.Entity) 
 
 	// handle uid request
 	if bindingProperty.uidRequest {
-		var errInfo string
 		if property != nil {
 			uid, err := property.Id.GetUid()
 			if err != nil {
 				return nil, err
 			}
-			errInfo = fmt.Sprintf("model property UID = %d", uid)
-		} else {
-			errInfo = "property not found in the model"
+			newUid, err := modelInfo.GenerateUid()
+			if err != nil {
+				return nil, err
+			}
+
+			// handle "reset property data" use-case - adding a new UID to an existing property
+			return nil, fmt.Errorf(`uid annotation value must not be empty on property %s, entity %s:
+    [rename] apply the current UID %d
+    [change/reset] apply a new UID %d`,
+				bindingProperty.Name, bindingProperty.entity.Name, uid, newUid)
 		}
-		return nil, fmt.Errorf("uid annotation value must not be empty (%s) on property %s, entity %s",
-			errInfo, bindingProperty.Name, bindingProperty.entity.Name)
+		return nil, fmt.Errorf("uid annotation value must not be empty on an unknown property %s, entity %s",
+			bindingProperty.Name, bindingProperty.entity.Name)
 	}
 
 	if property == nil {
@@ -172,6 +191,15 @@ func getModelProperty(bindingProperty *Property, modelEntity *modelinfo.Entity) 
 
 func mergeModelProperty(bindingProperty *Property, modelProperty *modelinfo.Property) (err error) {
 	modelProperty.Name = bindingProperty.Name
+
+	// handle "reset property data" use-case - adding a new UID to an existing property
+	if bindingProperty.Uid != 0 {
+		if id, _, err := modelProperty.Id.Get(); err != nil {
+			return err
+		} else {
+			modelProperty.Id = modelinfo.CreateIdUid(id, bindingProperty.Uid)
+		}
+	}
 
 	if bindingProperty.Id, bindingProperty.Uid, err = modelProperty.Id.Get(); err != nil {
 		return err

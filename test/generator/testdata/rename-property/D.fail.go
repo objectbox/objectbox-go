@@ -1,6 +1,6 @@
 package object
 
-// ERROR = can't merge binding model information: property with Uid 5617773211005988520 not found
+// ERROR = can't merge binding model information: property with Uid 5617773211005988520 not found in 'D'; property named 'New' not found in 'D'
 
 // completely new entity, already with an uid on a property
 // this is quite unusual and indicates a migration from another DB

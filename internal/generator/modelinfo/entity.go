@@ -125,7 +125,7 @@ func (entity *Entity) FindPropertyByUid(uid Uid) (*Property, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("property with Uid %d not found", uid)
+	return nil, fmt.Errorf("property with Uid %d not found in '%s'", uid, entity.Name)
 }
 
 //FindPropertyByName finds a property by name
@@ -136,7 +136,7 @@ func (entity *Entity) FindPropertyByName(name string) (*Property, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("property with Name %s not found", name)
+	return nil, fmt.Errorf("property named '%s' not found in '%s'", name, entity.Name)
 }
 
 // CreateProperty creates a property
@@ -146,7 +146,7 @@ func (entity *Entity) CreateProperty() (*Property, error) {
 		id = entity.LastPropertyId.getIdSafe() + 1
 	}
 
-	uniqueUid, err := entity.model.generateUid()
+	uniqueUid, err := entity.model.GenerateUid()
 
 	if err != nil {
 		return nil, err
@@ -198,7 +198,7 @@ func (entity *Entity) FindRelationByUid(uid Uid) (*StandaloneRelation, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("relation with Uid %d not found", uid)
+	return nil, fmt.Errorf("relation with Uid %d not found in '%s'", uid, entity.Name)
 }
 
 // FindRelationByName finds relation by name
@@ -209,7 +209,7 @@ func (entity *Entity) FindRelationByName(name string) (*StandaloneRelation, erro
 		}
 	}
 
-	return nil, fmt.Errorf("relation with Name %s not found", name)
+	return nil, fmt.Errorf("relation named '%s' not found in '%s'", name, entity.Name)
 }
 
 // CreateRelation creates relation

@@ -41,7 +41,7 @@ extern "C" {
 /// When using ObjectBox as a dynamic library, you should verify that a compatible version was linked using obx_version() or obx_version_is_at_least().
 #define OBX_VERSION_MAJOR 0
 #define OBX_VERSION_MINOR 7
-#define OBX_VERSION_PATCH 1  // values >= 100 are reserved for dev releases leading to the next minor/major increase
+#define OBX_VERSION_PATCH 2  // values >= 100 are reserved for dev releases leading to the next minor/major increase
 
 /// Returns the version of the library as ints. Pointers may be null.
 void obx_version(int* major, int* minor, int* patch);
@@ -405,6 +405,15 @@ void obx_opt_free(OBX_store_options* opt);
 /// @param opt required parameter holding the data model (obx_opt_model()) and optional options (see obx_opt_*())
 /// @returns NULL if the operation failed, see functions like obx_last_error_code() to get error details
 OBX_store* obx_store_open(OBX_store_options* opt);
+
+/// For stores created outside of this C API, e.g. via C++ or Java, this is how you can use it via C too.
+/// Like this, it is OK to use the same store instance (same database) from multiple languages in parallel.
+/// Note: the store's life time will still be managed outside of the C API;
+/// thus ensure that store is not closed while calling any C function on it.
+/// Once you are done with the C specific OBX_store, call obx_store_close() to free any C related resources.
+/// This, however, will not close the "core store".
+/// @param core_store A pointer to the core C++ ObjectStore, or the native JNI handle for a BoxStore.
+OBX_store* obx_store_wrap(void* core_store);
 
 obx_schema_id obx_store_entity_id(OBX_store* store, const char* entity_name);
 
@@ -864,10 +873,10 @@ obx_err obx_query_visit(OBX_query* query, obx_data_visitor* visitor, void* user_
 OBX_id_array* obx_query_find_ids(OBX_query* query, uint64_t offset, uint64_t limit);
 
 /// Returns the number of matching objects
-obx_err obx_query_count(OBX_query* query, uint64_t* count);
+obx_err obx_query_count(OBX_query* query, uint64_t* out_count);
 
 /// Removes all matching objects from the database & returns the number of deleted objects
-obx_err obx_query_remove(OBX_query* query, uint64_t* count);
+obx_err obx_query_remove(OBX_query* query, uint64_t* out_count);
 
 /// the resulting char* is valid until another call on to_string is made on the same query or until the query is freed
 const char* obx_query_describe(OBX_query* query);
@@ -888,10 +897,10 @@ OBX_bytes_array* obx_query_cursor_find(OBX_query* query, OBX_cursor* cursor, uin
 
 /// @returns NULL if the operation failed, see functions like obx_last_error_code() to get error details
 OBX_id_array* obx_query_cursor_find_ids(OBX_query* query, OBX_cursor* cursor, uint64_t offset, uint64_t limit);
-obx_err obx_query_cursor_count(OBX_query* query, OBX_cursor* cursor, uint64_t* count);
+obx_err obx_query_cursor_count(OBX_query* query, OBX_cursor* cursor, uint64_t* out_count);
 
 /// Removes (deletes!) all matching objects.
-obx_err obx_query_cursor_remove(OBX_query* query, OBX_cursor* cursor, uint64_t* count);
+obx_err obx_query_cursor_remove(OBX_query* query, OBX_cursor* cursor, uint64_t* out_count);
 
 //----------------------------------------------
 // Query parameters (obx_query_{type}_param(s))

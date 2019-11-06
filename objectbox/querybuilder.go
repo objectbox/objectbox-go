@@ -570,6 +570,9 @@ func (qb *QueryBuilder) BytesEqual(property *BaseProperty, value []byte) (Condit
 	var cid ConditionId
 
 	if qb.Err == nil && qb.checkEntityId(property.Entity.Id) {
+		if value == nil {
+			value = []byte{}
+		}
 		cid = qb.getConditionId(C.obx_qb_bytes_equal(qb.cqb, C.obx_schema_id(property.Id), cBytesPtr(value), C.size_t(len(value))))
 	}
 
@@ -581,6 +584,9 @@ func (qb *QueryBuilder) BytesGreater(property *BaseProperty, value []byte, withE
 	var cid ConditionId
 
 	if qb.Err == nil && qb.checkEntityId(property.Entity.Id) {
+		if value == nil {
+			value = []byte{}
+		}
 		cid = qb.getConditionId(C.obx_qb_bytes_greater(qb.cqb, C.obx_schema_id(property.Id), cBytesPtr(value), C.size_t(len(value)), C.bool(withEqual)))
 	}
 
@@ -592,6 +598,9 @@ func (qb *QueryBuilder) BytesLess(property *BaseProperty, value []byte, withEqua
 	var cid ConditionId
 
 	if qb.Err == nil && qb.checkEntityId(property.Entity.Id) {
+		if value == nil {
+			value = []byte{}
+		}
 		cid = qb.getConditionId(C.obx_qb_bytes_less(qb.cqb, C.obx_schema_id(property.Id), cBytesPtr(value), C.size_t(len(value)), C.bool(withEqual)))
 	}
 

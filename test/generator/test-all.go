@@ -108,6 +108,16 @@ func generateOneDir(t *testing.T, overwriteExpected bool, dir string) {
 			}
 
 			var receivedError = fmt.Errorf("%s\n%s\n%s", stdOut, stdErr, err)
+
+			// Fix paths in the error output on Windows so that it matches the expected error (which always uses '/').
+			if os.PathSeparator != '/' {
+				// Make sure the expected error doesn't contain the path separator already - to make it easier to debug.
+				if strings.Contains(expectedError.Error(), string(os.PathSeparator)) {
+					assert.Failf(t, "compile-error.expected contains this OS path separator '%v' so paths can't be normalized to '/'", string(os.PathSeparator))
+				}
+				receivedError = errors.New(strings.Replace(receivedError.Error(), string(os.PathSeparator), "/", -1))
+			}
+
 			assert.Eq(t, expectedError, receivedError)
 		})
 	}

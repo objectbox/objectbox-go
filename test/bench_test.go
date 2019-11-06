@@ -17,7 +17,6 @@
 package objectbox
 
 import (
-	"flag"
 	"fmt"
 	"github.com/objectbox/objectbox-go/objectbox"
 	"github.com/objectbox/objectbox-go/test/performance/perf"
@@ -28,16 +27,15 @@ import (
 // Implements simple benchmarks as an alternative to the "test/performance". However, it doesn't achieve the optimal
 // performance as the standalone one so the following benchmarks are only for quick regression testing.
 
-var bulkCount = 10000
-
-func init() {
-	// need to do the following two manually in init() function order to have access to testing.Short()
-	testing.Init()
-	flag.Parse()
+// a function instead of a global variable to make sure testing.Short is initialized already
+func bulkCount() int {
+	var bulkCount = 10000
 
 	if testing.Short() {
 		bulkCount = 100
 	}
+
+	return bulkCount
 }
 
 func prepareBenchData(b *testing.B, count int) []*perf.Entity {
@@ -100,10 +98,10 @@ func (env *benchmarkEnv) check(err error) {
 func BenchmarkPutMany(b *testing.B) {
 	var env = newBenchEnv(b)
 	defer env.close()
-	var inserts = prepareBenchData(b, bulkCount)
+	var inserts = prepareBenchData(b, bulkCount())
 
-	b.Run(fmt.Sprintf("count=%v", bulkCount), func(b *testing.B) {
-		b.SetBytes(int64(bulkCount)) // report speed in MB/s where one B is one object
+	b.Run(fmt.Sprintf("count=%v", bulkCount()), func(b *testing.B) {
+		b.SetBytes(int64(bulkCount())) // report speed in MB/s where one B is one object
 		b.ReportAllocs()
 		for n := 0; n < b.N; n++ {
 			_, err := env.box.PutMany(inserts)
@@ -119,7 +117,7 @@ func BenchmarkPutMany(b *testing.B) {
 func BenchmarkGetAll(b *testing.B) {
 	var env = newBenchEnv(b)
 	defer env.close()
-	var inserts = prepareBenchData(b, bulkCount)
+	var inserts = prepareBenchData(b, bulkCount())
 
 	b.StopTimer()
 	_, err := env.box.PutMany(inserts)
@@ -127,14 +125,14 @@ func BenchmarkGetAll(b *testing.B) {
 	b.StartTimer()
 
 	b.Run("GetAll", func(b *testing.B) {
-		b.SetBytes(int64(bulkCount)) // report speed in MB/s where one B is one object
+		b.SetBytes(int64(bulkCount())) // report speed in MB/s where one B is one object
 		b.ReportAllocs()
 		for n := 0; n < b.N; n++ {
 			objects, err := env.box.GetAll()
 			if err != nil {
 				b.Error(err)
-			} else if len(objects) != bulkCount {
-				b.Errorf("invalid number of objects received: %v instead of %v", len(objects), bulkCount)
+			} else if len(objects) != bulkCount() {
+				b.Errorf("invalid number of objects received: %v instead of %v", len(objects), bulkCount())
 			}
 		}
 	})
@@ -143,10 +141,10 @@ func BenchmarkGetAll(b *testing.B) {
 func BenchmarkRemoveAll(b *testing.B) {
 	var env = newBenchEnv(b)
 	defer env.close()
-	var inserts = prepareBenchData(b, bulkCount)
+	var inserts = prepareBenchData(b, bulkCount())
 
 	b.Run("count=%v", func(b *testing.B) {
-		b.SetBytes(int64(bulkCount)) // report speed in MB/s where one B is one object
+		b.SetBytes(int64(bulkCount())) // report speed in MB/s where one B is one object
 		b.ReportAllocs()
 		for n := 0; n < b.N; n++ {
 			b.StopTimer()

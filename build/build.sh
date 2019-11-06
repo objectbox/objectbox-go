@@ -43,6 +43,8 @@ function generate {
     go generate ./...
 }
 
+go version
+
 preBuild
 build
 generate

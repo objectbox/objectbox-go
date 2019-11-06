@@ -19,15 +19,14 @@ package objectbox_test
 import (
 	"errors"
 	"fmt"
+	"github.com/objectbox/objectbox-go/objectbox"
+	"github.com/objectbox/objectbox-go/test/assert"
+	"github.com/objectbox/objectbox-go/test/model"
 	"reflect"
 	"regexp"
 	"runtime"
 	"strings"
 	"testing"
-
-	"github.com/objectbox/objectbox-go/objectbox"
-	"github.com/objectbox/objectbox-go/test/assert"
-	"github.com/objectbox/objectbox-go/test/model"
 )
 
 // Following methods use many test-cases defined as a list of queryTestCase and run all Query.* methods on each test case
@@ -345,6 +344,181 @@ func TestQueryParams(t *testing.T) {
 			func(q i) error { return eq(q).SetBytesParams(E.ByteVector, nil) }},
 		{5, s{`ByteVector < byte[5]{0x01020305 08}`}, box.Query(E.ByteVector.LessThan(nil)),
 			func(q i) error { return eq(q).SetBytesParams(E.ByteVector, e.ByteVector) }},
+	})
+}
+
+func TestQueryAlias(t *testing.T) {
+	env := model.NewTestEnv(t)
+	defer env.Close()
+
+	// let's alias the entity to make the test cases easier to read
+	var E = model.Entity_
+
+	{ // Alias()
+		env.Box.Query(E.Id.GreaterThan(0).Alias("alias"))
+
+		func() {
+			defer assert.MustPanic(t, regexp.MustCompile("using Alias on a combination of conditions is not supported"))
+			env.Box.Query(objectbox.Any().Alias("alias"))
+		}()
+
+		func() {
+			defer assert.MustPanic(t, regexp.MustCompile("using Alias on a OneToMany relation link is not supported"))
+			env.Box.Query(E.Related.Link().Alias("alias"))
+		}()
+
+		func() {
+			defer assert.MustPanic(t, regexp.MustCompile("using Alias on a ManyToMany relation link is not supported"))
+			env.Box.Query(E.RelatedSlice.Link().Alias("alias"))
+		}()
+	}
+
+	{ // As()
+		var alias = objectbox.Alias("alias")
+		env.Box.Query(E.Id.GreaterThan(0).As(alias))
+
+		func() {
+			defer assert.MustPanic(t, regexp.MustCompile("using Alias on a combination of conditions is not supported"))
+			env.Box.Query(objectbox.Any().As(alias))
+		}()
+
+		func() {
+			defer assert.MustPanic(t, regexp.MustCompile("using Alias on a OneToMany relation link is not supported"))
+			env.Box.Query(E.Related.Link().As(alias))
+		}()
+
+		func() {
+			defer assert.MustPanic(t, regexp.MustCompile("using Alias on a ManyToMany relation link is not supported"))
+			env.Box.Query(E.RelatedSlice.Link().As(alias))
+		}()
+	}
+}
+
+func TestQueryAliasParams(t *testing.T) {
+	env := model.NewTestEnv(t)
+	defer env.Close()
+
+	// let's simplify (shorten) a test case definition with some aliases
+	var box = env.Box
+	var E = model.Entity_
+	var e = model.Entity47()
+	type i = interface{}
+	var eq = func(q interface{}) *objectbox.Query { return q.(*objectbox.Query) }
+
+	// verify an unknown alias fails
+	var err = env.Box.Query(E.Id.GreaterThan(0)).SetInt64Params(objectbox.Alias("xyz"), 1)
+	assert.True(t, strings.Contains(err.Error(), "Parameter alias unavailable: xyz"))
+
+	// special test - what happens when we use property identifier instead of an alias
+	testQueries(t, env, queryTestOptions{baseCount: 10}, []queryTestCase{
+		{1, s{`(Id == 1 AND Id > 0)`}, box.Query(E.Id.Equals(0), E.Id.GreaterThan(0).Alias("int value")),
+			func(q i) error { return eq(q).SetInt64Params(E.Id, 1) }},
+		{0, s{`(Id == 0 AND Id > 1)`}, box.Query(E.Id.Equals(0), E.Id.GreaterThan(0).Alias("int value")),
+			func(q i) error { return eq(q).SetInt64Params(objectbox.Alias("int value"), 1) }},
+	})
+
+	// a copy of the test cases from TestQueryParams(), with alias applied
+	var alias = objectbox.Alias("text")
+	testQueries(t, env, queryTestOptions{baseCount: 1000}, []queryTestCase{
+		{1, s{`String == "Val-1"`}, box.Query(E.String.Equals("", true).As(alias)),
+			func(q i) error { return eq(q).SetStringParams(alias, e.String) }},
+		{1, s{`String in ["VAL-1"]`}, box.Query(E.String.In(true).As(alias)),
+			func(q i) error { return eq(q).SetStringParamsIn(alias, "VAL-1") }},
+		{2, s{`String in ["VAL-1", "val-860714888"]`, `String in ["val-860714888", "VAL-1"]`},
+			box.Query(E.String.In(true).As(alias)),
+			func(q i) error { return eq(q).SetStringParamsIn(alias, "val-860714888", "VAL-1") }},
+
+		{2, s{`StringVector contains "first-1"`}, box.Query(E.StringVector.Contains("", true).As(alias)),
+			func(q i) error { return eq(q).SetStringParams(alias, "first-1") }},
+
+		{2, s{`Int64 == 47`}, box.Query(E.Int64.Equals(0).As(alias)),
+			func(q i) error { return eq(q).SetInt64Params(alias, e.Int64) }},
+		{1, s{`Int64 between -1 and 1`}, box.Query(E.Int64.Between(0, 0).As(alias)),
+			func(q i) error { return eq(q).SetInt64Params(alias, -1, 1) }},
+		{2, s{`Int64 in [94|47]`, `Int64 in [47|94]`}, box.Query(E.Int64.In().As(alias)),
+			func(q i) error { return eq(q).SetInt64ParamsIn(alias, e.Int64, e.Int64*2) }},
+
+		{2, s{`Uint64 == 47`}, box.Query(E.Uint64.Equals(0).As(alias)),
+			func(q i) error { return eq(q).SetInt64Params(alias, int64(e.Uint64)) }},
+		{2, s{`Uint64 in [94|47]`, `Uint64 in [47|94]`}, box.Query(E.Uint64.In().As(alias)),
+			func(q i) error { return eq(q).SetInt64ParamsIn(alias, int64(e.Uint64), int64(e.Uint64*2)) }},
+
+		{3, s{`Int == 47`}, box.Query(E.Int.Equals(0).As(alias)),
+			func(q i) error { return eq(q).SetInt64Params(alias, int64(e.Int)) }},
+		{1, s{`Int between -1 and 1`}, box.Query(E.Int.Between(0, 0).As(alias)),
+			func(q i) error { return eq(q).SetInt64Params(alias, -1, 1) }},
+		{3, s{`Int in [94|47]`, `Int in [47|94]`}, box.Query(E.Int.In().As(alias)),
+			func(q i) error { return eq(q).SetInt64ParamsIn(alias, int64(e.Int), int64(e.Int*2)) }},
+
+		{3, s{`Uint == 47`}, box.Query(E.Uint.Equals(0).As(alias)),
+			func(q i) error { return eq(q).SetInt64Params(alias, int64(e.Uint)) }},
+		{3, s{`Uint in [94|47]`, `Uint in [47|94]`}, box.Query(E.Uint.In().As(alias)),
+			func(q i) error { return eq(q).SetInt64ParamsIn(alias, int64(e.Uint), int64(e.Uint*2)) }},
+
+		{3, s{`Rune == 47`}, box.Query(E.Rune.Equals(0).As(alias)),
+			func(q i) error { return eq(q).SetInt64Params(alias, int64(e.Rune)) }},
+		{1, s{`Rune between -1 and 1`}, box.Query(E.Rune.Between(0, 0).As(alias)),
+			func(q i) error { return eq(q).SetInt64Params(alias, -1, 1) }},
+		{3, s{`Rune in [94|47]`, `Rune in [47|94]`}, box.Query(E.Rune.In().As(alias)),
+			func(q i) error { return eq(q).SetInt32ParamsIn(alias, int32(e.Rune), int32(e.Rune*2)) }},
+
+		{3, s{`Int32 == 47`}, box.Query(E.Int32.Equals(0).As(alias)),
+			func(q i) error { return eq(q).SetInt64Params(alias, int64(e.Int32)) }},
+		{1, s{`Int32 between -1 and 1`}, box.Query(E.Int32.Between(0, 0).As(alias)),
+			func(q i) error { return eq(q).SetInt64Params(alias, -1, 1) }},
+		{3, s{`Int32 in [94|47]`, `Int32 in [47|94]`}, box.Query(E.Int32.In().As(alias)),
+			func(q i) error { return eq(q).SetInt32ParamsIn(alias, e.Int32, e.Int32*2) }},
+
+		{3, s{`Uint32 == 47`}, box.Query(E.Uint32.Equals(0).As(alias)),
+			func(q i) error { return eq(q).SetInt64Params(alias, int64(e.Int32)) }},
+		{1, s{`Uint32 between 0 and 1`}, box.Query(E.Uint32.Between(0, 0).As(alias)),
+			func(q i) error { return eq(q).SetInt64Params(alias, 0, 1) }},
+		{3, s{`Uint32 in [94|47]`, `Uint32 in [47|94]`}, box.Query(E.Uint32.In().As(alias)),
+			func(q i) error { return eq(q).SetInt32ParamsIn(alias, int32(e.Uint32), int32(e.Uint32*2)) }},
+
+		{3, s{`Int16 == 47`}, box.Query(E.Int16.Equals(0).As(alias)),
+			func(q i) error { return eq(q).SetInt64Params(alias, int64(e.Int16)) }},
+		{1, s{`Int16 between -1 and 1`}, box.Query(E.Int16.Between(0, 0).As(alias)),
+			func(q i) error { return eq(q).SetInt64Params(alias, -1, 1) }},
+
+		{3, s{`Uint16 == 47`}, box.Query(E.Uint16.Equals(0).As(alias)),
+			func(q i) error { return eq(q).SetInt64Params(alias, int64(e.Uint16)) }},
+		{1, s{`Uint16 between 0 and 1`}, box.Query(E.Uint16.Between(0, 0).As(alias)),
+			func(q i) error { return eq(q).SetInt64Params(alias, 0, 1) }},
+
+		{6, s{`Int8 == 47`}, box.Query(E.Int8.Equals(0).As(alias)),
+			func(q i) error { return eq(q).SetInt64Params(alias, int64(e.Int8)) }},
+		{11, s{`Int8 between -1 and 1`}, box.Query(E.Int8.Between(0, 0).As(alias)),
+			func(q i) error { return eq(q).SetInt64Params(alias, -1, 1) }},
+
+		{6, s{`Uint8 == 47`}, box.Query(E.Uint8.Equals(0).As(alias)),
+			func(q i) error { return eq(q).SetInt64Params(alias, int64(e.Uint8)) }},
+		{8, s{`Uint8 between 0 and 1`}, box.Query(E.Uint8.Between(0, 0).As(alias)),
+			func(q i) error { return eq(q).SetInt64Params(alias, 0, 1) }},
+
+		{6, s{`Byte == 47`}, box.Query(E.Byte.Equals(0).As(alias)),
+			func(q i) error { return eq(q).SetInt64Params(alias, int64(e.Byte)) }},
+		{8, s{`Byte between 0 and 1`}, box.Query(E.Byte.Between(0, 0).As(alias)),
+			func(q i) error { return eq(q).SetInt64Params(alias, 0, 1) }},
+
+		{2, s{`Float64 between 47.739999 and 47.740001`}, box.Query(E.Float64.Between(0, 0).As(alias)),
+			func(q i) error { return eq(q).SetFloat64Params(alias, e.Float64-0.000001, e.Float64+0.000001) }},
+		{498, s{`Float64 > 47.740000`}, box.Query(E.Float64.GreaterThan(0).As(alias)),
+			func(q i) error { return eq(q).SetFloat64Params(alias, e.Float64) }},
+
+		{2, s{`Float32 between 47.739990 and 47.740013`}, box.Query(E.Float32.Between(0, 0).As(alias)),
+			func(q i) error {
+				return eq(q).SetFloat64Params(alias, float64(e.Float32-0.00001), float64(e.Float32+0.00001))
+			}},
+		{498, s{`Float32 > 47.740002`}, box.Query(E.Float32.GreaterThan(e.Float32).As(alias)),
+			func(q i) error { return eq(q).SetFloat64Params(alias, float64(e.Float32)) }},
+
+		{6, s{`ByteVector == byte[5]{0x01020305 08}`}, box.Query(E.ByteVector.Equals(nil).As(alias)),
+			func(q i) error { return eq(q).SetBytesParams(alias, e.ByteVector) }},
+		{1000, s{`ByteVector > byte[0]""`}, box.Query(E.ByteVector.GreaterThan(nil).As(alias)),
+			func(q i) error { return eq(q).SetBytesParams(alias, nil) }},
+		{5, s{`ByteVector < byte[5]{0x01020305 08}`}, box.Query(E.ByteVector.LessThan(nil).As(alias)),
+			func(q i) error { return eq(q).SetBytesParams(alias, e.ByteVector) }},
 	})
 }
 

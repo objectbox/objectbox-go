@@ -23,23 +23,55 @@ import (
 // Condition is used by Query to limit object selection
 type Condition interface {
 	applyTo(qb *QueryBuilder, isRoot bool) (ConditionId, error)
+
+	// Alias sets a string alias for the given condition. It can later be used in Query.Set*Params() methods.
+	Alias(alias string) Condition
+
+	// As sets a string alias for the given condition. It can later be used in Query.Set*Params() methods.
+	As(alias *alias) Condition
 }
 
 // ConditionId is a condition identifier type, used when building queries
 type ConditionId = int32
 
 type conditionClosure struct {
-	applyFun func(qb *QueryBuilder) (ConditionId, error)
+	apply func(qb *QueryBuilder) (ConditionId, error)
+	alias *string
 }
 
 func (condition *conditionClosure) applyTo(qb *QueryBuilder, isRoot bool) (ConditionId, error) {
-	return condition.applyFun(qb)
+	cid, err := condition.apply(qb)
+	if err != nil {
+		return 0, err
+	}
+
+	if condition.alias != nil {
+		err = qb.Alias(*condition.alias)
+		if err != nil {
+			return 0, err
+		}
+	}
+
+	return cid, nil
+}
+
+// Alias sets a string alias for the given condition. It can later be used in Query.Set*Params() methods
+func (condition *conditionClosure) Alias(alias string) Condition {
+	condition.alias = &alias
+	return condition
+}
+
+// As sets an alias for the given condition. It can later be used in Query.Set*Params() methods.
+func (condition *conditionClosure) As(alias *alias) Condition {
+	condition.alias = alias.alias()
+	return condition
 }
 
 // Combines multiple conditions with an operator
 type conditionCombination struct {
-	or         bool // AND by default
-	conditions []Condition
+	or          bool // AND by default
+	conditions  []Condition
+	aliasCalled bool
 }
 
 // assertNoLinks makes sure there are no links (0 condition IDs) among given conditions
@@ -53,6 +85,10 @@ func (*conditionCombination) assertNoLinks(conditionIds []ConditionId) error {
 }
 
 func (condition *conditionCombination) applyTo(qb *QueryBuilder, isRoot bool) (ConditionId, error) {
+	if condition.aliasCalled {
+		return 0, errors.New("using Alias on a combination of conditions is not supported")
+	}
+
 	if len(condition.conditions) == 0 {
 		return 0, nil
 	} else if len(condition.conditions) == 1 {
@@ -84,6 +120,20 @@ func (condition *conditionCombination) applyTo(qb *QueryBuilder, isRoot bool) (C
 	return qb.All(ids)
 }
 
+// Alias sets a string alias for the given condition. It can later be used in Query.Set*Params() methods.
+// This is an invalid call on a combination of conditions and will result in an error.
+func (condition *conditionCombination) Alias(alias string) Condition {
+	condition.aliasCalled = true
+	return condition
+}
+
+// As sets an alias for the given condition. It can later be used in Query.Set*Params() methods.
+// This is an invalid call on a combination of conditions and will result in an error.
+func (condition *conditionCombination) As(alias *alias) Condition {
+	condition.aliasCalled = true
+	return condition
+}
+
 // Any provides a way to combine multiple query conditions (equivalent to OR logical operator)
 func Any(conditions ...Condition) Condition {
 	return &conditionCombination{
@@ -97,4 +147,26 @@ func All(conditions ...Condition) Condition {
 	return &conditionCombination{
 		conditions: conditions,
 	}
+}
+
+// implements propertyOrAlias
+type alias struct {
+	string
+}
+
+func (alias) propertyId() TypeId {
+	return 0
+}
+
+func (alias) entityId() TypeId {
+	return 0
+}
+
+func (as *alias) alias() *string {
+	return &as.string
+}
+
+// Alias wraps a string as an identifier usable for Query.Set*Params*() methods.
+func Alias(value string) *alias {
+	return &alias{value}
 }

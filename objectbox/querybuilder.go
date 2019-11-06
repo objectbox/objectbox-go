@@ -255,6 +255,19 @@ func (qb *QueryBuilder) getConditionId(cid C.obx_qb_cond) ConditionId {
 	return ConditionId(cid)
 }
 
+// Alias sets an alias for the last created condition
+func (qb *QueryBuilder) Alias(alias string) error {
+	if qb.Err == nil {
+		qb.Err = cCall(func() C.obx_err {
+			cvalue := C.CString(alias)
+			defer C.free(unsafe.Pointer(cvalue))
+			return C.obx_qb_param_alias(qb.cqb, cvalue)
+		})
+	}
+
+	return qb.Err
+}
+
 // Any is called internally
 func (qb *QueryBuilder) Any(ids []ConditionId) (ConditionId, error) {
 	var cid ConditionId

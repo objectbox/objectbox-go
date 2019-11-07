@@ -184,11 +184,7 @@ func goUint64ArrayToCObxId(values []uint64) *C.obx_id {
 
 func cBytesPtr(value []byte) unsafe.Pointer {
 	if len(value) == 0 {
-		if value == nil {
-			return nil
-		}
-		header := (*reflect.SliceHeader)(unsafe.Pointer(&value))
-		return unsafe.Pointer(header.Data)
+		return nil
 	}
 	return unsafe.Pointer(&value[0])
 }

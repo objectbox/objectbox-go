@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -eu
 
-cLibVersion=0.7.2
+cLibVersion=0.7.1
 os=$(uname)
 
 goVersion=$(go version | cut -d' ' -f 3)

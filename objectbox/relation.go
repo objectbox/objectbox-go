@@ -29,7 +29,7 @@ func (condition *conditionRelationOneToMany) applyTo(qb *QueryBuilder, isRoot bo
 		return 0, errors.New("using Alias on a OneToMany relation link is not supported")
 	}
 
-	return 0, qb.LinkOneToMany(condition.relation, condition.conditions)
+	return conditionIdFakeLink, qb.LinkOneToMany(condition.relation, condition.conditions)
 }
 
 // Alias sets a string alias for the given condition. It can later be used in Query.Set*Params() methods.
@@ -124,7 +124,7 @@ func (condition *conditionRelationManyToMany) applyTo(qb *QueryBuilder, isRoot b
 		return 0, errors.New("using Alias on a ManyToMany relation link is not supported")
 	}
 
-	return 0, qb.LinkManyToMany(condition.relation, condition.conditions)
+	return conditionIdFakeLink, qb.LinkManyToMany(condition.relation, condition.conditions)
 }
 
 // Alias sets a string alias for the given condition. It can later be used in Query.Set*Params() methods.

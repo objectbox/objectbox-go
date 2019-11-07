@@ -53,8 +53,44 @@ func (property BaseProperty) IsNotNil() Condition {
 	}
 }
 
-// TODO consider not using closures but defining conditions for each operation
-// test performance to make an informed decision as that approach requires much more code and is not so clean
+// Note - the following order* methods are not public because they're only applied selectively
+//  e.g. StringVector doesn't support ordering at all
+
+// orderAsc sets ascending order based on this property
+func (property BaseProperty) orderAsc() Condition {
+	return &orderClosure{
+		apply: func(qb *QueryBuilder) error {
+			return qb.orderAsc(&property)
+		},
+	}
+}
+
+// orderDesc sets descending order based on this property
+func (property BaseProperty) orderDesc() Condition {
+	return &orderClosure{
+		apply: func(qb *QueryBuilder) error {
+			return qb.orderDesc(&property)
+		},
+	}
+}
+
+// orderNilLast puts objects with nil value of the property at the end of the result set
+func (property BaseProperty) orderNilLast() Condition {
+	return &orderClosure{
+		apply: func(qb *QueryBuilder) error {
+			return qb.orderNilLast(&property)
+		},
+	}
+}
+
+// orderNilAsZero treats the nil value of the property the same as if it was 0
+func (property BaseProperty) orderNilAsZero() Condition {
+	return &orderClosure{
+		apply: func(qb *QueryBuilder) error {
+			return qb.orderNilAsZero(&property)
+		},
+	}
+}
 
 // PropertyString holds information about a property and provides query building methods
 type PropertyString struct {
@@ -152,6 +188,35 @@ func (property PropertyString) In(caseSensitive bool, texts ...string) Condition
 	}
 }
 
+// OrderAsc sets ascending order based on this property
+func (property PropertyString) OrderAsc(caseSensitive bool) Condition {
+	return &orderClosure{
+		apply: func(qb *QueryBuilder) error {
+			if err := qb.orderAsc(property.BaseProperty); err != nil {
+				return err
+			}
+			return qb.orderCaseSensitive(property.BaseProperty, caseSensitive)
+		},
+	}
+}
+
+// OrderDesc sets descending order based on this property
+func (property PropertyString) OrderDesc(caseSensitive bool) Condition {
+	return &orderClosure{
+		apply: func(qb *QueryBuilder) error {
+			if err := qb.orderDesc(property.BaseProperty); err != nil {
+				return err
+			}
+			return qb.orderCaseSensitive(property.BaseProperty, caseSensitive)
+		},
+	}
+}
+
+// OrderNilLast puts objects with nil value of the property at the end of the result set
+func (property PropertyString) OrderNilLast() Condition {
+	return property.orderNilLast()
+}
+
 // PropertyStringVector holds information about a property and provides query building methods
 type PropertyStringVector struct {
 	*BaseProperty
@@ -234,6 +299,26 @@ func (property PropertyInt64) NotIn(values ...int64) Condition {
 	}
 }
 
+// OrderAsc sets ascending order based on this property
+func (property PropertyInt64) OrderAsc() Condition {
+	return property.orderAsc()
+}
+
+// OrderDesc sets descending order based on this property
+func (property PropertyInt64) OrderDesc() Condition {
+	return property.orderDesc()
+}
+
+// OrderNilLast puts objects with nil value of the property at the end of the result set
+func (property PropertyInt64) OrderNilLast() Condition {
+	return property.orderNilLast()
+}
+
+// OrderNilAsZero treats the nil value of the property the same as if it was 0
+func (property PropertyInt64) OrderNilAsZero() Condition {
+	return property.orderNilAsZero()
+}
+
 // PropertyInt holds information about a property and provides query building methods
 type PropertyInt struct {
 	*BaseProperty
@@ -310,6 +395,26 @@ func (property PropertyInt) NotIn(values ...int) Condition {
 			return qb.Int64NotIn(property.BaseProperty, property.int64Slice(values))
 		},
 	}
+}
+
+// OrderAsc sets ascending order based on this property
+func (property PropertyInt) OrderAsc() Condition {
+	return property.orderAsc()
+}
+
+// OrderDesc sets descending order based on this property
+func (property PropertyInt) OrderDesc() Condition {
+	return property.orderDesc()
+}
+
+// OrderNilLast puts objects with nil value of the property at the end of the result set
+func (property PropertyInt) OrderNilLast() Condition {
+	return property.orderNilLast()
+}
+
+// OrderNilAsZero treats the nil value of the property the same as if it was 0
+func (property PropertyInt) OrderNilAsZero() Condition {
+	return property.orderNilAsZero()
 }
 
 // PropertyUint64 holds information about a property and provides query building methods
@@ -390,6 +495,26 @@ func (property PropertyUint64) NotIn(values ...uint64) Condition {
 	}
 }
 
+// OrderAsc sets ascending order based on this property
+func (property PropertyUint64) OrderAsc() Condition {
+	return property.orderAsc()
+}
+
+// OrderDesc sets descending order based on this property
+func (property PropertyUint64) OrderDesc() Condition {
+	return property.orderDesc()
+}
+
+// OrderNilLast puts objects with nil value of the property at the end of the result set
+func (property PropertyUint64) OrderNilLast() Condition {
+	return property.orderNilLast()
+}
+
+// OrderNilAsZero treats the nil value of the property the same as if it was 0
+func (property PropertyUint64) OrderNilAsZero() Condition {
+	return property.orderNilAsZero()
+}
+
 // PropertyUint holds information about a property and provides query building methods
 type PropertyUint struct {
 	*BaseProperty
@@ -466,6 +591,26 @@ func (property PropertyUint) NotIn(values ...uint) Condition {
 			return qb.Int64NotIn(property.BaseProperty, property.int64Slice(values))
 		},
 	}
+}
+
+// OrderAsc sets ascending order based on this property
+func (property PropertyUint) OrderAsc() Condition {
+	return property.orderAsc()
+}
+
+// OrderDesc sets descending order based on this property
+func (property PropertyUint) OrderDesc() Condition {
+	return property.orderDesc()
+}
+
+// OrderNilLast puts objects with nil value of the property at the end of the result set
+func (property PropertyUint) OrderNilLast() Condition {
+	return property.orderNilLast()
+}
+
+// OrderNilAsZero treats the nil value of the property the same as if it was 0
+func (property PropertyUint) OrderNilAsZero() Condition {
+	return property.orderNilAsZero()
 }
 
 // PropertyRune holds information about a property and provides query building methods
@@ -546,6 +691,26 @@ func (property PropertyRune) NotIn(values ...rune) Condition {
 	}
 }
 
+// OrderAsc sets ascending order based on this property
+func (property PropertyRune) OrderAsc() Condition {
+	return property.orderAsc()
+}
+
+// OrderDesc sets descending order based on this property
+func (property PropertyRune) OrderDesc() Condition {
+	return property.orderDesc()
+}
+
+// OrderNilLast puts objects with nil value of the property at the end of the result set
+func (property PropertyRune) OrderNilLast() Condition {
+	return property.orderNilLast()
+}
+
+// OrderNilAsZero treats the nil value of the property the same as if it was 0
+func (property PropertyRune) OrderNilAsZero() Condition {
+	return property.orderNilAsZero()
+}
+
 // PropertyInt32 holds information about a property and provides query building methods
 type PropertyInt32 struct {
 	*BaseProperty
@@ -612,6 +777,26 @@ func (property PropertyInt32) NotIn(values ...int32) Condition {
 			return qb.Int32NotIn(property.BaseProperty, values)
 		},
 	}
+}
+
+// OrderAsc sets ascending order based on this property
+func (property PropertyInt32) OrderAsc() Condition {
+	return property.orderAsc()
+}
+
+// OrderDesc sets descending order based on this property
+func (property PropertyInt32) OrderDesc() Condition {
+	return property.orderDesc()
+}
+
+// OrderNilLast puts objects with nil value of the property at the end of the result set
+func (property PropertyInt32) OrderNilLast() Condition {
+	return property.orderNilLast()
+}
+
+// OrderNilAsZero treats the nil value of the property the same as if it was 0
+func (property PropertyInt32) OrderNilAsZero() Condition {
+	return property.orderNilAsZero()
 }
 
 // PropertyUint32 holds information about a property and provides query building methods
@@ -692,6 +877,26 @@ func (property PropertyUint32) NotIn(values ...uint32) Condition {
 	}
 }
 
+// OrderAsc sets ascending order based on this property
+func (property PropertyUint32) OrderAsc() Condition {
+	return property.orderAsc()
+}
+
+// OrderDesc sets descending order based on this property
+func (property PropertyUint32) OrderDesc() Condition {
+	return property.orderDesc()
+}
+
+// OrderNilLast puts objects with nil value of the property at the end of the result set
+func (property PropertyUint32) OrderNilLast() Condition {
+	return property.orderNilLast()
+}
+
+// OrderNilAsZero treats the nil value of the property the same as if it was 0
+func (property PropertyUint32) OrderNilAsZero() Condition {
+	return property.orderNilAsZero()
+}
+
 // PropertyInt16 holds information about a property and provides query building methods
 type PropertyInt16 struct {
 	*BaseProperty
@@ -740,6 +945,26 @@ func (property PropertyInt16) Between(a, b int16) Condition {
 			return qb.IntBetween(property.BaseProperty, int64(a), int64(b))
 		},
 	}
+}
+
+// OrderAsc sets ascending order based on this property
+func (property PropertyInt16) OrderAsc() Condition {
+	return property.orderAsc()
+}
+
+// OrderDesc sets descending order based on this property
+func (property PropertyInt16) OrderDesc() Condition {
+	return property.orderDesc()
+}
+
+// OrderNilLast puts objects with nil value of the property at the end of the result set
+func (property PropertyInt16) OrderNilLast() Condition {
+	return property.orderNilLast()
+}
+
+// OrderNilAsZero treats the nil value of the property the same as if it was 0
+func (property PropertyInt16) OrderNilAsZero() Condition {
+	return property.orderNilAsZero()
 }
 
 // PropertyUint16 holds information about a property and provides query building methods
@@ -792,6 +1017,26 @@ func (property PropertyUint16) Between(a, b uint16) Condition {
 	}
 }
 
+// OrderAsc sets ascending order based on this property
+func (property PropertyUint16) OrderAsc() Condition {
+	return property.orderAsc()
+}
+
+// OrderDesc sets descending order based on this property
+func (property PropertyUint16) OrderDesc() Condition {
+	return property.orderDesc()
+}
+
+// OrderNilLast puts objects with nil value of the property at the end of the result set
+func (property PropertyUint16) OrderNilLast() Condition {
+	return property.orderNilLast()
+}
+
+// OrderNilAsZero treats the nil value of the property the same as if it was 0
+func (property PropertyUint16) OrderNilAsZero() Condition {
+	return property.orderNilAsZero()
+}
+
 // PropertyInt8 holds information about a property and provides query building methods
 type PropertyInt8 struct {
 	*BaseProperty
@@ -840,6 +1085,26 @@ func (property PropertyInt8) Between(a, b int8) Condition {
 			return qb.IntBetween(property.BaseProperty, int64(a), int64(b))
 		},
 	}
+}
+
+// OrderAsc sets ascending order based on this property
+func (property PropertyInt8) OrderAsc() Condition {
+	return property.orderAsc()
+}
+
+// OrderDesc sets descending order based on this property
+func (property PropertyInt8) OrderDesc() Condition {
+	return property.orderDesc()
+}
+
+// OrderNilLast puts objects with nil value of the property at the end of the result set
+func (property PropertyInt8) OrderNilLast() Condition {
+	return property.orderNilLast()
+}
+
+// OrderNilAsZero treats the nil value of the property the same as if it was 0
+func (property PropertyInt8) OrderNilAsZero() Condition {
+	return property.orderNilAsZero()
 }
 
 // PropertyUint8 holds information about a property and provides query building methods
@@ -892,6 +1157,26 @@ func (property PropertyUint8) Between(a, b uint8) Condition {
 	}
 }
 
+// OrderAsc sets ascending order based on this property
+func (property PropertyUint8) OrderAsc() Condition {
+	return property.orderAsc()
+}
+
+// OrderDesc sets descending order based on this property
+func (property PropertyUint8) OrderDesc() Condition {
+	return property.orderDesc()
+}
+
+// OrderNilLast puts objects with nil value of the property at the end of the result set
+func (property PropertyUint8) OrderNilLast() Condition {
+	return property.orderNilLast()
+}
+
+// OrderNilAsZero treats the nil value of the property the same as if it was 0
+func (property PropertyUint8) OrderNilAsZero() Condition {
+	return property.orderNilAsZero()
+}
+
 // PropertyByte holds information about a property and provides query building methods
 type PropertyByte struct {
 	*BaseProperty
@@ -942,6 +1227,26 @@ func (property PropertyByte) Between(a, b byte) Condition {
 	}
 }
 
+// OrderAsc sets ascending order based on this property
+func (property PropertyByte) OrderAsc() Condition {
+	return property.orderAsc()
+}
+
+// OrderDesc sets descending order based on this property
+func (property PropertyByte) OrderDesc() Condition {
+	return property.orderDesc()
+}
+
+// OrderNilLast puts objects with nil value of the property at the end of the result set
+func (property PropertyByte) OrderNilLast() Condition {
+	return property.orderNilLast()
+}
+
+// OrderNilAsZero treats the nil value of the property the same as if it was 0
+func (property PropertyByte) OrderNilAsZero() Condition {
+	return property.orderNilAsZero()
+}
+
 // PropertyFloat64 holds information about a property and provides query building methods
 type PropertyFloat64 struct {
 	*BaseProperty
@@ -974,6 +1279,26 @@ func (property PropertyFloat64) Between(a, b float64) Condition {
 	}
 }
 
+// OrderAsc sets ascending order based on this property
+func (property PropertyFloat64) OrderAsc() Condition {
+	return property.orderAsc()
+}
+
+// OrderDesc sets descending order based on this property
+func (property PropertyFloat64) OrderDesc() Condition {
+	return property.orderDesc()
+}
+
+// OrderNilLast puts objects with nil value of the property at the end of the result set
+func (property PropertyFloat64) OrderNilLast() Condition {
+	return property.orderNilLast()
+}
+
+// OrderNilAsZero treats the nil value of the property the same as if it was 0
+func (property PropertyFloat64) OrderNilAsZero() Condition {
+	return property.orderNilAsZero()
+}
+
 // PropertyFloat32 holds information about a property and provides query building methods
 type PropertyFloat32 struct {
 	*BaseProperty
@@ -1004,6 +1329,26 @@ func (property PropertyFloat32) Between(a, b float32) Condition {
 			return qb.DoubleBetween(property.BaseProperty, float64(a), float64(b))
 		},
 	}
+}
+
+// OrderAsc sets ascending order based on this property
+func (property PropertyFloat32) OrderAsc() Condition {
+	return property.orderAsc()
+}
+
+// OrderDesc sets descending order based on this property
+func (property PropertyFloat32) OrderDesc() Condition {
+	return property.orderDesc()
+}
+
+// OrderNilLast puts objects with nil value of the property at the end of the result set
+func (property PropertyFloat32) OrderNilLast() Condition {
+	return property.orderNilLast()
+}
+
+// OrderNilAsZero treats the nil value of the property the same as if it was 0
+func (property PropertyFloat32) OrderNilAsZero() Condition {
+	return property.orderNilAsZero()
 }
 
 // PropertyByteVector holds information about a property and provides query building methods
@@ -1071,4 +1416,24 @@ func (property PropertyBool) Equals(value bool) Condition {
 			return qb.IntEqual(property.BaseProperty, 0)
 		},
 	}
+}
+
+// OrderAsc sets ascending order based on this property
+func (property PropertyBool) OrderAsc() Condition {
+	return property.orderAsc()
+}
+
+// OrderDesc sets descending order based on this property
+func (property PropertyBool) OrderDesc() Condition {
+	return property.orderDesc()
+}
+
+// OrderNilLast puts objects with nil value of the property at the end of the result set
+func (property PropertyBool) OrderNilLast() Condition {
+	return property.orderNilLast()
+}
+
+// OrderNilAsZero treats the nil value of the property the same as if it was 0
+func (property PropertyBool) OrderNilAsFalse() Condition {
+	return property.orderNilAsZero()
 }

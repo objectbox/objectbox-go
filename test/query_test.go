@@ -212,7 +212,6 @@ func TestQueries(t *testing.T) {
 
 		{3, s{`(Bool == 1 AND Byte == 1)`}, box.Query(E.Bool.Equals(true), E.Byte.Equals(1)), nil},
 	})
-
 }
 
 func TestQueryOffsetLimit(t *testing.T) {
@@ -358,17 +357,17 @@ func TestQueryAlias(t *testing.T) {
 		env.Box.Query(E.Id.GreaterThan(0).Alias("alias"))
 
 		func() {
-			defer assert.MustPanic(t, regexp.MustCompile("using Alias on a combination of conditions is not supported"))
+			defer assert.MustPanic(t, regexp.MustCompile(`using Alias/As\("alias"\) on a combination of conditions is not supported`))
 			env.Box.Query(objectbox.Any().Alias("alias"))
 		}()
 
 		func() {
-			defer assert.MustPanic(t, regexp.MustCompile("using Alias on a OneToMany relation link is not supported"))
+			defer assert.MustPanic(t, regexp.MustCompile(`using Alias/As\("alias"\) on a OneToMany relation link is not supported`))
 			env.Box.Query(E.Related.Link().Alias("alias"))
 		}()
 
 		func() {
-			defer assert.MustPanic(t, regexp.MustCompile("using Alias on a ManyToMany relation link is not supported"))
+			defer assert.MustPanic(t, regexp.MustCompile(`using Alias/As\("alias"\) on a ManyToMany relation link is not supported`))
 			env.Box.Query(E.RelatedSlice.Link().Alias("alias"))
 		}()
 	}
@@ -378,17 +377,17 @@ func TestQueryAlias(t *testing.T) {
 		env.Box.Query(E.Id.GreaterThan(0).As(alias))
 
 		func() {
-			defer assert.MustPanic(t, regexp.MustCompile("using Alias on a combination of conditions is not supported"))
+			defer assert.MustPanic(t, regexp.MustCompile(`using Alias/As\("alias"\) on a combination of conditions is not supported`))
 			env.Box.Query(objectbox.Any().As(alias))
 		}()
 
 		func() {
-			defer assert.MustPanic(t, regexp.MustCompile("using Alias on a OneToMany relation link is not supported"))
+			defer assert.MustPanic(t, regexp.MustCompile(`using Alias/As\("alias"\) on a OneToMany relation link is not supported`))
 			env.Box.Query(E.Related.Link().As(alias))
 		}()
 
 		func() {
-			defer assert.MustPanic(t, regexp.MustCompile("using Alias on a ManyToMany relation link is not supported"))
+			defer assert.MustPanic(t, regexp.MustCompile(`using Alias/As\("alias"\) on a ManyToMany relation link is not supported`))
 			env.Box.Query(E.RelatedSlice.Link().As(alias))
 		}()
 	}
@@ -657,7 +656,97 @@ func TestQueryLinks(t *testing.T) {
 			E.RelatedPtr.Link(R.Name.Equals("relPtr-Val-1", true)),
 		))
 	}()
+}
 
+func TestQueryOrderSimple(t *testing.T) {
+	env := model.NewTestEnv(t)
+	defer env.Close()
+
+	const count = 10
+	env.Populate(count)
+
+	asc, err := env.Box.Query(model.Entity_.String.OrderAsc(true)).Find()
+	assert.NoErr(t, err)
+
+	desc, err := env.Box.Query(model.Entity_.String.OrderDesc(true)).Find()
+	assert.NoErr(t, err)
+
+	assert.Eq(t, count, len(asc))
+	assert.Eq(t, count, len(desc))
+
+	for i := 0; i < count; i++ {
+		assert.Eq(t, asc[i], desc[count-i-1])
+
+		if i < count-1 {
+			assert.True(t, asc[i].String < asc[i+1].String)
+		}
+	}
+}
+
+func TestQueryOrder(t *testing.T) {
+	env := model.NewTestEnv(t)
+	defer env.Close()
+
+	var box = env.Box
+
+	// let's alias the entity to make the test cases easier to read
+	var E = model.Entity_
+	const c = 1
+
+	// TODO compare textual representation of order when it's provided by the core
+	testQueries(t, env, queryTestOptions{baseCount: c}, []queryTestCase{
+		{c, nil, box.Query(E.String.OrderAsc(true), E.String.OrderNilLast()), nil},
+		{c, nil, box.Query(E.String.OrderAsc(false)), nil},
+		{c, nil, box.Query(E.String.OrderDesc(true)), nil},
+		{c, nil, box.Query(E.String.OrderDesc(false)), nil},
+
+		{c, nil, box.Query(E.Int64.OrderAsc(), E.Int64.OrderNilLast()), nil},
+		{c, nil, box.Query(E.Int64.OrderDesc(), E.Int64.OrderNilAsZero()), nil},
+
+		{c, nil, box.Query(E.Uint64.OrderAsc(), E.Uint64.OrderNilLast()), nil},
+		{c, nil, box.Query(E.Uint64.OrderDesc(), E.Uint64.OrderNilAsZero()), nil},
+
+		{c, nil, box.Query(E.Int.OrderAsc(), E.Int.OrderNilLast()), nil},
+		{c, nil, box.Query(E.Int.OrderDesc(), E.Int.OrderNilAsZero()), nil},
+
+		{c, nil, box.Query(E.Uint.OrderAsc(), E.Uint.OrderNilLast()), nil},
+		{c, nil, box.Query(E.Uint.OrderDesc(), E.Uint.OrderNilAsZero()), nil},
+
+		{c, nil, box.Query(E.Rune.OrderAsc(), E.Rune.OrderNilLast()), nil},
+		{c, nil, box.Query(E.Rune.OrderDesc(), E.Rune.OrderNilAsZero()), nil},
+
+		{c, nil, box.Query(E.Int32.OrderAsc(), E.Int32.OrderNilLast()), nil},
+		{c, nil, box.Query(E.Int32.OrderDesc(), E.Int32.OrderNilAsZero()), nil},
+
+		{c, nil, box.Query(E.Uint32.OrderAsc(), E.Uint32.OrderNilLast()), nil},
+		{c, nil, box.Query(E.Uint32.OrderDesc(), E.Uint32.OrderNilAsZero()), nil},
+
+		{c, nil, box.Query(E.Int16.OrderAsc(), E.Int16.OrderNilLast()), nil},
+		{c, nil, box.Query(E.Int16.OrderDesc(), E.Int16.OrderNilAsZero()), nil},
+
+		{c, nil, box.Query(E.Uint16.OrderAsc(), E.Uint16.OrderNilLast()), nil},
+		{c, nil, box.Query(E.Uint16.OrderDesc(), E.Uint16.OrderNilAsZero()), nil},
+
+		{c, nil, box.Query(E.Int8.OrderAsc(), E.Int8.OrderNilLast()), nil},
+		{c, nil, box.Query(E.Int8.OrderDesc(), E.Int8.OrderNilAsZero()), nil},
+
+		{c, nil, box.Query(E.Uint8.OrderAsc(), E.Uint8.OrderNilLast()), nil},
+		{c, nil, box.Query(E.Uint8.OrderDesc(), E.Uint8.OrderNilAsZero()), nil},
+
+		{c, nil, box.Query(E.Byte.OrderAsc(), E.Byte.OrderNilLast()), nil},
+		{c, nil, box.Query(E.Byte.OrderDesc(), E.Byte.OrderNilAsZero()), nil},
+
+		{c, nil, box.Query(E.Float64.OrderAsc(), E.Float64.OrderNilLast()), nil},
+		{c, nil, box.Query(E.Float64.OrderDesc(), E.Float64.OrderNilAsZero()), nil},
+
+		{c, nil, box.Query(E.Float32.OrderAsc(), E.Float32.OrderNilLast()), nil},
+		{c, nil, box.Query(E.Float32.OrderDesc(), E.Float32.OrderNilAsZero()), nil},
+
+		{c, nil, box.Query(E.Bool.OrderAsc(), E.Bool.OrderNilLast()), nil},
+		{c, nil, box.Query(E.Bool.OrderDesc(), E.Bool.OrderNilAsFalse()), nil},
+
+		{c, nil, box.Query(E.Bool.OrderAsc(), E.Byte.OrderDesc()), nil},
+	})
 }
 
 func TestQueryClose(t *testing.T) {
@@ -991,6 +1080,10 @@ func executeTestCase(t *testing.T, env *model.TestEnv, options queryTestOptions,
 	}
 
 	var isExpected = func(actualDesc string) bool {
+		if desc == nil {
+			return true
+		}
+
 		for _, expectedDescription := range desc {
 			if expectedDescription == actualDesc {
 				return true

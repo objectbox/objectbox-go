@@ -36,6 +36,7 @@ type QueryBuilder struct {
 	cqb           *C.OBX_query_builder
 	typeId        TypeId
 	innerBuilders []*QueryBuilder
+	orderFlags    map[TypeId]C.OBXOrderFlags
 
 	// The first error that occurred during a any of the calls on the query builder
 	Err error
@@ -43,8 +44,9 @@ type QueryBuilder struct {
 
 func newQueryBuilder(ob *ObjectBox, typeId TypeId) *QueryBuilder {
 	var qb = &QueryBuilder{
-		objectBox: ob,
-		typeId:    typeId,
+		objectBox:  ob,
+		typeId:     typeId,
+		orderFlags: make(map[TypeId]C.OBXOrderFlags),
 	}
 
 	qb.Err = cCallBool(func() bool {
@@ -63,9 +65,10 @@ func (qb *QueryBuilder) newInnerBuilder(typeId TypeId, cqb *C.OBX_query_builder)
 	}
 
 	var iqb = &QueryBuilder{
-		objectBox: qb.objectBox,
-		cqb:       cqb,
-		typeId:    typeId,
+		objectBox:  qb.objectBox,
+		cqb:        cqb,
+		typeId:     typeId,
+		orderFlags: make(map[TypeId]C.OBXOrderFlags),
 	}
 
 	qb.innerBuilders = append(qb.innerBuilders, iqb)
@@ -103,6 +106,10 @@ func (qb *QueryBuilder) Close() error {
 
 // Build is called internally
 func (qb *QueryBuilder) Build(box *Box) (*Query, error) {
+	for propertyId, orderFlags := range qb.orderFlags {
+		qb.order(C.obx_schema_id(propertyId), orderFlags)
+	}
+
 	if qb.Err != nil {
 		return nil, qb.Err
 	}
@@ -213,6 +220,49 @@ func (qb *QueryBuilder) LinkManyToMany(relation *RelationToMany, conditions []Co
 	}
 
 	return iqb.applyConditions(conditions)
+}
+
+func (qb *QueryBuilder) order(propertyId C.obx_schema_id, flags C.OBXOrderFlags) {
+	if qb.Err == nil {
+		qb.Err = cCall(func() C.obx_err {
+			return C.obx_qb_order(qb.cqb, propertyId, flags)
+		})
+	}
+}
+
+// setOrderFlag stores the order flag to be aplied later before building the query
+// if value is true, the flag is set, otherwise the flag is cleared (unset)
+func (qb *QueryBuilder) setOrderFlag(property *BaseProperty, flag C.OBXOrderFlags, value bool) error {
+	if qb.Err == nil && qb.checkEntityId(property.Entity.Id) {
+		if value {
+			// set the flag
+			qb.orderFlags[property.Id] = qb.orderFlags[property.Id] | flag
+		} else {
+			// clear the flag
+			qb.orderFlags[property.Id] = qb.orderFlags[property.Id] &^ flag
+		}
+	}
+	return qb.Err
+}
+
+func (qb *QueryBuilder) orderAsc(property *BaseProperty) error {
+	return qb.setOrderFlag(property, C.OBXOrderFlags_DESCENDING, false)
+}
+
+func (qb *QueryBuilder) orderDesc(property *BaseProperty) error {
+	return qb.setOrderFlag(property, C.OBXOrderFlags_DESCENDING, true)
+}
+
+func (qb *QueryBuilder) orderCaseSensitive(property *BaseProperty, value bool) error {
+	return qb.setOrderFlag(property, C.OBXOrderFlags_CASE_SENSITIVE, value)
+}
+
+func (qb *QueryBuilder) orderNilLast(property *BaseProperty) error {
+	return qb.setOrderFlag(property, C.OBXOrderFlags_NULLS_LAST, true)
+}
+
+func (qb *QueryBuilder) orderNilAsZero(property *BaseProperty) error {
+	return qb.setOrderFlag(property, C.OBXOrderFlags_NULLS_ZERO, true)
 }
 
 func (qb *QueryBuilder) checkForCError() {

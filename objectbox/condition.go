@@ -18,9 +18,10 @@ package objectbox
 
 import (
 	"errors"
+	"fmt"
 )
 
-// Condition is used by Query to limit object selection
+// Condition is used by Query to limit object selection or specify their order
 type Condition interface {
 	applyTo(qb *QueryBuilder, isRoot bool) (ConditionId, error)
 
@@ -33,6 +34,9 @@ type Condition interface {
 
 // ConditionId is a condition identifier type, used when building queries
 type ConditionId = int32
+
+const conditionIdFakeOrder = -1
+const conditionIdFakeLink = -2
 
 type conditionClosure struct {
 	apply func(qb *QueryBuilder) (ConditionId, error)
@@ -69,15 +73,15 @@ func (condition *conditionClosure) As(alias *alias) Condition {
 
 // Combines multiple conditions with an operator
 type conditionCombination struct {
-	or          bool // AND by default
-	conditions  []Condition
-	aliasCalled bool
+	or         bool // AND by default
+	conditions []Condition
+	alias      *string // this is only used to report an error
 }
 
 // assertNoLinks makes sure there are no links (0 condition IDs) among given conditions
 func (*conditionCombination) assertNoLinks(conditionIds []ConditionId) error {
 	for _, cid := range conditionIds {
-		if cid == 0 {
+		if cid == conditionIdFakeLink {
 			return errors.New("using Link inside Any/All is not supported")
 		}
 	}
@@ -85,8 +89,8 @@ func (*conditionCombination) assertNoLinks(conditionIds []ConditionId) error {
 }
 
 func (condition *conditionCombination) applyTo(qb *QueryBuilder, isRoot bool) (ConditionId, error) {
-	if condition.aliasCalled {
-		return 0, errors.New("using Alias on a combination of conditions is not supported")
+	if condition.alias != nil {
+		return 0, fmt.Errorf("using Alias/As(\"%s\") on a combination of conditions is not supported", *condition.alias)
 	}
 
 	if len(condition.conditions) == 0 {
@@ -95,12 +99,17 @@ func (condition *conditionCombination) applyTo(qb *QueryBuilder, isRoot bool) (C
 		return condition.conditions[0].applyTo(qb, isRoot)
 	}
 
-	ids := make([]ConditionId, len(condition.conditions))
-
-	var err error
-	for k, sub := range condition.conditions {
-		if ids[k], err = sub.applyTo(qb, false); err != nil {
+	ids := make([]ConditionId, 0, len(condition.conditions))
+	for _, sub := range condition.conditions {
+		cid, err := sub.applyTo(qb, false)
+		if err != nil {
 			return 0, err
+		}
+
+		// Skip order pseudo conditions.
+		// Note: conditionIdFakeLink is allowed here and is caught below if used in non-root or in an "ALL" combination.
+		if cid != conditionIdFakeOrder {
+			ids = append(ids, cid)
 		}
 	}
 
@@ -123,14 +132,14 @@ func (condition *conditionCombination) applyTo(qb *QueryBuilder, isRoot bool) (C
 // Alias sets a string alias for the given condition. It can later be used in Query.Set*Params() methods.
 // This is an invalid call on a combination of conditions and will result in an error.
 func (condition *conditionCombination) Alias(alias string) Condition {
-	condition.aliasCalled = true
+	condition.alias = &alias
 	return condition
 }
 
 // As sets an alias for the given condition. It can later be used in Query.Set*Params() methods.
 // This is an invalid call on a combination of conditions and will result in an error.
 func (condition *conditionCombination) As(alias *alias) Condition {
-	condition.aliasCalled = true
+	condition.alias = alias.alias()
 	return condition
 }
 
@@ -169,4 +178,31 @@ func (as *alias) alias() *string {
 // Alias wraps a string as an identifier usable for Query.Set*Params*() methods.
 func Alias(value string) *alias {
 	return &alias{value}
+}
+
+type orderClosure struct {
+	apply func(qb *QueryBuilder) error
+	alias *string // this is only used to report an error
+}
+
+func (order *orderClosure) applyTo(qb *QueryBuilder, isRoot bool) (ConditionId, error) {
+	if order.alias != nil {
+		return 0, fmt.Errorf("using Alias/As(\"%s\") on Order*() is not supported", *order.alias)
+	}
+
+	return conditionIdFakeOrder, order.apply(qb)
+}
+
+// Alias sets a string alias for the given condition. It can later be used in Query.Set*Params() methods.
+// This is an invalid call on order definition and will result in an error.
+func (order *orderClosure) Alias(alias string) Condition {
+	order.alias = &alias
+	return order
+}
+
+// As sets an alias for the given condition. It can later be used in Query.Set*Params() methods.
+// This is an invalid call on order definition and will result in an error.
+func (order *orderClosure) As(alias *alias) Condition {
+	order.alias = alias.alias()
+	return order
 }

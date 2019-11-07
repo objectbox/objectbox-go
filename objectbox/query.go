@@ -402,13 +402,9 @@ func (query *Query) SetBytesParams(identifier propertyOrAlias, values ...[]byte)
 	}
 
 	return cCall(func() C.obx_err {
-		var value = values[0]
-		if value == nil {
-			value = []byte{}
-		}
 		if cAlias != nil {
-			return C.obx_query_bytes_param_alias(query.cQuery, cAlias, cBytesPtr(value), C.size_t(len(value)))
+			return C.obx_query_bytes_param_alias(query.cQuery, cAlias, cBytesPtr(values[0]), C.size_t(len(values[0])))
 		}
-		return C.obx_query_bytes_param(query.cQuery, C.obx_schema_id(identifier.entityId()), C.obx_schema_id(identifier.propertyId()), cBytesPtr(value), C.size_t(len(value)))
+		return C.obx_query_bytes_param(query.cQuery, C.obx_schema_id(identifier.entityId()), C.obx_schema_id(identifier.propertyId()), cBytesPtr(values[0]), C.size_t(len(values[0])))
 	})
 }

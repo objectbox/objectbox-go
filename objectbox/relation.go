@@ -16,17 +16,19 @@
 
 package objectbox
 
-import "errors"
+import (
+	"fmt"
+)
 
 type conditionRelationOneToMany struct {
-	relation    *RelationToOne
-	conditions  []Condition
-	aliasCalled bool
+	relation   *RelationToOne
+	conditions []Condition
+	alias      *string // this is only used to report an error
 }
 
 func (condition *conditionRelationOneToMany) applyTo(qb *QueryBuilder, isRoot bool) (ConditionId, error) {
-	if condition.aliasCalled {
-		return 0, errors.New("using Alias on a OneToMany relation link is not supported")
+	if condition.alias != nil {
+		return 0, fmt.Errorf("using Alias/As(\"%s\") on a OneToMany relation link is not supported", *condition.alias)
 	}
 
 	return conditionIdFakeLink, qb.LinkOneToMany(condition.relation, condition.conditions)
@@ -35,14 +37,14 @@ func (condition *conditionRelationOneToMany) applyTo(qb *QueryBuilder, isRoot bo
 // Alias sets a string alias for the given condition. It can later be used in Query.Set*Params() methods.
 // This is an invalid call on Relation links and will result in an error.
 func (condition *conditionRelationOneToMany) Alias(alias string) Condition {
-	condition.aliasCalled = true // this is invalid on this condition type
+	condition.alias = &alias
 	return condition
 }
 
 // As sets an alias for the given condition. It can later be used in Query.Set*Params() methods.
 // This is an invalid call on Relation links and will result in an error.
 func (condition *conditionRelationOneToMany) As(alias *alias) Condition {
-	condition.aliasCalled = true // this is invalid on this condition type
+	condition.alias = alias.alias()
 	return condition
 }
 
@@ -114,14 +116,14 @@ func (relation RelationToOne) NotIn(values ...uint64) Condition {
 }
 
 type conditionRelationManyToMany struct {
-	relation    *RelationToMany
-	conditions  []Condition
-	aliasCalled bool
+	relation   *RelationToMany
+	conditions []Condition
+	alias      *string // this is only used to report an error
 }
 
 func (condition *conditionRelationManyToMany) applyTo(qb *QueryBuilder, isRoot bool) (ConditionId, error) {
-	if condition.aliasCalled {
-		return 0, errors.New("using Alias on a ManyToMany relation link is not supported")
+	if condition.alias != nil {
+		return 0, fmt.Errorf("using Alias/As(\"%s\") on a ManyToMany relation link is not supported", *condition.alias)
 	}
 
 	return conditionIdFakeLink, qb.LinkManyToMany(condition.relation, condition.conditions)
@@ -130,14 +132,14 @@ func (condition *conditionRelationManyToMany) applyTo(qb *QueryBuilder, isRoot b
 // Alias sets a string alias for the given condition. It can later be used in Query.Set*Params() methods.
 // This is an invalid call on Relation links and will result in an error.
 func (condition *conditionRelationManyToMany) Alias(alias string) Condition {
-	condition.aliasCalled = true // this is invalid on this condition type
+	condition.alias = &alias
 	return condition
 }
 
 // As sets an alias for the given condition. It can later be used in Query.Set*Params() methods.
 // This is an invalid call on Relation links and will result in an error.
 func (condition *conditionRelationManyToMany) As(alias *alias) Condition {
-	condition.aliasCalled = true
+	condition.alias = alias.alias()
 	return condition
 }
 

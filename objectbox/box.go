@@ -260,7 +260,7 @@ func (box *Box) PutMany(objects interface{}) (ids []uint64, err error) {
 		return []uint64{}, nil
 	}
 
-	// prepare the result, filled in bellow
+	// prepare the result, filled in below
 	ids = make([]uint64, count)
 
 	// Execute everything in a single single transaction - for performance and consistency.

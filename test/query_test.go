@@ -357,17 +357,17 @@ func TestQueryAlias(t *testing.T) {
 		env.Box.Query(E.Id.GreaterThan(0).Alias("alias"))
 
 		func() {
-			defer assert.MustPanic(t, regexp.MustCompile("using Alias on a combination of conditions is not supported"))
+			defer assert.MustPanic(t, regexp.MustCompile(`using Alias/As\("alias"\) on a combination of conditions is not supported`))
 			env.Box.Query(objectbox.Any().Alias("alias"))
 		}()
 
 		func() {
-			defer assert.MustPanic(t, regexp.MustCompile("using Alias on a OneToMany relation link is not supported"))
+			defer assert.MustPanic(t, regexp.MustCompile(`using Alias/As\("alias"\) on a OneToMany relation link is not supported`))
 			env.Box.Query(E.Related.Link().Alias("alias"))
 		}()
 
 		func() {
-			defer assert.MustPanic(t, regexp.MustCompile("using Alias on a ManyToMany relation link is not supported"))
+			defer assert.MustPanic(t, regexp.MustCompile(`using Alias/As\("alias"\) on a ManyToMany relation link is not supported`))
 			env.Box.Query(E.RelatedSlice.Link().Alias("alias"))
 		}()
 	}
@@ -377,17 +377,17 @@ func TestQueryAlias(t *testing.T) {
 		env.Box.Query(E.Id.GreaterThan(0).As(alias))
 
 		func() {
-			defer assert.MustPanic(t, regexp.MustCompile("using Alias on a combination of conditions is not supported"))
+			defer assert.MustPanic(t, regexp.MustCompile(`using Alias/As\("alias"\) on a combination of conditions is not supported`))
 			env.Box.Query(objectbox.Any().As(alias))
 		}()
 
 		func() {
-			defer assert.MustPanic(t, regexp.MustCompile("using Alias on a OneToMany relation link is not supported"))
+			defer assert.MustPanic(t, regexp.MustCompile(`using Alias/As\("alias"\) on a OneToMany relation link is not supported`))
 			env.Box.Query(E.Related.Link().As(alias))
 		}()
 
 		func() {
-			defer assert.MustPanic(t, regexp.MustCompile("using Alias on a ManyToMany relation link is not supported"))
+			defer assert.MustPanic(t, regexp.MustCompile(`using Alias/As\("alias"\) on a ManyToMany relation link is not supported`))
 			env.Box.Query(E.RelatedSlice.Link().As(alias))
 		}()
 	}
@@ -676,6 +676,10 @@ func TestQueryOrderSimple(t *testing.T) {
 
 	for i := 0; i < count; i++ {
 		assert.Eq(t, asc[i], desc[count-i-1])
+
+		if i < count-1 {
+			assert.True(t, asc[i].String < asc[i+1].String)
+		}
 	}
 }
 

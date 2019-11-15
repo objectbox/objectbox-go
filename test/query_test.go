@@ -343,6 +343,13 @@ func TestQueryParams(t *testing.T) {
 			func(q i) error { return eq(q).SetBytesParams(E.ByteVector, nil) }},
 		{5, s{`ByteVector < byte[5]{0x01020305 08}`}, box.Query(E.ByteVector.LessThan(nil)),
 			func(q i) error { return eq(q).SetBytesParams(E.ByteVector, e.ByteVector) }},
+
+		{1, s{`Related == 1`}, box.Query(E.Related.Equals(0)),
+			func(q i) error { return eq(q).SetInt64Params(E.Related, 1) }},
+		{1, s{`Related in [1]`}, box.Query(E.Related.In()),
+			func(q i) error { return eq(q).SetInt64ParamsIn(E.Related, 1) }},
+		{999, s{`Related not in [1]`}, box.Query(E.Related.NotIn()),
+			func(q i) error { return eq(q).SetInt64ParamsIn(E.Related, 1) }},
 	})
 }
 

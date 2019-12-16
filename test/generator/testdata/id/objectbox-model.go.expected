@@ -10,13 +10,14 @@ import (
 // It is usually used when setting-up ObjectBox as an argument to the Builder.Model() function.
 func ObjectBoxModel() *objectbox.Model {
 	model := objectbox.NewModel()
-	model.GeneratorVersion(3)
+	model.GeneratorVersion(5)
 
 	model.RegisterBinding(ABinding)
 	model.RegisterBinding(BBinding)
 	model.RegisterBinding(CBinding)
+	model.RegisterBinding(DBinding)
 	model.RegisterBinding(StringIdEntityBinding)
-	model.LastEntityId(4, 6044372234677422456)
+	model.LastEntityId(5, 1543572285742637646)
 
 	return model
 }

@@ -42,7 +42,8 @@ func (v Version) String() string {
 
 // VersionGo returns the Version of the ObjectBox-Go binding
 func VersionGo() Version {
-	return Version{1, 0, 0, ""}
+	// for label, use `beta.0` format, increasing the counter for each subsequent release
+	return Version{1, 1, 0, ""}
 }
 
 // VersionLib returns the Version of the dynamic linked ObjectBox library

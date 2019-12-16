@@ -34,13 +34,17 @@ func TestTransactionMassiveInsert(t *testing.T) {
 
 	var insert = uint64(1000000)
 
-	err := ob.RunInWriteTx(func() error {
+	if testing.Short() {
+		insert = 1000
+	}
+
+	assert.NoErr(t, ob.RunInWriteTx(func() error {
 		for i := insert; i > 0; i-- {
 			_, err := box.Put(&iot.Event{})
 			assert.NoErr(t, err)
 		}
 		return nil
-	})
+	}))
 
 	count, err := box.Count()
 	assert.NoErr(t, err)

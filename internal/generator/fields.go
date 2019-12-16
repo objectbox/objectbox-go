@@ -19,7 +19,7 @@ type field interface {
 	Tag() string
 	Type() typeErrorful
 	TypeInternal() types.Type
-	Package() *types.Package
+	Package() (*types.Package, error)
 }
 
 type typeErrorful interface {
@@ -86,8 +86,19 @@ func (field astStructField) TypeInternal() types.Type {
 	return astTypeExpr{Expr: field.Field.Type, source: field.source}
 }
 
-func (field astStructField) Package() *types.Package {
-	return types.NewPackage(field.source.dir, field.source.f.Name.Name)
+func (field astStructField) Package() (*types.Package, error) {
+	// handle fields referring to an imported type
+	if selector, ok := field.Field.Type.(*ast.SelectorExpr); ok {
+		var importAlias = selector.X.(*ast.Ident).Name
+		pkg, err := field.source.importedPackage(importAlias)
+		if err != nil {
+			return nil, err
+		}
+		return pkg, nil
+	}
+
+	// by default, use current package
+	return types.NewPackage(field.source.dir, field.source.pkgName), nil
 }
 
 type astTypeExpr struct {
@@ -116,11 +127,11 @@ func (expr astTypeExpr) Underlying() types.Type {
 }
 
 func (expr astTypeExpr) UnderlyingOrError() (types.Type, error) {
-	if t, err := expr.source.getType(expr.Expr); err != nil {
+	t, err := expr.source.getType(expr.Expr)
+	if err != nil {
 		return nil, err
-	} else {
-		return t.Underlying(), nil
 	}
+	return t.Underlying(), nil
 }
 
 //endregion
@@ -164,8 +175,12 @@ func (field structField) TypeInternal() types.Type {
 	return field.Var.Type()
 }
 
-func (field structField) Package() *types.Package {
-	return field.Var.Pkg()
+func (field structField) Package() (*types.Package, error) {
+	var pkg = field.Var.Pkg()
+	if pkg == nil {
+		return nil, fmt.Errorf("could not get package for %v", *field.Var)
+	}
+	return pkg, nil
 }
 
 type typesTypeErrorful struct {

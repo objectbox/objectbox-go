@@ -4,6 +4,7 @@
 package model
 
 import (
+	"errors"
 	"github.com/google/flatbuffers/go"
 	"github.com/objectbox/objectbox-go/objectbox"
 	"github.com/objectbox/objectbox-go/objectbox/fbutils"
@@ -42,14 +43,14 @@ var EntityByValue_ = struct {
 
 // GeneratorVersion is called by ObjectBox to verify the compatibility of the generator used to generate this code
 func (entityByValue_EntityInfo) GeneratorVersion() int {
-	return 3
+	return 5
 }
 
 // AddToModel is called by ObjectBox during model build
 func (entityByValue_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("EntityByValue", 3, 2793387980842421409)
 	model.Property("Id", 6, 1, 8853550994304785841)
-	model.PropertyFlags(8193)
+	model.PropertyFlags(1)
 	model.Property("Text", 9, 2, 6704507893545428268)
 	model.EntityLastPropertyId(2, 6704507893545428268)
 }
@@ -64,12 +65,14 @@ func (entityByValue_EntityInfo) GetId(object interface{}) (uint64, error) {
 }
 
 // SetId is called by ObjectBox during Put to update an ID on an object that has just been inserted
-func (entityByValue_EntityInfo) SetId(object interface{}, id uint64) {
+func (entityByValue_EntityInfo) SetId(object interface{}, id uint64) error {
 	if obj, ok := object.(*EntityByValue); ok {
 		obj.Id = id
+		return nil
 	} else {
 		// NOTE while this can't update, it will at least behave consistently (panic in case of a wrong type)
 		_ = object.(EntityByValue).Id
+		return nil
 	}
 }
 
@@ -99,14 +102,19 @@ func (entityByValue_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Bui
 
 // Load is called by ObjectBox to load an object from a FlatBuffer
 func (entityByValue_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{}, error) {
+	if len(bytes) == 0 { // sanity check, should "never" happen
+		return nil, errors.New("can't deserialize an object of type 'EntityByValue' - no data received")
+	}
+
 	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
-	var id = table.GetUint64Slot(4, 0)
+
+	var propId = table.GetUint64Slot(4, 0)
 
 	return &EntityByValue{
-		Id:   id,
+		Id:   propId,
 		Text: fbutils.GetStringSlot(table, 6),
 	}, nil
 }
@@ -118,6 +126,9 @@ func (entityByValue_EntityInfo) MakeSlice(capacity int) interface{} {
 
 // AppendToSlice is called by ObjectBox to fill the slice of the read objects
 func (entityByValue_EntityInfo) AppendToSlice(slice interface{}, object interface{}) interface{} {
+	if object == nil {
+		return append(slice.([]EntityByValue), EntityByValue{})
+	}
 	return append(slice.([]EntityByValue), *object.(*EntityByValue))
 }
 
@@ -140,24 +151,21 @@ func (box *EntityByValueBox) Put(object *EntityByValue) (uint64, error) {
 	return box.Box.Put(object)
 }
 
-// PutAsync asynchronously inserts/updates a single object.
+// Insert synchronously inserts a single object. As opposed to Put, Insert will fail if given an ID that already exists.
+// In case the Id is not specified, it would be assigned automatically (auto-increment).
 // When inserting, the EntityByValue.Id property on the passed object will be assigned the new ID as well.
-//
-// It's executed on a separate internal thread for better performance.
-//
-// There are two main use cases:
-//
-// 1) "Put & Forget:" you gain faster puts as you don't have to wait for the transaction to finish.
-//
-// 2) Many small transactions: if your write load is typically a lot of individual puts that happen in parallel,
-// this will merge small transactions into bigger ones. This results in a significant gain in overall throughput.
-//
-//
-// In situations with (extremely) high async load, this method may be throttled (~1ms) or delayed (<1s).
-// In the unlikely event that the object could not be enqueued after delaying, an error will be returned.
-//
-// Note that this method does not give you hard durability guarantees like the synchronous Put provides.
-// There is a small time window (typically 3 ms) in which the data may not have been committed durably yet.
+func (box *EntityByValueBox) Insert(object *EntityByValue) (uint64, error) {
+	return box.Box.Insert(object)
+}
+
+// Update synchronously updates a single object.
+// As opposed to Put, Update will fail if an object with the same ID is not found in the database.
+func (box *EntityByValueBox) Update(object *EntityByValue) error {
+	return box.Box.Update(object)
+}
+
+// PutAsync asynchronously inserts/updates a single object.
+// Deprecated: use box.Async().Put() instead
 func (box *EntityByValueBox) PutAsync(object *EntityByValue) (uint64, error) {
 	return box.Box.PutAsync(object)
 }
@@ -193,6 +201,15 @@ func (box *EntityByValueBox) Get(id uint64) (*EntityByValue, error) {
 // If any of the objects doesn't exist, its position in the return slice is an empty object
 func (box *EntityByValueBox) GetMany(ids ...uint64) ([]EntityByValue, error) {
 	objects, err := box.Box.GetMany(ids...)
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]EntityByValue), nil
+}
+
+// GetManyExisting reads multiple objects at once, skipping those that do not exist.
+func (box *EntityByValueBox) GetManyExisting(ids ...uint64) ([]EntityByValue, error) {
+	objects, err := box.Box.GetManyExisting(ids...)
 	if err != nil {
 		return nil, err
 	}
@@ -244,6 +261,68 @@ func (box *EntityByValueBox) QueryOrError(conditions ...objectbox.Condition) (*E
 	} else {
 		return &EntityByValueQuery{query}, nil
 	}
+}
+
+// Async provides access to the default Async Box for asynchronous operations. See EntityByValueAsyncBox for more information.
+func (box *EntityByValueBox) Async() *EntityByValueAsyncBox {
+	return &EntityByValueAsyncBox{AsyncBox: box.Box.Async()}
+}
+
+// EntityByValueAsyncBox provides asynchronous operations on EntityByValue objects.
+//
+// Asynchronous operations are executed on a separate internal thread for better performance.
+//
+// There are two main use cases:
+//
+// 1) "execute & forget:" you gain faster put/remove operations as you don't have to wait for the transaction to finish.
+//
+// 2) Many small transactions: if your write load is typically a lot of individual puts that happen in parallel,
+// this will merge small transactions into bigger ones. This results in a significant gain in overall throughput.
+//
+// In situations with (extremely) high async load, an async method may be throttled (~1ms) or delayed up to 1 second.
+// In the unlikely event that the object could still not be enqueued (full queue), an error will be returned.
+//
+// Note that async methods do not give you hard durability guarantees like the synchronous Box provides.
+// There is a small time window in which the data may not have been committed durably yet.
+type EntityByValueAsyncBox struct {
+	*objectbox.AsyncBox
+}
+
+// AsyncBoxForEntityByValue creates a new async box with the given operation timeout in case an async queue is full.
+// The returned struct must be freed explicitly using the Close() method.
+// It's usually preferable to use EntityByValueBox::Async() which takes care of resource management and doesn't require closing.
+func AsyncBoxForEntityByValue(ob *objectbox.ObjectBox, timeoutMs uint64) *EntityByValueAsyncBox {
+	var async, err = objectbox.NewAsyncBox(ob, 3, timeoutMs)
+	if err != nil {
+		panic("Could not create async box for entity ID 3: %s" + err.Error())
+	}
+	return &EntityByValueAsyncBox{AsyncBox: async}
+}
+
+// Put inserts/updates a single object asynchronously.
+// When inserting a new object, the Id property on the passed object will be assigned the new ID the entity would hold
+// if the insert is ultimately successful. The newly assigned ID may not become valid if the insert fails.
+func (asyncBox *EntityByValueAsyncBox) Put(object *EntityByValue) (uint64, error) {
+	return asyncBox.AsyncBox.Put(object)
+}
+
+// Insert a single object asynchronously.
+// The Id property on the passed object will be assigned the new ID the entity would hold if the insert is ultimately
+// successful. The newly assigned ID may not become valid if the insert fails.
+// Fails silently if an object with the same ID already exists (this error is not returned).
+func (asyncBox *EntityByValueAsyncBox) Insert(object *EntityByValue) (id uint64, err error) {
+	return asyncBox.AsyncBox.Insert(object)
+}
+
+// Update a single object asynchronously.
+// The object must already exists or the update fails silently (without an error returned).
+func (asyncBox *EntityByValueAsyncBox) Update(object *EntityByValue) error {
+	return asyncBox.AsyncBox.Update(object)
+}
+
+// Remove deletes a single object asynchronously.
+func (asyncBox *EntityByValueAsyncBox) Remove(object *EntityByValue) error {
+	return asyncBox.AsyncBox.Remove(object)
 }
 
 // Query provides a way to search stored objects

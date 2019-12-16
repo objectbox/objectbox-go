@@ -49,17 +49,25 @@ func TestStructEmbedding(t *testing.T) {
 	assert.Eq(t, entity.Value, read.Value)
 }
 
-// NOTE nil pointers are currently not supported
-//func TestStructEmbeddingNilPtr(t *testing.T) {
-//	var env = model.NewTestEnv(t)
-//	defer env.Close()
-//
-//	box := model.BoxForTestEntityInline(env.ObjectBox)
-//
-//	entity := &model.TestEntityInline{
-//		BaseWithValue: nil,
-//	}
-//	id, err := box.Put(entity)
-//	assert.NoErr(t, err)
-//	assert.Eq(t, id, entity.Id)
-//}
+func TestStructEmbeddingNilPtr(t *testing.T) {
+	var env = model.NewTestEnv(t)
+	defer env.Close()
+
+	box := model.BoxForTestEntityInline(env.ObjectBox)
+
+	entity := &model.TestEntityInline{
+		BaseWithValue: nil,
+	}
+	id, err := box.Put(entity)
+	assert.NoErr(t, err)
+	assert.Eq(t, id, entity.Id)
+
+	read, err := box.Get(id)
+	assert.NoErr(t, err)
+	assert.True(t, read != nil)
+	// TODO invert the condition - should be nil
+	// Currently, the generated Load() method creates the containing object regardless if the given slot is present in
+	// FlatBuffers. That could be improved by constructing nil-able embedded structs similar to relations, setting to
+	// nil if none of the slots was set.
+	assert.True(t, read.BaseWithValue != nil)
+}

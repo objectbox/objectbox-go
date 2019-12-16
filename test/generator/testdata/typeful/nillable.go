@@ -1,5 +1,7 @@
 package object
 
+import "time"
+
 // Tests all available GO & ObjectBox types.
 // We're using pointers to test the `nil` support
 type Nillable struct {
@@ -22,5 +24,6 @@ type Nillable struct {
 	Rune         *rune
 	Float32      *float32
 	Float64      *float64
-	Date         *int64 `objectbox:"date"`
+	Date         *int64     `objectbox:"date"`
+	Time         *time.Time `objectbox:"date converter:timeInt64Ptr type:*int64"`
 }

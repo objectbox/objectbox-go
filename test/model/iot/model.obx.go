@@ -4,6 +4,7 @@
 package iot
 
 import (
+	"errors"
 	"github.com/google/flatbuffers/go"
 	"github.com/objectbox/objectbox-go/objectbox"
 	"github.com/objectbox/objectbox-go/objectbox/fbutils"
@@ -63,14 +64,14 @@ var Event_ = struct {
 
 // GeneratorVersion is called by ObjectBox to verify the compatibility of the generator used to generate this code
 func (event_EntityInfo) GeneratorVersion() int {
-	return 3
+	return 5
 }
 
 // AddToModel is called by ObjectBox during model build
 func (event_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("Event", 1, 1468539308767086854)
 	model.Property("Id", 6, 1, 3098166604415018001)
-	model.PropertyFlags(8193)
+	model.PropertyFlags(1)
 	model.Property("Uid", 9, 4, 472416569173577818)
 	model.PropertyFlags(32)
 	model.PropertyIndex(1, 3297791712577314158)
@@ -86,8 +87,9 @@ func (event_EntityInfo) GetId(object interface{}) (uint64, error) {
 }
 
 // SetId is called by ObjectBox during Put to update an ID on an object that has just been inserted
-func (event_EntityInfo) SetId(object interface{}, id uint64) {
+func (event_EntityInfo) SetId(object interface{}, id uint64) error {
 	object.(*Event).Id = id
+	return nil
 }
 
 // PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
@@ -114,14 +116,19 @@ func (event_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id
 
 // Load is called by ObjectBox to load an object from a FlatBuffer
 func (event_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{}, error) {
+	if len(bytes) == 0 { // sanity check, should "never" happen
+		return nil, errors.New("can't deserialize an object of type 'Event' - no data received")
+	}
+
 	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
-	var id = table.GetUint64Slot(4, 0)
+
+	var propId = table.GetUint64Slot(4, 0)
 
 	return &Event{
-		Id:      id,
+		Id:      propId,
 		Uid:     fbutils.GetStringSlot(table, 10),
 		Device:  fbutils.GetStringSlot(table, 6),
 		Date:    fbutils.GetInt64Slot(table, 8),
@@ -136,6 +143,9 @@ func (event_EntityInfo) MakeSlice(capacity int) interface{} {
 
 // AppendToSlice is called by ObjectBox to fill the slice of the read objects
 func (event_EntityInfo) AppendToSlice(slice interface{}, object interface{}) interface{} {
+	if object == nil {
+		return append(slice.([]*Event), nil)
+	}
 	return append(slice.([]*Event), object.(*Event))
 }
 
@@ -158,24 +168,21 @@ func (box *EventBox) Put(object *Event) (uint64, error) {
 	return box.Box.Put(object)
 }
 
-// PutAsync asynchronously inserts/updates a single object.
+// Insert synchronously inserts a single object. As opposed to Put, Insert will fail if given an ID that already exists.
+// In case the Id is not specified, it would be assigned automatically (auto-increment).
 // When inserting, the Event.Id property on the passed object will be assigned the new ID as well.
-//
-// It's executed on a separate internal thread for better performance.
-//
-// There are two main use cases:
-//
-// 1) "Put & Forget:" you gain faster puts as you don't have to wait for the transaction to finish.
-//
-// 2) Many small transactions: if your write load is typically a lot of individual puts that happen in parallel,
-// this will merge small transactions into bigger ones. This results in a significant gain in overall throughput.
-//
-//
-// In situations with (extremely) high async load, this method may be throttled (~1ms) or delayed (<1s).
-// In the unlikely event that the object could not be enqueued after delaying, an error will be returned.
-//
-// Note that this method does not give you hard durability guarantees like the synchronous Put provides.
-// There is a small time window (typically 3 ms) in which the data may not have been committed durably yet.
+func (box *EventBox) Insert(object *Event) (uint64, error) {
+	return box.Box.Insert(object)
+}
+
+// Update synchronously updates a single object.
+// As opposed to Put, Update will fail if an object with the same ID is not found in the database.
+func (box *EventBox) Update(object *Event) error {
+	return box.Box.Update(object)
+}
+
+// PutAsync asynchronously inserts/updates a single object.
+// Deprecated: use box.Async().Put() instead
 func (box *EventBox) PutAsync(object *Event) (uint64, error) {
 	return box.Box.PutAsync(object)
 }
@@ -211,6 +218,15 @@ func (box *EventBox) Get(id uint64) (*Event, error) {
 // If any of the objects doesn't exist, its position in the return slice is nil
 func (box *EventBox) GetMany(ids ...uint64) ([]*Event, error) {
 	objects, err := box.Box.GetMany(ids...)
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*Event), nil
+}
+
+// GetManyExisting reads multiple objects at once, skipping those that do not exist.
+func (box *EventBox) GetManyExisting(ids ...uint64) ([]*Event, error) {
+	objects, err := box.Box.GetManyExisting(ids...)
 	if err != nil {
 		return nil, err
 	}
@@ -262,6 +278,68 @@ func (box *EventBox) QueryOrError(conditions ...objectbox.Condition) (*EventQuer
 	} else {
 		return &EventQuery{query}, nil
 	}
+}
+
+// Async provides access to the default Async Box for asynchronous operations. See EventAsyncBox for more information.
+func (box *EventBox) Async() *EventAsyncBox {
+	return &EventAsyncBox{AsyncBox: box.Box.Async()}
+}
+
+// EventAsyncBox provides asynchronous operations on Event objects.
+//
+// Asynchronous operations are executed on a separate internal thread for better performance.
+//
+// There are two main use cases:
+//
+// 1) "execute & forget:" you gain faster put/remove operations as you don't have to wait for the transaction to finish.
+//
+// 2) Many small transactions: if your write load is typically a lot of individual puts that happen in parallel,
+// this will merge small transactions into bigger ones. This results in a significant gain in overall throughput.
+//
+// In situations with (extremely) high async load, an async method may be throttled (~1ms) or delayed up to 1 second.
+// In the unlikely event that the object could still not be enqueued (full queue), an error will be returned.
+//
+// Note that async methods do not give you hard durability guarantees like the synchronous Box provides.
+// There is a small time window in which the data may not have been committed durably yet.
+type EventAsyncBox struct {
+	*objectbox.AsyncBox
+}
+
+// AsyncBoxForEvent creates a new async box with the given operation timeout in case an async queue is full.
+// The returned struct must be freed explicitly using the Close() method.
+// It's usually preferable to use EventBox::Async() which takes care of resource management and doesn't require closing.
+func AsyncBoxForEvent(ob *objectbox.ObjectBox, timeoutMs uint64) *EventAsyncBox {
+	var async, err = objectbox.NewAsyncBox(ob, 1, timeoutMs)
+	if err != nil {
+		panic("Could not create async box for entity ID 1: %s" + err.Error())
+	}
+	return &EventAsyncBox{AsyncBox: async}
+}
+
+// Put inserts/updates a single object asynchronously.
+// When inserting a new object, the Id property on the passed object will be assigned the new ID the entity would hold
+// if the insert is ultimately successful. The newly assigned ID may not become valid if the insert fails.
+func (asyncBox *EventAsyncBox) Put(object *Event) (uint64, error) {
+	return asyncBox.AsyncBox.Put(object)
+}
+
+// Insert a single object asynchronously.
+// The Id property on the passed object will be assigned the new ID the entity would hold if the insert is ultimately
+// successful. The newly assigned ID may not become valid if the insert fails.
+// Fails silently if an object with the same ID already exists (this error is not returned).
+func (asyncBox *EventAsyncBox) Insert(object *Event) (id uint64, err error) {
+	return asyncBox.AsyncBox.Insert(object)
+}
+
+// Update a single object asynchronously.
+// The object must already exists or the update fails silently (without an error returned).
+func (asyncBox *EventAsyncBox) Update(object *Event) error {
+	return asyncBox.AsyncBox.Update(object)
+}
+
+// Remove deletes a single object asynchronously.
+func (asyncBox *EventAsyncBox) Remove(object *Event) error {
+	return asyncBox.AsyncBox.Remove(object)
 }
 
 // Query provides a way to search stored objects
@@ -376,17 +454,17 @@ var Reading_ = struct {
 
 // GeneratorVersion is called by ObjectBox to verify the compatibility of the generator used to generate this code
 func (reading_EntityInfo) GeneratorVersion() int {
-	return 3
+	return 5
 }
 
 // AddToModel is called by ObjectBox during model build
 func (reading_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("Reading", 2, 5284076134434938613)
 	model.Property("Id", 6, 1, 3968063745680890327)
-	model.PropertyFlags(8193)
+	model.PropertyFlags(1)
 	model.Property("Date", 10, 2, 4852407661923085028)
 	model.Property("EventId", 11, 3, 1403806151574554320)
-	model.PropertyFlags(8192)
+	model.PropertyFlags(8712)
 	model.PropertyRelation("Event", 2, 2642563953244304959)
 	model.Property("ValueName", 9, 4, 5626221656121286670)
 	model.Property("ValueString", 9, 5, 7303099924122013060)
@@ -403,8 +481,9 @@ func (reading_EntityInfo) GetId(object interface{}) (uint64, error) {
 }
 
 // SetId is called by ObjectBox during Put to update an ID on an object that has just been inserted
-func (reading_EntityInfo) SetId(object interface{}, id uint64) {
+func (reading_EntityInfo) SetId(object interface{}, id uint64) error {
 	object.(*Reading).Id = id
+	return nil
 }
 
 // PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
@@ -436,14 +515,19 @@ func (reading_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, 
 
 // Load is called by ObjectBox to load an object from a FlatBuffer
 func (reading_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{}, error) {
+	if len(bytes) == 0 { // sanity check, should "never" happen
+		return nil, errors.New("can't deserialize an object of type 'Reading' - no data received")
+	}
+
 	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
-	var id = table.GetUint64Slot(4, 0)
+
+	var propId = table.GetUint64Slot(4, 0)
 
 	return &Reading{
-		Id:              id,
+		Id:              propId,
 		Date:            fbutils.GetInt64Slot(table, 6),
 		EventId:         fbutils.GetUint64Slot(table, 8),
 		ValueName:       fbutils.GetStringSlot(table, 10),
@@ -462,6 +546,9 @@ func (reading_EntityInfo) MakeSlice(capacity int) interface{} {
 
 // AppendToSlice is called by ObjectBox to fill the slice of the read objects
 func (reading_EntityInfo) AppendToSlice(slice interface{}, object interface{}) interface{} {
+	if object == nil {
+		return append(slice.([]*Reading), nil)
+	}
 	return append(slice.([]*Reading), object.(*Reading))
 }
 
@@ -484,24 +571,21 @@ func (box *ReadingBox) Put(object *Reading) (uint64, error) {
 	return box.Box.Put(object)
 }
 
-// PutAsync asynchronously inserts/updates a single object.
+// Insert synchronously inserts a single object. As opposed to Put, Insert will fail if given an ID that already exists.
+// In case the Id is not specified, it would be assigned automatically (auto-increment).
 // When inserting, the Reading.Id property on the passed object will be assigned the new ID as well.
-//
-// It's executed on a separate internal thread for better performance.
-//
-// There are two main use cases:
-//
-// 1) "Put & Forget:" you gain faster puts as you don't have to wait for the transaction to finish.
-//
-// 2) Many small transactions: if your write load is typically a lot of individual puts that happen in parallel,
-// this will merge small transactions into bigger ones. This results in a significant gain in overall throughput.
-//
-//
-// In situations with (extremely) high async load, this method may be throttled (~1ms) or delayed (<1s).
-// In the unlikely event that the object could not be enqueued after delaying, an error will be returned.
-//
-// Note that this method does not give you hard durability guarantees like the synchronous Put provides.
-// There is a small time window (typically 3 ms) in which the data may not have been committed durably yet.
+func (box *ReadingBox) Insert(object *Reading) (uint64, error) {
+	return box.Box.Insert(object)
+}
+
+// Update synchronously updates a single object.
+// As opposed to Put, Update will fail if an object with the same ID is not found in the database.
+func (box *ReadingBox) Update(object *Reading) error {
+	return box.Box.Update(object)
+}
+
+// PutAsync asynchronously inserts/updates a single object.
+// Deprecated: use box.Async().Put() instead
 func (box *ReadingBox) PutAsync(object *Reading) (uint64, error) {
 	return box.Box.PutAsync(object)
 }
@@ -537,6 +621,15 @@ func (box *ReadingBox) Get(id uint64) (*Reading, error) {
 // If any of the objects doesn't exist, its position in the return slice is nil
 func (box *ReadingBox) GetMany(ids ...uint64) ([]*Reading, error) {
 	objects, err := box.Box.GetMany(ids...)
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*Reading), nil
+}
+
+// GetManyExisting reads multiple objects at once, skipping those that do not exist.
+func (box *ReadingBox) GetManyExisting(ids ...uint64) ([]*Reading, error) {
+	objects, err := box.Box.GetManyExisting(ids...)
 	if err != nil {
 		return nil, err
 	}
@@ -588,6 +681,68 @@ func (box *ReadingBox) QueryOrError(conditions ...objectbox.Condition) (*Reading
 	} else {
 		return &ReadingQuery{query}, nil
 	}
+}
+
+// Async provides access to the default Async Box for asynchronous operations. See ReadingAsyncBox for more information.
+func (box *ReadingBox) Async() *ReadingAsyncBox {
+	return &ReadingAsyncBox{AsyncBox: box.Box.Async()}
+}
+
+// ReadingAsyncBox provides asynchronous operations on Reading objects.
+//
+// Asynchronous operations are executed on a separate internal thread for better performance.
+//
+// There are two main use cases:
+//
+// 1) "execute & forget:" you gain faster put/remove operations as you don't have to wait for the transaction to finish.
+//
+// 2) Many small transactions: if your write load is typically a lot of individual puts that happen in parallel,
+// this will merge small transactions into bigger ones. This results in a significant gain in overall throughput.
+//
+// In situations with (extremely) high async load, an async method may be throttled (~1ms) or delayed up to 1 second.
+// In the unlikely event that the object could still not be enqueued (full queue), an error will be returned.
+//
+// Note that async methods do not give you hard durability guarantees like the synchronous Box provides.
+// There is a small time window in which the data may not have been committed durably yet.
+type ReadingAsyncBox struct {
+	*objectbox.AsyncBox
+}
+
+// AsyncBoxForReading creates a new async box with the given operation timeout in case an async queue is full.
+// The returned struct must be freed explicitly using the Close() method.
+// It's usually preferable to use ReadingBox::Async() which takes care of resource management and doesn't require closing.
+func AsyncBoxForReading(ob *objectbox.ObjectBox, timeoutMs uint64) *ReadingAsyncBox {
+	var async, err = objectbox.NewAsyncBox(ob, 2, timeoutMs)
+	if err != nil {
+		panic("Could not create async box for entity ID 2: %s" + err.Error())
+	}
+	return &ReadingAsyncBox{AsyncBox: async}
+}
+
+// Put inserts/updates a single object asynchronously.
+// When inserting a new object, the Id property on the passed object will be assigned the new ID the entity would hold
+// if the insert is ultimately successful. The newly assigned ID may not become valid if the insert fails.
+func (asyncBox *ReadingAsyncBox) Put(object *Reading) (uint64, error) {
+	return asyncBox.AsyncBox.Put(object)
+}
+
+// Insert a single object asynchronously.
+// The Id property on the passed object will be assigned the new ID the entity would hold if the insert is ultimately
+// successful. The newly assigned ID may not become valid if the insert fails.
+// Fails silently if an object with the same ID already exists (this error is not returned).
+func (asyncBox *ReadingAsyncBox) Insert(object *Reading) (id uint64, err error) {
+	return asyncBox.AsyncBox.Insert(object)
+}
+
+// Update a single object asynchronously.
+// The object must already exists or the update fails silently (without an error returned).
+func (asyncBox *ReadingAsyncBox) Update(object *Reading) error {
+	return asyncBox.AsyncBox.Update(object)
+}
+
+// Remove deletes a single object asynchronously.
+func (asyncBox *ReadingAsyncBox) Remove(object *Reading) error {
+	return asyncBox.AsyncBox.Remove(object)
 }
 
 // Query provides a way to search stored objects

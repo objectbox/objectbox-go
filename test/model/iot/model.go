@@ -18,6 +18,7 @@ package iot
 
 //go:generate go run github.com/objectbox/objectbox-go/cmd/objectbox-gogen
 
+// Event model
 type Event struct {
 	Id      uint64 `objectbox:"id"`
 	Uid     string `objectbox:"unique"`
@@ -26,6 +27,7 @@ type Event struct {
 	Picture []byte
 }
 
+// Reading model
 type Reading struct {
 	Id   uint64 `objectbox:"id"`
 	Date int64  `objectbox:"date"`

@@ -4,6 +4,7 @@
 package object
 
 import (
+	"errors"
 	"github.com/google/flatbuffers/go"
 	"github.com/objectbox/objectbox-go/objectbox"
 	"github.com/objectbox/objectbox-go/objectbox/fbutils"
@@ -49,14 +50,14 @@ var B_ = struct {
 
 // GeneratorVersion is called by ObjectBox to verify the compatibility of the generator used to generate this code
 func (b_EntityInfo) GeneratorVersion() int {
-	return 3
+	return 5
 }
 
 // AddToModel is called by ObjectBox during model build
 func (b_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("B", 2, 501233450539197794)
 	model.Property("Id", 6, 1, 3390393562759376202)
-	model.PropertyFlags(8193)
+	model.PropertyFlags(1)
 	model.Property("Name", 9, 2, 2669985732393126063)
 	model.Property("Info", 9, 3, 1774932891286980153)
 	model.EntityLastPropertyId(3, 1774932891286980153)
@@ -68,8 +69,9 @@ func (b_EntityInfo) GetId(object interface{}) (uint64, error) {
 }
 
 // SetId is called by ObjectBox during Put to update an ID on an object that has just been inserted
-func (b_EntityInfo) SetId(object interface{}, id uint64) {
+func (b_EntityInfo) SetId(object interface{}, id uint64) error {
 	object.(*B).Id = id
+	return nil
 }
 
 // PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
@@ -93,14 +95,19 @@ func (b_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uin
 
 // Load is called by ObjectBox to load an object from a FlatBuffer
 func (b_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{}, error) {
+	if len(bytes) == 0 { // sanity check, should "never" happen
+		return nil, errors.New("can't deserialize an object of type 'B' - no data received")
+	}
+
 	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
-	var id = table.GetUint64Slot(4, 0)
+
+	var propId = table.GetUint64Slot(4, 0)
 
 	return &B{
-		Id:   id,
+		Id:   propId,
 		Name: fbutils.GetStringSlot(table, 6),
 		Info: fbutils.GetStringSlot(table, 8),
 	}, nil
@@ -113,6 +120,9 @@ func (b_EntityInfo) MakeSlice(capacity int) interface{} {
 
 // AppendToSlice is called by ObjectBox to fill the slice of the read objects
 func (b_EntityInfo) AppendToSlice(slice interface{}, object interface{}) interface{} {
+	if object == nil {
+		return append(slice.([]*B), nil)
+	}
 	return append(slice.([]*B), object.(*B))
 }
 
@@ -135,24 +145,21 @@ func (box *BBox) Put(object *B) (uint64, error) {
 	return box.Box.Put(object)
 }
 
-// PutAsync asynchronously inserts/updates a single object.
+// Insert synchronously inserts a single object. As opposed to Put, Insert will fail if given an ID that already exists.
+// In case the Id is not specified, it would be assigned automatically (auto-increment).
 // When inserting, the B.Id property on the passed object will be assigned the new ID as well.
-//
-// It's executed on a separate internal thread for better performance.
-//
-// There are two main use cases:
-//
-// 1) "Put & Forget:" you gain faster puts as you don't have to wait for the transaction to finish.
-//
-// 2) Many small transactions: if your write load is typically a lot of individual puts that happen in parallel,
-// this will merge small transactions into bigger ones. This results in a significant gain in overall throughput.
-//
-//
-// In situations with (extremely) high async load, this method may be throttled (~1ms) or delayed (<1s).
-// In the unlikely event that the object could not be enqueued after delaying, an error will be returned.
-//
-// Note that this method does not give you hard durability guarantees like the synchronous Put provides.
-// There is a small time window (typically 3 ms) in which the data may not have been committed durably yet.
+func (box *BBox) Insert(object *B) (uint64, error) {
+	return box.Box.Insert(object)
+}
+
+// Update synchronously updates a single object.
+// As opposed to Put, Update will fail if an object with the same ID is not found in the database.
+func (box *BBox) Update(object *B) error {
+	return box.Box.Update(object)
+}
+
+// PutAsync asynchronously inserts/updates a single object.
+// Deprecated: use box.Async().Put() instead
 func (box *BBox) PutAsync(object *B) (uint64, error) {
 	return box.Box.PutAsync(object)
 }
@@ -188,6 +195,15 @@ func (box *BBox) Get(id uint64) (*B, error) {
 // If any of the objects doesn't exist, its position in the return slice is nil
 func (box *BBox) GetMany(ids ...uint64) ([]*B, error) {
 	objects, err := box.Box.GetMany(ids...)
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*B), nil
+}
+
+// GetManyExisting reads multiple objects at once, skipping those that do not exist.
+func (box *BBox) GetManyExisting(ids ...uint64) ([]*B, error) {
+	objects, err := box.Box.GetManyExisting(ids...)
 	if err != nil {
 		return nil, err
 	}
@@ -239,6 +255,68 @@ func (box *BBox) QueryOrError(conditions ...objectbox.Condition) (*BQuery, error
 	} else {
 		return &BQuery{query}, nil
 	}
+}
+
+// Async provides access to the default Async Box for asynchronous operations. See BAsyncBox for more information.
+func (box *BBox) Async() *BAsyncBox {
+	return &BAsyncBox{AsyncBox: box.Box.Async()}
+}
+
+// BAsyncBox provides asynchronous operations on B objects.
+//
+// Asynchronous operations are executed on a separate internal thread for better performance.
+//
+// There are two main use cases:
+//
+// 1) "execute & forget:" you gain faster put/remove operations as you don't have to wait for the transaction to finish.
+//
+// 2) Many small transactions: if your write load is typically a lot of individual puts that happen in parallel,
+// this will merge small transactions into bigger ones. This results in a significant gain in overall throughput.
+//
+// In situations with (extremely) high async load, an async method may be throttled (~1ms) or delayed up to 1 second.
+// In the unlikely event that the object could still not be enqueued (full queue), an error will be returned.
+//
+// Note that async methods do not give you hard durability guarantees like the synchronous Box provides.
+// There is a small time window in which the data may not have been committed durably yet.
+type BAsyncBox struct {
+	*objectbox.AsyncBox
+}
+
+// AsyncBoxForB creates a new async box with the given operation timeout in case an async queue is full.
+// The returned struct must be freed explicitly using the Close() method.
+// It's usually preferable to use BBox::Async() which takes care of resource management and doesn't require closing.
+func AsyncBoxForB(ob *objectbox.ObjectBox, timeoutMs uint64) *BAsyncBox {
+	var async, err = objectbox.NewAsyncBox(ob, 2, timeoutMs)
+	if err != nil {
+		panic("Could not create async box for entity ID 2: %s" + err.Error())
+	}
+	return &BAsyncBox{AsyncBox: async}
+}
+
+// Put inserts/updates a single object asynchronously.
+// When inserting a new object, the Id property on the passed object will be assigned the new ID the entity would hold
+// if the insert is ultimately successful. The newly assigned ID may not become valid if the insert fails.
+func (asyncBox *BAsyncBox) Put(object *B) (uint64, error) {
+	return asyncBox.AsyncBox.Put(object)
+}
+
+// Insert a single object asynchronously.
+// The Id property on the passed object will be assigned the new ID the entity would hold if the insert is ultimately
+// successful. The newly assigned ID may not become valid if the insert fails.
+// Fails silently if an object with the same ID already exists (this error is not returned).
+func (asyncBox *BAsyncBox) Insert(object *B) (id uint64, err error) {
+	return asyncBox.AsyncBox.Insert(object)
+}
+
+// Update a single object asynchronously.
+// The object must already exists or the update fails silently (without an error returned).
+func (asyncBox *BAsyncBox) Update(object *B) error {
+	return asyncBox.AsyncBox.Update(object)
+}
+
+// Remove deletes a single object asynchronously.
+func (asyncBox *BAsyncBox) Remove(object *B) error {
+	return asyncBox.AsyncBox.Remove(object)
 }
 
 // Query provides a way to search stored objects

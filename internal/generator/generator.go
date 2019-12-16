@@ -33,17 +33,23 @@ import (
 	"github.com/objectbox/objectbox-go/internal/generator/templates"
 )
 
-const Version = 3
+// Version specifies the current generator version.
+// It is used to validate generated code compatibility and is increased when there are changes in the generated code.
+// Internal generator changes that don't change the output do not cause an increase.
+const Version = 5
 
+// BindingFile returns a name of the binding file for the given entity file.
 func BindingFile(sourceFile string) string {
 	var extension = filepath.Ext(sourceFile)
 	return sourceFile[0:len(sourceFile)-len(extension)] + ".obx" + extension
 }
 
+// ModelInfoFile returns the model info JSON file name in the given directory
 func ModelInfoFile(dir string) string {
 	return filepath.Join(dir, "objectbox-model.json")
 }
 
+// ModelFile returns the model GO file for the given JSON info file path
 func ModelFile(modelInfoFile string) string {
 	var extension = filepath.Ext(modelInfoFile)
 	return modelInfoFile[0:len(modelInfoFile)-len(extension)] + ".go"
@@ -69,12 +75,14 @@ func Process(sourceFile string, options Options) error {
 	}
 
 	var modelInfo *modelinfo.ModelInfo
-	if modelInfo, err = modelinfo.LoadOrCreateModel(options.ModelInfoFile); err != nil {
+
+	modelInfo, err = modelinfo.LoadOrCreateModel(options.ModelInfoFile)
+	if err != nil {
 		return fmt.Errorf("can't init ModelInfo: %s", err)
-	} else {
-		modelInfo.Rand = options.Rand
-		defer modelInfo.Close()
 	}
+
+	modelInfo.Rand = options.Rand
+	defer modelInfo.Close()
 
 	if err = modelInfo.Validate(); err != nil {
 		return fmt.Errorf("invalid ModelInfo loaded: %s", err)
@@ -228,4 +236,48 @@ func generateModelFile(model *modelinfo.ModelInfo) (data []byte, err error) {
 	}
 
 	return b.Bytes(), nil
+}
+
+const recursionSuffix = "/..."
+
+// Clean removes generated files in the given path.
+// Removes *.obx.go and objectbox-model.go but keeps objectbox-model.json
+func Clean(path string) error {
+	var recursive bool
+
+	// if it's a pattern
+	if strings.HasSuffix(path, recursionSuffix) {
+		recursive = true
+		path = path[0:len(path)-len(recursionSuffix)] + "/*"
+	} else {
+		// if it's a directory
+		if finfo, err := os.Stat(path); err == nil && finfo.IsDir() {
+			path = path + "/*"
+		}
+	}
+
+	matches, err := filepath.Glob(path)
+	if err != nil {
+		return err
+	}
+
+	for _, subpath := range matches {
+		finfo, err := os.Stat(subpath)
+		if err != nil {
+			return err
+		}
+
+		if recursive && finfo.Mode().IsDir() {
+			err = Clean(subpath + recursionSuffix)
+		} else if finfo.Mode().IsRegular() && isGeneratedFile(subpath) {
+			fmt.Printf("Removing %s\n", subpath)
+			err = os.Remove(subpath)
+		}
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

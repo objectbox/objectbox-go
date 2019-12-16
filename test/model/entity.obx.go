@@ -4,6 +4,7 @@
 package model
 
 import (
+	"errors"
 	"github.com/google/flatbuffers/go"
 	"github.com/objectbox/objectbox-go/objectbox"
 	"github.com/objectbox/objectbox-go/objectbox/fbutils"
@@ -337,14 +338,14 @@ var Entity_ = struct {
 
 // GeneratorVersion is called by ObjectBox to verify the compatibility of the generator used to generate this code
 func (entity_EntityInfo) GeneratorVersion() int {
-	return 3
+	return 5
 }
 
 // AddToModel is called by ObjectBox during model build
 func (entity_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("Entity", 1, 3022148985475790732)
 	model.Property("Id", 6, 1, 1213346202559552829)
-	model.PropertyFlags(8193)
+	model.PropertyFlags(1)
 	model.Property("Int", 6, 2, 6609825840127351046)
 	model.Property("Int8", 2, 3, 741904540265547276)
 	model.Property("Int16", 3, 4, 2102961483425256790)
@@ -364,6 +365,7 @@ func (entity_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Property("String", 9, 13, 3525810560076343996)
 	model.Property("StringVector", 30, 21, 3893192683529392073)
 	model.Property("Byte", 2, 14, 4035373893984224671)
+	model.PropertyFlags(8192)
 	model.Property("ByteVector", 23, 15, 1294888641203478533)
 	model.Property("Rune", 5, 16, 445652208596094853)
 	model.Property("Float32", 7, 17, 2321055489159952634)
@@ -371,13 +373,13 @@ func (entity_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Property("Date", 10, 19, 2927532418453906842)
 	model.Property("Complex128", 23, 20, 2323084480359838337)
 	model.Property("Related", 11, 22, 6981354105569415135)
-	model.PropertyFlags(8192)
+	model.PropertyFlags(8712)
 	model.PropertyRelation("TestEntityRelated", 1, 7297830522090799401)
 	model.Property("RelatedPtr", 11, 23, 2938782103279095882)
-	model.PropertyFlags(8192)
+	model.PropertyFlags(8712)
 	model.PropertyRelation("TestEntityRelated", 2, 1636618737379039866)
 	model.Property("RelatedPtr2", 11, 24, 7776035803207726954)
-	model.PropertyFlags(8192)
+	model.PropertyFlags(8712)
 	model.PropertyRelation("TestEntityRelated", 3, 6077259218141868916)
 	model.Property("IntPtr", 6, 25, 373339162565757738)
 	model.Property("Int8Ptr", 2, 26, 4408376776468442700)
@@ -398,6 +400,7 @@ func (entity_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Property("StringPtr", 9, 36, 8409889434685629914)
 	model.Property("StringVectorPtr", 30, 43, 4222000762705400780)
 	model.Property("BytePtr", 2, 38, 7395768407310126147)
+	model.PropertyFlags(8192)
 	model.Property("ByteVectorPtr", 23, 44, 6100401720382402484)
 	model.Property("RunePtr", 5, 40, 5826738612842297282)
 	model.Property("Float32Ptr", 7, 41, 8081176555310747578)
@@ -413,8 +416,9 @@ func (entity_EntityInfo) GetId(object interface{}) (uint64, error) {
 }
 
 // SetId is called by ObjectBox during Put to update an ID on an object that has just been inserted
-func (entity_EntityInfo) SetId(object interface{}, id uint64) {
+func (entity_EntityInfo) SetId(object interface{}, id uint64) error {
 	object.(*Entity).Id = id
+	return nil
 }
 
 // PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
@@ -463,18 +467,39 @@ func (entity_EntityInfo) PutRelated(ob *objectbox.ObjectBox, object interface{},
 // Flatten is called by ObjectBox to transform an object to a FlatBuffer
 func (entity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) error {
 	obj := object.(*Entity)
+	var propDate int64
+	{
+		var err error
+		propDate, err = objectbox.TimeInt64ConvertToDatabaseValue(obj.Date)
+		if err != nil {
+			return errors.New("converter objectbox.TimeInt64ConvertToDatabaseValue() failed on Entity.Date: " + err.Error())
+		}
+	}
+
+	var propComplex128 []byte
+	{
+		var err error
+		propComplex128, err = complex128BytesToDatabaseValue(obj.Complex128)
+		if err != nil {
+			return errors.New("converter complex128BytesToDatabaseValue() failed on Entity.Complex128: " + err.Error())
+		}
+	}
+
 	var offsetString = fbutils.CreateStringOffset(fbb, obj.String)
 	var offsetStringVector = fbutils.CreateStringVectorOffset(fbb, obj.StringVector)
 	var offsetByteVector = fbutils.CreateByteVectorOffset(fbb, obj.ByteVector)
-	var offsetComplex128 = fbutils.CreateByteVectorOffset(fbb, complex128BytesToDatabaseValue(obj.Complex128))
+	var offsetComplex128 = fbutils.CreateByteVectorOffset(fbb, propComplex128)
+
 	var offsetStringPtr flatbuffers.UOffsetT
 	if obj.StringPtr != nil {
 		offsetStringPtr = fbutils.CreateStringOffset(fbb, *obj.StringPtr)
 	}
+
 	var offsetStringVectorPtr flatbuffers.UOffsetT
 	if obj.StringVectorPtr != nil {
 		offsetStringVectorPtr = fbutils.CreateStringVectorOffset(fbb, *obj.StringVectorPtr)
 	}
+
 	var offsetByteVectorPtr flatbuffers.UOffsetT
 	if obj.ByteVectorPtr != nil {
 		offsetByteVectorPtr = fbutils.CreateByteVectorOffset(fbb, *obj.ByteVectorPtr)
@@ -523,12 +548,12 @@ func (entity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, i
 	fbutils.SetBoolSlot(fbb, 11, obj.Bool)
 	fbutils.SetUOffsetTSlot(fbb, 12, offsetString)
 	fbutils.SetUOffsetTSlot(fbb, 20, offsetStringVector)
-	fbutils.SetByteSlot(fbb, 13, obj.Byte)
+	fbutils.SetUint8Slot(fbb, 13, obj.Byte)
 	fbutils.SetUOffsetTSlot(fbb, 14, offsetByteVector)
 	fbutils.SetInt32Slot(fbb, 15, obj.Rune)
 	fbutils.SetFloat32Slot(fbb, 16, obj.Float32)
 	fbutils.SetFloat64Slot(fbb, 17, obj.Float64)
-	fbutils.SetInt64Slot(fbb, 18, timeInt64ToDatabaseValue(obj.Date))
+	fbutils.SetInt64Slot(fbb, 18, propDate)
 	fbutils.SetUOffsetTSlot(fbb, 19, offsetComplex128)
 	fbutils.SetUint64Slot(fbb, 21, rIdRelated)
 	if obj.RelatedPtr != nil {
@@ -577,7 +602,7 @@ func (entity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, i
 		fbutils.SetUOffsetTSlot(fbb, 42, offsetStringVectorPtr)
 	}
 	if obj.BytePtr != nil {
-		fbutils.SetByteSlot(fbb, 37, *obj.BytePtr)
+		fbutils.SetUint8Slot(fbb, 37, *obj.BytePtr)
 	}
 	if obj.ByteVectorPtr != nil {
 		fbutils.SetUOffsetTSlot(fbb, 43, offsetByteVectorPtr)
@@ -596,16 +621,33 @@ func (entity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, i
 
 // Load is called by ObjectBox to load an object from a FlatBuffer
 func (entity_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{}, error) {
+	if len(bytes) == 0 { // sanity check, should "never" happen
+		return nil, errors.New("can't deserialize an object of type 'Entity' - no data received")
+	}
+
 	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
-	var id = table.GetUint64Slot(4, 0)
+
+	var propId = table.GetUint64Slot(4, 0)
+
+	propDate, err := objectbox.TimeInt64ConvertToEntityProperty(fbutils.GetInt64Slot(table, 40))
+	if err != nil {
+		return nil, errors.New("converter objectbox.TimeInt64ConvertToEntityProperty() failed on Entity.Date: " + err.Error())
+	}
+
+	propComplex128, err := complex128BytesToEntityProperty(fbutils.GetByteVectorSlot(table, 42))
+	if err != nil {
+		return nil, errors.New("converter complex128BytesToEntityProperty() failed on Entity.Complex128: " + err.Error())
+	}
 
 	var relRelated *TestEntityRelated
 	if rId := fbutils.GetUint64Slot(table, 46); rId > 0 {
 		if rObject, err := BoxForTestEntityRelated(ob).Get(rId); err != nil {
 			return nil, err
+		} else if rObject == nil {
+			relRelated = &TestEntityRelated{}
 		} else {
 			relRelated = rObject
 		}
@@ -632,16 +674,16 @@ func (entity_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{
 	}
 
 	var relRelatedSlice []EntityByValue
-	if rIds, err := BoxForEntity(ob).RelationIds(Entity_.RelatedSlice, id); err != nil {
+	if rIds, err := BoxForEntity(ob).RelationIds(Entity_.RelatedSlice, propId); err != nil {
 		return nil, err
-	} else if rSlice, err := BoxForEntityByValue(ob).GetMany(rIds...); err != nil {
+	} else if rSlice, err := BoxForEntityByValue(ob).GetManyExisting(rIds...); err != nil {
 		return nil, err
 	} else {
 		relRelatedSlice = rSlice
 	}
 
 	return &Entity{
-		Id:              id,
+		Id:              propId,
 		Int:             fbutils.GetIntSlot(table, 6),
 		Int8:            fbutils.GetInt8Slot(table, 8),
 		Int16:           fbutils.GetInt16Slot(table, 10),
@@ -660,13 +702,13 @@ func (entity_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{
 		Rune:            fbutils.GetRuneSlot(table, 34),
 		Float32:         fbutils.GetFloat32Slot(table, 36),
 		Float64:         fbutils.GetFloat64Slot(table, 38),
-		Date:            timeInt64ToEntityProperty(fbutils.GetInt64Slot(table, 40)),
-		Complex128:      complex128BytesToEntityProperty(fbutils.GetByteVectorSlot(table, 42)),
+		Date:            propDate,
+		Complex128:      propComplex128,
 		Related:         *relRelated,
 		RelatedPtr:      relRelatedPtr,
 		RelatedPtr2:     relRelatedPtr2,
 		RelatedSlice:    relRelatedSlice,
-		RelatedPtrSlice: nil, // use EntityBox::FetchRelatedPtrSlice() to fetch this lazy-loaded relation
+		RelatedPtrSlice: nil, // use EntityBox::FetchRelatedPtrSlice() to fetch this lazy-loaded relation,
 		IntPtr:          fbutils.GetIntPtrSlot(table, 52),
 		Int8Ptr:         fbutils.GetInt8PtrSlot(table, 54),
 		Int16Ptr:        fbutils.GetInt16PtrSlot(table, 56),
@@ -695,6 +737,9 @@ func (entity_EntityInfo) MakeSlice(capacity int) interface{} {
 
 // AppendToSlice is called by ObjectBox to fill the slice of the read objects
 func (entity_EntityInfo) AppendToSlice(slice interface{}, object interface{}) interface{} {
+	if object == nil {
+		return append(slice.([]*Entity), nil)
+	}
 	return append(slice.([]*Entity), object.(*Entity))
 }
 
@@ -717,24 +762,21 @@ func (box *EntityBox) Put(object *Entity) (uint64, error) {
 	return box.Box.Put(object)
 }
 
-// PutAsync asynchronously inserts/updates a single object.
+// Insert synchronously inserts a single object. As opposed to Put, Insert will fail if given an ID that already exists.
+// In case the Id is not specified, it would be assigned automatically (auto-increment).
 // When inserting, the Entity.Id property on the passed object will be assigned the new ID as well.
-//
-// It's executed on a separate internal thread for better performance.
-//
-// There are two main use cases:
-//
-// 1) "Put & Forget:" you gain faster puts as you don't have to wait for the transaction to finish.
-//
-// 2) Many small transactions: if your write load is typically a lot of individual puts that happen in parallel,
-// this will merge small transactions into bigger ones. This results in a significant gain in overall throughput.
-//
-//
-// In situations with (extremely) high async load, this method may be throttled (~1ms) or delayed (<1s).
-// In the unlikely event that the object could not be enqueued after delaying, an error will be returned.
-//
-// Note that this method does not give you hard durability guarantees like the synchronous Put provides.
-// There is a small time window (typically 3 ms) in which the data may not have been committed durably yet.
+func (box *EntityBox) Insert(object *Entity) (uint64, error) {
+	return box.Box.Insert(object)
+}
+
+// Update synchronously updates a single object.
+// As opposed to Put, Update will fail if an object with the same ID is not found in the database.
+func (box *EntityBox) Update(object *Entity) error {
+	return box.Box.Update(object)
+}
+
+// PutAsync asynchronously inserts/updates a single object.
+// Deprecated: use box.Async().Put() instead
 func (box *EntityBox) PutAsync(object *Entity) (uint64, error) {
 	return box.Box.PutAsync(object)
 }
@@ -776,6 +818,15 @@ func (box *EntityBox) GetMany(ids ...uint64) ([]*Entity, error) {
 	return objects.([]*Entity), nil
 }
 
+// GetManyExisting reads multiple objects at once, skipping those that do not exist.
+func (box *EntityBox) GetManyExisting(ids ...uint64) ([]*Entity, error) {
+	objects, err := box.Box.GetManyExisting(ids...)
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*Entity), nil
+}
+
 // GetAll reads all stored objects
 func (box *EntityBox) GetAll() ([]*Entity, error) {
 	objects, err := box.Box.GetAll()
@@ -786,7 +837,7 @@ func (box *EntityBox) GetAll() ([]*Entity, error) {
 }
 
 // FetchRelatedPtrSlice reads target objects for relation Entity::RelatedPtrSlice.
-// It will "GetMany()" all related TestEntityRelated objects for each source object
+// It will "GetManyExisting()" all related TestEntityRelated objects for each source object
 // and set sourceObject.RelatedPtrSlice to the slice of related objects, as currently stored in DB.
 func (box *EntityBox) FetchRelatedPtrSlice(sourceObjects ...*Entity) error {
 	var slices = make([][]*TestEntityRelated, len(sourceObjects))
@@ -796,7 +847,7 @@ func (box *EntityBox) FetchRelatedPtrSlice(sourceObjects ...*Entity) error {
 		for k, object := range sourceObjects {
 			rIds, err := box.RelationIds(Entity_.RelatedPtrSlice, object.Id)
 			if err == nil {
-				slices[k], err = BoxForTestEntityRelated(box.ObjectBox).GetMany(rIds...)
+				slices[k], err = BoxForTestEntityRelated(box.ObjectBox).GetManyExisting(rIds...)
 			}
 			if err != nil {
 				return err
@@ -849,6 +900,68 @@ func (box *EntityBox) QueryOrError(conditions ...objectbox.Condition) (*EntityQu
 	} else {
 		return &EntityQuery{query}, nil
 	}
+}
+
+// Async provides access to the default Async Box for asynchronous operations. See EntityAsyncBox for more information.
+func (box *EntityBox) Async() *EntityAsyncBox {
+	return &EntityAsyncBox{AsyncBox: box.Box.Async()}
+}
+
+// EntityAsyncBox provides asynchronous operations on Entity objects.
+//
+// Asynchronous operations are executed on a separate internal thread for better performance.
+//
+// There are two main use cases:
+//
+// 1) "execute & forget:" you gain faster put/remove operations as you don't have to wait for the transaction to finish.
+//
+// 2) Many small transactions: if your write load is typically a lot of individual puts that happen in parallel,
+// this will merge small transactions into bigger ones. This results in a significant gain in overall throughput.
+//
+// In situations with (extremely) high async load, an async method may be throttled (~1ms) or delayed up to 1 second.
+// In the unlikely event that the object could still not be enqueued (full queue), an error will be returned.
+//
+// Note that async methods do not give you hard durability guarantees like the synchronous Box provides.
+// There is a small time window in which the data may not have been committed durably yet.
+type EntityAsyncBox struct {
+	*objectbox.AsyncBox
+}
+
+// AsyncBoxForEntity creates a new async box with the given operation timeout in case an async queue is full.
+// The returned struct must be freed explicitly using the Close() method.
+// It's usually preferable to use EntityBox::Async() which takes care of resource management and doesn't require closing.
+func AsyncBoxForEntity(ob *objectbox.ObjectBox, timeoutMs uint64) *EntityAsyncBox {
+	var async, err = objectbox.NewAsyncBox(ob, 1, timeoutMs)
+	if err != nil {
+		panic("Could not create async box for entity ID 1: %s" + err.Error())
+	}
+	return &EntityAsyncBox{AsyncBox: async}
+}
+
+// Put inserts/updates a single object asynchronously.
+// When inserting a new object, the Id property on the passed object will be assigned the new ID the entity would hold
+// if the insert is ultimately successful. The newly assigned ID may not become valid if the insert fails.
+func (asyncBox *EntityAsyncBox) Put(object *Entity) (uint64, error) {
+	return asyncBox.AsyncBox.Put(object)
+}
+
+// Insert a single object asynchronously.
+// The Id property on the passed object will be assigned the new ID the entity would hold if the insert is ultimately
+// successful. The newly assigned ID may not become valid if the insert fails.
+// Fails silently if an object with the same ID already exists (this error is not returned).
+func (asyncBox *EntityAsyncBox) Insert(object *Entity) (id uint64, err error) {
+	return asyncBox.AsyncBox.Insert(object)
+}
+
+// Update a single object asynchronously.
+// The object must already exists or the update fails silently (without an error returned).
+func (asyncBox *EntityAsyncBox) Update(object *Entity) error {
+	return asyncBox.AsyncBox.Update(object)
+}
+
+// Remove deletes a single object asynchronously.
+func (asyncBox *EntityAsyncBox) Remove(object *Entity) error {
+	return asyncBox.AsyncBox.Remove(object)
 }
 
 // Query provides a way to search stored objects
@@ -906,25 +1019,27 @@ var TestStringIdEntity_ = struct {
 
 // GeneratorVersion is called by ObjectBox to verify the compatibility of the generator used to generate this code
 func (testStringIdEntity_EntityInfo) GeneratorVersion() int {
-	return 3
+	return 5
 }
 
 // AddToModel is called by ObjectBox during model build
 func (testStringIdEntity_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("TestStringIdEntity", 2, 5412225159475839048)
 	model.Property("Id", 6, 1, 4639124040173808562)
-	model.PropertyFlags(8193)
+	model.PropertyFlags(1)
 	model.EntityLastPropertyId(1, 4639124040173808562)
 }
 
 // GetId is called by ObjectBox during Put operations to check for existing ID on an object
 func (testStringIdEntity_EntityInfo) GetId(object interface{}) (uint64, error) {
-	return objectbox.StringIdConvertToDatabaseValue(object.(*TestStringIdEntity).Id), nil
+	return objectbox.StringIdConvertToDatabaseValue(object.(*TestStringIdEntity).Id)
 }
 
 // SetId is called by ObjectBox during Put to update an ID on an object that has just been inserted
-func (testStringIdEntity_EntityInfo) SetId(object interface{}, id uint64) {
-	object.(*TestStringIdEntity).Id = objectbox.StringIdConvertToEntityProperty(id)
+func (testStringIdEntity_EntityInfo) SetId(object interface{}, id uint64) error {
+	var err error
+	object.(*TestStringIdEntity).Id, err = objectbox.StringIdConvertToEntityProperty(id)
+	return err
 }
 
 // PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
@@ -943,14 +1058,22 @@ func (testStringIdEntity_EntityInfo) Flatten(object interface{}, fbb *flatbuffer
 
 // Load is called by ObjectBox to load an object from a FlatBuffer
 func (testStringIdEntity_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{}, error) {
+	if len(bytes) == 0 { // sanity check, should "never" happen
+		return nil, errors.New("can't deserialize an object of type 'TestStringIdEntity' - no data received")
+	}
+
 	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
-	var id = table.GetUint64Slot(4, 0)
+
+	propId, err := objectbox.StringIdConvertToEntityProperty(fbutils.GetUint64Slot(table, 4))
+	if err != nil {
+		return nil, errors.New("converter objectbox.StringIdConvertToEntityProperty() failed on TestStringIdEntity.Id: " + err.Error())
+	}
 
 	return &TestStringIdEntity{
-		Id: objectbox.StringIdConvertToEntityProperty(id),
+		Id: propId,
 	}, nil
 }
 
@@ -961,6 +1084,9 @@ func (testStringIdEntity_EntityInfo) MakeSlice(capacity int) interface{} {
 
 // AppendToSlice is called by ObjectBox to fill the slice of the read objects
 func (testStringIdEntity_EntityInfo) AppendToSlice(slice interface{}, object interface{}) interface{} {
+	if object == nil {
+		return append(slice.([]*TestStringIdEntity), nil)
+	}
 	return append(slice.([]*TestStringIdEntity), object.(*TestStringIdEntity))
 }
 
@@ -983,24 +1109,21 @@ func (box *TestStringIdEntityBox) Put(object *TestStringIdEntity) (uint64, error
 	return box.Box.Put(object)
 }
 
-// PutAsync asynchronously inserts/updates a single object.
+// Insert synchronously inserts a single object. As opposed to Put, Insert will fail if given an ID that already exists.
+// In case the Id is not specified, it would be assigned automatically (auto-increment).
 // When inserting, the TestStringIdEntity.Id property on the passed object will be assigned the new ID as well.
-//
-// It's executed on a separate internal thread for better performance.
-//
-// There are two main use cases:
-//
-// 1) "Put & Forget:" you gain faster puts as you don't have to wait for the transaction to finish.
-//
-// 2) Many small transactions: if your write load is typically a lot of individual puts that happen in parallel,
-// this will merge small transactions into bigger ones. This results in a significant gain in overall throughput.
-//
-//
-// In situations with (extremely) high async load, this method may be throttled (~1ms) or delayed (<1s).
-// In the unlikely event that the object could not be enqueued after delaying, an error will be returned.
-//
-// Note that this method does not give you hard durability guarantees like the synchronous Put provides.
-// There is a small time window (typically 3 ms) in which the data may not have been committed durably yet.
+func (box *TestStringIdEntityBox) Insert(object *TestStringIdEntity) (uint64, error) {
+	return box.Box.Insert(object)
+}
+
+// Update synchronously updates a single object.
+// As opposed to Put, Update will fail if an object with the same ID is not found in the database.
+func (box *TestStringIdEntityBox) Update(object *TestStringIdEntity) error {
+	return box.Box.Update(object)
+}
+
+// PutAsync asynchronously inserts/updates a single object.
+// Deprecated: use box.Async().Put() instead
 func (box *TestStringIdEntityBox) PutAsync(object *TestStringIdEntity) (uint64, error) {
 	return box.Box.PutAsync(object)
 }
@@ -1042,6 +1165,15 @@ func (box *TestStringIdEntityBox) GetMany(ids ...uint64) ([]*TestStringIdEntity,
 	return objects.([]*TestStringIdEntity), nil
 }
 
+// GetManyExisting reads multiple objects at once, skipping those that do not exist.
+func (box *TestStringIdEntityBox) GetManyExisting(ids ...uint64) ([]*TestStringIdEntity, error) {
+	objects, err := box.Box.GetManyExisting(ids...)
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*TestStringIdEntity), nil
+}
+
 // GetAll reads all stored objects
 func (box *TestStringIdEntityBox) GetAll() ([]*TestStringIdEntity, error) {
 	objects, err := box.Box.GetAll()
@@ -1063,8 +1195,12 @@ func (box *TestStringIdEntityBox) Remove(object *TestStringIdEntity) error {
 // you can execute multiple box.Contains() and box.Remove() inside a single write transaction.
 func (box *TestStringIdEntityBox) RemoveMany(objects ...*TestStringIdEntity) (uint64, error) {
 	var ids = make([]uint64, len(objects))
+	var err error
 	for k, object := range objects {
-		ids[k] = objectbox.StringIdConvertToDatabaseValue(object.Id)
+		ids[k], err = objectbox.StringIdConvertToDatabaseValue(object.Id)
+		if err != nil {
+			return 0, errors.New("converter objectbox.StringIdConvertToDatabaseValue() failed on TestStringIdEntity.Id: " + err.Error())
+		}
 	}
 	return box.Box.RemoveIds(ids...)
 }
@@ -1087,6 +1223,68 @@ func (box *TestStringIdEntityBox) QueryOrError(conditions ...objectbox.Condition
 	} else {
 		return &TestStringIdEntityQuery{query}, nil
 	}
+}
+
+// Async provides access to the default Async Box for asynchronous operations. See TestStringIdEntityAsyncBox for more information.
+func (box *TestStringIdEntityBox) Async() *TestStringIdEntityAsyncBox {
+	return &TestStringIdEntityAsyncBox{AsyncBox: box.Box.Async()}
+}
+
+// TestStringIdEntityAsyncBox provides asynchronous operations on TestStringIdEntity objects.
+//
+// Asynchronous operations are executed on a separate internal thread for better performance.
+//
+// There are two main use cases:
+//
+// 1) "execute & forget:" you gain faster put/remove operations as you don't have to wait for the transaction to finish.
+//
+// 2) Many small transactions: if your write load is typically a lot of individual puts that happen in parallel,
+// this will merge small transactions into bigger ones. This results in a significant gain in overall throughput.
+//
+// In situations with (extremely) high async load, an async method may be throttled (~1ms) or delayed up to 1 second.
+// In the unlikely event that the object could still not be enqueued (full queue), an error will be returned.
+//
+// Note that async methods do not give you hard durability guarantees like the synchronous Box provides.
+// There is a small time window in which the data may not have been committed durably yet.
+type TestStringIdEntityAsyncBox struct {
+	*objectbox.AsyncBox
+}
+
+// AsyncBoxForTestStringIdEntity creates a new async box with the given operation timeout in case an async queue is full.
+// The returned struct must be freed explicitly using the Close() method.
+// It's usually preferable to use TestStringIdEntityBox::Async() which takes care of resource management and doesn't require closing.
+func AsyncBoxForTestStringIdEntity(ob *objectbox.ObjectBox, timeoutMs uint64) *TestStringIdEntityAsyncBox {
+	var async, err = objectbox.NewAsyncBox(ob, 2, timeoutMs)
+	if err != nil {
+		panic("Could not create async box for entity ID 2: %s" + err.Error())
+	}
+	return &TestStringIdEntityAsyncBox{AsyncBox: async}
+}
+
+// Put inserts/updates a single object asynchronously.
+// When inserting a new object, the Id property on the passed object will be assigned the new ID the entity would hold
+// if the insert is ultimately successful. The newly assigned ID may not become valid if the insert fails.
+func (asyncBox *TestStringIdEntityAsyncBox) Put(object *TestStringIdEntity) (uint64, error) {
+	return asyncBox.AsyncBox.Put(object)
+}
+
+// Insert a single object asynchronously.
+// The Id property on the passed object will be assigned the new ID the entity would hold if the insert is ultimately
+// successful. The newly assigned ID may not become valid if the insert fails.
+// Fails silently if an object with the same ID already exists (this error is not returned).
+func (asyncBox *TestStringIdEntityAsyncBox) Insert(object *TestStringIdEntity) (id uint64, err error) {
+	return asyncBox.AsyncBox.Insert(object)
+}
+
+// Update a single object asynchronously.
+// The object must already exists or the update fails silently (without an error returned).
+func (asyncBox *TestStringIdEntityAsyncBox) Update(object *TestStringIdEntity) error {
+	return asyncBox.AsyncBox.Update(object)
+}
+
+// Remove deletes a single object asynchronously.
+func (asyncBox *TestStringIdEntityAsyncBox) Remove(object *TestStringIdEntity) error {
+	return asyncBox.AsyncBox.Remove(object)
 }
 
 // Query provides a way to search stored objects
@@ -1158,7 +1356,7 @@ var TestEntityInline_ = struct {
 
 // GeneratorVersion is called by ObjectBox to verify the compatibility of the generator used to generate this code
 func (testEntityInline_EntityInfo) GeneratorVersion() int {
-	return 3
+	return 5
 }
 
 // AddToModel is called by ObjectBox during model build
@@ -1167,7 +1365,7 @@ func (testEntityInline_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Property("Date", 10, 1, 6052475349651303914)
 	model.Property("Value", 8, 2, 7019205901062172310)
 	model.Property("Id", 6, 3, 5298431058949014957)
-	model.PropertyFlags(8193)
+	model.PropertyFlags(1)
 	model.EntityLastPropertyId(3, 5298431058949014957)
 }
 
@@ -1177,8 +1375,9 @@ func (testEntityInline_EntityInfo) GetId(object interface{}) (uint64, error) {
 }
 
 // SetId is called by ObjectBox during Put to update an ID on an object that has just been inserted
-func (testEntityInline_EntityInfo) SetId(object interface{}, id uint64) {
+func (testEntityInline_EntityInfo) SetId(object interface{}, id uint64) error {
 	object.(*TestEntityInline).Id = id
+	return nil
 }
 
 // PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
@@ -1193,18 +1392,25 @@ func (testEntityInline_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.
 	// build the FlatBuffers object
 	fbb.StartObject(3)
 	fbutils.SetInt64Slot(fbb, 0, obj.BaseWithDate.Date)
-	fbutils.SetFloat64Slot(fbb, 1, obj.BaseWithValue.Value)
+	if obj.BaseWithValue != nil {
+		fbutils.SetFloat64Slot(fbb, 1, obj.BaseWithValue.Value)
+	}
 	fbutils.SetUint64Slot(fbb, 2, id)
 	return nil
 }
 
 // Load is called by ObjectBox to load an object from a FlatBuffer
 func (testEntityInline_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{}, error) {
+	if len(bytes) == 0 { // sanity check, should "never" happen
+		return nil, errors.New("can't deserialize an object of type 'TestEntityInline' - no data received")
+	}
+
 	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
-	var id = table.GetUint64Slot(8, 0)
+
+	var propId = table.GetUint64Slot(8, 0)
 
 	return &TestEntityInline{
 		BaseWithDate: BaseWithDate{
@@ -1213,7 +1419,7 @@ func (testEntityInline_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (
 		BaseWithValue: &BaseWithValue{
 			Value: fbutils.GetFloat64Slot(table, 6),
 		},
-		Id: id,
+		Id: propId,
 	}, nil
 }
 
@@ -1224,6 +1430,9 @@ func (testEntityInline_EntityInfo) MakeSlice(capacity int) interface{} {
 
 // AppendToSlice is called by ObjectBox to fill the slice of the read objects
 func (testEntityInline_EntityInfo) AppendToSlice(slice interface{}, object interface{}) interface{} {
+	if object == nil {
+		return append(slice.([]*TestEntityInline), nil)
+	}
 	return append(slice.([]*TestEntityInline), object.(*TestEntityInline))
 }
 
@@ -1246,24 +1455,21 @@ func (box *TestEntityInlineBox) Put(object *TestEntityInline) (uint64, error) {
 	return box.Box.Put(object)
 }
 
-// PutAsync asynchronously inserts/updates a single object.
+// Insert synchronously inserts a single object. As opposed to Put, Insert will fail if given an ID that already exists.
+// In case the Id is not specified, it would be assigned automatically (auto-increment).
 // When inserting, the TestEntityInline.Id property on the passed object will be assigned the new ID as well.
-//
-// It's executed on a separate internal thread for better performance.
-//
-// There are two main use cases:
-//
-// 1) "Put & Forget:" you gain faster puts as you don't have to wait for the transaction to finish.
-//
-// 2) Many small transactions: if your write load is typically a lot of individual puts that happen in parallel,
-// this will merge small transactions into bigger ones. This results in a significant gain in overall throughput.
-//
-//
-// In situations with (extremely) high async load, this method may be throttled (~1ms) or delayed (<1s).
-// In the unlikely event that the object could not be enqueued after delaying, an error will be returned.
-//
-// Note that this method does not give you hard durability guarantees like the synchronous Put provides.
-// There is a small time window (typically 3 ms) in which the data may not have been committed durably yet.
+func (box *TestEntityInlineBox) Insert(object *TestEntityInline) (uint64, error) {
+	return box.Box.Insert(object)
+}
+
+// Update synchronously updates a single object.
+// As opposed to Put, Update will fail if an object with the same ID is not found in the database.
+func (box *TestEntityInlineBox) Update(object *TestEntityInline) error {
+	return box.Box.Update(object)
+}
+
+// PutAsync asynchronously inserts/updates a single object.
+// Deprecated: use box.Async().Put() instead
 func (box *TestEntityInlineBox) PutAsync(object *TestEntityInline) (uint64, error) {
 	return box.Box.PutAsync(object)
 }
@@ -1299,6 +1505,15 @@ func (box *TestEntityInlineBox) Get(id uint64) (*TestEntityInline, error) {
 // If any of the objects doesn't exist, its position in the return slice is nil
 func (box *TestEntityInlineBox) GetMany(ids ...uint64) ([]*TestEntityInline, error) {
 	objects, err := box.Box.GetMany(ids...)
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*TestEntityInline), nil
+}
+
+// GetManyExisting reads multiple objects at once, skipping those that do not exist.
+func (box *TestEntityInlineBox) GetManyExisting(ids ...uint64) ([]*TestEntityInline, error) {
+	objects, err := box.Box.GetManyExisting(ids...)
 	if err != nil {
 		return nil, err
 	}
@@ -1350,6 +1565,68 @@ func (box *TestEntityInlineBox) QueryOrError(conditions ...objectbox.Condition) 
 	} else {
 		return &TestEntityInlineQuery{query}, nil
 	}
+}
+
+// Async provides access to the default Async Box for asynchronous operations. See TestEntityInlineAsyncBox for more information.
+func (box *TestEntityInlineBox) Async() *TestEntityInlineAsyncBox {
+	return &TestEntityInlineAsyncBox{AsyncBox: box.Box.Async()}
+}
+
+// TestEntityInlineAsyncBox provides asynchronous operations on TestEntityInline objects.
+//
+// Asynchronous operations are executed on a separate internal thread for better performance.
+//
+// There are two main use cases:
+//
+// 1) "execute & forget:" you gain faster put/remove operations as you don't have to wait for the transaction to finish.
+//
+// 2) Many small transactions: if your write load is typically a lot of individual puts that happen in parallel,
+// this will merge small transactions into bigger ones. This results in a significant gain in overall throughput.
+//
+// In situations with (extremely) high async load, an async method may be throttled (~1ms) or delayed up to 1 second.
+// In the unlikely event that the object could still not be enqueued (full queue), an error will be returned.
+//
+// Note that async methods do not give you hard durability guarantees like the synchronous Box provides.
+// There is a small time window in which the data may not have been committed durably yet.
+type TestEntityInlineAsyncBox struct {
+	*objectbox.AsyncBox
+}
+
+// AsyncBoxForTestEntityInline creates a new async box with the given operation timeout in case an async queue is full.
+// The returned struct must be freed explicitly using the Close() method.
+// It's usually preferable to use TestEntityInlineBox::Async() which takes care of resource management and doesn't require closing.
+func AsyncBoxForTestEntityInline(ob *objectbox.ObjectBox, timeoutMs uint64) *TestEntityInlineAsyncBox {
+	var async, err = objectbox.NewAsyncBox(ob, 4, timeoutMs)
+	if err != nil {
+		panic("Could not create async box for entity ID 4: %s" + err.Error())
+	}
+	return &TestEntityInlineAsyncBox{AsyncBox: async}
+}
+
+// Put inserts/updates a single object asynchronously.
+// When inserting a new object, the Id property on the passed object will be assigned the new ID the entity would hold
+// if the insert is ultimately successful. The newly assigned ID may not become valid if the insert fails.
+func (asyncBox *TestEntityInlineAsyncBox) Put(object *TestEntityInline) (uint64, error) {
+	return asyncBox.AsyncBox.Put(object)
+}
+
+// Insert a single object asynchronously.
+// The Id property on the passed object will be assigned the new ID the entity would hold if the insert is ultimately
+// successful. The newly assigned ID may not become valid if the insert fails.
+// Fails silently if an object with the same ID already exists (this error is not returned).
+func (asyncBox *TestEntityInlineAsyncBox) Insert(object *TestEntityInline) (id uint64, err error) {
+	return asyncBox.AsyncBox.Insert(object)
+}
+
+// Update a single object asynchronously.
+// The object must already exists or the update fails silently (without an error returned).
+func (asyncBox *TestEntityInlineAsyncBox) Update(object *TestEntityInline) error {
+	return asyncBox.AsyncBox.Update(object)
+}
+
+// Remove deletes a single object asynchronously.
+func (asyncBox *TestEntityInlineAsyncBox) Remove(object *TestEntityInline) error {
+	return asyncBox.AsyncBox.Remove(object)
 }
 
 // Query provides a way to search stored objects
@@ -1428,17 +1705,17 @@ var TestEntityRelated_ = struct {
 
 // GeneratorVersion is called by ObjectBox to verify the compatibility of the generator used to generate this code
 func (testEntityRelated_EntityInfo) GeneratorVersion() int {
-	return 3
+	return 5
 }
 
 // AddToModel is called by ObjectBox during model build
 func (testEntityRelated_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("TestEntityRelated", 5, 145948658381494339)
 	model.Property("Id", 6, 1, 710127486443861244)
-	model.PropertyFlags(8193)
+	model.PropertyFlags(1)
 	model.Property("Name", 9, 2, 1781092268467778149)
 	model.Property("Next", 11, 3, 3103593908461833729)
-	model.PropertyFlags(8192)
+	model.PropertyFlags(8712)
 	model.PropertyRelation("EntityByValue", 4, 3414034888235702623)
 	model.EntityLastPropertyId(3, 3103593908461833729)
 	model.Relation(6, 3119566795324383223, EntityByValueBinding.Id, EntityByValueBinding.Uid)
@@ -1450,8 +1727,9 @@ func (testEntityRelated_EntityInfo) GetId(object interface{}) (uint64, error) {
 }
 
 // SetId is called by ObjectBox during Put to update an ID on an object that has just been inserted
-func (testEntityRelated_EntityInfo) SetId(object interface{}, id uint64) {
+func (testEntityRelated_EntityInfo) SetId(object interface{}, id uint64) error {
 	object.(*TestEntityRelated).Id = id
+	return nil
 }
 
 // PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
@@ -1499,11 +1777,16 @@ func (testEntityRelated_EntityInfo) Flatten(object interface{}, fbb *flatbuffers
 
 // Load is called by ObjectBox to load an object from a FlatBuffer
 func (testEntityRelated_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{}, error) {
+	if len(bytes) == 0 { // sanity check, should "never" happen
+		return nil, errors.New("can't deserialize an object of type 'TestEntityRelated' - no data received")
+	}
+
 	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
-	var id = table.GetUint64Slot(4, 0)
+
+	var propId = table.GetUint64Slot(4, 0)
 
 	var relNext *EntityByValue
 	if rId := fbutils.GetUint64PtrSlot(table, 8); rId != nil && *rId > 0 {
@@ -1515,16 +1798,16 @@ func (testEntityRelated_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) 
 	}
 
 	var relNextSlice []EntityByValue
-	if rIds, err := BoxForTestEntityRelated(ob).RelationIds(TestEntityRelated_.NextSlice, id); err != nil {
+	if rIds, err := BoxForTestEntityRelated(ob).RelationIds(TestEntityRelated_.NextSlice, propId); err != nil {
 		return nil, err
-	} else if rSlice, err := BoxForEntityByValue(ob).GetMany(rIds...); err != nil {
+	} else if rSlice, err := BoxForEntityByValue(ob).GetManyExisting(rIds...); err != nil {
 		return nil, err
 	} else {
 		relNextSlice = rSlice
 	}
 
 	return &TestEntityRelated{
-		Id:        id,
+		Id:        propId,
 		Name:      fbutils.GetStringSlot(table, 6),
 		Next:      relNext,
 		NextSlice: relNextSlice,
@@ -1538,6 +1821,9 @@ func (testEntityRelated_EntityInfo) MakeSlice(capacity int) interface{} {
 
 // AppendToSlice is called by ObjectBox to fill the slice of the read objects
 func (testEntityRelated_EntityInfo) AppendToSlice(slice interface{}, object interface{}) interface{} {
+	if object == nil {
+		return append(slice.([]*TestEntityRelated), nil)
+	}
 	return append(slice.([]*TestEntityRelated), object.(*TestEntityRelated))
 }
 
@@ -1560,24 +1846,21 @@ func (box *TestEntityRelatedBox) Put(object *TestEntityRelated) (uint64, error) 
 	return box.Box.Put(object)
 }
 
-// PutAsync asynchronously inserts/updates a single object.
+// Insert synchronously inserts a single object. As opposed to Put, Insert will fail if given an ID that already exists.
+// In case the Id is not specified, it would be assigned automatically (auto-increment).
 // When inserting, the TestEntityRelated.Id property on the passed object will be assigned the new ID as well.
-//
-// It's executed on a separate internal thread for better performance.
-//
-// There are two main use cases:
-//
-// 1) "Put & Forget:" you gain faster puts as you don't have to wait for the transaction to finish.
-//
-// 2) Many small transactions: if your write load is typically a lot of individual puts that happen in parallel,
-// this will merge small transactions into bigger ones. This results in a significant gain in overall throughput.
-//
-//
-// In situations with (extremely) high async load, this method may be throttled (~1ms) or delayed (<1s).
-// In the unlikely event that the object could not be enqueued after delaying, an error will be returned.
-//
-// Note that this method does not give you hard durability guarantees like the synchronous Put provides.
-// There is a small time window (typically 3 ms) in which the data may not have been committed durably yet.
+func (box *TestEntityRelatedBox) Insert(object *TestEntityRelated) (uint64, error) {
+	return box.Box.Insert(object)
+}
+
+// Update synchronously updates a single object.
+// As opposed to Put, Update will fail if an object with the same ID is not found in the database.
+func (box *TestEntityRelatedBox) Update(object *TestEntityRelated) error {
+	return box.Box.Update(object)
+}
+
+// PutAsync asynchronously inserts/updates a single object.
+// Deprecated: use box.Async().Put() instead
 func (box *TestEntityRelatedBox) PutAsync(object *TestEntityRelated) (uint64, error) {
 	return box.Box.PutAsync(object)
 }
@@ -1613,6 +1896,15 @@ func (box *TestEntityRelatedBox) Get(id uint64) (*TestEntityRelated, error) {
 // If any of the objects doesn't exist, its position in the return slice is nil
 func (box *TestEntityRelatedBox) GetMany(ids ...uint64) ([]*TestEntityRelated, error) {
 	objects, err := box.Box.GetMany(ids...)
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*TestEntityRelated), nil
+}
+
+// GetManyExisting reads multiple objects at once, skipping those that do not exist.
+func (box *TestEntityRelatedBox) GetManyExisting(ids ...uint64) ([]*TestEntityRelated, error) {
+	objects, err := box.Box.GetManyExisting(ids...)
 	if err != nil {
 		return nil, err
 	}
@@ -1664,6 +1956,68 @@ func (box *TestEntityRelatedBox) QueryOrError(conditions ...objectbox.Condition)
 	} else {
 		return &TestEntityRelatedQuery{query}, nil
 	}
+}
+
+// Async provides access to the default Async Box for asynchronous operations. See TestEntityRelatedAsyncBox for more information.
+func (box *TestEntityRelatedBox) Async() *TestEntityRelatedAsyncBox {
+	return &TestEntityRelatedAsyncBox{AsyncBox: box.Box.Async()}
+}
+
+// TestEntityRelatedAsyncBox provides asynchronous operations on TestEntityRelated objects.
+//
+// Asynchronous operations are executed on a separate internal thread for better performance.
+//
+// There are two main use cases:
+//
+// 1) "execute & forget:" you gain faster put/remove operations as you don't have to wait for the transaction to finish.
+//
+// 2) Many small transactions: if your write load is typically a lot of individual puts that happen in parallel,
+// this will merge small transactions into bigger ones. This results in a significant gain in overall throughput.
+//
+// In situations with (extremely) high async load, an async method may be throttled (~1ms) or delayed up to 1 second.
+// In the unlikely event that the object could still not be enqueued (full queue), an error will be returned.
+//
+// Note that async methods do not give you hard durability guarantees like the synchronous Box provides.
+// There is a small time window in which the data may not have been committed durably yet.
+type TestEntityRelatedAsyncBox struct {
+	*objectbox.AsyncBox
+}
+
+// AsyncBoxForTestEntityRelated creates a new async box with the given operation timeout in case an async queue is full.
+// The returned struct must be freed explicitly using the Close() method.
+// It's usually preferable to use TestEntityRelatedBox::Async() which takes care of resource management and doesn't require closing.
+func AsyncBoxForTestEntityRelated(ob *objectbox.ObjectBox, timeoutMs uint64) *TestEntityRelatedAsyncBox {
+	var async, err = objectbox.NewAsyncBox(ob, 5, timeoutMs)
+	if err != nil {
+		panic("Could not create async box for entity ID 5: %s" + err.Error())
+	}
+	return &TestEntityRelatedAsyncBox{AsyncBox: async}
+}
+
+// Put inserts/updates a single object asynchronously.
+// When inserting a new object, the Id property on the passed object will be assigned the new ID the entity would hold
+// if the insert is ultimately successful. The newly assigned ID may not become valid if the insert fails.
+func (asyncBox *TestEntityRelatedAsyncBox) Put(object *TestEntityRelated) (uint64, error) {
+	return asyncBox.AsyncBox.Put(object)
+}
+
+// Insert a single object asynchronously.
+// The Id property on the passed object will be assigned the new ID the entity would hold if the insert is ultimately
+// successful. The newly assigned ID may not become valid if the insert fails.
+// Fails silently if an object with the same ID already exists (this error is not returned).
+func (asyncBox *TestEntityRelatedAsyncBox) Insert(object *TestEntityRelated) (id uint64, err error) {
+	return asyncBox.AsyncBox.Insert(object)
+}
+
+// Update a single object asynchronously.
+// The object must already exists or the update fails silently (without an error returned).
+func (asyncBox *TestEntityRelatedAsyncBox) Update(object *TestEntityRelated) error {
+	return asyncBox.AsyncBox.Update(object)
+}
+
+// Remove deletes a single object asynchronously.
+func (asyncBox *TestEntityRelatedAsyncBox) Remove(object *TestEntityRelated) error {
+	return asyncBox.AsyncBox.Remove(object)
 }
 
 // Query provides a way to search stored objects

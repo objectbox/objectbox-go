@@ -4,6 +4,7 @@
 package object
 
 import (
+	"errors"
 	"github.com/google/flatbuffers/go"
 	"github.com/objectbox/objectbox-go/objectbox"
 	"github.com/objectbox/objectbox-go/objectbox/fbutils"
@@ -18,7 +19,7 @@ var TypefulBinding = typeful_EntityInfo{
 	Entity: objectbox.Entity{
 		Id: 3,
 	},
-	Uid: 4035568504096476779,
+	Uid: 959367522974354090,
 }
 
 // Typeful_ contains type-based Property helpers to facilitate some common operations such as Queries.
@@ -43,6 +44,8 @@ var Typeful_ = struct {
 	Float32      *objectbox.PropertyFloat32
 	Float64      *objectbox.PropertyFloat64
 	Date         *objectbox.PropertyInt64
+	Time         *objectbox.PropertyInt64
+	Time2        *objectbox.PropertyInt64
 }{
 	Id: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
@@ -164,43 +167,58 @@ var Typeful_ = struct {
 			Entity: &TypefulBinding.Entity,
 		},
 	},
+	Time: &objectbox.PropertyInt64{
+		BaseProperty: &objectbox.BaseProperty{
+			Id:     21,
+			Entity: &TypefulBinding.Entity,
+		},
+	},
+	Time2: &objectbox.PropertyInt64{
+		BaseProperty: &objectbox.BaseProperty{
+			Id:     22,
+			Entity: &TypefulBinding.Entity,
+		},
+	},
 }
 
 // GeneratorVersion is called by ObjectBox to verify the compatibility of the generator used to generate this code
 func (typeful_EntityInfo) GeneratorVersion() int {
-	return 3
+	return 5
 }
 
 // AddToModel is called by ObjectBox during model build
 func (typeful_EntityInfo) AddToModel(model *objectbox.Model) {
-	model.Entity("Typeful", 3, 4035568504096476779)
-	model.Property("Id", 6, 1, 959367522974354090)
-	model.PropertyFlags(8193)
-	model.Property("Int", 6, 2, 2914295034816259174)
-	model.Property("Int8", 2, 3, 1395437218309923052)
-	model.Property("Int16", 3, 4, 6745438398739480977)
-	model.Property("Int32", 5, 5, 2897681629866238117)
-	model.Property("Int64", 6, 6, 3398579248012586914)
-	model.Property("Uint", 6, 7, 5974317550424871033)
+	model.Entity("Typeful", 3, 959367522974354090)
+	model.Property("Id", 6, 1, 2914295034816259174)
+	model.PropertyFlags(1)
+	model.Property("Int", 6, 2, 1395437218309923052)
+	model.Property("Int8", 2, 3, 6745438398739480977)
+	model.Property("Int16", 3, 4, 2897681629866238117)
+	model.Property("Int32", 5, 5, 3398579248012586914)
+	model.Property("Int64", 6, 6, 5974317550424871033)
+	model.Property("Uint", 6, 7, 3317123977833389635)
 	model.PropertyFlags(8192)
-	model.Property("Uint8", 2, 8, 3317123977833389635)
+	model.Property("Uint8", 2, 8, 5001958211167890979)
 	model.PropertyFlags(8192)
-	model.Property("Uint16", 3, 9, 5001958211167890979)
+	model.Property("Uint16", 3, 9, 167566062957544642)
 	model.PropertyFlags(8192)
-	model.Property("Uint32", 5, 10, 167566062957544642)
+	model.Property("Uint32", 5, 10, 4778690082005258714)
 	model.PropertyFlags(8192)
-	model.Property("Uint64", 6, 11, 4778690082005258714)
+	model.Property("Uint64", 6, 11, 1059542851699319360)
 	model.PropertyFlags(8192)
-	model.Property("Bool", 1, 12, 1059542851699319360)
-	model.Property("String", 9, 13, 6972732843819909978)
-	model.Property("StringVector", 30, 14, 5558237345453186302)
-	model.Property("Byte", 2, 15, 7845762441295307478)
-	model.Property("ByteVector", 23, 16, 771642788862502430)
-	model.Property("Rune", 5, 17, 8514850266767180993)
-	model.Property("Float32", 7, 18, 8683452355129068124)
-	model.Property("Float64", 8, 19, 4345851588384648695)
-	model.Property("Date", 10, 20, 7699391924090763411)
-	model.EntityLastPropertyId(20, 7699391924090763411)
+	model.Property("Bool", 1, 12, 6972732843819909978)
+	model.Property("String", 9, 13, 5558237345453186302)
+	model.Property("StringVector", 30, 14, 7845762441295307478)
+	model.Property("Byte", 2, 15, 771642788862502430)
+	model.PropertyFlags(8192)
+	model.Property("ByteVector", 23, 16, 8514850266767180993)
+	model.Property("Rune", 5, 17, 8683452355129068124)
+	model.Property("Float32", 7, 18, 4345851588384648695)
+	model.Property("Float64", 8, 19, 7699391924090763411)
+	model.Property("Date", 10, 20, 388440063886460141)
+	model.Property("Time", 10, 21, 7561811714888168464)
+	model.Property("Time2", 10, 22, 3959279844101328186)
+	model.EntityLastPropertyId(22, 3959279844101328186)
 }
 
 // GetId is called by ObjectBox during Put operations to check for existing ID on an object
@@ -209,8 +227,9 @@ func (typeful_EntityInfo) GetId(object interface{}) (uint64, error) {
 }
 
 // SetId is called by ObjectBox during Put to update an ID on an object that has just been inserted
-func (typeful_EntityInfo) SetId(object interface{}, id uint64) {
+func (typeful_EntityInfo) SetId(object interface{}, id uint64) error {
 	object.(*Typeful).Id = id
+	return nil
 }
 
 // PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
@@ -221,12 +240,30 @@ func (typeful_EntityInfo) PutRelated(ob *objectbox.ObjectBox, object interface{}
 // Flatten is called by ObjectBox to transform an object to a FlatBuffer
 func (typeful_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) error {
 	obj := object.(*Typeful)
+	var propTime int64
+	{
+		var err error
+		propTime, err = objectbox.TimeInt64ConvertToDatabaseValue(obj.Time)
+		if err != nil {
+			return errors.New("converter objectbox.TimeInt64ConvertToDatabaseValue() failed on Typeful.Time: " + err.Error())
+		}
+	}
+
+	var propTime2 int64
+	{
+		var err error
+		propTime2, err = objectbox.TimeInt64ConvertToDatabaseValue(obj.Time2)
+		if err != nil {
+			return errors.New("converter objectbox.TimeInt64ConvertToDatabaseValue() failed on Typeful.Time2: " + err.Error())
+		}
+	}
+
 	var offsetString = fbutils.CreateStringOffset(fbb, obj.String)
 	var offsetStringVector = fbutils.CreateStringVectorOffset(fbb, obj.StringVector)
 	var offsetByteVector = fbutils.CreateByteVectorOffset(fbb, obj.ByteVector)
 
 	// build the FlatBuffers object
-	fbb.StartObject(20)
+	fbb.StartObject(22)
 	fbutils.SetUint64Slot(fbb, 0, id)
 	fbutils.SetInt64Slot(fbb, 1, int64(obj.Int))
 	fbutils.SetInt8Slot(fbb, 2, obj.Int8)
@@ -241,25 +278,42 @@ func (typeful_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, 
 	fbutils.SetBoolSlot(fbb, 11, obj.Bool)
 	fbutils.SetUOffsetTSlot(fbb, 12, offsetString)
 	fbutils.SetUOffsetTSlot(fbb, 13, offsetStringVector)
-	fbutils.SetByteSlot(fbb, 14, obj.Byte)
+	fbutils.SetUint8Slot(fbb, 14, obj.Byte)
 	fbutils.SetUOffsetTSlot(fbb, 15, offsetByteVector)
 	fbutils.SetInt32Slot(fbb, 16, obj.Rune)
 	fbutils.SetFloat32Slot(fbb, 17, obj.Float32)
 	fbutils.SetFloat64Slot(fbb, 18, obj.Float64)
 	fbutils.SetInt64Slot(fbb, 19, obj.Date)
+	fbutils.SetInt64Slot(fbb, 20, propTime)
+	fbutils.SetInt64Slot(fbb, 21, propTime2)
 	return nil
 }
 
 // Load is called by ObjectBox to load an object from a FlatBuffer
 func (typeful_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{}, error) {
+	if len(bytes) == 0 { // sanity check, should "never" happen
+		return nil, errors.New("can't deserialize an object of type 'Typeful' - no data received")
+	}
+
 	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
-	var id = table.GetUint64Slot(4, 0)
+
+	var propId = table.GetUint64Slot(4, 0)
+
+	propTime, err := objectbox.TimeInt64ConvertToEntityProperty(fbutils.GetInt64Slot(table, 44))
+	if err != nil {
+		return nil, errors.New("converter objectbox.TimeInt64ConvertToEntityProperty() failed on Typeful.Time: " + err.Error())
+	}
+
+	propTime2, err := objectbox.TimeInt64ConvertToEntityProperty(fbutils.GetInt64Slot(table, 46))
+	if err != nil {
+		return nil, errors.New("converter objectbox.TimeInt64ConvertToEntityProperty() failed on Typeful.Time2: " + err.Error())
+	}
 
 	return &Typeful{
-		Id:           id,
+		Id:           propId,
 		Int:          fbutils.GetIntSlot(table, 6),
 		Int8:         fbutils.GetInt8Slot(table, 8),
 		Int16:        fbutils.GetInt16Slot(table, 10),
@@ -279,6 +333,8 @@ func (typeful_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface
 		Float32:      fbutils.GetFloat32Slot(table, 38),
 		Float64:      fbutils.GetFloat64Slot(table, 40),
 		Date:         fbutils.GetInt64Slot(table, 42),
+		Time:         propTime,
+		Time2:        propTime2,
 	}, nil
 }
 
@@ -289,6 +345,9 @@ func (typeful_EntityInfo) MakeSlice(capacity int) interface{} {
 
 // AppendToSlice is called by ObjectBox to fill the slice of the read objects
 func (typeful_EntityInfo) AppendToSlice(slice interface{}, object interface{}) interface{} {
+	if object == nil {
+		return append(slice.([]*Typeful), nil)
+	}
 	return append(slice.([]*Typeful), object.(*Typeful))
 }
 
@@ -311,24 +370,21 @@ func (box *TypefulBox) Put(object *Typeful) (uint64, error) {
 	return box.Box.Put(object)
 }
 
-// PutAsync asynchronously inserts/updates a single object.
+// Insert synchronously inserts a single object. As opposed to Put, Insert will fail if given an ID that already exists.
+// In case the Id is not specified, it would be assigned automatically (auto-increment).
 // When inserting, the Typeful.Id property on the passed object will be assigned the new ID as well.
-//
-// It's executed on a separate internal thread for better performance.
-//
-// There are two main use cases:
-//
-// 1) "Put & Forget:" you gain faster puts as you don't have to wait for the transaction to finish.
-//
-// 2) Many small transactions: if your write load is typically a lot of individual puts that happen in parallel,
-// this will merge small transactions into bigger ones. This results in a significant gain in overall throughput.
-//
-//
-// In situations with (extremely) high async load, this method may be throttled (~1ms) or delayed (<1s).
-// In the unlikely event that the object could not be enqueued after delaying, an error will be returned.
-//
-// Note that this method does not give you hard durability guarantees like the synchronous Put provides.
-// There is a small time window (typically 3 ms) in which the data may not have been committed durably yet.
+func (box *TypefulBox) Insert(object *Typeful) (uint64, error) {
+	return box.Box.Insert(object)
+}
+
+// Update synchronously updates a single object.
+// As opposed to Put, Update will fail if an object with the same ID is not found in the database.
+func (box *TypefulBox) Update(object *Typeful) error {
+	return box.Box.Update(object)
+}
+
+// PutAsync asynchronously inserts/updates a single object.
+// Deprecated: use box.Async().Put() instead
 func (box *TypefulBox) PutAsync(object *Typeful) (uint64, error) {
 	return box.Box.PutAsync(object)
 }
@@ -364,6 +420,15 @@ func (box *TypefulBox) Get(id uint64) (*Typeful, error) {
 // If any of the objects doesn't exist, its position in the return slice is nil
 func (box *TypefulBox) GetMany(ids ...uint64) ([]*Typeful, error) {
 	objects, err := box.Box.GetMany(ids...)
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*Typeful), nil
+}
+
+// GetManyExisting reads multiple objects at once, skipping those that do not exist.
+func (box *TypefulBox) GetManyExisting(ids ...uint64) ([]*Typeful, error) {
+	objects, err := box.Box.GetManyExisting(ids...)
 	if err != nil {
 		return nil, err
 	}
@@ -415,6 +480,68 @@ func (box *TypefulBox) QueryOrError(conditions ...objectbox.Condition) (*Typeful
 	} else {
 		return &TypefulQuery{query}, nil
 	}
+}
+
+// Async provides access to the default Async Box for asynchronous operations. See TypefulAsyncBox for more information.
+func (box *TypefulBox) Async() *TypefulAsyncBox {
+	return &TypefulAsyncBox{AsyncBox: box.Box.Async()}
+}
+
+// TypefulAsyncBox provides asynchronous operations on Typeful objects.
+//
+// Asynchronous operations are executed on a separate internal thread for better performance.
+//
+// There are two main use cases:
+//
+// 1) "execute & forget:" you gain faster put/remove operations as you don't have to wait for the transaction to finish.
+//
+// 2) Many small transactions: if your write load is typically a lot of individual puts that happen in parallel,
+// this will merge small transactions into bigger ones. This results in a significant gain in overall throughput.
+//
+// In situations with (extremely) high async load, an async method may be throttled (~1ms) or delayed up to 1 second.
+// In the unlikely event that the object could still not be enqueued (full queue), an error will be returned.
+//
+// Note that async methods do not give you hard durability guarantees like the synchronous Box provides.
+// There is a small time window in which the data may not have been committed durably yet.
+type TypefulAsyncBox struct {
+	*objectbox.AsyncBox
+}
+
+// AsyncBoxForTypeful creates a new async box with the given operation timeout in case an async queue is full.
+// The returned struct must be freed explicitly using the Close() method.
+// It's usually preferable to use TypefulBox::Async() which takes care of resource management and doesn't require closing.
+func AsyncBoxForTypeful(ob *objectbox.ObjectBox, timeoutMs uint64) *TypefulAsyncBox {
+	var async, err = objectbox.NewAsyncBox(ob, 3, timeoutMs)
+	if err != nil {
+		panic("Could not create async box for entity ID 3: %s" + err.Error())
+	}
+	return &TypefulAsyncBox{AsyncBox: async}
+}
+
+// Put inserts/updates a single object asynchronously.
+// When inserting a new object, the Id property on the passed object will be assigned the new ID the entity would hold
+// if the insert is ultimately successful. The newly assigned ID may not become valid if the insert fails.
+func (asyncBox *TypefulAsyncBox) Put(object *Typeful) (uint64, error) {
+	return asyncBox.AsyncBox.Put(object)
+}
+
+// Insert a single object asynchronously.
+// The Id property on the passed object will be assigned the new ID the entity would hold if the insert is ultimately
+// successful. The newly assigned ID may not become valid if the insert fails.
+// Fails silently if an object with the same ID already exists (this error is not returned).
+func (asyncBox *TypefulAsyncBox) Insert(object *Typeful) (id uint64, err error) {
+	return asyncBox.AsyncBox.Insert(object)
+}
+
+// Update a single object asynchronously.
+// The object must already exists or the update fails silently (without an error returned).
+func (asyncBox *TypefulAsyncBox) Update(object *Typeful) error {
+	return asyncBox.AsyncBox.Update(object)
+}
+
+// Remove deletes a single object asynchronously.
+func (asyncBox *TypefulAsyncBox) Remove(object *Typeful) error {
+	return asyncBox.AsyncBox.Remove(object)
 }
 
 // Query provides a way to search stored objects

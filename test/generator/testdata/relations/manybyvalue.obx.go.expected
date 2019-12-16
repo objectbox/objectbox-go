@@ -4,6 +4,7 @@
 package object
 
 import (
+	"errors"
 	"github.com/google/flatbuffers/go"
 	"github.com/objectbox/objectbox-go/objectbox"
 	"github.com/objectbox/objectbox-go/objectbox/fbutils"
@@ -16,9 +17,9 @@ type taskRelManyValue_EntityInfo struct {
 
 var TaskRelManyValueBinding = taskRelManyValue_EntityInfo{
 	Entity: objectbox.Entity{
-		Id: 7,
+		Id: 8,
 	},
-	Uid: 2217592893536642650,
+	Uid: 3706853784096366226,
 }
 
 // TaskRelManyValue_ contains type-based Property helpers to facilitate some common operations such as Queries.
@@ -35,22 +36,22 @@ var TaskRelManyValue_ = struct {
 	Groups: &objectbox.RelationToMany{
 		Id:     3,
 		Source: &TaskRelManyValueBinding.Entity,
-		Target: &GroupBinding.Entity,
+		Target: &GroupByValBinding.Entity,
 	},
 }
 
 // GeneratorVersion is called by ObjectBox to verify the compatibility of the generator used to generate this code
 func (taskRelManyValue_EntityInfo) GeneratorVersion() int {
-	return 3
+	return 5
 }
 
 // AddToModel is called by ObjectBox during model build
 func (taskRelManyValue_EntityInfo) AddToModel(model *objectbox.Model) {
-	model.Entity("TaskRelManyValue", 7, 2217592893536642650)
-	model.Property("Id", 6, 1, 1929546706668609706)
-	model.PropertyFlags(8193)
-	model.EntityLastPropertyId(1, 1929546706668609706)
-	model.Relation(3, 6392442863481646880, GroupBinding.Id, GroupBinding.Uid)
+	model.Entity("TaskRelManyValue", 8, 3706853784096366226)
+	model.Property("Id", 6, 1, 2627038740284806767)
+	model.PropertyFlags(1)
+	model.EntityLastPropertyId(1, 2627038740284806767)
+	model.Relation(3, 6303220950515014660, GroupByValBinding.Id, GroupByValBinding.Uid)
 }
 
 // GetId is called by ObjectBox during Put operations to check for existing ID on an object
@@ -59,8 +60,9 @@ func (taskRelManyValue_EntityInfo) GetId(object interface{}) (uint64, error) {
 }
 
 // SetId is called by ObjectBox during Put to update an ID on an object that has just been inserted
-func (taskRelManyValue_EntityInfo) SetId(object interface{}, id uint64) {
+func (taskRelManyValue_EntityInfo) SetId(object interface{}, id uint64) error {
 	object.(*TaskRelManyValue).Id = id
+	return nil
 }
 
 // PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
@@ -83,23 +85,28 @@ func (taskRelManyValue_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.
 
 // Load is called by ObjectBox to load an object from a FlatBuffer
 func (taskRelManyValue_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{}, error) {
+	if len(bytes) == 0 { // sanity check, should "never" happen
+		return nil, errors.New("can't deserialize an object of type 'TaskRelManyValue' - no data received")
+	}
+
 	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
-	var id = table.GetUint64Slot(4, 0)
 
-	var relGroups []Group
-	if rIds, err := BoxForTaskRelManyValue(ob).RelationIds(TaskRelManyValue_.Groups, id); err != nil {
+	var propId = table.GetUint64Slot(4, 0)
+
+	var relGroups []GroupByVal
+	if rIds, err := BoxForTaskRelManyValue(ob).RelationIds(TaskRelManyValue_.Groups, propId); err != nil {
 		return nil, err
-	} else if rSlice, err := BoxForGroup(ob).GetMany(rIds...); err != nil {
+	} else if rSlice, err := BoxForGroupByVal(ob).GetManyExisting(rIds...); err != nil {
 		return nil, err
 	} else {
 		relGroups = rSlice
 	}
 
 	return &TaskRelManyValue{
-		Id:     id,
+		Id:     propId,
 		Groups: relGroups,
 	}, nil
 }
@@ -111,6 +118,9 @@ func (taskRelManyValue_EntityInfo) MakeSlice(capacity int) interface{} {
 
 // AppendToSlice is called by ObjectBox to fill the slice of the read objects
 func (taskRelManyValue_EntityInfo) AppendToSlice(slice interface{}, object interface{}) interface{} {
+	if object == nil {
+		return append(slice.([]*TaskRelManyValue), nil)
+	}
 	return append(slice.([]*TaskRelManyValue), object.(*TaskRelManyValue))
 }
 
@@ -122,7 +132,7 @@ type TaskRelManyValueBox struct {
 // BoxForTaskRelManyValue opens a box of TaskRelManyValue objects
 func BoxForTaskRelManyValue(ob *objectbox.ObjectBox) *TaskRelManyValueBox {
 	return &TaskRelManyValueBox{
-		Box: ob.InternalBox(7),
+		Box: ob.InternalBox(8),
 	}
 }
 
@@ -133,24 +143,21 @@ func (box *TaskRelManyValueBox) Put(object *TaskRelManyValue) (uint64, error) {
 	return box.Box.Put(object)
 }
 
-// PutAsync asynchronously inserts/updates a single object.
+// Insert synchronously inserts a single object. As opposed to Put, Insert will fail if given an ID that already exists.
+// In case the Id is not specified, it would be assigned automatically (auto-increment).
 // When inserting, the TaskRelManyValue.Id property on the passed object will be assigned the new ID as well.
-//
-// It's executed on a separate internal thread for better performance.
-//
-// There are two main use cases:
-//
-// 1) "Put & Forget:" you gain faster puts as you don't have to wait for the transaction to finish.
-//
-// 2) Many small transactions: if your write load is typically a lot of individual puts that happen in parallel,
-// this will merge small transactions into bigger ones. This results in a significant gain in overall throughput.
-//
-//
-// In situations with (extremely) high async load, this method may be throttled (~1ms) or delayed (<1s).
-// In the unlikely event that the object could not be enqueued after delaying, an error will be returned.
-//
-// Note that this method does not give you hard durability guarantees like the synchronous Put provides.
-// There is a small time window (typically 3 ms) in which the data may not have been committed durably yet.
+func (box *TaskRelManyValueBox) Insert(object *TaskRelManyValue) (uint64, error) {
+	return box.Box.Insert(object)
+}
+
+// Update synchronously updates a single object.
+// As opposed to Put, Update will fail if an object with the same ID is not found in the database.
+func (box *TaskRelManyValueBox) Update(object *TaskRelManyValue) error {
+	return box.Box.Update(object)
+}
+
+// PutAsync asynchronously inserts/updates a single object.
+// Deprecated: use box.Async().Put() instead
 func (box *TaskRelManyValueBox) PutAsync(object *TaskRelManyValue) (uint64, error) {
 	return box.Box.PutAsync(object)
 }
@@ -186,6 +193,15 @@ func (box *TaskRelManyValueBox) Get(id uint64) (*TaskRelManyValue, error) {
 // If any of the objects doesn't exist, its position in the return slice is nil
 func (box *TaskRelManyValueBox) GetMany(ids ...uint64) ([]*TaskRelManyValue, error) {
 	objects, err := box.Box.GetMany(ids...)
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*TaskRelManyValue), nil
+}
+
+// GetManyExisting reads multiple objects at once, skipping those that do not exist.
+func (box *TaskRelManyValueBox) GetManyExisting(ids ...uint64) ([]*TaskRelManyValue, error) {
+	objects, err := box.Box.GetManyExisting(ids...)
 	if err != nil {
 		return nil, err
 	}
@@ -237,6 +253,68 @@ func (box *TaskRelManyValueBox) QueryOrError(conditions ...objectbox.Condition) 
 	} else {
 		return &TaskRelManyValueQuery{query}, nil
 	}
+}
+
+// Async provides access to the default Async Box for asynchronous operations. See TaskRelManyValueAsyncBox for more information.
+func (box *TaskRelManyValueBox) Async() *TaskRelManyValueAsyncBox {
+	return &TaskRelManyValueAsyncBox{AsyncBox: box.Box.Async()}
+}
+
+// TaskRelManyValueAsyncBox provides asynchronous operations on TaskRelManyValue objects.
+//
+// Asynchronous operations are executed on a separate internal thread for better performance.
+//
+// There are two main use cases:
+//
+// 1) "execute & forget:" you gain faster put/remove operations as you don't have to wait for the transaction to finish.
+//
+// 2) Many small transactions: if your write load is typically a lot of individual puts that happen in parallel,
+// this will merge small transactions into bigger ones. This results in a significant gain in overall throughput.
+//
+// In situations with (extremely) high async load, an async method may be throttled (~1ms) or delayed up to 1 second.
+// In the unlikely event that the object could still not be enqueued (full queue), an error will be returned.
+//
+// Note that async methods do not give you hard durability guarantees like the synchronous Box provides.
+// There is a small time window in which the data may not have been committed durably yet.
+type TaskRelManyValueAsyncBox struct {
+	*objectbox.AsyncBox
+}
+
+// AsyncBoxForTaskRelManyValue creates a new async box with the given operation timeout in case an async queue is full.
+// The returned struct must be freed explicitly using the Close() method.
+// It's usually preferable to use TaskRelManyValueBox::Async() which takes care of resource management and doesn't require closing.
+func AsyncBoxForTaskRelManyValue(ob *objectbox.ObjectBox, timeoutMs uint64) *TaskRelManyValueAsyncBox {
+	var async, err = objectbox.NewAsyncBox(ob, 8, timeoutMs)
+	if err != nil {
+		panic("Could not create async box for entity ID 8: %s" + err.Error())
+	}
+	return &TaskRelManyValueAsyncBox{AsyncBox: async}
+}
+
+// Put inserts/updates a single object asynchronously.
+// When inserting a new object, the Id property on the passed object will be assigned the new ID the entity would hold
+// if the insert is ultimately successful. The newly assigned ID may not become valid if the insert fails.
+func (asyncBox *TaskRelManyValueAsyncBox) Put(object *TaskRelManyValue) (uint64, error) {
+	return asyncBox.AsyncBox.Put(object)
+}
+
+// Insert a single object asynchronously.
+// The Id property on the passed object will be assigned the new ID the entity would hold if the insert is ultimately
+// successful. The newly assigned ID may not become valid if the insert fails.
+// Fails silently if an object with the same ID already exists (this error is not returned).
+func (asyncBox *TaskRelManyValueAsyncBox) Insert(object *TaskRelManyValue) (id uint64, err error) {
+	return asyncBox.AsyncBox.Insert(object)
+}
+
+// Update a single object asynchronously.
+// The object must already exists or the update fails silently (without an error returned).
+func (asyncBox *TaskRelManyValueAsyncBox) Update(object *TaskRelManyValue) error {
+	return asyncBox.AsyncBox.Update(object)
+}
+
+// Remove deletes a single object asynchronously.
+func (asyncBox *TaskRelManyValueAsyncBox) Remove(object *TaskRelManyValue) error {
+	return asyncBox.AsyncBox.Remove(object)
 }
 
 // Query provides a way to search stored objects

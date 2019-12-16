@@ -82,7 +82,7 @@ func goBytesArrayToC(goArray [][]byte) (*bytesArray, error) {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 
-	var cArray = C.obx_bytes_array_create(C.size_t(len(goArray)))
+	var cArray = C.obx_bytes_array(C.size_t(len(goArray)))
 	if cArray == nil {
 		return nil, createError()
 	}
@@ -116,9 +116,9 @@ func cIdsArrayToGo(cArray *C.OBX_id_array) []uint64 {
 	var ids = make([]uint64, size)
 	if size > 0 {
 		var cArrayStart = unsafe.Pointer(cArray.ids)
-		var cIdSize = unsafe.Sizeof(*cArray.ids)
+		var cSize = unsafe.Sizeof(*cArray.ids)
 		for i := uint(0); i < size; i++ {
-			ids[i] = *(*uint64)(unsafe.Pointer(uintptr(cArrayStart) + uintptr(i)*cIdSize))
+			ids[i] = *(*uint64)(unsafe.Pointer(uintptr(cArrayStart) + uintptr(i)*cSize))
 		}
 	}
 	return ids
@@ -129,7 +129,7 @@ func goIdsArrayToC(ids []uint64) (*idsArray, error) {
 	runtime.LockOSThread()
 
 	var err error
-	var cArray = C.obx_id_array_create(goUint64ArrayToCObxId(ids), C.size_t(len(ids)))
+	var cArray = C.obx_id_array(goUint64ArrayToCObxId(ids), C.size_t(len(ids)))
 	if cArray == nil {
 		err = createError()
 	}
@@ -162,32 +162,31 @@ func goStringArrayToC(values []string) *stringArray {
 }
 
 func goInt64ArrayToC(values []int64) *C.int64_t {
-	if len(values) > 0 {
-		return (*C.int64_t)(unsafe.Pointer(&values[0]))
+	if len(values) == 0 {
+		return nil
 	}
-	return nil
+	return (*C.int64_t)(unsafe.Pointer(&values[0]))
 }
 
 func goInt32ArrayToC(values []int32) *C.int32_t {
-	if len(values) > 0 {
-		return (*C.int32_t)(unsafe.Pointer(&values[0]))
+	if len(values) == 0 {
+		return nil
 	}
-	return nil
+	return (*C.int32_t)(unsafe.Pointer(&values[0]))
 }
 
 func goUint64ArrayToCObxId(values []uint64) *C.obx_id {
-	if len(values) > 0 {
-		return (*C.obx_id)(unsafe.Pointer(&values[0]))
-	} else {
+	if len(values) == 0 {
 		return nil
 	}
+	return (*C.obx_id)(unsafe.Pointer(&values[0]))
 }
 
 func cBytesPtr(value []byte) unsafe.Pointer {
-	if len(value) >= 1 {
-		return unsafe.Pointer(&value[0])
+	if len(value) == 0 {
+		return nil
 	}
-	return nil
+	return unsafe.Pointer(&value[0])
 }
 
 // Maps a C void* to the given byte-slice. The void* is not garbage collected and must be managed outside.

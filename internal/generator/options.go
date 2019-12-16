@@ -18,6 +18,7 @@ package generator
 
 import "math/rand"
 
+// Options provide configuration for the generator
 type Options struct {
 	ModelInfoFile string
 	ByValue       bool

@@ -23,11 +23,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/objectbox/objectbox-go/test/assert"
-
 	"github.com/objectbox/objectbox-go/objectbox"
+	"github.com/objectbox/objectbox-go/test/assert"
 )
 
+// TestEnv provides environment for testing ObjectBox. It sets up the database and populates it with data.
 type TestEnv struct {
 	ObjectBox *objectbox.ObjectBox
 	Box       *EntityBox
@@ -37,10 +37,12 @@ type TestEnv struct {
 	options TestEnvOptions
 }
 
+// TestEnvOptions configure the TestEnv
 type TestEnvOptions struct {
 	PopulateRelations bool
 }
 
+// NewTestEnv creates the test environment
 func NewTestEnv(t *testing.T) *TestEnv {
 	var env = &TestEnv{
 		dbName: "testdata",
@@ -59,6 +61,7 @@ func NewTestEnv(t *testing.T) *TestEnv {
 	return env
 }
 
+// Close closes ObjectBox and removes the database
 func (env *TestEnv) Close() {
 	env.ObjectBox.Close()
 	env.removeDb()
@@ -76,11 +79,13 @@ func (env *TestEnv) removeDb() {
 	assert.NoErr(env.t, removeFileIfExists(filepath.Join(env.dbName, "lock.mdb")))
 }
 
+// SetOptions configures options
 func (env *TestEnv) SetOptions(options TestEnvOptions) *TestEnv {
 	env.options = options
 	return env
 }
 
+// Populate creates given number of entities in the database
 func (env *TestEnv) Populate(count uint) {
 	// the first one is always the special Entity47
 	env.PutEntity(entity47(1, &env.options))
@@ -114,6 +119,7 @@ func (env *TestEnv) Populate(count uint) {
 	assert.Eq(env.t, uint64(count), c)
 }
 
+// PutEntity creates an entity
 func (env *TestEnv) PutEntity(entity *Entity) uint64 {
 	id, err := env.Box.Put(entity)
 	assert.NoErr(env.t, err)
@@ -121,12 +127,12 @@ func (env *TestEnv) PutEntity(entity *Entity) uint64 {
 	return id
 }
 
-// create a test entity ("47" because int fields are multiples of 47)
+// Entity47 creates a test entity ("47" because int fields are multiples of 47)
 func Entity47() *Entity {
 	return entity47(1, nil)
 }
 
-// create a test entity ("47" because int fields are multiples of 47)
+// entity47 creates a test entity ("47" because int fields are multiples of 47)
 func entity47(coef int64, options *TestEnvOptions) *Entity {
 	// NOTE, it doesn't really matter that we overflow the smaller types
 	var Bool = coef%2 == 1
@@ -157,7 +163,11 @@ func entity47(coef int64, options *TestEnvOptions) *Entity {
 		Rune:         47 * rune(coef),
 		Float32:      47.74 * float32(coef),
 		Float64:      47.74 * float64(coef),
-		Date:         timeInt64ToEntityProperty(47 * int64(coef)),
+	}
+	var err error
+	object.Date, err = objectbox.TimeInt64ConvertToEntityProperty(47 * int64(coef))
+	if err != nil {
+		panic(err)
 	}
 
 	if options != nil && options.PopulateRelations {

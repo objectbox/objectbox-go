@@ -19,10 +19,12 @@ package fbutils
 
 import "github.com/google/flatbuffers/go"
 
+// CreateStringOffset creates an offset in the FlatBuffers table
 func CreateStringOffset(fbb *flatbuffers.Builder, value string) flatbuffers.UOffsetT {
 	return fbb.CreateString(value)
 }
 
+// CreateByteVectorOffset creates an offset in the FlatBuffers table
 func CreateByteVectorOffset(fbb *flatbuffers.Builder, value []byte) flatbuffers.UOffsetT {
 	if value == nil {
 		return 0
@@ -31,6 +33,7 @@ func CreateByteVectorOffset(fbb *flatbuffers.Builder, value []byte) flatbuffers.
 	return fbb.CreateByteVector(value)
 }
 
+// CreateStringVectorOffset creates an offset in the FlatBuffers table
 func CreateStringVectorOffset(fbb *flatbuffers.Builder, values []string) flatbuffers.UOffsetT {
 	if values == nil {
 		return 0

@@ -12,7 +12,7 @@
           "id": "1:1213346202559552829",
           "name": "Id",
           "type": 6,
-          "flags": 8193
+          "flags": 1
         },
         {
           "id": "2:6609825840127351046",
@@ -82,7 +82,8 @@
         {
           "id": "14:4035373893984224671",
           "name": "Byte",
-          "type": 2
+          "type": 2,
+          "flags": 8192
         },
         {
           "id": "15:1294888641203478533",
@@ -124,7 +125,7 @@
           "name": "Related",
           "indexId": "1:7297830522090799401",
           "type": 11,
-          "flags": 8192,
+          "flags": 8712,
           "relationTarget": "TestEntityRelated"
         },
         {
@@ -132,7 +133,7 @@
           "name": "RelatedPtr",
           "indexId": "2:1636618737379039866",
           "type": 11,
-          "flags": 8192,
+          "flags": 8712,
           "relationTarget": "TestEntityRelated"
         },
         {
@@ -140,7 +141,7 @@
           "name": "RelatedPtr2",
           "indexId": "3:6077259218141868916",
           "type": 11,
-          "flags": 8192,
+          "flags": 8712,
           "relationTarget": "TestEntityRelated"
         },
         {
@@ -211,7 +212,8 @@
         {
           "id": "38:7395768407310126147",
           "name": "BytePtr",
-          "type": 2
+          "type": 2,
+          "flags": 8192
         },
         {
           "id": "40:5826738612842297282",
@@ -261,7 +263,7 @@
           "id": "1:4639124040173808562",
           "name": "Id",
           "type": 6,
-          "flags": 8193
+          "flags": 1
         }
       ]
     },
@@ -274,7 +276,7 @@
           "id": "1:8853550994304785841",
           "name": "Id",
           "type": 6,
-          "flags": 8193
+          "flags": 1
         },
         {
           "id": "2:6704507893545428268",
@@ -302,7 +304,7 @@
           "id": "3:5298431058949014957",
           "name": "Id",
           "type": 6,
-          "flags": 8193
+          "flags": 1
         }
       ]
     },
@@ -315,7 +317,7 @@
           "id": "1:710127486443861244",
           "name": "Id",
           "type": 6,
-          "flags": 8193
+          "flags": 1
         },
         {
           "id": "2:1781092268467778149",
@@ -327,7 +329,7 @@
           "name": "Next",
           "indexId": "4:3414034888235702623",
           "type": 11,
-          "flags": 8192,
+          "flags": 8712,
           "relationTarget": "EntityByValue"
         }
       ],

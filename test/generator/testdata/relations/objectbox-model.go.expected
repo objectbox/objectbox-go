@@ -10,18 +10,19 @@ import (
 // It is usually used when setting-up ObjectBox as an argument to the Builder.Model() function.
 func ObjectBoxModel() *objectbox.Model {
 	model := objectbox.NewModel()
-	model.GeneratorVersion(3)
+	model.GeneratorVersion(5)
 
 	model.RegisterBinding(GroupBinding)
+	model.RegisterBinding(GroupByValBinding)
 	model.RegisterBinding(TaskRelIdBinding)
 	model.RegisterBinding(TaskRelPtrBinding)
 	model.RegisterBinding(TaskRelValueBinding)
 	model.RegisterBinding(TaskRelEmbeddedBinding)
 	model.RegisterBinding(TaskRelManyPtrBinding)
 	model.RegisterBinding(TaskRelManyValueBinding)
-	model.LastEntityId(7, 2217592893536642650)
-	model.LastIndexId(4, 7259475919510918339)
-	model.LastRelationId(3, 6392442863481646880)
+	model.LastEntityId(8, 3706853784096366226)
+	model.LastIndexId(4, 3930927879439176946)
+	model.LastRelationId(3, 6303220950515014660)
 
 	return model
 }

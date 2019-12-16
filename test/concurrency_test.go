@@ -27,15 +27,20 @@ import (
 )
 
 func TestConcurrentPut(t *testing.T) {
-	concurrentInsert(t, 100, 20, false)
+	if testing.Short() {
+		concurrentInsert(t, 50, 10, false)
+	} else {
+		concurrentInsert(t, 100, 20, false)
+	}
 }
 
 func TestConcurrentPutAsync(t *testing.T) {
 	count := 100000
-	if strings.Contains(strings.ToLower(runtime.GOARCH), "arm") {
+
+	if testing.Short() || strings.Contains(strings.ToLower(runtime.GOARCH), "arm") {
 		count = 10000
 	}
-	t.Logf("Count for GOARCH %s: %v", runtime.GOARCH, count)
+
 	concurrentInsert(t, count, 20, true)
 }
 

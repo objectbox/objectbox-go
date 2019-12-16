@@ -4,6 +4,7 @@
 package object
 
 import (
+	"errors"
 	"github.com/google/flatbuffers/go"
 	"github.com/objectbox/objectbox-go/objectbox"
 	"github.com/objectbox/objectbox-go/objectbox/fbutils"
@@ -42,14 +43,14 @@ var TaskByValue_ = struct {
 
 // GeneratorVersion is called by ObjectBox to verify the compatibility of the generator used to generate this code
 func (taskByValue_EntityInfo) GeneratorVersion() int {
-	return 3
+	return 5
 }
 
 // AddToModel is called by ObjectBox during model build
 func (taskByValue_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("TaskByValue", 3, 2661732831099943416)
 	model.Property("Id", 6, 1, 7837839688282259259)
-	model.PropertyFlags(8193)
+	model.PropertyFlags(1)
 	model.Property("Name", 9, 2, 2518412263346885298)
 	model.EntityLastPropertyId(2, 2518412263346885298)
 }
@@ -64,12 +65,14 @@ func (taskByValue_EntityInfo) GetId(object interface{}) (uint64, error) {
 }
 
 // SetId is called by ObjectBox during Put to update an ID on an object that has just been inserted
-func (taskByValue_EntityInfo) SetId(object interface{}, id uint64) {
+func (taskByValue_EntityInfo) SetId(object interface{}, id uint64) error {
 	if obj, ok := object.(*TaskByValue); ok {
 		obj.Id = id
+		return nil
 	} else {
 		// NOTE while this can't update, it will at least behave consistently (panic in case of a wrong type)
 		_ = object.(TaskByValue).Id
+		return nil
 	}
 }
 
@@ -99,14 +102,19 @@ func (taskByValue_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Build
 
 // Load is called by ObjectBox to load an object from a FlatBuffer
 func (taskByValue_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{}, error) {
+	if len(bytes) == 0 { // sanity check, should "never" happen
+		return nil, errors.New("can't deserialize an object of type 'TaskByValue' - no data received")
+	}
+
 	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
-	var id = table.GetUint64Slot(4, 0)
+
+	var propId = table.GetUint64Slot(4, 0)
 
 	return &TaskByValue{
-		Id:   id,
+		Id:   propId,
 		Name: fbutils.GetStringSlot(table, 6),
 	}, nil
 }
@@ -118,6 +126,9 @@ func (taskByValue_EntityInfo) MakeSlice(capacity int) interface{} {
 
 // AppendToSlice is called by ObjectBox to fill the slice of the read objects
 func (taskByValue_EntityInfo) AppendToSlice(slice interface{}, object interface{}) interface{} {
+	if object == nil {
+		return append(slice.([]TaskByValue), TaskByValue{})
+	}
 	return append(slice.([]TaskByValue), *object.(*TaskByValue))
 }
 
@@ -140,24 +151,21 @@ func (box *TaskByValueBox) Put(object *TaskByValue) (uint64, error) {
 	return box.Box.Put(object)
 }
 
-// PutAsync asynchronously inserts/updates a single object.
+// Insert synchronously inserts a single object. As opposed to Put, Insert will fail if given an ID that already exists.
+// In case the Id is not specified, it would be assigned automatically (auto-increment).
 // When inserting, the TaskByValue.Id property on the passed object will be assigned the new ID as well.
-//
-// It's executed on a separate internal thread for better performance.
-//
-// There are two main use cases:
-//
-// 1) "Put & Forget:" you gain faster puts as you don't have to wait for the transaction to finish.
-//
-// 2) Many small transactions: if your write load is typically a lot of individual puts that happen in parallel,
-// this will merge small transactions into bigger ones. This results in a significant gain in overall throughput.
-//
-//
-// In situations with (extremely) high async load, this method may be throttled (~1ms) or delayed (<1s).
-// In the unlikely event that the object could not be enqueued after delaying, an error will be returned.
-//
-// Note that this method does not give you hard durability guarantees like the synchronous Put provides.
-// There is a small time window (typically 3 ms) in which the data may not have been committed durably yet.
+func (box *TaskByValueBox) Insert(object *TaskByValue) (uint64, error) {
+	return box.Box.Insert(object)
+}
+
+// Update synchronously updates a single object.
+// As opposed to Put, Update will fail if an object with the same ID is not found in the database.
+func (box *TaskByValueBox) Update(object *TaskByValue) error {
+	return box.Box.Update(object)
+}
+
+// PutAsync asynchronously inserts/updates a single object.
+// Deprecated: use box.Async().Put() instead
 func (box *TaskByValueBox) PutAsync(object *TaskByValue) (uint64, error) {
 	return box.Box.PutAsync(object)
 }
@@ -193,6 +201,15 @@ func (box *TaskByValueBox) Get(id uint64) (*TaskByValue, error) {
 // If any of the objects doesn't exist, its position in the return slice is an empty object
 func (box *TaskByValueBox) GetMany(ids ...uint64) ([]TaskByValue, error) {
 	objects, err := box.Box.GetMany(ids...)
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]TaskByValue), nil
+}
+
+// GetManyExisting reads multiple objects at once, skipping those that do not exist.
+func (box *TaskByValueBox) GetManyExisting(ids ...uint64) ([]TaskByValue, error) {
+	objects, err := box.Box.GetManyExisting(ids...)
 	if err != nil {
 		return nil, err
 	}
@@ -244,6 +261,68 @@ func (box *TaskByValueBox) QueryOrError(conditions ...objectbox.Condition) (*Tas
 	} else {
 		return &TaskByValueQuery{query}, nil
 	}
+}
+
+// Async provides access to the default Async Box for asynchronous operations. See TaskByValueAsyncBox for more information.
+func (box *TaskByValueBox) Async() *TaskByValueAsyncBox {
+	return &TaskByValueAsyncBox{AsyncBox: box.Box.Async()}
+}
+
+// TaskByValueAsyncBox provides asynchronous operations on TaskByValue objects.
+//
+// Asynchronous operations are executed on a separate internal thread for better performance.
+//
+// There are two main use cases:
+//
+// 1) "execute & forget:" you gain faster put/remove operations as you don't have to wait for the transaction to finish.
+//
+// 2) Many small transactions: if your write load is typically a lot of individual puts that happen in parallel,
+// this will merge small transactions into bigger ones. This results in a significant gain in overall throughput.
+//
+// In situations with (extremely) high async load, an async method may be throttled (~1ms) or delayed up to 1 second.
+// In the unlikely event that the object could still not be enqueued (full queue), an error will be returned.
+//
+// Note that async methods do not give you hard durability guarantees like the synchronous Box provides.
+// There is a small time window in which the data may not have been committed durably yet.
+type TaskByValueAsyncBox struct {
+	*objectbox.AsyncBox
+}
+
+// AsyncBoxForTaskByValue creates a new async box with the given operation timeout in case an async queue is full.
+// The returned struct must be freed explicitly using the Close() method.
+// It's usually preferable to use TaskByValueBox::Async() which takes care of resource management and doesn't require closing.
+func AsyncBoxForTaskByValue(ob *objectbox.ObjectBox, timeoutMs uint64) *TaskByValueAsyncBox {
+	var async, err = objectbox.NewAsyncBox(ob, 3, timeoutMs)
+	if err != nil {
+		panic("Could not create async box for entity ID 3: %s" + err.Error())
+	}
+	return &TaskByValueAsyncBox{AsyncBox: async}
+}
+
+// Put inserts/updates a single object asynchronously.
+// When inserting a new object, the Id property on the passed object will be assigned the new ID the entity would hold
+// if the insert is ultimately successful. The newly assigned ID may not become valid if the insert fails.
+func (asyncBox *TaskByValueAsyncBox) Put(object *TaskByValue) (uint64, error) {
+	return asyncBox.AsyncBox.Put(object)
+}
+
+// Insert a single object asynchronously.
+// The Id property on the passed object will be assigned the new ID the entity would hold if the insert is ultimately
+// successful. The newly assigned ID may not become valid if the insert fails.
+// Fails silently if an object with the same ID already exists (this error is not returned).
+func (asyncBox *TaskByValueAsyncBox) Insert(object *TaskByValue) (id uint64, err error) {
+	return asyncBox.AsyncBox.Insert(object)
+}
+
+// Update a single object asynchronously.
+// The object must already exists or the update fails silently (without an error returned).
+func (asyncBox *TaskByValueAsyncBox) Update(object *TaskByValue) error {
+	return asyncBox.AsyncBox.Update(object)
+}
+
+// Remove deletes a single object asynchronously.
+func (asyncBox *TaskByValueAsyncBox) Remove(object *TaskByValue) error {
+	return asyncBox.AsyncBox.Remove(object)
 }
 
 // Query provides a way to search stored objects
@@ -308,14 +387,14 @@ var TaskStringByValue_ = struct {
 
 // GeneratorVersion is called by ObjectBox to verify the compatibility of the generator used to generate this code
 func (taskStringByValue_EntityInfo) GeneratorVersion() int {
-	return 3
+	return 5
 }
 
 // AddToModel is called by ObjectBox during model build
 func (taskStringByValue_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("TaskStringByValue", 4, 8325060299420976708)
 	model.Property("Id", 6, 1, 5617773211005988520)
-	model.PropertyFlags(8193)
+	model.PropertyFlags(1)
 	model.Property("Name", 9, 2, 2339563716805116249)
 	model.EntityLastPropertyId(2, 2339563716805116249)
 }
@@ -323,19 +402,22 @@ func (taskStringByValue_EntityInfo) AddToModel(model *objectbox.Model) {
 // GetId is called by ObjectBox during Put operations to check for existing ID on an object
 func (taskStringByValue_EntityInfo) GetId(object interface{}) (uint64, error) {
 	if obj, ok := object.(*TaskStringByValue); ok {
-		return objectbox.StringIdConvertToDatabaseValue(obj.Id), nil
+		return objectbox.StringIdConvertToDatabaseValue(obj.Id)
 	} else {
-		return objectbox.StringIdConvertToDatabaseValue(object.(TaskStringByValue).Id), nil
+		return objectbox.StringIdConvertToDatabaseValue(object.(TaskStringByValue).Id)
 	}
 }
 
 // SetId is called by ObjectBox during Put to update an ID on an object that has just been inserted
-func (taskStringByValue_EntityInfo) SetId(object interface{}, id uint64) {
+func (taskStringByValue_EntityInfo) SetId(object interface{}, id uint64) error {
 	if obj, ok := object.(*TaskStringByValue); ok {
-		obj.Id = objectbox.StringIdConvertToEntityProperty(id)
+		var err error
+		obj.Id, err = objectbox.StringIdConvertToEntityProperty(id)
+		return err
 	} else {
 		// NOTE while this can't update, it will at least behave consistently (panic in case of a wrong type)
 		_ = object.(TaskStringByValue).Id
+		return nil
 	}
 }
 
@@ -365,14 +447,22 @@ func (taskStringByValue_EntityInfo) Flatten(object interface{}, fbb *flatbuffers
 
 // Load is called by ObjectBox to load an object from a FlatBuffer
 func (taskStringByValue_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{}, error) {
+	if len(bytes) == 0 { // sanity check, should "never" happen
+		return nil, errors.New("can't deserialize an object of type 'TaskStringByValue' - no data received")
+	}
+
 	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
-	var id = table.GetUint64Slot(4, 0)
+
+	propId, err := objectbox.StringIdConvertToEntityProperty(fbutils.GetUint64Slot(table, 4))
+	if err != nil {
+		return nil, errors.New("converter objectbox.StringIdConvertToEntityProperty() failed on TaskStringByValue.Id: " + err.Error())
+	}
 
 	return &TaskStringByValue{
-		Id:   objectbox.StringIdConvertToEntityProperty(id),
+		Id:   propId,
 		Name: fbutils.GetStringSlot(table, 6),
 	}, nil
 }
@@ -384,6 +474,9 @@ func (taskStringByValue_EntityInfo) MakeSlice(capacity int) interface{} {
 
 // AppendToSlice is called by ObjectBox to fill the slice of the read objects
 func (taskStringByValue_EntityInfo) AppendToSlice(slice interface{}, object interface{}) interface{} {
+	if object == nil {
+		return append(slice.([]TaskStringByValue), TaskStringByValue{})
+	}
 	return append(slice.([]TaskStringByValue), *object.(*TaskStringByValue))
 }
 
@@ -406,24 +499,21 @@ func (box *TaskStringByValueBox) Put(object *TaskStringByValue) (uint64, error) 
 	return box.Box.Put(object)
 }
 
-// PutAsync asynchronously inserts/updates a single object.
+// Insert synchronously inserts a single object. As opposed to Put, Insert will fail if given an ID that already exists.
+// In case the Id is not specified, it would be assigned automatically (auto-increment).
 // When inserting, the TaskStringByValue.Id property on the passed object will be assigned the new ID as well.
-//
-// It's executed on a separate internal thread for better performance.
-//
-// There are two main use cases:
-//
-// 1) "Put & Forget:" you gain faster puts as you don't have to wait for the transaction to finish.
-//
-// 2) Many small transactions: if your write load is typically a lot of individual puts that happen in parallel,
-// this will merge small transactions into bigger ones. This results in a significant gain in overall throughput.
-//
-//
-// In situations with (extremely) high async load, this method may be throttled (~1ms) or delayed (<1s).
-// In the unlikely event that the object could not be enqueued after delaying, an error will be returned.
-//
-// Note that this method does not give you hard durability guarantees like the synchronous Put provides.
-// There is a small time window (typically 3 ms) in which the data may not have been committed durably yet.
+func (box *TaskStringByValueBox) Insert(object *TaskStringByValue) (uint64, error) {
+	return box.Box.Insert(object)
+}
+
+// Update synchronously updates a single object.
+// As opposed to Put, Update will fail if an object with the same ID is not found in the database.
+func (box *TaskStringByValueBox) Update(object *TaskStringByValue) error {
+	return box.Box.Update(object)
+}
+
+// PutAsync asynchronously inserts/updates a single object.
+// Deprecated: use box.Async().Put() instead
 func (box *TaskStringByValueBox) PutAsync(object *TaskStringByValue) (uint64, error) {
 	return box.Box.PutAsync(object)
 }
@@ -465,6 +555,15 @@ func (box *TaskStringByValueBox) GetMany(ids ...uint64) ([]TaskStringByValue, er
 	return objects.([]TaskStringByValue), nil
 }
 
+// GetManyExisting reads multiple objects at once, skipping those that do not exist.
+func (box *TaskStringByValueBox) GetManyExisting(ids ...uint64) ([]TaskStringByValue, error) {
+	objects, err := box.Box.GetManyExisting(ids...)
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]TaskStringByValue), nil
+}
+
 // GetAll reads all stored objects
 func (box *TaskStringByValueBox) GetAll() ([]TaskStringByValue, error) {
 	objects, err := box.Box.GetAll()
@@ -486,8 +585,12 @@ func (box *TaskStringByValueBox) Remove(object *TaskStringByValue) error {
 // you can execute multiple box.Contains() and box.Remove() inside a single write transaction.
 func (box *TaskStringByValueBox) RemoveMany(objects ...*TaskStringByValue) (uint64, error) {
 	var ids = make([]uint64, len(objects))
+	var err error
 	for k, object := range objects {
-		ids[k] = objectbox.StringIdConvertToDatabaseValue(object.Id)
+		ids[k], err = objectbox.StringIdConvertToDatabaseValue(object.Id)
+		if err != nil {
+			return 0, errors.New("converter objectbox.StringIdConvertToDatabaseValue() failed on TaskStringByValue.Id: " + err.Error())
+		}
 	}
 	return box.Box.RemoveIds(ids...)
 }
@@ -510,6 +613,68 @@ func (box *TaskStringByValueBox) QueryOrError(conditions ...objectbox.Condition)
 	} else {
 		return &TaskStringByValueQuery{query}, nil
 	}
+}
+
+// Async provides access to the default Async Box for asynchronous operations. See TaskStringByValueAsyncBox for more information.
+func (box *TaskStringByValueBox) Async() *TaskStringByValueAsyncBox {
+	return &TaskStringByValueAsyncBox{AsyncBox: box.Box.Async()}
+}
+
+// TaskStringByValueAsyncBox provides asynchronous operations on TaskStringByValue objects.
+//
+// Asynchronous operations are executed on a separate internal thread for better performance.
+//
+// There are two main use cases:
+//
+// 1) "execute & forget:" you gain faster put/remove operations as you don't have to wait for the transaction to finish.
+//
+// 2) Many small transactions: if your write load is typically a lot of individual puts that happen in parallel,
+// this will merge small transactions into bigger ones. This results in a significant gain in overall throughput.
+//
+// In situations with (extremely) high async load, an async method may be throttled (~1ms) or delayed up to 1 second.
+// In the unlikely event that the object could still not be enqueued (full queue), an error will be returned.
+//
+// Note that async methods do not give you hard durability guarantees like the synchronous Box provides.
+// There is a small time window in which the data may not have been committed durably yet.
+type TaskStringByValueAsyncBox struct {
+	*objectbox.AsyncBox
+}
+
+// AsyncBoxForTaskStringByValue creates a new async box with the given operation timeout in case an async queue is full.
+// The returned struct must be freed explicitly using the Close() method.
+// It's usually preferable to use TaskStringByValueBox::Async() which takes care of resource management and doesn't require closing.
+func AsyncBoxForTaskStringByValue(ob *objectbox.ObjectBox, timeoutMs uint64) *TaskStringByValueAsyncBox {
+	var async, err = objectbox.NewAsyncBox(ob, 4, timeoutMs)
+	if err != nil {
+		panic("Could not create async box for entity ID 4: %s" + err.Error())
+	}
+	return &TaskStringByValueAsyncBox{AsyncBox: async}
+}
+
+// Put inserts/updates a single object asynchronously.
+// When inserting a new object, the Id property on the passed object will be assigned the new ID the entity would hold
+// if the insert is ultimately successful. The newly assigned ID may not become valid if the insert fails.
+func (asyncBox *TaskStringByValueAsyncBox) Put(object *TaskStringByValue) (uint64, error) {
+	return asyncBox.AsyncBox.Put(object)
+}
+
+// Insert a single object asynchronously.
+// The Id property on the passed object will be assigned the new ID the entity would hold if the insert is ultimately
+// successful. The newly assigned ID may not become valid if the insert fails.
+// Fails silently if an object with the same ID already exists (this error is not returned).
+func (asyncBox *TaskStringByValueAsyncBox) Insert(object *TaskStringByValue) (id uint64, err error) {
+	return asyncBox.AsyncBox.Insert(object)
+}
+
+// Update a single object asynchronously.
+// The object must already exists or the update fails silently (without an error returned).
+func (asyncBox *TaskStringByValueAsyncBox) Update(object *TaskStringByValue) error {
+	return asyncBox.AsyncBox.Update(object)
+}
+
+// Remove deletes a single object asynchronously.
+func (asyncBox *TaskStringByValueAsyncBox) Remove(object *TaskStringByValue) error {
+	return asyncBox.AsyncBox.Remove(object)
 }
 
 // Query provides a way to search stored objects

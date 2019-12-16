@@ -17,10 +17,9 @@
 package objectbox_test
 
 import (
-	"testing"
-
 	"github.com/objectbox/objectbox-go/test/assert"
 	"github.com/objectbox/objectbox-go/test/model"
+	"testing"
 )
 
 func TestRelationsInsert(t *testing.T) {
@@ -231,4 +230,31 @@ func TestRelationsUpdate(t *testing.T) {
 
 		env.Close()
 	}
+}
+
+// This tests simulates missing related objects and checks whether storing/reading works correctly
+func TestRelationsMissing(t *testing.T) {
+	var env = model.NewTestEnv(t)
+	defer env.Close()
+
+	var object = &model.Entity{
+		// manually assign IDs to related entities so they're not going to be inserted by PutRelated()
+		Related:         model.TestEntityRelated{Id: 10},
+		RelatedPtr:      &model.TestEntityRelated{Id: 20},
+		RelatedSlice:    []model.EntityByValue{{Id: 30}},
+		RelatedPtrSlice: []*model.TestEntityRelated{{Id: 40}},
+	}
+
+	id, err := env.Box.Put(object)
+	assert.NoErr(t, err)
+	assert.True(t, id == 1)
+
+	read, err := env.Box.Get(id)
+	assert.NoErr(t, err)
+	assert.Eq(t, object.Id, read.Id)
+	assert.True(t, 0 == read.Related.Id)
+	assert.True(t, nil == read.RelatedPtr)
+	assert.True(t, nil != read.RelatedSlice)
+	assert.True(t, 0 == len(read.RelatedSlice))
+	assert.True(t, nil == read.RelatedPtrSlice)
 }

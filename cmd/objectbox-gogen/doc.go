@@ -7,17 +7,29 @@ containing the struct that you want to persist and executing `go generate` in th
 
 Alternatively, you can run the command manually:
 
-	objectbox-gogen [flags]
+	objectbox-gogen [flags] [path-pattern]
+		to generate the binding code
 
+or
 
-The flags are
+	objectbox-gogen clean [path-pattern]
+		to remove the generated files instead of creating them - this removes *.obx.go and objectbox-model.go but keeps objectbox-model.json
 
+path-pattern:
+  * a path or a valid path pattern as accepted by the go tool (e.g. ./...)
+  * if not given, the generator expects GOFILE environment variable to be set
+
+Available flags:
   -byValue
         getters should return a struct value (a copy) instead of a struct pointer
+  -help
+        print this help
   -persist string
         path to the model information persistence file
   -source string
-        path to the source file containing structs to process
+        @deprecated, equivalent to passing the given source file path as as the path-pattern argument
+  -version
+        print the generator version info
 
 
 

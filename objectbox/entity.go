@@ -16,7 +16,7 @@
 
 package objectbox
 
-// this is used publicly in the model/bindings
+// Entity is used to specify model in the generated binding code
 type Entity struct {
 	Id TypeId
 }

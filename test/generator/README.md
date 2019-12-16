@@ -8,7 +8,7 @@ The following rules apply:
 * there can be a "objectbox-model.json.initial" - it would be used as an initial value for the ".json" file before executing the generator 
 
 ### Negative tests
-When a file starts with an underscore, it's considered a negative test (the generation should fail):
+When a file ends with `.fail.go`, it's considered a negative test (the generation should fail):
 * it should not generate a binding (thus there's no need for the ".obx.go.expected" file)
 
 

@@ -45,7 +45,7 @@ type Query struct {
 	linkedEntityIds []TypeId
 }
 
-// Frees (native) resources held by this Query.
+// Close frees (native) resources held by this Query.
 // Note that this is optional and not required because the GC invokes a finalizer automatically.
 func (query *Query) Close() error {
 	query.closeMutex.Lock()
@@ -84,19 +84,19 @@ func (query *Query) Find() (objects interface{}, err error) {
 		return 0, query.errorClosed()
 	}
 
+	const existingOnly = true
 	if supportsBytesArray {
 		var cFn = func() *C.OBX_bytes_array {
 			return C.obx_query_find(query.cQuery, C.uint64_t(query.offset), C.uint64_t(query.limit))
 		}
-		return query.box.readManyObjects(cFn)
-
-	} else {
-		var cFn = func(visitorArg unsafe.Pointer) C.obx_err {
-			return C.obx_query_visit(query.cQuery, dataVisitor, visitorArg,
-				C.uint64_t(query.offset), C.uint64_t(query.limit))
-		}
-		return query.box.readUsingVisitor(cFn)
+		return query.box.readManyObjects(existingOnly, cFn)
 	}
+
+	var cFn = func(visitorArg unsafe.Pointer) C.obx_err {
+		return C.obx_query_visit(query.cQuery, dataVisitor, visitorArg,
+			C.uint64_t(query.offset), C.uint64_t(query.limit))
+	}
+	return query.box.readUsingVisitor(existingOnly, cFn)
 }
 
 // Offset defines the index of the first object to process (how many objects to skip)
@@ -169,7 +169,14 @@ func (query *Query) DescribeParams() (string, error) {
 	return C.GoString(cResult), nil
 }
 
-func (query *Query) checkEntityId(entityId TypeId) error {
+func (query *Query) checkIdentifier(identifier propertyOrAlias) error {
+	// NOTE: maybe validate if the alias was previously used in this query?
+	if identifier.alias() != nil {
+		return nil
+	}
+
+	var entityId = identifier.entityId()
+
 	if query.entity.id == entityId {
 		return nil
 	}
@@ -188,63 +195,186 @@ func (query *Query) checkEntityId(entityId TypeId) error {
 	return fmt.Errorf("property from a different entity %d passed, expected %d", entityId, query.entity.id)
 }
 
-type Property interface {
+// propertyOrAlias is used to identify a condition in a query.
+// You can use either a BaseProperty (or any Property* type embedding it), or an Alias("str") call result.
+type propertyOrAlias interface {
 	propertyId() TypeId
 	entityId() TypeId
+	alias() *string
 }
 
-func (query *Query) SetStringParams(property Property, values ...string) error {
-	if err := query.checkEntityId(property.entityId()); err != nil {
+// SetStringParams changes query parameter values on the given property
+func (query *Query) SetStringParams(identifier propertyOrAlias, values ...string) error {
+	if err := query.checkIdentifier(identifier); err != nil {
 		return err
 	}
 
 	if len(values) == 0 {
 		return fmt.Errorf("no values given")
+	}
 
-	} else if len(values) == 1 {
+	var cAlias *C.char
+	if alias := identifier.alias(); alias != nil {
+		cAlias = C.CString(*alias)
+		defer C.free(unsafe.Pointer(cAlias))
+	}
+
+	if len(values) == 1 {
 		return cCall(func() C.obx_err {
 			cString := C.CString(values[0])
 			defer C.free(unsafe.Pointer(cString))
-			return C.obx_query_string_param(query.cQuery, C.obx_schema_id(property.entityId()), C.obx_schema_id(property.propertyId()), cString)
+
+			if cAlias != nil {
+				return C.obx_query_string_param_alias(query.cQuery, cAlias, cString)
+			}
+			return C.obx_query_string_param(query.cQuery, C.obx_schema_id(identifier.entityId()), C.obx_schema_id(identifier.propertyId()), cString)
 		})
 	}
 
 	return fmt.Errorf("too many values given")
 }
 
-func (query *Query) SetStringParamsIn(property Property, values ...string) error {
-	if err := query.checkEntityId(property.entityId()); err != nil {
+// SetStringParamsIn changes query parameter values on the given property
+func (query *Query) SetStringParamsIn(identifier propertyOrAlias, values ...string) error {
+	if err := query.checkIdentifier(identifier); err != nil {
 		return err
 	}
 
 	if len(values) == 0 {
 		return fmt.Errorf("no values given")
+	}
+
+	var cAlias *C.char
+	if alias := identifier.alias(); alias != nil {
+		cAlias = C.CString(*alias)
+		defer C.free(unsafe.Pointer(cAlias))
 	}
 
 	cStringArray := goStringArrayToC(values)
 	defer cStringArray.free()
 
 	return cCall(func() C.obx_err {
-		return C.obx_query_string_params_in(query.cQuery, C.obx_schema_id(property.entityId()), C.obx_schema_id(property.propertyId()), cStringArray.cArray, C.int(cStringArray.size))
+		if cAlias != nil {
+			return C.obx_query_string_params_in_alias(query.cQuery, cAlias, cStringArray.cArray, C.int(cStringArray.size))
+		}
+		return C.obx_query_string_params_in(query.cQuery, C.obx_schema_id(identifier.entityId()), C.obx_schema_id(identifier.propertyId()), cStringArray.cArray, C.int(cStringArray.size))
 	})
 }
 
-func (query *Query) SetInt64Params(property Property, values ...int64) error {
-	if err := query.checkEntityId(property.entityId()); err != nil {
+// SetInt64Params changes query parameter values on the given property
+func (query *Query) SetInt64Params(identifier propertyOrAlias, values ...int64) error {
+	if err := query.checkIdentifier(identifier); err != nil {
 		return err
 	}
 
 	if len(values) == 0 {
 		return fmt.Errorf("no values given")
+	}
 
-	} else if len(values) == 1 {
+	var cAlias *C.char
+	if alias := identifier.alias(); alias != nil {
+		cAlias = C.CString(*alias)
+		defer C.free(unsafe.Pointer(cAlias))
+	}
+
+	if len(values) == 1 {
 		return cCall(func() C.obx_err {
-			return C.obx_query_int_param(query.cQuery, C.obx_schema_id(property.entityId()), C.obx_schema_id(property.propertyId()), C.int64_t(values[0]))
+			if cAlias != nil {
+				return C.obx_query_int_param_alias(query.cQuery, cAlias, C.int64_t(values[0]))
+			}
+			return C.obx_query_int_param(query.cQuery, C.obx_schema_id(identifier.entityId()), C.obx_schema_id(identifier.propertyId()), C.int64_t(values[0]))
 		})
 
 	} else if len(values) == 2 {
 		return cCall(func() C.obx_err {
-			return C.obx_query_int_params(query.cQuery, C.obx_schema_id(property.entityId()), C.obx_schema_id(property.propertyId()), C.int64_t(values[0]), C.int64_t(values[1]))
+			if cAlias != nil {
+				return C.obx_query_int_params_alias(query.cQuery, cAlias, C.int64_t(values[0]), C.int64_t(values[1]))
+			}
+			return C.obx_query_int_params(query.cQuery, C.obx_schema_id(identifier.entityId()), C.obx_schema_id(identifier.propertyId()), C.int64_t(values[0]), C.int64_t(values[1]))
+		})
+	}
+
+	return fmt.Errorf("too many values given")
+}
+
+// SetInt64ParamsIn changes query parameter values on the given property
+func (query *Query) SetInt64ParamsIn(identifier propertyOrAlias, values ...int64) error {
+	if err := query.checkIdentifier(identifier); err != nil {
+		return err
+	}
+
+	if len(values) == 0 {
+		return fmt.Errorf("no values given")
+	}
+
+	var cAlias *C.char
+	if alias := identifier.alias(); alias != nil {
+		cAlias = C.CString(*alias)
+		defer C.free(unsafe.Pointer(cAlias))
+	}
+
+	return cCall(func() C.obx_err {
+		if cAlias != nil {
+			return C.obx_query_int64_params_in_alias(query.cQuery, cAlias, (*C.int64_t)(unsafe.Pointer(&values[0])), C.int(len(values)))
+		}
+		return C.obx_query_int64_params_in(query.cQuery, C.obx_schema_id(identifier.entityId()), C.obx_schema_id(identifier.propertyId()), (*C.int64_t)(unsafe.Pointer(&values[0])), C.int(len(values)))
+	})
+}
+
+// SetInt32ParamsIn changes query parameter values on the given property
+func (query *Query) SetInt32ParamsIn(identifier propertyOrAlias, values ...int32) error {
+	if err := query.checkIdentifier(identifier); err != nil {
+		return err
+	}
+
+	if len(values) == 0 {
+		return fmt.Errorf("no values given")
+	}
+
+	var cAlias *C.char
+	if alias := identifier.alias(); alias != nil {
+		cAlias = C.CString(*alias)
+		defer C.free(unsafe.Pointer(cAlias))
+	}
+
+	return cCall(func() C.obx_err {
+		if cAlias != nil {
+			return C.obx_query_int32_params_in_alias(query.cQuery, cAlias, (*C.int32_t)(unsafe.Pointer(&values[0])), C.int(len(values)))
+		}
+		return C.obx_query_int32_params_in(query.cQuery, C.obx_schema_id(identifier.entityId()), C.obx_schema_id(identifier.propertyId()), (*C.int32_t)(unsafe.Pointer(&values[0])), C.int(len(values)))
+	})
+}
+
+// SetFloat64Params changes query parameter values on the given property
+func (query *Query) SetFloat64Params(identifier propertyOrAlias, values ...float64) error {
+	if err := query.checkIdentifier(identifier); err != nil {
+		return err
+	}
+
+	if len(values) == 0 {
+		return fmt.Errorf("no values given")
+	}
+
+	var cAlias *C.char
+	if alias := identifier.alias(); alias != nil {
+		cAlias = C.CString(*alias)
+		defer C.free(unsafe.Pointer(cAlias))
+	}
+
+	if len(values) == 1 {
+		return cCall(func() C.obx_err {
+			if cAlias != nil {
+				return C.obx_query_double_param_alias(query.cQuery, cAlias, C.double(values[0]))
+			}
+			return C.obx_query_double_param(query.cQuery, C.obx_schema_id(identifier.entityId()), C.obx_schema_id(identifier.propertyId()), C.double(values[0]))
+		})
+
+	} else if len(values) == 2 {
+		return cCall(func() C.obx_err {
+			if cAlias != nil {
+				return C.obx_query_double_params_alias(query.cQuery, cAlias, C.double(values[0]), C.double(values[1]))
+			}
+			return C.obx_query_double_params(query.cQuery, C.obx_schema_id(identifier.entityId()), C.obx_schema_id(identifier.propertyId()), C.double(values[0]), C.double(values[1]))
 		})
 
 	}
@@ -252,59 +382,9 @@ func (query *Query) SetInt64Params(property Property, values ...int64) error {
 	return fmt.Errorf("too many values given")
 }
 
-func (query *Query) SetInt64ParamsIn(property Property, values ...int64) error {
-	if err := query.checkEntityId(property.entityId()); err != nil {
-		return err
-	}
-
-	if len(values) == 0 {
-		return fmt.Errorf("no values given")
-	}
-
-	return cCall(func() C.obx_err {
-		return C.obx_query_int64_params_in(query.cQuery, C.obx_schema_id(property.entityId()), C.obx_schema_id(property.propertyId()), (*C.int64_t)(unsafe.Pointer(&values[0])), C.int(len(values)))
-	})
-}
-
-func (query *Query) SetInt32ParamsIn(property Property, values ...int32) error {
-	if err := query.checkEntityId(property.entityId()); err != nil {
-		return err
-	}
-
-	if len(values) == 0 {
-		return fmt.Errorf("no values given")
-	}
-
-	return cCall(func() C.obx_err {
-		return C.obx_query_int32_params_in(query.cQuery, C.obx_schema_id(property.entityId()), C.obx_schema_id(property.propertyId()), (*C.int32_t)(unsafe.Pointer(&values[0])), C.int(len(values)))
-	})
-}
-
-func (query *Query) SetFloat64Params(property Property, values ...float64) error {
-	if err := query.checkEntityId(property.entityId()); err != nil {
-		return err
-	}
-
-	if len(values) == 0 {
-		return fmt.Errorf("no values given")
-
-	} else if len(values) == 1 {
-		return cCall(func() C.obx_err {
-			return C.obx_query_double_param(query.cQuery, C.obx_schema_id(property.entityId()), C.obx_schema_id(property.propertyId()), C.double(values[0]))
-		})
-
-	} else if len(values) == 2 {
-		return cCall(func() C.obx_err {
-			return C.obx_query_double_params(query.cQuery, C.obx_schema_id(property.entityId()), C.obx_schema_id(property.propertyId()), C.double(values[0]), C.double(values[1]))
-		})
-
-	}
-
-	return fmt.Errorf("too many values given")
-}
-
-func (query *Query) SetBytesParams(property Property, values ...[]byte) error {
-	if err := query.checkEntityId(property.entityId()); err != nil {
+// SetBytesParams changes query parameter values on the given property
+func (query *Query) SetBytesParams(identifier propertyOrAlias, values ...[]byte) error {
+	if err := query.checkIdentifier(identifier); err != nil {
 		return err
 	}
 
@@ -315,7 +395,16 @@ func (query *Query) SetBytesParams(property Property, values ...[]byte) error {
 		return fmt.Errorf("too many values given")
 	}
 
+	var cAlias *C.char
+	if alias := identifier.alias(); alias != nil {
+		cAlias = C.CString(*alias)
+		defer C.free(unsafe.Pointer(cAlias))
+	}
+
 	return cCall(func() C.obx_err {
-		return C.obx_query_bytes_param(query.cQuery, C.obx_schema_id(property.entityId()), C.obx_schema_id(property.propertyId()), cBytesPtr(values[0]), C.size_t(len(values[0])))
+		if cAlias != nil {
+			return C.obx_query_bytes_param_alias(query.cQuery, cAlias, cBytesPtr(values[0]), C.size_t(len(values[0])))
+		}
+		return C.obx_query_bytes_param(query.cQuery, C.obx_schema_id(identifier.entityId()), C.obx_schema_id(identifier.propertyId()), cBytesPtr(values[0]), C.size_t(len(values[0])))
 	})
 }

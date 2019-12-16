@@ -21,6 +21,7 @@ import (
 	"strings"
 )
 
+// Entity represents a DB entity
 type Entity struct {
 	Id             IdUid                 `json:"id"`
 	LastPropertyId IdUid                 `json:"lastPropertyId"`
@@ -31,6 +32,7 @@ type Entity struct {
 	model *ModelInfo
 }
 
+// CreateEntity constructs an Entity
 func CreateEntity(model *ModelInfo, id Id, uid Uid) *Entity {
 	return &Entity{
 		model:      model,
@@ -39,7 +41,7 @@ func CreateEntity(model *ModelInfo, id Id, uid Uid) *Entity {
 	}
 }
 
-// performs initial validation of loaded data so that it doesn't have to be checked in each function
+// Validate performs initial validation of loaded data so that it doesn't have to be checked in each function
 func (entity *Entity) Validate() (err error) {
 	if entity.model == nil {
 		return fmt.Errorf("undefined parent model")
@@ -114,6 +116,7 @@ func (entity *Entity) Validate() (err error) {
 	return nil
 }
 
+// FindPropertyByUid finds a property by Uid
 func (entity *Entity) FindPropertyByUid(uid Uid) (*Property, error) {
 	for _, property := range entity.Properties {
 		propertyUid, _ := property.Id.GetUid()
@@ -122,9 +125,10 @@ func (entity *Entity) FindPropertyByUid(uid Uid) (*Property, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("property with Uid %d not found", uid)
+	return nil, fmt.Errorf("property with Uid %d not found in '%s'", uid, entity.Name)
 }
 
+//FindPropertyByName finds a property by name
 func (entity *Entity) FindPropertyByName(name string) (*Property, error) {
 	for _, property := range entity.Properties {
 		if strings.ToLower(property.Name) == strings.ToLower(name) {
@@ -132,16 +136,17 @@ func (entity *Entity) FindPropertyByName(name string) (*Property, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("property with Name %s not found", name)
+	return nil, fmt.Errorf("property named '%s' not found in '%s'", name, entity.Name)
 }
 
+// CreateProperty creates a property
 func (entity *Entity) CreateProperty() (*Property, error) {
 	var id Id = 1
 	if len(entity.Properties) > 0 {
 		id = entity.LastPropertyId.getIdSafe() + 1
 	}
 
-	uniqueUid, err := entity.model.generateUid()
+	uniqueUid, err := entity.model.GenerateUid()
 
 	if err != nil {
 		return nil, err
@@ -155,6 +160,7 @@ func (entity *Entity) CreateProperty() (*Property, error) {
 	return property, nil
 }
 
+// RemoveProperty removes a property
 func (entity *Entity) RemoveProperty(property *Property) error {
 	var indexToRemove = -1
 	for index, prop := range entity.Properties {
@@ -183,6 +189,7 @@ func (entity *Entity) RemoveProperty(property *Property) error {
 	return nil
 }
 
+// FindRelationByUid Finds relation by Uid
 func (entity *Entity) FindRelationByUid(uid Uid) (*StandaloneRelation, error) {
 	for _, relation := range entity.Relations {
 		relationUid, _ := relation.Id.GetUid()
@@ -191,9 +198,10 @@ func (entity *Entity) FindRelationByUid(uid Uid) (*StandaloneRelation, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("relation with Uid %d not found", uid)
+	return nil, fmt.Errorf("relation with Uid %d not found in '%s'", uid, entity.Name)
 }
 
+// FindRelationByName finds relation by name
 func (entity *Entity) FindRelationByName(name string) (*StandaloneRelation, error) {
 	for _, relation := range entity.Relations {
 		if strings.ToLower(relation.Name) == strings.ToLower(name) {
@@ -201,19 +209,22 @@ func (entity *Entity) FindRelationByName(name string) (*StandaloneRelation, erro
 		}
 	}
 
-	return nil, fmt.Errorf("relation with Name %s not found", name)
+	return nil, fmt.Errorf("relation named '%s' not found in '%s'", name, entity.Name)
 }
 
+// CreateRelation creates relation
 func (entity *Entity) CreateRelation() (*StandaloneRelation, error) {
-	if id, err := entity.model.createRelationId(); err != nil {
+	id, err := entity.model.createRelationId()
+	if err != nil {
 		return nil, err
-	} else {
-		var relation = CreateStandaloneRelation(entity, id)
-		entity.Relations = append(entity.Relations, relation)
-		return relation, nil
 	}
+
+	var relation = CreateStandaloneRelation(entity, id)
+	entity.Relations = append(entity.Relations, relation)
+	return relation, nil
 }
 
+// RemoveRelation removes relation
 func (entity *Entity) RemoveRelation(relation *StandaloneRelation) error {
 	var indexToRemove = -1
 	for index, rel := range entity.Relations {
@@ -235,7 +246,7 @@ func (entity *Entity) RemoveRelation(relation *StandaloneRelation) error {
 	return nil
 }
 
-// recursively checks whether given UID is present in the model
+// containsUid recursively checks whether given Uid is present in the model
 func (entity *Entity) containsUid(searched Uid) bool {
 	if entity.Id.getUidSafe() == searched {
 		return true

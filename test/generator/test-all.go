@@ -19,9 +19,11 @@ package generator
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"math/rand"
 	"os"
+	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -29,6 +31,7 @@ import (
 
 	"github.com/objectbox/objectbox-go/internal/generator"
 	"github.com/objectbox/objectbox-go/test/assert"
+	"github.com/objectbox/objectbox-go/test/build"
 )
 
 // generateAllDirs walks through the "data" and generates bindings for each subdirectory
@@ -54,7 +57,6 @@ func generateAllDirs(t *testing.T, overwriteExpected bool) {
 func generateOneDir(t *testing.T, overwriteExpected bool, dir string) {
 	modelInfoFile := generator.ModelInfoFile(dir)
 	modelInfoExpectedFile := modelInfoFile + ".expected"
-	modelInfoInitialFile := modelInfoFile + ".initial"
 
 	modelFile := generator.ModelFile(modelInfoFile)
 	modelExpectedFile := modelFile + ".expected"
@@ -64,18 +66,60 @@ func generateOneDir(t *testing.T, overwriteExpected bool, dir string) {
 		if i == 0 {
 			t.Logf("Testing %s without model info JSON", filepath.Base(dir))
 			os.Remove(modelInfoFile)
+		} else if testing.Short() {
+			continue // don't test twice in "short" tests
 		} else {
 			t.Logf("Testing %s with previous model info JSON", filepath.Base(dir))
 		}
 
-		if fileExists(modelInfoInitialFile) {
-			assert.NoErr(t, copyFile(modelInfoInitialFile, modelInfoFile))
+		// setup the desired directory contents by copying "*.initial" files to their name without the extension
+		initialFiles, err := filepath.Glob(filepath.Join(dir, "*.initial"))
+		assert.NoErr(t, err)
+		for _, initialFile := range initialFiles {
+			assert.NoErr(t, copyFile(initialFile, initialFile[0:len(initialFile)-len(".initial")]))
 		}
 
 		generateAllFiles(t, overwriteExpected, dir, modelInfoFile)
 
 		assertSameFile(t, modelInfoFile, modelInfoExpectedFile, overwriteExpected)
 		assertSameFile(t, modelFile, modelExpectedFile, overwriteExpected)
+	}
+
+	// verify the result can be built
+	if !testing.Short() {
+		t.Run("compile", func(t *testing.T) {
+			t.Parallel()
+
+			var expectedError error
+			if fileExists(path.Join(dir, "compile-error.expected")) {
+				content, err := ioutil.ReadFile(path.Join(dir, "compile-error.expected"))
+				assert.NoErr(t, err)
+				expectedError = errors.New(string(content))
+			}
+
+			stdOut, stdErr, err := build.Package("./" + dir)
+			if err == nil && expectedError == nil {
+				// successful
+				return
+			}
+
+			if err == nil && expectedError != nil {
+				assert.Failf(t, "Unexpected PASS during compilation")
+			}
+
+			var receivedError = fmt.Errorf("%s\n%s\n%s", stdOut, stdErr, err)
+
+			// Fix paths in the error output on Windows so that it matches the expected error (which always uses '/').
+			if os.PathSeparator != '/' {
+				// Make sure the expected error doesn't contain the path separator already - to make it easier to debug.
+				if strings.Contains(expectedError.Error(), string(os.PathSeparator)) {
+					assert.Failf(t, "compile-error.expected contains this OS path separator '%v' so paths can't be normalized to '/'", string(os.PathSeparator))
+				}
+				receivedError = errors.New(strings.Replace(receivedError.Error(), string(os.PathSeparator), "/", -1))
+			}
+
+			assert.Eq(t, expectedError, receivedError)
+		})
 	}
 }
 
@@ -135,7 +179,7 @@ func generateAllFiles(t *testing.T, overwriteExpected bool, dir string, modelInf
 		err = generator.Process(sourceFile, getOptions(t, sourceFile, modelInfoFile))
 
 		// handle negative test
-		var shouldFail = strings.HasPrefix(filepath.Base(sourceFile), "!")
+		var shouldFail = strings.HasSuffix(filepath.Base(sourceFile), ".fail.go")
 		if shouldFail {
 			if err == nil {
 				assert.Failf(t, "Unexpected PASS on a negative test %s", sourceFile)
@@ -176,17 +220,22 @@ func getOptions(t *testing.T, sourceFile, modelInfoFile string) generator.Option
 	return options
 }
 
-var expectedErrorRegexp = regexp.MustCompile("// *ERROR *=(.+)[\n|\r]")
+var expectedErrorRegexp = regexp.MustCompile(`// *ERROR *=(.+)[\n|\r]`)
+var expectedErrorRegexpMulti = regexp.MustCompile(`(?sU)/\* *ERROR.*[\n|\r](.+)\*/`)
 
 func getExpectedError(t *testing.T, sourceFile string) error {
 	source, err := ioutil.ReadFile(sourceFile)
 	assert.NoErr(t, err)
 
-	var match = expectedErrorRegexp.FindSubmatch(source)
-	if len(match) > 1 {
-		return errors.New(strings.TrimSpace(string(match[1])))
+	if match := expectedErrorRegexp.FindSubmatch(source); len(match) > 1 {
+		return errors.New(strings.TrimSpace(string(match[1]))) // this is a "positive" return
 	}
 
+	if match := expectedErrorRegexpMulti.FindSubmatch(source); len(match) > 1 {
+		return errors.New(strings.TrimSpace(string(match[1]))) // this is a "positive" return
+	}
+
+	assert.Failf(t, "missing error declaration in %s - add comment to the file // ERROR = expected error text", sourceFile)
 	return nil
 }
 

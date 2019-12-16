@@ -4,6 +4,7 @@
 package object
 
 import (
+	"errors"
 	"github.com/google/flatbuffers/go"
 	"github.com/objectbox/objectbox-go/objectbox"
 	"github.com/objectbox/objectbox-go/objectbox/fbutils"
@@ -16,9 +17,9 @@ type stringIdEntity_EntityInfo struct {
 
 var StringIdEntityBinding = stringIdEntity_EntityInfo{
 	Entity: objectbox.Entity{
-		Id: 4,
+		Id: 5,
 	},
-	Uid: 6044372234677422456,
+	Uid: 1543572285742637646,
 }
 
 // StringIdEntity_ contains type-based Property helpers to facilitate some common operations such as Queries.
@@ -35,25 +36,27 @@ var StringIdEntity_ = struct {
 
 // GeneratorVersion is called by ObjectBox to verify the compatibility of the generator used to generate this code
 func (stringIdEntity_EntityInfo) GeneratorVersion() int {
-	return 3
+	return 5
 }
 
 // AddToModel is called by ObjectBox during model build
 func (stringIdEntity_EntityInfo) AddToModel(model *objectbox.Model) {
-	model.Entity("StringIdEntity", 4, 6044372234677422456)
-	model.Property("Id", 6, 1, 8274930044578894929)
-	model.PropertyFlags(8193)
-	model.EntityLastPropertyId(1, 8274930044578894929)
+	model.Entity("StringIdEntity", 5, 1543572285742637646)
+	model.Property("Id", 6, 1, 2661732831099943416)
+	model.PropertyFlags(1)
+	model.EntityLastPropertyId(1, 2661732831099943416)
 }
 
 // GetId is called by ObjectBox during Put operations to check for existing ID on an object
 func (stringIdEntity_EntityInfo) GetId(object interface{}) (uint64, error) {
-	return objectbox.StringIdConvertToDatabaseValue(object.(*StringIdEntity).Id), nil
+	return objectbox.StringIdConvertToDatabaseValue(object.(*StringIdEntity).Id)
 }
 
 // SetId is called by ObjectBox during Put to update an ID on an object that has just been inserted
-func (stringIdEntity_EntityInfo) SetId(object interface{}, id uint64) {
-	object.(*StringIdEntity).Id = objectbox.StringIdConvertToEntityProperty(id)
+func (stringIdEntity_EntityInfo) SetId(object interface{}, id uint64) error {
+	var err error
+	object.(*StringIdEntity).Id, err = objectbox.StringIdConvertToEntityProperty(id)
+	return err
 }
 
 // PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
@@ -72,14 +75,22 @@ func (stringIdEntity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Bu
 
 // Load is called by ObjectBox to load an object from a FlatBuffer
 func (stringIdEntity_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{}, error) {
+	if len(bytes) == 0 { // sanity check, should "never" happen
+		return nil, errors.New("can't deserialize an object of type 'StringIdEntity' - no data received")
+	}
+
 	var table = &flatbuffers.Table{
 		Bytes: bytes,
 		Pos:   flatbuffers.GetUOffsetT(bytes),
 	}
-	var id = table.GetUint64Slot(4, 0)
+
+	propId, err := objectbox.StringIdConvertToEntityProperty(fbutils.GetUint64Slot(table, 4))
+	if err != nil {
+		return nil, errors.New("converter objectbox.StringIdConvertToEntityProperty() failed on StringIdEntity.Id: " + err.Error())
+	}
 
 	return &StringIdEntity{
-		Id: objectbox.StringIdConvertToEntityProperty(id),
+		Id: propId,
 	}, nil
 }
 
@@ -90,6 +101,9 @@ func (stringIdEntity_EntityInfo) MakeSlice(capacity int) interface{} {
 
 // AppendToSlice is called by ObjectBox to fill the slice of the read objects
 func (stringIdEntity_EntityInfo) AppendToSlice(slice interface{}, object interface{}) interface{} {
+	if object == nil {
+		return append(slice.([]*StringIdEntity), nil)
+	}
 	return append(slice.([]*StringIdEntity), object.(*StringIdEntity))
 }
 
@@ -101,7 +115,7 @@ type StringIdEntityBox struct {
 // BoxForStringIdEntity opens a box of StringIdEntity objects
 func BoxForStringIdEntity(ob *objectbox.ObjectBox) *StringIdEntityBox {
 	return &StringIdEntityBox{
-		Box: ob.InternalBox(4),
+		Box: ob.InternalBox(5),
 	}
 }
 
@@ -112,24 +126,21 @@ func (box *StringIdEntityBox) Put(object *StringIdEntity) (uint64, error) {
 	return box.Box.Put(object)
 }
 
-// PutAsync asynchronously inserts/updates a single object.
+// Insert synchronously inserts a single object. As opposed to Put, Insert will fail if given an ID that already exists.
+// In case the Id is not specified, it would be assigned automatically (auto-increment).
 // When inserting, the StringIdEntity.Id property on the passed object will be assigned the new ID as well.
-//
-// It's executed on a separate internal thread for better performance.
-//
-// There are two main use cases:
-//
-// 1) "Put & Forget:" you gain faster puts as you don't have to wait for the transaction to finish.
-//
-// 2) Many small transactions: if your write load is typically a lot of individual puts that happen in parallel,
-// this will merge small transactions into bigger ones. This results in a significant gain in overall throughput.
-//
-//
-// In situations with (extremely) high async load, this method may be throttled (~1ms) or delayed (<1s).
-// In the unlikely event that the object could not be enqueued after delaying, an error will be returned.
-//
-// Note that this method does not give you hard durability guarantees like the synchronous Put provides.
-// There is a small time window (typically 3 ms) in which the data may not have been committed durably yet.
+func (box *StringIdEntityBox) Insert(object *StringIdEntity) (uint64, error) {
+	return box.Box.Insert(object)
+}
+
+// Update synchronously updates a single object.
+// As opposed to Put, Update will fail if an object with the same ID is not found in the database.
+func (box *StringIdEntityBox) Update(object *StringIdEntity) error {
+	return box.Box.Update(object)
+}
+
+// PutAsync asynchronously inserts/updates a single object.
+// Deprecated: use box.Async().Put() instead
 func (box *StringIdEntityBox) PutAsync(object *StringIdEntity) (uint64, error) {
 	return box.Box.PutAsync(object)
 }
@@ -171,6 +182,15 @@ func (box *StringIdEntityBox) GetMany(ids ...uint64) ([]*StringIdEntity, error) 
 	return objects.([]*StringIdEntity), nil
 }
 
+// GetManyExisting reads multiple objects at once, skipping those that do not exist.
+func (box *StringIdEntityBox) GetManyExisting(ids ...uint64) ([]*StringIdEntity, error) {
+	objects, err := box.Box.GetManyExisting(ids...)
+	if err != nil {
+		return nil, err
+	}
+	return objects.([]*StringIdEntity), nil
+}
+
 // GetAll reads all stored objects
 func (box *StringIdEntityBox) GetAll() ([]*StringIdEntity, error) {
 	objects, err := box.Box.GetAll()
@@ -192,8 +212,12 @@ func (box *StringIdEntityBox) Remove(object *StringIdEntity) error {
 // you can execute multiple box.Contains() and box.Remove() inside a single write transaction.
 func (box *StringIdEntityBox) RemoveMany(objects ...*StringIdEntity) (uint64, error) {
 	var ids = make([]uint64, len(objects))
+	var err error
 	for k, object := range objects {
-		ids[k] = objectbox.StringIdConvertToDatabaseValue(object.Id)
+		ids[k], err = objectbox.StringIdConvertToDatabaseValue(object.Id)
+		if err != nil {
+			return 0, errors.New("converter objectbox.StringIdConvertToDatabaseValue() failed on StringIdEntity.Id: " + err.Error())
+		}
 	}
 	return box.Box.RemoveIds(ids...)
 }
@@ -216,6 +240,68 @@ func (box *StringIdEntityBox) QueryOrError(conditions ...objectbox.Condition) (*
 	} else {
 		return &StringIdEntityQuery{query}, nil
 	}
+}
+
+// Async provides access to the default Async Box for asynchronous operations. See StringIdEntityAsyncBox for more information.
+func (box *StringIdEntityBox) Async() *StringIdEntityAsyncBox {
+	return &StringIdEntityAsyncBox{AsyncBox: box.Box.Async()}
+}
+
+// StringIdEntityAsyncBox provides asynchronous operations on StringIdEntity objects.
+//
+// Asynchronous operations are executed on a separate internal thread for better performance.
+//
+// There are two main use cases:
+//
+// 1) "execute & forget:" you gain faster put/remove operations as you don't have to wait for the transaction to finish.
+//
+// 2) Many small transactions: if your write load is typically a lot of individual puts that happen in parallel,
+// this will merge small transactions into bigger ones. This results in a significant gain in overall throughput.
+//
+// In situations with (extremely) high async load, an async method may be throttled (~1ms) or delayed up to 1 second.
+// In the unlikely event that the object could still not be enqueued (full queue), an error will be returned.
+//
+// Note that async methods do not give you hard durability guarantees like the synchronous Box provides.
+// There is a small time window in which the data may not have been committed durably yet.
+type StringIdEntityAsyncBox struct {
+	*objectbox.AsyncBox
+}
+
+// AsyncBoxForStringIdEntity creates a new async box with the given operation timeout in case an async queue is full.
+// The returned struct must be freed explicitly using the Close() method.
+// It's usually preferable to use StringIdEntityBox::Async() which takes care of resource management and doesn't require closing.
+func AsyncBoxForStringIdEntity(ob *objectbox.ObjectBox, timeoutMs uint64) *StringIdEntityAsyncBox {
+	var async, err = objectbox.NewAsyncBox(ob, 5, timeoutMs)
+	if err != nil {
+		panic("Could not create async box for entity ID 5: %s" + err.Error())
+	}
+	return &StringIdEntityAsyncBox{AsyncBox: async}
+}
+
+// Put inserts/updates a single object asynchronously.
+// When inserting a new object, the Id property on the passed object will be assigned the new ID the entity would hold
+// if the insert is ultimately successful. The newly assigned ID may not become valid if the insert fails.
+func (asyncBox *StringIdEntityAsyncBox) Put(object *StringIdEntity) (uint64, error) {
+	return asyncBox.AsyncBox.Put(object)
+}
+
+// Insert a single object asynchronously.
+// The Id property on the passed object will be assigned the new ID the entity would hold if the insert is ultimately
+// successful. The newly assigned ID may not become valid if the insert fails.
+// Fails silently if an object with the same ID already exists (this error is not returned).
+func (asyncBox *StringIdEntityAsyncBox) Insert(object *StringIdEntity) (id uint64, err error) {
+	return asyncBox.AsyncBox.Insert(object)
+}
+
+// Update a single object asynchronously.
+// The object must already exists or the update fails silently (without an error returned).
+func (asyncBox *StringIdEntityAsyncBox) Update(object *StringIdEntity) error {
+	return asyncBox.AsyncBox.Update(object)
+}
+
+// Remove deletes a single object asynchronously.
+func (asyncBox *StringIdEntityAsyncBox) Remove(object *StringIdEntity) error {
+	return asyncBox.AsyncBox.Remove(object)
 }
 
 // Query provides a way to search stored objects

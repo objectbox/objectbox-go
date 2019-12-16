@@ -12,7 +12,7 @@
           "id": "1:2259404117704393152",
           "name": "Id",
           "type": 6,
-          "flags": 8193
+          "flags": 1
         }
       ]
     },
@@ -25,7 +25,7 @@
           "id": "1:501233450539197794",
           "name": "Id",
           "type": 6,
-          "flags": 8193
+          "flags": 1
         }
       ]
     },
@@ -44,25 +44,38 @@
           "id": "2:1774932891286980153",
           "name": "identifier",
           "type": 6,
-          "flags": 8193
+          "flags": 1
         }
       ]
     },
     {
       "id": "4:6044372234677422456",
       "lastPropertyId": "1:8274930044578894929",
-      "name": "StringIdEntity",
+      "name": "D",
       "properties": [
         {
           "id": "1:8274930044578894929",
           "name": "Id",
           "type": 6,
-          "flags": 8193
+          "flags": 1
+        }
+      ]
+    },
+    {
+      "id": "5:1543572285742637646",
+      "lastPropertyId": "1:2661732831099943416",
+      "name": "StringIdEntity",
+      "properties": [
+        {
+          "id": "1:2661732831099943416",
+          "name": "Id",
+          "type": 6,
+          "flags": 1
         }
       ]
     }
   ],
-  "lastEntityId": "4:6044372234677422456",
+  "lastEntityId": "5:1543572285742637646",
   "lastIndexId": "",
   "lastRelationId": "",
   "modelVersion": 5,

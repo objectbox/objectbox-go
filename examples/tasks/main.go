@@ -19,14 +19,12 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"github.com/objectbox/objectbox-go/examples/tasks/internal/model"
+	"github.com/objectbox/objectbox-go/objectbox"
 	"os"
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/objectbox/objectbox-go/objectbox"
-
-	"github.com/objectbox/objectbox-go/examples/tasks/internal/model"
 )
 
 func main() {
@@ -158,11 +156,10 @@ func setDone(box *model.TaskBox, id uint64) {
 }
 
 func fmtTime(obTimestamp int64) string {
-	if obTimestamp == 0 {
-		return ""
-	} else {
+	if obTimestamp != 0 {
 		return time.Unix(obTimestamp/1000, obTimestamp%1000*1000000).String()
 	}
+	return ""
 }
 
 func obNow() int64 {

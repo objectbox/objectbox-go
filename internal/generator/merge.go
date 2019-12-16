@@ -18,6 +18,7 @@ package generator
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/objectbox/objectbox-go/internal/generator/modelinfo"
 )
@@ -25,11 +26,11 @@ import (
 func mergeBindingWithModelInfo(binding *Binding, modelInfo *modelinfo.ModelInfo) error {
 	// we need to first prepare all entities - otherwise relations wouldn't be able to find them in the model
 	var models = make([]*modelinfo.Entity, len(binding.Entities))
+	var err error
 	for k, bindingEntity := range binding.Entities {
-		if modelEntity, err := getModelEntity(bindingEntity, modelInfo); err != nil {
+		models[k], err = getModelEntity(bindingEntity, modelInfo)
+		if err != nil {
 			return err
-		} else {
-			models[k] = modelEntity
 		}
 	}
 
@@ -57,22 +58,22 @@ func getModelEntity(bindingEntity *Entity, modelInfo *modelinfo.ModelInfo) (*mod
 	if bindingEntity.uidRequest {
 		var errInfo string
 		if entity != nil {
-			if uid, err := entity.Id.GetUid(); err != nil {
+			uid, err := entity.Id.GetUid()
+			if err != nil {
 				return nil, err
-			} else {
-				errInfo = fmt.Sprintf("model entity UID = %d", uid)
 			}
+			errInfo = fmt.Sprintf("model entity UID = %d", uid)
 		} else {
 			errInfo = "entity not found in the model"
 		}
 		return nil, fmt.Errorf("uid annotation value must not be empty (%s) on entity %s", errInfo, bindingEntity.Name)
 	}
 
-	if entity != nil {
-		return entity, nil
-	} else {
+	if entity == nil {
 		return modelInfo.CreateEntity(bindingEntity.Name)
 	}
+
+	return entity, nil
 }
 
 func mergeModelEntity(bindingEntity *Entity, modelEntity *modelinfo.Entity, modelInfo *modelinfo.ModelInfo) (err error) {
@@ -86,7 +87,7 @@ func mergeModelEntity(bindingEntity *Entity, modelEntity *modelinfo.Entity, mode
 
 		// add all properties from the bindings to the model and update/rename the changed ones
 		for _, bindingProperty := range bindingEntity.Properties {
-			if modelProperty, err := getModelProperty(bindingProperty, modelEntity); err != nil {
+			if modelProperty, err := getModelProperty(bindingProperty, modelEntity, modelInfo); err != nil {
 				return err
 			} else if err := mergeModelProperty(bindingProperty, modelProperty); err != nil {
 				return err
@@ -139,9 +140,21 @@ func mergeModelEntity(bindingEntity *Entity, modelEntity *modelinfo.Entity, mode
 	return nil
 }
 
-func getModelProperty(bindingProperty *Property, modelEntity *modelinfo.Entity) (*modelinfo.Property, error) {
+func getModelProperty(bindingProperty *Property, modelEntity *modelinfo.Entity, modelInfo *modelinfo.ModelInfo) (*modelinfo.Property, error) {
 	if bindingProperty.Uid != 0 {
-		return modelEntity.FindPropertyByUid(bindingProperty.Uid)
+		property, err := modelEntity.FindPropertyByUid(bindingProperty.Uid)
+		if err == nil {
+			return property, nil
+		}
+
+		// handle "reset property data" use-case - adding a new UID to an existing property
+		property, err2 := modelEntity.FindPropertyByName(bindingProperty.Name)
+		if err2 != nil {
+			return nil, fmt.Errorf("%v; %v", err, err2)
+		}
+
+		log.Printf("Notice - new UID was specified for the same property name '%s' - resetting value (recreating the property)", bindingProperty.Path())
+		return property, nil
 	}
 
 	// we don't care about this error, either the property is found or we create it
@@ -149,29 +162,44 @@ func getModelProperty(bindingProperty *Property, modelEntity *modelinfo.Entity) 
 
 	// handle uid request
 	if bindingProperty.uidRequest {
-		var errInfo string
 		if property != nil {
-			if uid, err := property.Id.GetUid(); err != nil {
+			uid, err := property.Id.GetUid()
+			if err != nil {
 				return nil, err
-			} else {
-				errInfo = fmt.Sprintf("model property UID = %d", uid)
 			}
-		} else {
-			errInfo = "property not found in the model"
+			newUid, err := modelInfo.GenerateUid()
+			if err != nil {
+				return nil, err
+			}
+
+			// handle "reset property data" use-case - adding a new UID to an existing property
+			return nil, fmt.Errorf(`uid annotation value must not be empty on property %s, entity %s:
+    [rename] apply the current UID %d
+    [change/reset] apply a new UID %d`,
+				bindingProperty.Name, bindingProperty.entity.Name, uid, newUid)
 		}
-		return nil, fmt.Errorf("uid annotation value must not be empty (%s) on property %s, entity %s",
-			errInfo, bindingProperty.Name, bindingProperty.entity.Name)
+		return nil, fmt.Errorf("uid annotation value must not be empty on an unknown property %s, entity %s",
+			bindingProperty.Name, bindingProperty.entity.Name)
 	}
 
-	if property != nil {
-		return property, nil
-	} else {
+	if property == nil {
 		return modelEntity.CreateProperty()
 	}
+
+	return property, nil
 }
 
 func mergeModelProperty(bindingProperty *Property, modelProperty *modelinfo.Property) (err error) {
 	modelProperty.Name = bindingProperty.Name
+
+	// handle "reset property data" use-case - adding a new UID to an existing property
+	if bindingProperty.Uid != 0 {
+		if id, _, err := modelProperty.Id.Get(); err != nil {
+			return err
+		} else {
+			modelProperty.Id = modelinfo.CreateIdUid(id, bindingProperty.Uid)
+		}
+	}
 
 	if bindingProperty.Id, bindingProperty.Uid, err = modelProperty.Id.Get(); err != nil {
 		return err
@@ -232,11 +260,11 @@ func getModelRelation(bindingRelation *StandaloneRelation, modelEntity *modelinf
 	if bindingRelation.uidRequest {
 		var errInfo string
 		if relation != nil {
-			if uid, err := relation.Id.GetUid(); err != nil {
+			uid, err := relation.Id.GetUid()
+			if err != nil {
 				return nil, err
-			} else {
-				errInfo = fmt.Sprintf("model relation UID = %d", uid)
 			}
+			errInfo = fmt.Sprintf("model relation UID = %d", uid)
 		} else {
 			errInfo = "relation not found in the model"
 		}
@@ -244,11 +272,11 @@ func getModelRelation(bindingRelation *StandaloneRelation, modelEntity *modelinf
 			errInfo, bindingRelation.Name, modelEntity.Name)
 	}
 
-	if relation != nil {
-		return relation, nil
-	} else {
+	if relation == nil {
 		return modelEntity.CreateRelation()
 	}
+
+	return relation, nil
 }
 
 func mergeModelRelation(bindingRelation *StandaloneRelation, modelRelation *modelinfo.StandaloneRelation, modelInfo *modelinfo.ModelInfo) (err error) {

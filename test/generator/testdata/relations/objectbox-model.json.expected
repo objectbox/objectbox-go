@@ -12,7 +12,7 @@
           "id": "1:2259404117704393152",
           "name": "Id",
           "type": 6,
-          "flags": 8193
+          "flags": 1
         },
         {
           "id": "2:6050128673802995827",
@@ -24,109 +24,107 @@
     {
       "id": "2:501233450539197794",
       "lastPropertyId": "2:2669985732393126063",
-      "name": "TaskRelId",
+      "name": "GroupByVal",
       "properties": [
         {
           "id": "1:3390393562759376202",
           "name": "Id",
           "type": 6,
-          "flags": 8193
+          "flags": 1
         },
         {
           "id": "2:2669985732393126063",
+          "name": "Name",
+          "type": 9
+        }
+      ]
+    },
+    {
+      "id": "3:1774932891286980153",
+      "lastPropertyId": "2:8274930044578894929",
+      "name": "TaskRelId",
+      "properties": [
+        {
+          "id": "1:6044372234677422456",
+          "name": "Id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:8274930044578894929",
           "name": "Group",
-          "indexId": "1:1774932891286980153",
+          "indexId": "1:1543572285742637646",
           "type": 11,
-          "flags": 8192,
+          "flags": 8712,
           "relationTarget": "Group"
         }
       ]
     },
     {
-      "id": "3:6044372234677422456",
-      "lastPropertyId": "2:1543572285742637646",
+      "id": "4:2661732831099943416",
+      "lastPropertyId": "2:7837839688282259259",
       "name": "TaskRelPtr",
       "properties": [
         {
-          "id": "1:8274930044578894929",
+          "id": "1:8325060299420976708",
           "name": "Id",
           "type": 6,
-          "flags": 8193
+          "flags": 1
         },
         {
-          "id": "2:1543572285742637646",
+          "id": "2:7837839688282259259",
           "name": "Group",
-          "indexId": "2:2661732831099943416",
+          "indexId": "2:2518412263346885298",
           "type": 11,
-          "flags": 8192,
+          "flags": 8712,
           "relationTarget": "Group"
         }
       ]
     },
     {
-      "id": "4:8325060299420976708",
-      "lastPropertyId": "2:2518412263346885298",
+      "id": "5:5617773211005988520",
+      "lastPropertyId": "2:7144924247938981575",
       "name": "TaskRelValue",
       "properties": [
         {
-          "id": "1:7837839688282259259",
+          "id": "1:2339563716805116249",
           "name": "Id",
           "type": 6,
-          "flags": 8193
+          "flags": 1
         },
         {
-          "id": "2:2518412263346885298",
+          "id": "2:7144924247938981575",
           "name": "Group",
-          "indexId": "3:5617773211005988520",
+          "indexId": "3:161231572858529631",
           "type": 11,
-          "flags": 8192,
+          "flags": 8712,
           "relationTarget": "Group"
         }
       ]
     },
     {
-      "id": "5:2339563716805116249",
-      "lastPropertyId": "2:161231572858529631",
+      "id": "6:7259475919510918339",
+      "lastPropertyId": "2:3287288577352441706",
       "name": "TaskRelEmbedded",
       "properties": [
         {
-          "id": "1:7144924247938981575",
+          "id": "1:7373105480197164748",
           "name": "Id",
           "type": 6,
-          "flags": 8193
+          "flags": 1
         },
         {
-          "id": "2:161231572858529631",
+          "id": "2:3287288577352441706",
           "name": "Group",
-          "indexId": "4:7259475919510918339",
+          "indexId": "4:3930927879439176946",
           "type": 11,
-          "flags": 8192,
+          "flags": 8712,
           "relationTarget": "Group"
         }
       ],
       "relations": [
         {
-          "id": "1:7373105480197164748",
-          "name": "Groups",
-          "targetId": "1:8717895732742165505"
-        }
-      ]
-    },
-    {
-      "id": "6:3287288577352441706",
-      "lastPropertyId": "1:3930927879439176946",
-      "name": "TaskRelManyPtr",
-      "properties": [
-        {
-          "id": "1:3930927879439176946",
-          "name": "Id",
-          "type": 6,
-          "flags": 8193
-        }
-      ],
-      "relations": [
-        {
-          "id": "2:4706154865122290029",
+          "id": "1:4706154865122290029",
           "name": "Groups",
           "targetId": "1:8717895732742165505"
         }
@@ -135,27 +133,47 @@
     {
       "id": "7:2217592893536642650",
       "lastPropertyId": "1:1929546706668609706",
-      "name": "TaskRelManyValue",
+      "name": "TaskRelManyPtr",
       "properties": [
         {
           "id": "1:1929546706668609706",
           "name": "Id",
           "type": 6,
-          "flags": 8193
+          "flags": 1
         }
       ],
       "relations": [
         {
-          "id": "3:6392442863481646880",
+          "id": "2:6392442863481646880",
           "name": "Groups",
           "targetId": "1:8717895732742165505"
         }
       ]
+    },
+    {
+      "id": "8:3706853784096366226",
+      "lastPropertyId": "1:2627038740284806767",
+      "name": "TaskRelManyValue",
+      "properties": [
+        {
+          "id": "1:2627038740284806767",
+          "name": "Id",
+          "type": 6,
+          "flags": 1
+        }
+      ],
+      "relations": [
+        {
+          "id": "3:6303220950515014660",
+          "name": "Groups",
+          "targetId": "2:501233450539197794"
+        }
+      ]
     }
   ],
-  "lastEntityId": "7:2217592893536642650",
-  "lastIndexId": "4:7259475919510918339",
-  "lastRelationId": "3:6392442863481646880",
+  "lastEntityId": "8:3706853784096366226",
+  "lastIndexId": "4:3930927879439176946",
+  "lastRelationId": "3:6303220950515014660",
   "modelVersion": 5,
   "modelVersionParserMinimum": 5,
   "retiredEntityUids": [],

@@ -36,7 +36,7 @@ import (
 // Version specifies the current generator version.
 // It is used to validate generated code compatibility and is increased when there are changes in the generated code.
 // Internal generator changes that don't change the output do not cause an increase.
-const Version = 4
+const Version = 5
 
 // BindingFile returns a name of the binding file for the given entity file.
 func BindingFile(sourceFile string) string {

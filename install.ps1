@@ -1,7 +1,7 @@
 # remove the space in the following to require running this script as administrator
 # Requires -RunAsAdministrator
 
-# terminate on uncought exceptions
+# terminate on uncaught exceptions
 $ErrorActionPreference = "Stop"
 
 # Configure supported HTTPS protocols

@@ -365,6 +365,7 @@ func (entity_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Property("String", 9, 13, 3525810560076343996)
 	model.Property("StringVector", 30, 21, 3893192683529392073)
 	model.Property("Byte", 2, 14, 4035373893984224671)
+	model.PropertyFlags(8192)
 	model.Property("ByteVector", 23, 15, 1294888641203478533)
 	model.Property("Rune", 5, 16, 445652208596094853)
 	model.Property("Float32", 7, 17, 2321055489159952634)
@@ -399,6 +400,7 @@ func (entity_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Property("StringPtr", 9, 36, 8409889434685629914)
 	model.Property("StringVectorPtr", 30, 43, 4222000762705400780)
 	model.Property("BytePtr", 2, 38, 7395768407310126147)
+	model.PropertyFlags(8192)
 	model.Property("ByteVectorPtr", 23, 44, 6100401720382402484)
 	model.Property("RunePtr", 5, 40, 5826738612842297282)
 	model.Property("Float32Ptr", 7, 41, 8081176555310747578)
@@ -546,7 +548,7 @@ func (entity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, i
 	fbutils.SetBoolSlot(fbb, 11, obj.Bool)
 	fbutils.SetUOffsetTSlot(fbb, 12, offsetString)
 	fbutils.SetUOffsetTSlot(fbb, 20, offsetStringVector)
-	fbutils.SetByteSlot(fbb, 13, obj.Byte)
+	fbutils.SetUint8Slot(fbb, 13, obj.Byte)
 	fbutils.SetUOffsetTSlot(fbb, 14, offsetByteVector)
 	fbutils.SetInt32Slot(fbb, 15, obj.Rune)
 	fbutils.SetFloat32Slot(fbb, 16, obj.Float32)
@@ -600,7 +602,7 @@ func (entity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, i
 		fbutils.SetUOffsetTSlot(fbb, 42, offsetStringVectorPtr)
 	}
 	if obj.BytePtr != nil {
-		fbutils.SetByteSlot(fbb, 37, *obj.BytePtr)
+		fbutils.SetUint8Slot(fbb, 37, *obj.BytePtr)
 	}
 	if obj.ByteVectorPtr != nil {
 		fbutils.SetUOffsetTSlot(fbb, 43, offsetByteVectorPtr)

@@ -859,13 +859,10 @@ func (property *Property) setBasicType(baseType string) error {
 	} else if ts == "int8" {
 		property.ObType = propertyTypeByte
 		property.FbType = "Int8"
-	} else if ts == "uint8" {
+	} else if ts == "uint8" || ts == "byte" {
 		property.ObType = propertyTypeByte
 		property.FbType = "Uint8"
 		property.addObFlag(propertyFlagUnsigned)
-	} else if ts == "byte" {
-		property.ObType = propertyTypeByte
-		property.FbType = "Byte"
 	} else if ts == "[]byte" {
 		property.ObType = propertyTypeByteVector
 		property.FbType = "UOffsetT"

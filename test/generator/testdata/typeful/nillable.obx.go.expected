@@ -203,6 +203,7 @@ func (nillable_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Property("String", 9, 13, 3930927879439176946)
 	model.Property("StringVector", 30, 14, 4706154865122290029)
 	model.Property("Byte", 2, 15, 2217592893536642650)
+	model.PropertyFlags(8192)
 	model.Property("ByteVector", 23, 16, 1929546706668609706)
 	model.Property("Rune", 5, 17, 6392442863481646880)
 	model.Property("Float32", 7, 18, 3706853784096366226)
@@ -298,7 +299,7 @@ func (nillable_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder,
 		fbutils.SetUOffsetTSlot(fbb, 13, offsetStringVector)
 	}
 	if obj.Byte != nil {
-		fbutils.SetByteSlot(fbb, 14, *obj.Byte)
+		fbutils.SetUint8Slot(fbb, 14, *obj.Byte)
 	}
 	if obj.ByteVector != nil {
 		fbutils.SetUOffsetTSlot(fbb, 15, offsetByteVector)

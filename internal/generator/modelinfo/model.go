@@ -260,6 +260,7 @@ func (model *ModelInfo) CreateEntity(name string) (*Entity, error) {
 	return entity, nil
 }
 
+// GenerateUid generates a unique UID
 func (model *ModelInfo) GenerateUid() (result Uid, err error) {
 	result = 0
 

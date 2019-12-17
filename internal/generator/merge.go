@@ -194,11 +194,11 @@ func mergeModelProperty(bindingProperty *Property, modelProperty *modelinfo.Prop
 
 	// handle "reset property data" use-case - adding a new UID to an existing property
 	if bindingProperty.Uid != 0 {
-		if id, _, err := modelProperty.Id.Get(); err != nil {
+		id, _, err := modelProperty.Id.Get()
+		if err != nil {
 			return err
-		} else {
-			modelProperty.Id = modelinfo.CreateIdUid(id, bindingProperty.Uid)
 		}
+		modelProperty.Id = modelinfo.CreateIdUid(id, bindingProperty.Uid)
 	}
 
 	if bindingProperty.Id, bindingProperty.Uid, err = modelProperty.Id.Get(); err != nil {

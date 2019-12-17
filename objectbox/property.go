@@ -1433,7 +1433,7 @@ func (property PropertyBool) OrderNilLast() Condition {
 	return property.orderNilLast()
 }
 
-// OrderNilAsZero treats the nil value of the property the same as if it was 0
+// OrderNilAsFalse treats the nil value of the property the same as if it was 0
 func (property PropertyBool) OrderNilAsFalse() Condition {
 	return property.orderNilAsZero()
 }

@@ -118,7 +118,7 @@ func testAsync(t *testing.T, asyncF func(box *model.TestEntityInlineBox) *model.
 
 	// insert with an existing ID will fail now (silently)
 	var idBefore = object.Id
-	id, err = async.Insert(object)
+	_, err = async.Insert(object)
 	assert.NoErr(t, err)
 	assert.Eq(t, object.Id, idBefore)
 	waitAndCount(2)

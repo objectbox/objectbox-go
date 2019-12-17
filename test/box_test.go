@@ -237,6 +237,7 @@ func TestBoxUpdate(t *testing.T) {
 	assert.NoErr(t, env.Box.Update(object))
 
 	objectRead, err := env.Box.Get(id)
+	assert.NoErr(t, err)
 	assert.Eq(t, object, objectRead)
 }
 

@@ -230,7 +230,7 @@ func (qb *QueryBuilder) order(propertyId C.obx_schema_id, flags C.OBXOrderFlags)
 	}
 }
 
-// setOrderFlag stores the order flag to be aplied later before building the query
+// setOrderFlag stores the order flag to be applied later before building the query
 // if value is true, the flag is set, otherwise the flag is cleared (unset)
 func (qb *QueryBuilder) setOrderFlag(property *BaseProperty, flag C.OBXOrderFlags, value bool) error {
 	if qb.Err == nil && qb.checkEntityId(property.Entity.Id) {

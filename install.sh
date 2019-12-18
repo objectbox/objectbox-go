@@ -46,7 +46,7 @@ if [[ "$os" != MINGW* ]] && [[ "$os" != CYGWIN* ]]; then
     installed=
     if [[ -n "${manager}" ]]; then
       echo "Seems like your package manager is ${manager}, you may want to try: ${installCmd1} ; ${installCmd2}"
-      read -p "Would you like to execute that command? [y/N] " -r
+      read -p "Would you like to execute that command(s) now? [y/N] " -r
       if [[ $REPLY =~ ^[Yy]$ ]]; then
         ${installCmd1}
         ${installCmd2}

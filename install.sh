@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-cLibVersion=0.8.1
+cLibVersion=0.8.2
 os=$(uname)
 
 # verify installed Go version

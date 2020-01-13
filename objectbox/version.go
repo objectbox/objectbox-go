@@ -59,3 +59,7 @@ func VersionLib() Version {
 func VersionInfo() string {
 	return "ObjectBox Go version " + VersionGo().String() + " using dynamic library version " + VersionLib().String()
 }
+
+func internalLibVersion() string {
+	return "C-API v" + C.GoString(C.obx_version_string()) + " core v" + C.GoString(C.obx_version_core_string())
+}

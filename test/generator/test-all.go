@@ -100,8 +100,8 @@ func generateOneDir(t *testing.T, overwriteExpected bool, srcDir string) {
 			if err == nil {
 				return nil
 			}
-			var str = strings.ReplaceAll(err.Error(), tempRoot+string(os.PathSeparator), "")
-			str = strings.ReplaceAll(str, modulePath, "github.com/objectbox/objectbox-go/test/generator/"+srcDir)
+			var str = strings.Replace(err.Error(), tempRoot+string(os.PathSeparator), "", -1)
+			str = strings.Replace(str, modulePath, "github.com/objectbox/objectbox-go/test/generator/"+srcDir, -1)
 			return errors.New(str)
 		}
 	}

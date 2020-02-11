@@ -45,9 +45,9 @@ func TestConcurrentPutAsync(t *testing.T) {
 }
 
 func concurrentInsert(t *testing.T, count, concurrency int, putAsync bool) {
-	objectBox := iot.LoadEmptyTestObjectBox()
-	defer objectBox.Close()
-	box := iot.BoxForEvent(objectBox)
+	env := iot.LoadEmptyTestObjectBox()
+	defer env.Close()
+	box := iot.BoxForEvent(env.ObjectBox)
 
 	err := box.RemoveAll()
 	assert.NoErr(t, err)
@@ -93,7 +93,7 @@ func concurrentInsert(t *testing.T, count, concurrency int, putAsync bool) {
 	t.Log("waiting for all goroutines to finish")
 	wg.Wait()
 
-	assert.NoErr(t, objectBox.AwaitAsyncCompletion())
+	assert.NoErr(t, env.ObjectBox.AwaitAsyncCompletion())
 
 	t.Log("validating counts")
 	if len(errors) != 0 {

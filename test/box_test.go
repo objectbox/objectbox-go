@@ -25,18 +25,18 @@ import (
 )
 
 func TestBox(t *testing.T) {
-	objectBox := iot.LoadEmptyTestObjectBox()
-	defer objectBox.Close()
-	box1 := iot.BoxForEvent(objectBox)
-	box2 := iot.BoxForEvent(objectBox)
+	env := iot.LoadEmptyTestObjectBox()
+	defer env.Close()
+	box1 := iot.BoxForEvent(env.ObjectBox)
+	box2 := iot.BoxForEvent(env.ObjectBox)
 
 	assert.Eq(t, box1.Box, box2.Box)
 }
 
 func TestPutAsync(t *testing.T) {
-	objectBox := iot.LoadEmptyTestObjectBox()
-	defer objectBox.Close()
-	box := iot.BoxForEvent(objectBox)
+	env := iot.LoadEmptyTestObjectBox()
+	defer env.Close()
+	box := iot.BoxForEvent(env.ObjectBox)
 	err := box.RemoveAll()
 	assert.NoErr(t, err)
 
@@ -47,7 +47,7 @@ func TestPutAsync(t *testing.T) {
 	assert.NoErr(t, err)
 	assert.Eq(t, objectId, event.Id)
 
-	assert.NoErr(t, objectBox.AwaitAsyncCompletion())
+	assert.NoErr(t, env.AwaitAsyncCompletion())
 
 	count, err := box.Count()
 	assert.NoErr(t, err)
@@ -74,9 +74,9 @@ func TestPutAsync(t *testing.T) {
 }
 
 func TestUnique(t *testing.T) {
-	objectBox := iot.LoadEmptyTestObjectBox()
-	defer objectBox.Close()
-	box := iot.BoxForEvent(objectBox)
+	env := iot.LoadEmptyTestObjectBox()
+	defer env.Close()
+	box := iot.BoxForEvent(env.ObjectBox)
 
 	err := box.RemoveAll()
 	assert.NoErr(t, err)
@@ -101,9 +101,9 @@ func TestUnique(t *testing.T) {
 }
 
 func TestBoxBulk(t *testing.T) {
-	objectBox := iot.LoadEmptyTestObjectBox()
-	defer objectBox.Close()
-	box := iot.BoxForEvent(objectBox)
+	env := iot.LoadEmptyTestObjectBox()
+	defer env.Close()
+	box := iot.BoxForEvent(env.ObjectBox)
 
 	err := box.RemoveAll()
 	assert.NoErr(t, err)
@@ -167,9 +167,9 @@ func TestBoxBulk(t *testing.T) {
 }
 
 func TestPut(t *testing.T) {
-	objectBox := iot.LoadEmptyTestObjectBox()
-	defer objectBox.Close()
-	box := iot.BoxForEvent(objectBox)
+	env := iot.LoadEmptyTestObjectBox()
+	defer env.Close()
+	box := iot.BoxForEvent(env.ObjectBox)
 
 	assert.NoErr(t, box.RemoveAll())
 

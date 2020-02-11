@@ -25,10 +25,10 @@ import (
 )
 
 func TestTransactionMassiveInsert(t *testing.T) {
-	ob := iot.LoadEmptyTestObjectBox()
-	defer ob.Close()
+	env := iot.LoadEmptyTestObjectBox()
+	defer env.Close()
 
-	var box = iot.BoxForEvent(ob)
+	var box = iot.BoxForEvent(env.ObjectBox)
 
 	assert.NoErr(t, box.RemoveAll())
 
@@ -38,7 +38,7 @@ func TestTransactionMassiveInsert(t *testing.T) {
 		insert = 1000
 	}
 
-	assert.NoErr(t, ob.RunInWriteTx(func() error {
+	assert.NoErr(t, env.RunInWriteTx(func() error {
 		for i := insert; i > 0; i-- {
 			_, err := box.Put(&iot.Event{})
 			assert.NoErr(t, err)
@@ -52,10 +52,10 @@ func TestTransactionMassiveInsert(t *testing.T) {
 }
 
 func TestTransactionRollback(t *testing.T) {
-	ob := iot.LoadEmptyTestObjectBox()
-	defer ob.Close()
+	env := iot.LoadEmptyTestObjectBox()
+	defer env.Close()
 
-	var box = iot.BoxForEvent(ob)
+	var box = iot.BoxForEvent(env.ObjectBox)
 
 	assert.NoErr(t, box.RemoveAll())
 
@@ -73,7 +73,7 @@ func TestTransactionRollback(t *testing.T) {
 
 	// rolled-back Tx
 	var expected = errors.New("expected")
-	assert.Eq(t, expected, ob.RunInWriteTx(func() error {
+	assert.Eq(t, expected, env.RunInWriteTx(func() error {
 		assert.NoErr(t, box.RemoveAll())
 		return expected
 	}))
@@ -83,7 +83,7 @@ func TestTransactionRollback(t *testing.T) {
 	assert.Eq(t, len(insert), int(count))
 
 	// successful tx
-	assert.NoErr(t, ob.RunInWriteTx(func() error {
+	assert.NoErr(t, env.RunInWriteTx(func() error {
 		assert.NoErr(t, box.RemoveAll())
 		return nil
 	}))

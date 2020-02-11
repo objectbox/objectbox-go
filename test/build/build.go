@@ -22,7 +22,8 @@ import (
 
 // Package builds a single Go package/directory, running `go build path`
 func Package(path string) (stdOut []byte, stdErr []byte, err error) {
-	var cmd = exec.Command("go", "build", path)
+	var cmd = exec.Command("go", "build")
+	cmd.Dir = path
 	stdOut, err = cmd.Output()
 	if ee, ok := err.(*exec.ExitError); ok {
 		stdErr = ee.Stderr

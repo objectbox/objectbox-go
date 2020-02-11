@@ -54,7 +54,58 @@ func generateAllDirs(t *testing.T, overwriteExpected bool) {
 	}
 }
 
-func generateOneDir(t *testing.T, overwriteExpected bool, dir string) {
+func generateOneDir(t *testing.T, overwriteExpected bool, srcDir string) {
+	var dir = srcDir
+
+	var errorTransformer = func(err error) error {
+		return err
+	}
+
+	var cleanup = func() {}
+	defer func() {
+		cleanup()
+	}()
+
+	// Test in a temporary directory - if tested by an end user, the repo is read-only.
+	// This doesn't apply if overwriteExpected is set, as that's only supposed to be run during this lib's development.
+	if !overwriteExpected {
+		tempRoot, err := ioutil.TempDir("", "objectbox-generator-test")
+		assert.NoErr(t, err)
+
+		// we can't defer directly because compilation step is run in a separate goroutine after this function exits
+		cleanup = func() {
+			assert.NoErr(t, os.RemoveAll(tempRoot))
+		}
+
+		// copy the source dir, including the relative paths (to make sure expected errors contain same paths)
+		var tempDir = filepath.Join(tempRoot, srcDir)
+		assert.NoErr(t, os.MkdirAll(tempDir, 0700))
+		assert.NoErr(t, copyDirectory(srcDir, tempDir))
+		t.Logf("Testing in a temporary directory %s", tempDir)
+
+		// When outside of the project's directory, we need to set up the whole temp dir as its own module, otherwise
+		// it won't find this `objectbox-go`. Therefore, we create a go.mod file pointing it to the right path.
+		cwd, err := os.Getwd()
+		assert.NoErr(t, err)
+		var modulePath = "example.com/virtual/objectbox-go/test/generator/" + srcDir
+		var goMod = "module " + modulePath + "\n" +
+			"replace github.com/objectbox/objectbox-go => " + filepath.Join(cwd, "/../../") + "\n" +
+			"require github.com/objectbox/objectbox-go v0.0.0"
+		assert.NoErr(t, ioutil.WriteFile(path.Join(tempDir, "go.mod"), []byte(goMod), 0600))
+
+		// NOTE: we can't change directory using os.Chdir() because it applies to a process/thread, not a goroutine.
+		// Therefore, we just map paths in received errors, so they match the expected ones.
+		dir = tempDir
+		errorTransformer = func(err error) error {
+			if err == nil {
+				return nil
+			}
+			var str = strings.ReplaceAll(err.Error(), tempRoot+string(os.PathSeparator), "")
+			str = strings.ReplaceAll(str, modulePath, "github.com/objectbox/objectbox-go/test/generator/"+srcDir)
+			return errors.New(str)
+		}
+	}
+
 	modelInfoFile := generator.ModelInfoFile(dir)
 	modelInfoExpectedFile := modelInfoFile + ".expected"
 
@@ -79,7 +130,7 @@ func generateOneDir(t *testing.T, overwriteExpected bool, dir string) {
 			assert.NoErr(t, copyFile(initialFile, initialFile[0:len(initialFile)-len(".initial")]))
 		}
 
-		generateAllFiles(t, overwriteExpected, dir, modelInfoFile)
+		generateAllFiles(t, overwriteExpected, dir, modelInfoFile, errorTransformer)
 
 		assertSameFile(t, modelInfoFile, modelInfoExpectedFile, overwriteExpected)
 		assertSameFile(t, modelFile, modelExpectedFile, overwriteExpected)
@@ -87,7 +138,12 @@ func generateOneDir(t *testing.T, overwriteExpected bool, dir string) {
 
 	// verify the result can be built
 	if !testing.Short() {
+		// override the defer to prevent cleanup before compilation is actually run
+		var cleanupAfterCompile = cleanup
+		cleanup = func() {}
+
 		t.Run("compile", func(t *testing.T) {
+			defer cleanupAfterCompile()
 			t.Parallel()
 
 			var expectedError error
@@ -97,7 +153,7 @@ func generateOneDir(t *testing.T, overwriteExpected bool, dir string) {
 				expectedError = errors.New(string(content))
 			}
 
-			stdOut, stdErr, err := build.Package("./" + dir)
+			stdOut, stdErr, err := build.Package(dir)
 			if err == nil && expectedError == nil {
 				// successful
 				return
@@ -107,7 +163,7 @@ func generateOneDir(t *testing.T, overwriteExpected bool, dir string) {
 				assert.Failf(t, "Unexpected PASS during compilation")
 			}
 
-			var receivedError = fmt.Errorf("%s\n%s\n%s", stdOut, stdErr, err)
+			var receivedError = errorTransformer(fmt.Errorf("%s\n%s\n%s", stdOut, stdErr, err))
 
 			// Fix paths in the error output on Windows so that it matches the expected error (which always uses '/').
 			if os.PathSeparator != '/' {
@@ -148,7 +204,7 @@ func assertSameFile(t *testing.T, file string, expectedFile string, overwriteExp
 	}
 }
 
-func generateAllFiles(t *testing.T, overwriteExpected bool, dir string, modelInfoFile string) {
+func generateAllFiles(t *testing.T, overwriteExpected bool, dir string, modelInfoFile string, errorTransformer func(err error) error) {
 	var modelFile = generator.ModelFile(modelInfoFile)
 
 	// remove generated files during development (they might be syntactically wrong)
@@ -176,7 +232,7 @@ func generateAllFiles(t *testing.T, overwriteExpected bool, dir string, modelInf
 
 		t.Logf("  %s", filepath.Base(sourceFile))
 
-		err = generator.Process(sourceFile, getOptions(t, sourceFile, modelInfoFile))
+		err = errorTransformer(generator.Process(sourceFile, getOptions(t, sourceFile, modelInfoFile)))
 
 		// handle negative test
 		var shouldFail = strings.HasSuffix(filepath.Base(sourceFile), ".fail.go")

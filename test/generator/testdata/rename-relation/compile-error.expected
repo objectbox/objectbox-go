@@ -1,10 +1,10 @@
 
 # github.com/objectbox/objectbox-go/test/generator/testdata/rename-relation
-testdata/rename-relation/objectbox-model.go:22:24: undefined: NegTaskRelIdBinding
-testdata/rename-relation/objectbox-model.go:23:24: undefined: NegTaskRelPtrBinding
-testdata/rename-relation/objectbox-model.go:24:24: undefined: NegTaskRelValueBinding
-testdata/rename-relation/objectbox-model.go:25:24: undefined: NegTaskRelEmbeddedBinding
-testdata/rename-relation/objectbox-model.go:26:24: undefined: NegTaskRelManyPtrBinding
-testdata/rename-relation/objectbox-model.go:27:24: undefined: NegTaskRelManyValueBinding
+./objectbox-model.go:22:24: undefined: NegTaskRelIdBinding
+./objectbox-model.go:23:24: undefined: NegTaskRelPtrBinding
+./objectbox-model.go:24:24: undefined: NegTaskRelValueBinding
+./objectbox-model.go:25:24: undefined: NegTaskRelEmbeddedBinding
+./objectbox-model.go:26:24: undefined: NegTaskRelManyPtrBinding
+./objectbox-model.go:27:24: undefined: NegTaskRelManyValueBinding
 
 exit status 2

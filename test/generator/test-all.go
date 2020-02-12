@@ -34,6 +34,9 @@ import (
 	"github.com/objectbox/objectbox-go/test/build"
 )
 
+// this containing module name - used for test case modules
+const moduleName = "github.com/objectbox/objectbox-go"
+
 // generateAllDirs walks through the "data" and generates bindings for each subdirectory
 // set overwriteExpected to TRUE to update all ".expected" files with the generated content
 func generateAllDirs(t *testing.T, overwriteExpected bool) {
@@ -89,8 +92,8 @@ func generateOneDir(t *testing.T, overwriteExpected bool, srcDir string) {
 		assert.NoErr(t, err)
 		var modulePath = "example.com/virtual/objectbox-go/test/generator/" + srcDir
 		var goMod = "module " + modulePath + "\n" +
-			"replace github.com/objectbox/objectbox-go => " + filepath.Join(cwd, "/../../") + "\n" +
-			"require github.com/objectbox/objectbox-go v0.0.0"
+			"replace " + moduleName + " => " + filepath.Join(cwd, "/../../") + "\n" +
+			"require " + moduleName + " v0.0.0"
 		assert.NoErr(t, ioutil.WriteFile(path.Join(tempDir, "go.mod"), []byte(goMod), 0600))
 
 		// NOTE: we can't change directory using os.Chdir() because it applies to a process/thread, not a goroutine.
@@ -101,7 +104,7 @@ func generateOneDir(t *testing.T, overwriteExpected bool, srcDir string) {
 				return nil
 			}
 			var str = strings.Replace(err.Error(), tempRoot+string(os.PathSeparator), "", -1)
-			str = strings.Replace(str, modulePath, "github.com/objectbox/objectbox-go/test/generator/"+srcDir, -1)
+			str = strings.Replace(str, modulePath, moduleName+"/test/generator/"+srcDir, -1)
 			return errors.New(str)
 		}
 	}
@@ -162,6 +165,10 @@ func generateOneDir(t *testing.T, overwriteExpected bool, srcDir string) {
 			if err == nil && expectedError != nil {
 				assert.Failf(t, "Unexpected PASS during compilation")
 			}
+
+			// On Windows, we're getting a `go finding` message during the build - remove it to be consistent.
+			var reg = regexp.MustCompile("go: finding " + moduleName + " v0.0.0[ \r\n]+")
+			stdErr = reg.ReplaceAll(stdErr, nil)
 
 			var receivedError = errorTransformer(fmt.Errorf("%s\n%s\n%s", stdOut, stdErr, err))
 

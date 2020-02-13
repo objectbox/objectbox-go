@@ -25,7 +25,7 @@ import (
 )
 
 func TestTransactionMassiveInsert(t *testing.T) {
-	env := iot.LoadEmptyTestObjectBox()
+	env := iot.NewTestEnv()
 	defer env.Close()
 
 	var box = iot.BoxForEvent(env.ObjectBox)
@@ -52,7 +52,7 @@ func TestTransactionMassiveInsert(t *testing.T) {
 }
 
 func TestTransactionRollback(t *testing.T) {
-	env := iot.LoadEmptyTestObjectBox()
+	env := iot.NewTestEnv()
 	defer env.Close()
 
 	var box = iot.BoxForEvent(env.ObjectBox)

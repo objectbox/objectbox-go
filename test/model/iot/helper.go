@@ -35,8 +35,8 @@ func (env *TestEnv) Close() {
 	os.RemoveAll(env.dir)
 }
 
-// LoadEmptyTestObjectBox creates an empty ObjectBox instance
-func LoadEmptyTestObjectBox() *TestEnv {
+// NewTestEnv creates an empty ObjectBox instance
+func NewTestEnv() *TestEnv {
 
 	// Test in a temporary directory - if tested by an end user, the repo is read-only.
 	tempDir, err := ioutil.TempDir("", "objectbox-test")

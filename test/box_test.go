@@ -25,7 +25,7 @@ import (
 )
 
 func TestBox(t *testing.T) {
-	env := iot.LoadEmptyTestObjectBox()
+	env := iot.NewTestEnv()
 	defer env.Close()
 	box1 := iot.BoxForEvent(env.ObjectBox)
 	box2 := iot.BoxForEvent(env.ObjectBox)
@@ -34,7 +34,7 @@ func TestBox(t *testing.T) {
 }
 
 func TestPutAsync(t *testing.T) {
-	env := iot.LoadEmptyTestObjectBox()
+	env := iot.NewTestEnv()
 	defer env.Close()
 	box := iot.BoxForEvent(env.ObjectBox)
 	err := box.RemoveAll()
@@ -74,7 +74,7 @@ func TestPutAsync(t *testing.T) {
 }
 
 func TestUnique(t *testing.T) {
-	env := iot.LoadEmptyTestObjectBox()
+	env := iot.NewTestEnv()
 	defer env.Close()
 	box := iot.BoxForEvent(env.ObjectBox)
 
@@ -101,7 +101,7 @@ func TestUnique(t *testing.T) {
 }
 
 func TestBoxBulk(t *testing.T) {
-	env := iot.LoadEmptyTestObjectBox()
+	env := iot.NewTestEnv()
 	defer env.Close()
 	box := iot.BoxForEvent(env.ObjectBox)
 
@@ -167,7 +167,7 @@ func TestBoxBulk(t *testing.T) {
 }
 
 func TestPut(t *testing.T) {
-	env := iot.LoadEmptyTestObjectBox()
+	env := iot.NewTestEnv()
 	defer env.Close()
 	box := iot.BoxForEvent(env.ObjectBox)
 

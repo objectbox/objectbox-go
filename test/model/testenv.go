@@ -18,8 +18,8 @@ package model
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 
@@ -33,7 +33,7 @@ type TestEnv struct {
 	Box       *EntityBox
 
 	t       *testing.T
-	dbName  string
+	dir     string
 	options TestEnvOptions
 }
 
@@ -44,14 +44,18 @@ type TestEnvOptions struct {
 
 // NewTestEnv creates the test environment
 func NewTestEnv(t *testing.T) *TestEnv {
-	var env = &TestEnv{
-		dbName: "testdata",
-		t:      t,
+	// Test in a temporary directory - if tested by an end user, the repo is read-only.
+	tempDir, err := ioutil.TempDir("", "objectbox-test")
+	if err != nil {
+		t.Fatal(err)
 	}
-	env.removeDb()
 
-	var err error
-	env.ObjectBox, err = objectbox.NewBuilder().Directory(env.dbName).Model(ObjectBoxModel()).Build()
+	var env = &TestEnv{
+		dir: tempDir,
+		t:   t,
+	}
+
+	env.ObjectBox, err = objectbox.NewBuilder().Directory(env.dir).Model(ObjectBoxModel()).Build()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -64,7 +68,7 @@ func NewTestEnv(t *testing.T) *TestEnv {
 // Close closes ObjectBox and removes the database
 func (env *TestEnv) Close() {
 	env.ObjectBox.Close()
-	env.removeDb()
+	os.RemoveAll(env.dir)
 }
 
 func removeFileIfExists(path string) error {
@@ -72,11 +76,6 @@ func removeFileIfExists(path string) error {
 		return os.Remove(path)
 	}
 	return nil
-}
-
-func (env *TestEnv) removeDb() {
-	assert.NoErr(env.t, removeFileIfExists(filepath.Join(env.dbName, "data.mdb")))
-	assert.NoErr(env.t, removeFileIfExists(filepath.Join(env.dbName, "lock.mdb")))
 }
 
 // SetOptions configures options

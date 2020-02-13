@@ -17,13 +17,13 @@
 package main
 
 import (
+	"io/ioutil"
 	"log"
 	"os"
 	"testing"
 )
 
 func TestPerformanceSimple(t *testing.T) {
-	var dbName = "db"
 	var count = 100000
 
 	if testing.Short() {
@@ -32,11 +32,18 @@ func TestPerformanceSimple(t *testing.T) {
 
 	log.Printf("running the test with %d objects", count)
 
-	// remove old database in case it already exists (and remove it after the test as well)
-	os.RemoveAll(dbName)
-	defer os.RemoveAll(dbName)
+	// Test in a temporary directory - if tested by an end user, the repo is read-only.
+	tempDir, err := ioutil.TempDir("", "objectbox-test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		if err := os.RemoveAll(tempDir); err != nil {
+			t.Fatal(err)
+		}
+	}()
 
-	executor := createExecutor(dbName)
+	executor := createExecutor(tempDir)
 	defer executor.close()
 
 	inserts := executor.prepareData(count)

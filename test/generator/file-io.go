@@ -17,8 +17,10 @@
 package generator
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 )
 
 func copyFile(sourceFile, targetFile string) error {
@@ -48,4 +50,34 @@ func copyFile(sourceFile, targetFile string) error {
 func fileExists(path string) bool {
 	_, err := os.Stat(path)
 	return !os.IsNotExist(err)
+}
+
+func copyDirectory(sourceDir, targetDir string) error {
+	entries, err := ioutil.ReadDir(sourceDir)
+	if err != nil {
+		return err
+	}
+
+	for _, entry := range entries {
+		sourcePath := filepath.Join(sourceDir, entry.Name())
+		targetPath := filepath.Join(targetDir, entry.Name())
+
+		fileInfo, err := os.Stat(sourcePath)
+		if err != nil {
+			return err
+		}
+
+		if fileInfo.IsDir() {
+			if err := os.Mkdir(targetPath, fileInfo.Mode()); err != nil {
+				return err
+			}
+		} else if fileInfo.Mode().IsRegular() {
+			if err := copyFile(sourcePath, targetPath); err != nil {
+				return err
+			}
+		} else {
+			return fmt.Errorf("not a regular file: %s", sourcePath)
+		}
+	}
+	return nil
 }

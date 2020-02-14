@@ -17,25 +17,42 @@
 package iot
 
 import (
-	"os"
-	"strconv"
-
 	"github.com/objectbox/objectbox-go/objectbox"
 	"github.com/objectbox/objectbox-go/test/assert"
+	"io/ioutil"
+	"os"
+	"strconv"
 )
 
-// LoadEmptyTestObjectBox creates an empty ObjectBox instance
-func LoadEmptyTestObjectBox() *objectbox.ObjectBox {
-	var dbName = "iot-test"
+type TestEnv struct {
+	*objectbox.ObjectBox
+	dir string
+}
 
-	// remove database beforehand - only used in tests
-	os.RemoveAll(dbName)
+// Close closes ObjectBox and removes the database
+func (env *TestEnv) Close() {
+	env.ObjectBox.Close()
+	os.RemoveAll(env.dir)
+}
 
-	objectBox, err := objectbox.NewBuilder().Directory(dbName).Model(ObjectBoxModel()).Build()
+// NewTestEnv creates an empty ObjectBox instance
+func NewTestEnv() *TestEnv {
+
+	// Test in a temporary directory - if tested by an end user, the repo is read-only.
+	tempDir, err := ioutil.TempDir("", "objectbox-test")
 	if err != nil {
 		panic(err)
 	}
-	return objectBox
+
+	objectBox, err := objectbox.NewBuilder().Directory(tempDir).Model(ObjectBoxModel()).Build()
+	if err != nil {
+		panic(err)
+	}
+
+	return &TestEnv{
+		ObjectBox: objectBox,
+		dir:       tempDir,
+	}
 }
 
 // PutEvent creates an event

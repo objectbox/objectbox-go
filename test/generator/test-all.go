@@ -82,8 +82,7 @@ func generateOneDir(t *testing.T, overwriteExpected bool, srcDir string) {
 
 		// copy the source dir, including the relative paths (to make sure expected errors contain same paths)
 		var tempDir = filepath.Join(tempRoot, srcDir)
-		assert.NoErr(t, os.MkdirAll(tempDir, 0700))
-		assert.NoErr(t, copyDirectory(srcDir, tempDir))
+		assert.NoErr(t, copyDirectory(srcDir, tempDir, 0700, 0600))
 		t.Logf("Testing in a temporary directory %s", tempDir)
 
 		// When outside of the project's directory, we need to set up the whole temp dir as its own module, otherwise
@@ -130,7 +129,7 @@ func generateOneDir(t *testing.T, overwriteExpected bool, srcDir string) {
 		initialFiles, err := filepath.Glob(filepath.Join(dir, "*.initial"))
 		assert.NoErr(t, err)
 		for _, initialFile := range initialFiles {
-			assert.NoErr(t, copyFile(initialFile, initialFile[0:len(initialFile)-len(".initial")]))
+			assert.NoErr(t, copyFile(initialFile, initialFile[0:len(initialFile)-len(".initial")], 0))
 		}
 
 		generateAllFiles(t, overwriteExpected, dir, modelInfoFile, errorTransformer)
@@ -200,7 +199,7 @@ func assertSameFile(t *testing.T, file string, expectedFile string, overwriteExp
 	assert.NoErr(t, err)
 
 	if overwriteExpected {
-		assert.NoErr(t, copyFile(file, expectedFile))
+		assert.NoErr(t, copyFile(file, expectedFile, 0))
 	}
 
 	contentExpected, err := ioutil.ReadFile(expectedFile)
@@ -211,7 +210,7 @@ func assertSameFile(t *testing.T, file string, expectedFile string, overwriteExp
 	}
 }
 
-func generateAllFiles(t *testing.T, overwriteExpected bool, dir string, modelInfoFile string, errorTransformer func(err error) error) {
+func generateAllFiles(t *testing.T, overwriteExpected bool, dir string, modelInfoFile string, errorTransformer func(error) error) {
 	var modelFile = generator.ModelFile(modelInfoFile)
 
 	// remove generated files during development (they might be syntactically wrong)

@@ -23,20 +23,22 @@ import (
 	"path/filepath"
 )
 
-func copyFile(sourceFile, targetFile string) error {
+func copyFile(sourceFile, targetFile string, permsOverride os.FileMode) error {
 	data, err := ioutil.ReadFile(sourceFile)
 	if err != nil {
 		return err
 	}
 
 	// copy permissions either from the existing target file or from the source file
-	var perm os.FileMode
-	if info, _ := os.Stat(targetFile); info != nil {
-		perm = info.Mode()
-	} else if info, err := os.Stat(sourceFile); info != nil {
-		perm = info.Mode()
-	} else {
-		return err
+	var perm os.FileMode = permsOverride
+	if perm == 0 {
+		if info, _ := os.Stat(targetFile); info != nil {
+			perm = info.Mode()
+		} else if info, err := os.Stat(sourceFile); info != nil {
+			perm = info.Mode()
+		} else {
+			return err
+		}
 	}
 
 	err = ioutil.WriteFile(targetFile, data, perm)
@@ -52,7 +54,11 @@ func fileExists(path string) bool {
 	return !os.IsNotExist(err)
 }
 
-func copyDirectory(sourceDir, targetDir string) error {
+func copyDirectory(sourceDir, targetDir string, dirPerms, filePerms os.FileMode) error {
+	if err := os.MkdirAll(targetDir, dirPerms); err != nil {
+		return err
+	}
+
 	entries, err := ioutil.ReadDir(sourceDir)
 	if err != nil {
 		return err
@@ -62,21 +68,21 @@ func copyDirectory(sourceDir, targetDir string) error {
 		sourcePath := filepath.Join(sourceDir, entry.Name())
 		targetPath := filepath.Join(targetDir, entry.Name())
 
-		fileInfo, err := os.Stat(sourcePath)
+		info, err := os.Stat(sourcePath)
 		if err != nil {
 			return err
 		}
 
-		if fileInfo.IsDir() {
-			if err := os.Mkdir(targetPath, fileInfo.Mode()); err != nil {
+		if info.IsDir() {
+			if err := copyDirectory(sourcePath, targetPath, dirPerms, filePerms); err != nil {
 				return err
 			}
-		} else if fileInfo.Mode().IsRegular() {
-			if err := copyFile(sourcePath, targetPath); err != nil {
+		} else if info.Mode().IsRegular() {
+			if err := copyFile(sourcePath, targetPath, filePerms); err != nil {
 				return err
 			}
 		} else {
-			return fmt.Errorf("not a regular file: %s", sourcePath)
+			return fmt.Errorf("not a regular file or directory: %s", sourcePath)
 		}
 	}
 	return nil

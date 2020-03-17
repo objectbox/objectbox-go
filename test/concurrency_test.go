@@ -95,13 +95,14 @@ func concurrentInsert(t *testing.T, count, concurrency int, putAsync bool) {
 
 	assert.NoErr(t, env.ObjectBox.AwaitAsyncCompletion())
 
-	t.Log("validating counts")
 	if len(errors) != 0 {
-		t.Errorf("encountered %d errors", len(errors))
-		for err := range errors {
-			t.Log(err)
+		t.Errorf("encountered %d errors:", len(errors))
+		for i := 0; i < len(errors); i++ {
+			t.Log("  ", <-errors)
 		}
 	}
+
+	t.Log("validating counts")
 	assert.Eq(t, 0, len(errors))
 	assert.Eq(t, count, len(ids))
 
@@ -120,4 +121,76 @@ func concurrentInsert(t *testing.T, count, concurrency int, putAsync bool) {
 			idsMap[id] = true
 		}
 	}
+}
+
+// TestConcurrentQuery checks concurrently running queries.
+// Previously there was an issue with finalizers, with query being closed during the native call.
+func TestConcurrentQuery(t *testing.T) {
+	env := iot.NewTestEnv()
+	defer env.Close()
+
+	box := iot.BoxForEvent(env.ObjectBox)
+
+	err := box.RemoveAll()
+	assert.NoErr(t, err)
+
+	var objects = 10000
+	var queries = 500
+	var concurrency = 4
+
+	if testing.Short() || strings.Contains(strings.ToLower(runtime.GOARCH), "arm") {
+		objects = 5000
+		queries = 200
+		concurrency = 2
+	}
+
+	assert.NoErr(t, env.ObjectBox.RunInWriteTx(func() error {
+		for i := objects; i > 0; i-- {
+			if _, e := box.Put(&iot.Event{
+				Device: "my device",
+			}); e != nil {
+				return e
+			}
+		}
+		return nil
+	}))
+
+	// prepare channels and launch the goroutines
+	errors := make(chan error, queries)
+
+	t.Logf("launching %d routines to execute %d queries each, over %d objects", concurrency, queries, objects)
+
+	var wg sync.WaitGroup
+	wg.Add(concurrency)
+	for i := concurrency; i > 0; i-- {
+		go func() {
+			defer wg.Done()
+			for j := queries; j > 0; j-- {
+				var e error
+				if j%2 == 0 {
+					_, e = box.Query(iot.Event_.Id.GreaterThan(0)).Find()
+				} else {
+					_, e = box.Query(iot.Event_.Id.GreaterThan(0)).FindIds()
+				}
+				if e != nil {
+					errors <- e
+					break
+				}
+			}
+		}()
+	}
+
+	// collect and check results after everything is done
+	t.Log("waiting for all goroutines to finish")
+	wg.Wait()
+
+	assert.NoErr(t, env.ObjectBox.AwaitAsyncCompletion())
+
+	if len(errors) != 0 {
+		t.Errorf("encountered %d errors:", len(errors))
+		for i := 0; i < len(errors); i++ {
+			t.Log("  ", <-errors)
+		}
+	}
+	assert.Eq(t, 0, len(errors))
 }

@@ -70,6 +70,7 @@ func queryFinalizer(query *Query) {
 
 // The native query object in the ObjectBox core is not tied with other resources.
 // Thus timing of the Close call is independent from other resources.
+// Warning: it's important the object is kept around until a native call returns, e.g. using `runtime.KeepAlive(query)`.
 func (query *Query) installFinalizer() {
 	runtime.SetFinalizer(query, queryFinalizer)
 }
@@ -80,6 +81,8 @@ func (query *Query) errorClosed() error {
 
 // Find returns all objects matching the query
 func (query *Query) Find() (objects interface{}, err error) {
+	defer runtime.KeepAlive(query)
+
 	if query.cQuery == nil {
 		return 0, query.errorClosed()
 	}
@@ -113,6 +116,8 @@ func (query *Query) Limit(limit uint64) *Query {
 
 // FindIds returns IDs of all objects matching the query
 func (query *Query) FindIds() ([]uint64, error) {
+	defer runtime.KeepAlive(query)
+
 	if query.cQuery == nil {
 		return nil, query.errorClosed()
 	}
@@ -137,6 +142,7 @@ func (query *Query) Count() (uint64, error) {
 	if err := cCall(func() C.obx_err { return C.obx_query_count(query.cQuery, &cResult) }); err != nil {
 		return 0, err
 	}
+	runtime.KeepAlive(query)
 	return uint64(cResult), nil
 }
 
@@ -155,6 +161,8 @@ func (query *Query) Remove() (count uint64, err error) {
 	if err := cCall(func() C.obx_err { return C.obx_query_remove(query.cQuery, &cResult) }); err != nil {
 		return 0, err
 	}
+
+	runtime.KeepAlive(query)
 	return uint64(cResult), nil
 }
 
@@ -163,9 +171,11 @@ func (query *Query) DescribeParams() (string, error) {
 	if query.cQuery == nil {
 		return "", query.errorClosed()
 	}
+
 	// no need to free, it's handled by the cQuery internally
 	cResult := C.obx_query_describe_params(query.cQuery)
 
+	runtime.KeepAlive(query)
 	return C.GoString(cResult), nil
 }
 
@@ -205,6 +215,8 @@ type propertyOrAlias interface {
 
 // SetStringParams changes query parameter values on the given property
 func (query *Query) SetStringParams(identifier propertyOrAlias, values ...string) error {
+	defer runtime.KeepAlive(query)
+
 	if err := query.checkIdentifier(identifier); err != nil {
 		return err
 	}
@@ -236,6 +248,8 @@ func (query *Query) SetStringParams(identifier propertyOrAlias, values ...string
 
 // SetStringParamsIn changes query parameter values on the given property
 func (query *Query) SetStringParamsIn(identifier propertyOrAlias, values ...string) error {
+	defer runtime.KeepAlive(query)
+
 	if err := query.checkIdentifier(identifier); err != nil {
 		return err
 	}
@@ -263,6 +277,8 @@ func (query *Query) SetStringParamsIn(identifier propertyOrAlias, values ...stri
 
 // SetInt64Params changes query parameter values on the given property
 func (query *Query) SetInt64Params(identifier propertyOrAlias, values ...int64) error {
+	defer runtime.KeepAlive(query)
+
 	if err := query.checkIdentifier(identifier); err != nil {
 		return err
 	}
@@ -299,6 +315,8 @@ func (query *Query) SetInt64Params(identifier propertyOrAlias, values ...int64) 
 
 // SetInt64ParamsIn changes query parameter values on the given property
 func (query *Query) SetInt64ParamsIn(identifier propertyOrAlias, values ...int64) error {
+	defer runtime.KeepAlive(query)
+
 	if err := query.checkIdentifier(identifier); err != nil {
 		return err
 	}
@@ -323,6 +341,8 @@ func (query *Query) SetInt64ParamsIn(identifier propertyOrAlias, values ...int64
 
 // SetInt32ParamsIn changes query parameter values on the given property
 func (query *Query) SetInt32ParamsIn(identifier propertyOrAlias, values ...int32) error {
+	defer runtime.KeepAlive(query)
+
 	if err := query.checkIdentifier(identifier); err != nil {
 		return err
 	}
@@ -347,6 +367,8 @@ func (query *Query) SetInt32ParamsIn(identifier propertyOrAlias, values ...int32
 
 // SetFloat64Params changes query parameter values on the given property
 func (query *Query) SetFloat64Params(identifier propertyOrAlias, values ...float64) error {
+	defer runtime.KeepAlive(query)
+
 	if err := query.checkIdentifier(identifier); err != nil {
 		return err
 	}
@@ -384,6 +406,8 @@ func (query *Query) SetFloat64Params(identifier propertyOrAlias, values ...float
 
 // SetBytesParams changes query parameter values on the given property
 func (query *Query) SetBytesParams(identifier propertyOrAlias, values ...[]byte) error {
+	defer runtime.KeepAlive(query)
+
 	if err := query.checkIdentifier(identifier); err != nil {
 		return err
 	}

@@ -27,7 +27,7 @@ import (
 	"unsafe"
 
 	"github.com/google/flatbuffers/go"
-	"github.com/objectbox/objectbox-go/internal/generator"
+	"github.com/objectbox/objectbox-generator/cmd/objectbox-gogen"
 )
 
 // ObjectBinding provides an interface for various object types to be included in the model
@@ -276,7 +276,7 @@ func (model *Model) RegisterBinding(binding ObjectBinding) {
 	}
 
 	var version = binding.GeneratorVersion()
-	if version != generator.Version {
+	if version != gogen.VersionId {
 		model.Error = fmt.Errorf("incompatible generator version %d used to generate the binding %s code "+
 			"- please follow the upgrade procedure described in the README.md", version, name)
 		return
@@ -294,7 +294,7 @@ func (model *Model) validate() error {
 		return model.Error
 	}
 
-	if model.generatorVersion != generator.Version {
+	if model.generatorVersion != gogen.VersionId {
 		return fmt.Errorf("incompatible generator version %d used to generate the model code "+
 			"- please follow the upgrade procedure described in the README.md", model.generatorVersion)
 	}

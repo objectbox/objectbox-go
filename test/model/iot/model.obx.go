@@ -25,20 +25,14 @@ var EventBinding = event_EntityInfo{
 // Event_ contains type-based Property helpers to facilitate some common operations such as Queries.
 var Event_ = struct {
 	Id      *objectbox.PropertyUint64
-	Uid     *objectbox.PropertyString
 	Device  *objectbox.PropertyString
 	Date    *objectbox.PropertyInt64
+	Uid     *objectbox.PropertyString
 	Picture *objectbox.PropertyByteVector
 }{
 	Id: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
 			Id:     1,
-			Entity: &EventBinding.Entity,
-		},
-	},
-	Uid: &objectbox.PropertyString{
-		BaseProperty: &objectbox.BaseProperty{
-			Id:     4,
 			Entity: &EventBinding.Entity,
 		},
 	},
@@ -51,6 +45,12 @@ var Event_ = struct {
 	Date: &objectbox.PropertyInt64{
 		BaseProperty: &objectbox.BaseProperty{
 			Id:     3,
+			Entity: &EventBinding.Entity,
+		},
+	},
+	Uid: &objectbox.PropertyString{
+		BaseProperty: &objectbox.BaseProperty{
+			Id:     4,
 			Entity: &EventBinding.Entity,
 		},
 	},
@@ -72,11 +72,11 @@ func (event_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("Event", 1, 1468539308767086854)
 	model.Property("Id", 6, 1, 3098166604415018001)
 	model.PropertyFlags(1)
+	model.Property("Device", 9, 2, 1213411729427304641)
+	model.Property("Date", 10, 3, 5907655274386702697)
 	model.Property("Uid", 9, 4, 472416569173577818)
 	model.PropertyFlags(32)
 	model.PropertyIndex(1, 3297791712577314158)
-	model.Property("Device", 9, 2, 1213411729427304641)
-	model.Property("Date", 10, 3, 5907655274386702697)
 	model.Property("Picture", 23, 5, 6024563395733984005)
 	model.EntityLastPropertyId(5, 6024563395733984005)
 }
@@ -100,8 +100,8 @@ func (event_EntityInfo) PutRelated(ob *objectbox.ObjectBox, object interface{}, 
 // Flatten is called by ObjectBox to transform an object to a FlatBuffer
 func (event_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) error {
 	obj := object.(*Event)
-	var offsetUid = fbutils.CreateStringOffset(fbb, obj.Uid)
 	var offsetDevice = fbutils.CreateStringOffset(fbb, obj.Device)
+	var offsetUid = fbutils.CreateStringOffset(fbb, obj.Uid)
 	var offsetPicture = fbutils.CreateByteVectorOffset(fbb, obj.Picture)
 
 	// build the FlatBuffers object

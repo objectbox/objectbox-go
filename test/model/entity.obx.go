@@ -37,7 +37,6 @@ var Entity_ = struct {
 	Uint64          *objectbox.PropertyUint64
 	Bool            *objectbox.PropertyBool
 	String          *objectbox.PropertyString
-	StringVector    *objectbox.PropertyStringVector
 	Byte            *objectbox.PropertyByte
 	ByteVector      *objectbox.PropertyByteVector
 	Rune            *objectbox.PropertyRune
@@ -45,6 +44,7 @@ var Entity_ = struct {
 	Float64         *objectbox.PropertyFloat64
 	Date            *objectbox.PropertyInt64
 	Complex128      *objectbox.PropertyByteVector
+	StringVector    *objectbox.PropertyStringVector
 	Related         *objectbox.RelationToOne
 	RelatedPtr      *objectbox.RelationToOne
 	RelatedPtr2     *objectbox.RelationToOne
@@ -60,14 +60,14 @@ var Entity_ = struct {
 	Uint64Ptr       *objectbox.PropertyUint64
 	BoolPtr         *objectbox.PropertyBool
 	StringPtr       *objectbox.PropertyString
-	StringVectorPtr *objectbox.PropertyStringVector
 	BytePtr         *objectbox.PropertyByte
-	ByteVectorPtr   *objectbox.PropertyByteVector
 	RunePtr         *objectbox.PropertyRune
 	Float32Ptr      *objectbox.PropertyFloat32
 	Float64Ptr      *objectbox.PropertyFloat64
-	RelatedPtrSlice *objectbox.RelationToMany
+	StringVectorPtr *objectbox.PropertyStringVector
+	ByteVectorPtr   *objectbox.PropertyByteVector
 	RelatedSlice    *objectbox.RelationToMany
+	RelatedPtrSlice *objectbox.RelationToMany
 }{
 	Id: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
@@ -147,12 +147,6 @@ var Entity_ = struct {
 			Entity: &EntityBinding.Entity,
 		},
 	},
-	StringVector: &objectbox.PropertyStringVector{
-		BaseProperty: &objectbox.BaseProperty{
-			Id:     21,
-			Entity: &EntityBinding.Entity,
-		},
-	},
 	Byte: &objectbox.PropertyByte{
 		BaseProperty: &objectbox.BaseProperty{
 			Id:     14,
@@ -192,6 +186,12 @@ var Entity_ = struct {
 	Complex128: &objectbox.PropertyByteVector{
 		BaseProperty: &objectbox.BaseProperty{
 			Id:     20,
+			Entity: &EntityBinding.Entity,
+		},
+	},
+	StringVector: &objectbox.PropertyStringVector{
+		BaseProperty: &objectbox.BaseProperty{
+			Id:     21,
 			Entity: &EntityBinding.Entity,
 		},
 	},
@@ -288,21 +288,9 @@ var Entity_ = struct {
 			Entity: &EntityBinding.Entity,
 		},
 	},
-	StringVectorPtr: &objectbox.PropertyStringVector{
-		BaseProperty: &objectbox.BaseProperty{
-			Id:     43,
-			Entity: &EntityBinding.Entity,
-		},
-	},
 	BytePtr: &objectbox.PropertyByte{
 		BaseProperty: &objectbox.BaseProperty{
 			Id:     38,
-			Entity: &EntityBinding.Entity,
-		},
-	},
-	ByteVectorPtr: &objectbox.PropertyByteVector{
-		BaseProperty: &objectbox.BaseProperty{
-			Id:     44,
 			Entity: &EntityBinding.Entity,
 		},
 	},
@@ -324,15 +312,27 @@ var Entity_ = struct {
 			Entity: &EntityBinding.Entity,
 		},
 	},
-	RelatedPtrSlice: &objectbox.RelationToMany{
-		Id:     5,
-		Source: &EntityBinding.Entity,
-		Target: &TestEntityRelatedBinding.Entity,
+	StringVectorPtr: &objectbox.PropertyStringVector{
+		BaseProperty: &objectbox.BaseProperty{
+			Id:     43,
+			Entity: &EntityBinding.Entity,
+		},
+	},
+	ByteVectorPtr: &objectbox.PropertyByteVector{
+		BaseProperty: &objectbox.BaseProperty{
+			Id:     44,
+			Entity: &EntityBinding.Entity,
+		},
 	},
 	RelatedSlice: &objectbox.RelationToMany{
 		Id:     4,
 		Source: &EntityBinding.Entity,
 		Target: &EntityByValueBinding.Entity,
+	},
+	RelatedPtrSlice: &objectbox.RelationToMany{
+		Id:     5,
+		Source: &EntityBinding.Entity,
+		Target: &TestEntityRelatedBinding.Entity,
 	},
 }
 
@@ -363,7 +363,6 @@ func (entity_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.PropertyFlags(8192)
 	model.Property("Bool", 1, 12, 13717766026420552)
 	model.Property("String", 9, 13, 3525810560076343996)
-	model.Property("StringVector", 30, 21, 3893192683529392073)
 	model.Property("Byte", 2, 14, 4035373893984224671)
 	model.PropertyFlags(8192)
 	model.Property("ByteVector", 23, 15, 1294888641203478533)
@@ -372,6 +371,7 @@ func (entity_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Property("Float64", 8, 18, 681625187526498317)
 	model.Property("Date", 10, 19, 2927532418453906842)
 	model.Property("Complex128", 23, 20, 2323084480359838337)
+	model.Property("StringVector", 30, 21, 3893192683529392073)
 	model.Property("Related", 11, 22, 6981354105569415135)
 	model.PropertyFlags(8712)
 	model.PropertyRelation("TestEntityRelated", 1, 7297830522090799401)
@@ -398,16 +398,16 @@ func (entity_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.PropertyFlags(8192)
 	model.Property("BoolPtr", 1, 35, 8481118512070824875)
 	model.Property("StringPtr", 9, 36, 8409889434685629914)
-	model.Property("StringVectorPtr", 30, 43, 4222000762705400780)
 	model.Property("BytePtr", 2, 38, 7395768407310126147)
 	model.PropertyFlags(8192)
-	model.Property("ByteVectorPtr", 23, 44, 6100401720382402484)
 	model.Property("RunePtr", 5, 40, 5826738612842297282)
 	model.Property("Float32Ptr", 7, 41, 8081176555310747578)
 	model.Property("Float64Ptr", 8, 42, 9203830121246076395)
+	model.Property("StringVectorPtr", 30, 43, 4222000762705400780)
+	model.Property("ByteVectorPtr", 23, 44, 6100401720382402484)
 	model.EntityLastPropertyId(44, 6100401720382402484)
-	model.Relation(5, 1694321226239708534, TestEntityRelatedBinding.Id, TestEntityRelatedBinding.Uid)
 	model.Relation(4, 5379891792880176678, EntityByValueBinding.Id, EntityByValueBinding.Uid)
+	model.Relation(5, 1694321226239708534, TestEntityRelatedBinding.Id, TestEntityRelatedBinding.Uid)
 }
 
 // GetId is called by ObjectBox during Put operations to check for existing ID on an object
@@ -486,9 +486,9 @@ func (entity_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, i
 	}
 
 	var offsetString = fbutils.CreateStringOffset(fbb, obj.String)
-	var offsetStringVector = fbutils.CreateStringVectorOffset(fbb, obj.StringVector)
 	var offsetByteVector = fbutils.CreateByteVectorOffset(fbb, obj.ByteVector)
 	var offsetComplex128 = fbutils.CreateByteVectorOffset(fbb, propComplex128)
+	var offsetStringVector = fbutils.CreateStringVectorOffset(fbb, obj.StringVector)
 
 	var offsetStringPtr flatbuffers.UOffsetT
 	if obj.StringPtr != nil {

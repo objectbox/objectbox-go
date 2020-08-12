@@ -189,7 +189,7 @@ func (box *Box) putOne(id uint64, object interface{}, putMode C.OBXPutMode) erro
 
 	return box.withObjectBytes(object, id, func(bytes []byte) error {
 		return cCall(func() C.obx_err {
-			return C.obx_box_put(box.cBox, C.obx_id(id), unsafe.Pointer(&bytes[0]), C.size_t(len(bytes)), putMode)
+			return C.obx_box_put5(box.cBox, C.obx_id(id), unsafe.Pointer(&bytes[0]), C.size_t(len(bytes)), putMode)
 		})
 	})
 }

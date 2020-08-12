@@ -100,7 +100,7 @@ func (async *AsyncBox) put(object interface{}, mode int) (uint64, error) {
 
 	err = async.box.withObjectBytes(object, id, func(bytes []byte) error {
 		return cCall(func() C.obx_err {
-			return C.obx_async_put_mode(async.cAsync, C.obx_id(id), unsafe.Pointer(&bytes[0]), C.size_t(len(bytes)),
+			return C.obx_async_put5(async.cAsync, C.obx_id(id), unsafe.Pointer(&bytes[0]), C.size_t(len(bytes)),
 				C.OBXPutMode(mode))
 		})
 	})

@@ -168,7 +168,7 @@ func (builder *Builder) BuildOrError() (*ObjectBox, error) {
 	}
 
 	if builder.maxReaders != nil {
-		C.obx_opt_max_readers(cOptions, C.int(*builder.maxReaders))
+		C.obx_opt_max_readers(cOptions, C.uint(*builder.maxReaders))
 	}
 
 	C.obx_opt_model(cOptions, builder.model.cModel)

@@ -40,8 +40,8 @@ type Query struct {
 	box             *Box
 	cQuery          *C.OBX_query
 	closeMutex      sync.Mutex
-	offset          uint64
-	limit           uint64
+	offsetErr       error
+	limitErr        error
 	linkedEntityIds []TypeId
 }
 
@@ -75,42 +75,49 @@ func (query *Query) installFinalizer() {
 	runtime.SetFinalizer(query, queryFinalizer)
 }
 
-func (query *Query) errorClosed() error {
-	return errors.New("illegal state; query was closed")
+func (query *Query) check() error {
+	if query.cQuery == nil {
+		return errors.New("illegal state; query was closed")
+	} else if query.limitErr != nil {
+		return query.limitErr
+	} else if query.offsetErr != nil {
+		return query.offsetErr
+	}
+
+	return nil
 }
 
 // Find returns all objects matching the query
 func (query *Query) Find() (objects interface{}, err error) {
 	defer runtime.KeepAlive(query)
 
-	if query.cQuery == nil {
-		return 0, query.errorClosed()
+	if err := query.check(); err != nil {
+		return nil, err
 	}
 
 	const existingOnly = true
 	if supportsBytesArray {
 		var cFn = func() *C.OBX_bytes_array {
-			return C.obx_query_find(query.cQuery, C.uint64_t(query.offset), C.uint64_t(query.limit))
+			return C.obx_query_find(query.cQuery)
 		}
 		return query.box.readManyObjects(existingOnly, cFn)
 	}
 
 	var cFn = func(visitorArg unsafe.Pointer) C.obx_err {
-		return C.obx_query_visit(query.cQuery, dataVisitor, visitorArg,
-			C.uint64_t(query.offset), C.uint64_t(query.limit))
+		return C.obx_query_visit(query.cQuery, dataVisitor, visitorArg)
 	}
 	return query.box.readUsingVisitor(existingOnly, cFn)
 }
 
 // Offset defines the index of the first object to process (how many objects to skip)
 func (query *Query) Offset(offset uint64) *Query {
-	query.offset = offset
+	query.offsetErr = cCall(func() C.obx_err { return C.obx_query_offset(query.cQuery, C.uint64_t(offset)) })
 	return query
 }
 
 // Limit sets the number of elements to process by the query
 func (query *Query) Limit(limit uint64) *Query {
-	query.limit = limit
+	query.limitErr = cCall(func() C.obx_err { return C.obx_query_limit(query.cQuery, C.uint64_t(limit)) })
 	return query
 }
 
@@ -118,24 +125,19 @@ func (query *Query) Limit(limit uint64) *Query {
 func (query *Query) FindIds() ([]uint64, error) {
 	defer runtime.KeepAlive(query)
 
-	if query.cQuery == nil {
-		return nil, query.errorClosed()
+	if err := query.check(); err != nil {
+		return nil, err
 	}
 
 	return cGetIds(func() *C.OBX_id_array {
-		return C.obx_query_find_ids(query.cQuery, C.uint64_t(query.offset), C.uint64_t(query.limit))
+		return C.obx_query_find_ids(query.cQuery)
 	})
 }
 
 // Count returns the number of objects matching the query
 func (query *Query) Count() (uint64, error) {
-	// doesn't support offset/limit at this point
-	if query.offset != 0 || query.limit != 0 {
-		return 0, fmt.Errorf("limit/offset are not supported by Count at this moment")
-	}
-
-	if query.cQuery == nil {
-		return 0, query.errorClosed()
+	if err := query.check(); err != nil {
+		return 0, err
 	}
 
 	var cResult C.uint64_t
@@ -148,13 +150,8 @@ func (query *Query) Count() (uint64, error) {
 
 // Remove permanently deletes all objects matching the query from the database
 func (query *Query) Remove() (count uint64, err error) {
-	// doesn't support offset/limit at this point
-	if query.offset != 0 || query.limit != 0 {
-		return 0, fmt.Errorf("limit/offset are not supported by Remove at this moment")
-	}
-
-	if query.cQuery == nil {
-		return 0, query.errorClosed()
+	if err := query.check(); err != nil {
+		return 0, err
 	}
 
 	var cResult C.uint64_t
@@ -168,8 +165,8 @@ func (query *Query) Remove() (count uint64, err error) {
 
 // DescribeParams returns a string representation of the query conditions
 func (query *Query) DescribeParams() (string, error) {
-	if query.cQuery == nil {
-		return "", query.errorClosed()
+	if err := query.check(); err != nil {
+		return "", err
 	}
 
 	// no need to free, it's handled by the cQuery internally
@@ -237,9 +234,9 @@ func (query *Query) SetStringParams(identifier propertyOrAlias, values ...string
 			defer C.free(unsafe.Pointer(cString))
 
 			if cAlias != nil {
-				return C.obx_query_string_param_alias(query.cQuery, cAlias, cString)
+				return C.obx_query_param_alias_string(query.cQuery, cAlias, cString)
 			}
-			return C.obx_query_string_param(query.cQuery, C.obx_schema_id(identifier.entityId()), C.obx_schema_id(identifier.propertyId()), cString)
+			return C.obx_query_param_string(query.cQuery, C.obx_schema_id(identifier.entityId()), C.obx_schema_id(identifier.propertyId()), cString)
 		})
 	}
 
@@ -269,9 +266,9 @@ func (query *Query) SetStringParamsIn(identifier propertyOrAlias, values ...stri
 
 	return cCall(func() C.obx_err {
 		if cAlias != nil {
-			return C.obx_query_string_params_in_alias(query.cQuery, cAlias, cStringArray.cArray, C.int(cStringArray.size))
+			return C.obx_query_param_alias_strings(query.cQuery, cAlias, cStringArray.cArray, C.int(cStringArray.size))
 		}
-		return C.obx_query_string_params_in(query.cQuery, C.obx_schema_id(identifier.entityId()), C.obx_schema_id(identifier.propertyId()), cStringArray.cArray, C.int(cStringArray.size))
+		return C.obx_query_param_strings(query.cQuery, C.obx_schema_id(identifier.entityId()), C.obx_schema_id(identifier.propertyId()), cStringArray.cArray, C.int(cStringArray.size))
 	})
 }
 
@@ -296,17 +293,17 @@ func (query *Query) SetInt64Params(identifier propertyOrAlias, values ...int64) 
 	if len(values) == 1 {
 		return cCall(func() C.obx_err {
 			if cAlias != nil {
-				return C.obx_query_int_param_alias(query.cQuery, cAlias, C.int64_t(values[0]))
+				return C.obx_query_param_alias_int(query.cQuery, cAlias, C.int64_t(values[0]))
 			}
-			return C.obx_query_int_param(query.cQuery, C.obx_schema_id(identifier.entityId()), C.obx_schema_id(identifier.propertyId()), C.int64_t(values[0]))
+			return C.obx_query_param_int(query.cQuery, C.obx_schema_id(identifier.entityId()), C.obx_schema_id(identifier.propertyId()), C.int64_t(values[0]))
 		})
 
 	} else if len(values) == 2 {
 		return cCall(func() C.obx_err {
 			if cAlias != nil {
-				return C.obx_query_int_params_alias(query.cQuery, cAlias, C.int64_t(values[0]), C.int64_t(values[1]))
+				return C.obx_query_param_alias_2ints(query.cQuery, cAlias, C.int64_t(values[0]), C.int64_t(values[1]))
 			}
-			return C.obx_query_int_params(query.cQuery, C.obx_schema_id(identifier.entityId()), C.obx_schema_id(identifier.propertyId()), C.int64_t(values[0]), C.int64_t(values[1]))
+			return C.obx_query_param_2ints(query.cQuery, C.obx_schema_id(identifier.entityId()), C.obx_schema_id(identifier.propertyId()), C.int64_t(values[0]), C.int64_t(values[1]))
 		})
 	}
 
@@ -333,9 +330,9 @@ func (query *Query) SetInt64ParamsIn(identifier propertyOrAlias, values ...int64
 
 	return cCall(func() C.obx_err {
 		if cAlias != nil {
-			return C.obx_query_int64_params_in_alias(query.cQuery, cAlias, (*C.int64_t)(unsafe.Pointer(&values[0])), C.int(len(values)))
+			return C.obx_query_param_alias_int64s(query.cQuery, cAlias, (*C.int64_t)(unsafe.Pointer(&values[0])), C.int(len(values)))
 		}
-		return C.obx_query_int64_params_in(query.cQuery, C.obx_schema_id(identifier.entityId()), C.obx_schema_id(identifier.propertyId()), (*C.int64_t)(unsafe.Pointer(&values[0])), C.int(len(values)))
+		return C.obx_query_param_int64s(query.cQuery, C.obx_schema_id(identifier.entityId()), C.obx_schema_id(identifier.propertyId()), (*C.int64_t)(unsafe.Pointer(&values[0])), C.int(len(values)))
 	})
 }
 
@@ -359,9 +356,9 @@ func (query *Query) SetInt32ParamsIn(identifier propertyOrAlias, values ...int32
 
 	return cCall(func() C.obx_err {
 		if cAlias != nil {
-			return C.obx_query_int32_params_in_alias(query.cQuery, cAlias, (*C.int32_t)(unsafe.Pointer(&values[0])), C.int(len(values)))
+			return C.obx_query_param_alias_int32s(query.cQuery, cAlias, (*C.int32_t)(unsafe.Pointer(&values[0])), C.int(len(values)))
 		}
-		return C.obx_query_int32_params_in(query.cQuery, C.obx_schema_id(identifier.entityId()), C.obx_schema_id(identifier.propertyId()), (*C.int32_t)(unsafe.Pointer(&values[0])), C.int(len(values)))
+		return C.obx_query_param_int32s(query.cQuery, C.obx_schema_id(identifier.entityId()), C.obx_schema_id(identifier.propertyId()), (*C.int32_t)(unsafe.Pointer(&values[0])), C.int(len(values)))
 	})
 }
 
@@ -386,17 +383,17 @@ func (query *Query) SetFloat64Params(identifier propertyOrAlias, values ...float
 	if len(values) == 1 {
 		return cCall(func() C.obx_err {
 			if cAlias != nil {
-				return C.obx_query_double_param_alias(query.cQuery, cAlias, C.double(values[0]))
+				return C.obx_query_param_alias_double(query.cQuery, cAlias, C.double(values[0]))
 			}
-			return C.obx_query_double_param(query.cQuery, C.obx_schema_id(identifier.entityId()), C.obx_schema_id(identifier.propertyId()), C.double(values[0]))
+			return C.obx_query_param_double(query.cQuery, C.obx_schema_id(identifier.entityId()), C.obx_schema_id(identifier.propertyId()), C.double(values[0]))
 		})
 
 	} else if len(values) == 2 {
 		return cCall(func() C.obx_err {
 			if cAlias != nil {
-				return C.obx_query_double_params_alias(query.cQuery, cAlias, C.double(values[0]), C.double(values[1]))
+				return C.obx_query_param_alias_2doubles(query.cQuery, cAlias, C.double(values[0]), C.double(values[1]))
 			}
-			return C.obx_query_double_params(query.cQuery, C.obx_schema_id(identifier.entityId()), C.obx_schema_id(identifier.propertyId()), C.double(values[0]), C.double(values[1]))
+			return C.obx_query_param_2doubles(query.cQuery, C.obx_schema_id(identifier.entityId()), C.obx_schema_id(identifier.propertyId()), C.double(values[0]), C.double(values[1]))
 		})
 
 	}
@@ -427,8 +424,8 @@ func (query *Query) SetBytesParams(identifier propertyOrAlias, values ...[]byte)
 
 	return cCall(func() C.obx_err {
 		if cAlias != nil {
-			return C.obx_query_bytes_param_alias(query.cQuery, cAlias, cBytesPtr(values[0]), C.size_t(len(values[0])))
+			return C.obx_query_param_alias_bytes(query.cQuery, cAlias, cBytesPtr(values[0]), C.size_t(len(values[0])))
 		}
-		return C.obx_query_bytes_param(query.cQuery, C.obx_schema_id(identifier.entityId()), C.obx_schema_id(identifier.propertyId()), cBytesPtr(values[0]), C.size_t(len(values[0])))
+		return C.obx_query_param_bytes(query.cQuery, C.obx_schema_id(identifier.entityId()), C.obx_schema_id(identifier.propertyId()), cBytesPtr(values[0]), C.size_t(len(values[0])))
 	})
 }

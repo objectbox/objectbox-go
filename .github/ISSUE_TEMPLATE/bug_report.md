@@ -8,38 +8,39 @@ assignees: ''
 ---
 
 :rotating_light: First, please check:
- - existing issues,
+ - existing issues (including closed ones),
  - Docs https://golang.objectbox.io/
  - FAQ page https://golang.objectbox.io/faq
 
-**Describe the bug**
-A clear and concise description in English of what the bug is.
+#### Description
+A clear and concise description in English of what the issue is.
 
-**Basic info (please complete the following information):**
- - ObjectBox version (are you using the latest version?): [e.g. 2.7.0]
+#### Basic info
+Please complete the following information:
+ - ObjectBox version (are you using the latest version?): [e.g. v1.1.2]
  - Reproducibility: [e.g. occurred once only | occasionally without visible pattern | always]
  - Device: [e.g. Desktop]
  - OS: [e.g. Ubuntu 20.04]
 
-**To Reproduce**
+#### How to reproduce
 Steps to reproduce the behavior:
 1. Put '...'
 2. Make changes to '....'
 3. See error
 
-**Expected behavior**
+#### Expected behavior
 A clear and concise description of what you expected to happen.
 
-**Code**
+#### Code
 If applicable, add code to help explain your problem.
- - Include affected entity classes.
+ - Include affected entity structs.
  - Please remove any unnecessary or confidential parts.
  - At best, link to or attach a project with a failing test.
 
-**Logs, stack traces**
+#### Logs, stack traces
 If applicable, add relevant logs, or a stack trace.
 
-**Additional context**
+#### Additional context
 Add any other context about the problem here.
  - Is there anything special about your code?
  - May transactions or multi-threading play a role?

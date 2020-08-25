@@ -23,6 +23,14 @@ test:linux:x64:go1.13:
   extends: .test:linux:x64
   image: golang:1.13
 
+test:linux:x64:go1.14:
+  extends: .test:linux:x64
+  image: golang:1.14
+
+test:linux:x64:go1.15:
+  extends: .test:linux:x64
+  image: golang:1.15
+
 test:linux:ARMv7hf:
   stage: test
   image: golang

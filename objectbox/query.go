@@ -134,7 +134,8 @@ func (query *Query) FindIds() ([]uint64, error) {
 	})
 }
 
-// Count returns the number of objects matching the query
+// Count returns the number of objects matching the query.
+// Currently can't be used in combination with Offset().
 func (query *Query) Count() (uint64, error) {
 	if err := query.check(); err != nil {
 		return 0, err
@@ -148,7 +149,8 @@ func (query *Query) Count() (uint64, error) {
 	return uint64(cResult), nil
 }
 
-// Remove permanently deletes all objects matching the query from the database
+// Remove permanently deletes all objects matching the query from the database.
+// Currently can't be used in combination with Offset() or Limit().
 func (query *Query) Remove() (count uint64, err error) {
 	if err := query.check(); err != nil {
 		return 0, err

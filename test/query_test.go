@@ -19,14 +19,15 @@ package objectbox_test
 import (
 	"errors"
 	"fmt"
-	"github.com/objectbox/objectbox-go/objectbox"
-	"github.com/objectbox/objectbox-go/test/assert"
-	"github.com/objectbox/objectbox-go/test/model"
 	"reflect"
 	"regexp"
 	"runtime"
 	"strings"
 	"testing"
+
+	"github.com/objectbox/objectbox-go/objectbox"
+	"github.com/objectbox/objectbox-go/test/assert"
+	"github.com/objectbox/objectbox-go/test/model"
 )
 
 // Following methods use many test-cases defined as a list of queryTestCase and run all Query.* methods on each test case
@@ -145,8 +146,8 @@ func TestQueries(t *testing.T) {
 		{499, s{`Int16 < 47`}, box.Query(E.Int16.LessThan(e.Int16)), nil},
 		{1, s{`Int16 between -1 and 1`}, box.Query(E.Int16.Between(-1, 1)), nil},
 		{4, s{`Int16 between 47 and 94`}, box.Query(E.Int16.Between(e.Int16, e.Int16*2)), nil},
-		//{0, s{`Int16 in [94|47]`, `Int16 in [47|94]`}, box.Query(E.Int16.In(e.Int16, e.Int16*2)), nil},
-		//{0, s{`Int16 in [94|47]`, `Int16 in [47|94]`}, box.Query(E.Int16.NotIn(e.Int16, e.Int16*2)), nil},
+		// {0, s{`Int16 in [94|47]`, `Int16 in [47|94]`}, box.Query(E.Int16.In(e.Int16, e.Int16*2)), nil},
+		// {0, s{`Int16 in [94|47]`, `Int16 in [47|94]`}, box.Query(E.Int16.NotIn(e.Int16, e.Int16*2)), nil},
 
 		{1, s{`Uint16 == 0`}, box.Query(E.Uint16.Equals(0)), nil},
 		{3, s{`Uint16 == 47`}, box.Query(E.Uint16.Equals(e.Uint16)), nil},
@@ -155,8 +156,8 @@ func TestQueries(t *testing.T) {
 		{1, s{`Uint16 < 47`}, box.Query(E.Uint16.LessThan(e.Uint16)), nil},
 		{1, s{`Uint16 between 0 and 1`}, box.Query(E.Uint16.Between(0, 1)), nil},
 		{4, s{`Uint16 between 47 and 94`}, box.Query(E.Uint16.Between(e.Uint16, e.Uint16*2)), nil},
-		//{0, s{`Uint16 in [94|47]`, `Uint16 in [47|94]`}, box.Query(E.Uint16.In(e.Uint16, e.Uint16*2)), nil},
-		//{0, s{`Uint16 in [94|47]`, `Uint16 in [47|94]`}, box.Query(E.Uint16.NotIn(e.Uint16, e.Uint16*2)), nil},
+		// {0, s{`Uint16 in [94|47]`, `Uint16 in [47|94]`}, box.Query(E.Uint16.In(e.Uint16, e.Uint16*2)), nil},
+		// {0, s{`Uint16 in [94|47]`, `Uint16 in [47|94]`}, box.Query(E.Uint16.NotIn(e.Uint16, e.Uint16*2)), nil},
 
 		{5, s{`Int8 == 0`}, box.Query(E.Int8.Equals(0)), nil},
 		{6, s{`Int8 == 47`}, box.Query(E.Int8.Equals(e.Int8)), nil},
@@ -165,8 +166,8 @@ func TestQueries(t *testing.T) {
 		{686, s{`Int8 < 47`}, box.Query(E.Int8.LessThan(e.Int8)), nil},
 		{11, s{`Int8 between -1 and 1`}, box.Query(E.Int8.Between(-1, 1)), nil},
 		{179, s{`Int8 between 47 and 94`}, box.Query(E.Int8.Between(e.Int8, e.Int8*2)), nil},
-		//{0, s{`Int8 in [94|47]`, `Int8 in [47|94]`}, box.Query(E.Int8.In(e.Int8, e.Int8*2)), nil},
-		//{0, s{`Int8 in [94|47]`, `Int8 in [47|94]`}, box.Query(E.Int8.NotIn(e.Int8, e.Int8*2)), nil},
+		// {0, s{`Int8 in [94|47]`, `Int8 in [47|94]`}, box.Query(E.Int8.In(e.Int8, e.Int8*2)), nil},
+		// {0, s{`Int8 in [94|47]`, `Int8 in [47|94]`}, box.Query(E.Int8.NotIn(e.Int8, e.Int8*2)), nil},
 
 		{5, s{`Uint8 == 0`}, box.Query(E.Uint8.Equals(0)), nil},
 		{6, s{`Uint8 == 47`}, box.Query(E.Uint8.Equals(e.Uint8)), nil},
@@ -175,8 +176,8 @@ func TestQueries(t *testing.T) {
 		{188, s{`Uint8 < 47`}, box.Query(E.Uint8.LessThan(e.Uint8)), nil},
 		{8, s{`Uint8 between 0 and 1`}, box.Query(E.Uint8.Between(0, 1)), nil},
 		{179, s{`Uint8 between 47 and 94`}, box.Query(E.Uint8.Between(e.Uint8, e.Uint8*2)), nil},
-		//{0, s{`Uint8 in [94|47]`, `Uint8 in [47|94]`}, box.Query(E.Uint8.In(e.Uint8, e.Uint8*2)), nil},
-		//{0, s{`Uint8 in [94|47]`, `Uint8 in [47|94]`}, box.Query(E.Uint8.NotIn(e.Uint8, e.Uint8*2)), nil},
+		// {0, s{`Uint8 in [94|47]`, `Uint8 in [47|94]`}, box.Query(E.Uint8.In(e.Uint8, e.Uint8*2)), nil},
+		// {0, s{`Uint8 in [94|47]`, `Uint8 in [47|94]`}, box.Query(E.Uint8.NotIn(e.Uint8, e.Uint8*2)), nil},
 
 		{5, s{`Byte == 0`}, box.Query(E.Byte.Equals(0)), nil},
 		{6, s{`Byte == 47`}, box.Query(E.Byte.Equals(e.Byte)), nil},
@@ -185,8 +186,8 @@ func TestQueries(t *testing.T) {
 		{188, s{`Byte < 47`}, box.Query(E.Byte.LessThan(e.Byte)), nil},
 		{8, s{`Byte between 0 and 1`}, box.Query(E.Byte.Between(0, 1)), nil},
 		{179, s{`Byte between 47 and 94`}, box.Query(E.Byte.Between(e.Byte, e.Byte*2)), nil},
-		//{0, {`Byte in [94|47]`, `Byte in [47|94]`}, box.Query(E.Byte.In(e.Byte, e.Byte*2)), nil},
-		//{0, {`Byte in [94|47]`, `Byte in [47|94]`}, box.Query(E.Byte.NotIn(e.Byte, e.Byte*2)), nil},
+		// {0, {`Byte in [94|47]`, `Byte in [47|94]`}, box.Query(E.Byte.In(e.Byte, e.Byte*2)), nil},
+		// {0, {`Byte in [94|47]`, `Byte in [47|94]`}, box.Query(E.Byte.NotIn(e.Byte, e.Byte*2)), nil},
 
 		{2, s{`Float64 between 47.739999 and 47.740001`}, box.Query(E.Float64.Between(e.Float64-0.000001, e.Float64+0.000001)), nil},
 		{498, s{`Float64 > 47.740000`}, box.Query(E.Float64.GreaterThan(e.Float64)), nil},
@@ -201,7 +202,7 @@ func TestQueries(t *testing.T) {
 		{2, s{`Float32 between 47.740002 and 95.480003`}, box.Query(E.Float32.Between(e.Float32, e.Float32*2)), nil},
 
 		{6, s{`ByteVector == byte[5]{0x01020305 08}`}, box.Query(E.ByteVector.Equals(e.ByteVector)), nil},
-		//{994, s{`ByteVector != byte[5]{0x01020305 08`}, box.Query(E.ByteVector.NotEquals(e.ByteVector)), nil},
+		// {994, s{`ByteVector != byte[5]{0x01020305 08`}, box.Query(E.ByteVector.NotEquals(e.ByteVector)), nil},
 		{989, s{`ByteVector > byte[5]{0x01020305 08}`}, box.Query(E.ByteVector.GreaterThan(e.ByteVector)), nil},
 		{995, s{`ByteVector >= byte[5]{0x01020305 08}`}, box.Query(E.ByteVector.GreaterOrEqual(e.ByteVector)), nil},
 		{5, s{`ByteVector < byte[5]{0x01020305 08}`}, box.Query(E.ByteVector.LessThan(e.ByteVector)), nil},
@@ -218,13 +219,31 @@ func TestQueryOffsetLimit(t *testing.T) {
 	env := model.NewTestEnv(t)
 	defer env.Close()
 
+	// skip Count() and Remove() - not supported in combination with `offset`
 	testQueries(t, env, queryTestOptions{baseCount: 10, skipCount: true, skipRemove: true}, []queryTestCase{
 		{10, s{`TRUE`}, env.Box.Query(), nil},
 		{5, s{`TRUE`}, env.Box.Query().Offset(5), nil},
-		{3, s{`TRUE`}, env.Box.Query().Limit(3), nil},
 		{3, s{`TRUE`}, env.Box.Query().Offset(3).Limit(3), nil},
 		{1, s{`TRUE`}, env.Box.Query().Offset(9).Limit(3), nil},
 	})
+
+	// Count() works fine in combination with `limit`
+	testQueries(t, env, queryTestOptions{baseCount: 10, skipCount: false, skipRemove: true}, []queryTestCase{
+		{3, s{`TRUE`}, env.Box.Query().Limit(3), nil},
+	})
+
+	// test negative queries where offset/limit is not supported
+	var assertNotSupported = func(count uint64, err error) {
+		assert.Eq(t, count, uint64(0))
+		assert.Err(t, err)
+		assert.True(t, strings.Contains(err.Error(), "not supported"))
+	}
+
+	assertNotSupported(env.Box.Query().Offset(5).Count())
+	assertNotSupported(env.Box.Query().Offset(5).Remove())
+	assertNotSupported(env.Box.Query().Offset(1).Limit(2).Count())
+	assertNotSupported(env.Box.Query().Offset(1).Limit(2).Remove())
+	assertNotSupported(env.Box.Query().Limit(5).Remove())
 }
 
 func TestQueryParams(t *testing.T) {
@@ -1132,7 +1151,7 @@ func executeTestCase(t *testing.T, env *model.TestEnv, options queryTestOptions,
 	if ids, err := query.FindIds(); err != nil {
 		assert.Failf(t, "case #%d {%s} %s", i, desc, err)
 	} else {
-		//t.Logf("case #%d {%s} - checking all IDs are present in the result", i, desc)
+		// t.Logf("case #%d {%s} - checking all IDs are present in the result", i, desc)
 		matchAllEntityIds(t, ids, actualData)
 	}
 

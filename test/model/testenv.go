@@ -31,9 +31,9 @@ import (
 type TestEnv struct {
 	ObjectBox *objectbox.ObjectBox
 	Box       *EntityBox
+	Directory string
 
 	t       *testing.T
-	dir     string
 	options TestEnvOptions
 }
 
@@ -51,11 +51,11 @@ func NewTestEnv(t *testing.T) *TestEnv {
 	}
 
 	var env = &TestEnv{
-		dir: tempDir,
-		t:   t,
+		Directory: tempDir,
+		t:         t,
 	}
 
-	env.ObjectBox, err = objectbox.NewBuilder().Directory(env.dir).Model(ObjectBoxModel()).Build()
+	env.ObjectBox, err = objectbox.NewBuilder().Directory(env.Directory).Model(ObjectBoxModel()).Build()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -68,7 +68,7 @@ func NewTestEnv(t *testing.T) *TestEnv {
 // Close closes ObjectBox and removes the database
 func (env *TestEnv) Close() {
 	env.ObjectBox.Close()
-	os.RemoveAll(env.dir)
+	os.RemoveAll(env.Directory)
 }
 
 func removeFileIfExists(path string) error {

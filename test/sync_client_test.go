@@ -18,12 +18,13 @@ package objectbox_test
 
 import (
 	"errors"
-	"github.com/objectbox/objectbox-go/objectbox"
-	"github.com/objectbox/objectbox-go/test/assert"
-	"github.com/objectbox/objectbox-go/test/model"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/objectbox/objectbox-go/objectbox"
+	"github.com/objectbox/objectbox-go/test/assert"
+	"github.com/objectbox/objectbox-go/test/model"
 )
 
 func TestSyncAuth(t *testing.T) {
@@ -84,6 +85,7 @@ func TestSyncState(t *testing.T) {
 	defer env.Close()
 
 	var client = env.SyncClient(server.URI())
+	defer client.Close()
 
 	assert.Eq(t, objectbox.SyncClientStateCreated, client.State())
 
@@ -172,12 +174,12 @@ func TestSyncDataAutomatic(t *testing.T) {
 	defer server.Close()
 
 	var a = NewTestSyncClient(t, server.URI(), "a")
-	a.Start()
 	defer a.Close()
+	a.Start()
 
 	var b = NewTestSyncClient(t, server.URI(), "b")
-	b.Start()
 	defer b.Close()
+	b.Start()
 
 	isEmpty, err := a.env.Box.IsEmpty()
 	assert.NoErr(t, err)
@@ -230,14 +232,14 @@ func TestSyncDataManual(t *testing.T) {
 	defer server.Close()
 
 	var a = NewTestSyncClient(t, server.URI(), "a")
+	defer a.Close()
 	assert.NoErr(t, a.sync.UpdatesMode(objectbox.SyncClientUpdatesManual))
 	a.Start()
-	defer a.Close()
 
 	var b = NewTestSyncClient(t, server.URI(), "b")
+	defer b.Close()
 	assert.NoErr(t, b.sync.UpdatesMode(objectbox.SyncClientUpdatesManual))
 	b.Start()
-	defer b.Close()
 
 	isEmpty, err := a.env.Box.IsEmpty()
 	assert.NoErr(t, err)
@@ -300,25 +302,25 @@ func TestSyncWaitForLogin(t *testing.T) {
 
 	// success
 	var a = NewTestSyncClient(t, server.URI(), "a")
+	defer a.Close()
 	timedOut, err := a.sync.WaitForLogin(time.Second)
 	assert.NoErr(t, err)
 	assert.True(t, !timedOut)
-	defer a.Close()
 
 	// failure
 	var b = NewTestSyncClient(t, server.URI(), "b")
+	defer b.Close()
 	assert.NoErr(t, b.sync.AuthSharedSecret([]byte{1}))
 	timedOut, err = b.sync.WaitForLogin(time.Second)
 	assert.True(t, strings.Contains(err.Error(), "credentials rejected"))
 	assert.True(t, !timedOut)
-	defer b.Close()
 
 	// time out
 	var c = NewTestSyncClient(t, server.URI(), "b")
+	defer c.Close()
 	timedOut, err = c.sync.WaitForLogin(time.Nanosecond)
 	assert.NoErr(t, err)
 	assert.True(t, timedOut)
-	defer c.Close()
 }
 
 func TestSyncOnChange(t *testing.T) {
@@ -326,13 +328,14 @@ func TestSyncOnChange(t *testing.T) {
 	defer server.Close()
 
 	var a = NewTestSyncClient(t, server.URI(), "a")
-	a.Start()
 	defer a.Close()
+	a.Start()
 
 	var putIDs = make([]uint64, 0)
 	var removedIDs = make([]uint64, 0)
 
 	var b = NewTestSyncClient(t, server.URI(), "b")
+	defer b.Close()
 	assert.NoErr(t, b.sync.OnChange(func(changes []*objectbox.SyncChangeNotification) {
 		t.Logf("received %d changes", len(changes))
 		for i, change := range changes {
@@ -346,17 +349,12 @@ func TestSyncOnChange(t *testing.T) {
 		}
 	}))
 	b.Start()
-	defer b.Close()
 
-	var count uint = 1000
-	if testing.Short() {
-		count = 100
-	}
-
-	// insert into one box
+	// insert on one client
+	var count uint = 100
 	a.env.Populate(count)
 
-	// wait for the data to be synced to the other box
+	// wait for the data to be received by another client - its onChange() listener is called
 	assert.NoErr(t, waitUntil(time.Second, func() (bool, error) {
 		return count == uint(len(putIDs)), nil
 	}))

@@ -268,14 +268,6 @@ func (client *SyncClient) CancelUpdates() error {
 	})
 }
 
-// DoFullSync is useful for new clients to quickly bring the local database up-to-date in a single transaction, without
-// transmitting the whole history.
-func (client *SyncClient) DoFullSync() error {
-	return cCall(func() C.obx_err {
-		return C.obx_sync_full(client.cClient)
-	})
-}
-
 // SyncChangeNotification describes a single incoming change received by the sync client
 type SyncChangeNotification struct {
 	EntityId   TypeId

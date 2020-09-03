@@ -130,8 +130,9 @@ func cCallbackLookup(id cCallbackId) cCallable {
 
 	fn, found := cCallbackMap[id]
 	if !found {
-		// this must never happen - it's either a programming error or a bug in the C library, calling with an invalid pass-through argument
-		panic(fmt.Errorf("invalid callback ID %d", id))
+		// this might happen in extraordinary circumstances, e.g. during shutdown if there are still some sync listeners
+		fmt.Println(fmt.Errorf("invalid C-API callback ID %d", id))
+		return nil
 	}
 
 	return fn

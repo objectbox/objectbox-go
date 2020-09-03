@@ -18,52 +18,66 @@ package objectbox_test
 
 import (
 	"bytes"
-	"github.com/objectbox/objectbox-go/test/assert"
-	"github.com/objectbox/objectbox-go/test/model"
 	"net"
 	"net/url"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/objectbox/objectbox-go/test/assert"
+	"github.com/objectbox/objectbox-go/test/model"
 )
+
+// find a free (available) port to bind to
+func findFreeTCPPort(t *testing.T) int {
+	addr, err := net.ResolveTCPAddr("tcp", "localhost:0")
+	assert.NoErr(t, err)
+
+	listener, err := net.ListenTCP("tcp", addr)
+	assert.NoErr(t, err)
+	var port = listener.Addr().(*net.TCPAddr).Port
+	listener.Close()
+	return port
+}
 
 // testSyncServer wraps a sync-server binary and executes it.
 // The binary must be present in the test folder in order for sync tests to work.
 type testSyncServer struct {
-	t   *testing.T
-	err error
-	cmd *exec.Cmd
-	env *model.TestEnv
+	t    *testing.T
+	err  error
+	cmd  *exec.Cmd
+	env  *model.TestEnv
+	port int
 }
 
 func NewTestSyncServer(t *testing.T) *testSyncServer {
-	// sync-server executable must be located in the `test` directory (current directory when executing the tests)
-	const executable = "sync-server"
-
-	// check if the executable exists
-	if _, err := os.Stat(executable); os.IsNotExist(err) {
-		cwd, err := os.Getwd()
-		assert.NoErr(t, err)
-
-		t.Skipf("%s executable not found in %v", executable, cwd)
-	} else {
-		assert.NoErr(t, err)
-	}
+	var execPath = findSyncServerExecutable(t)
 
 	var server = &testSyncServer{
-		t: t,
+		t:    t,
+		port: findFreeTCPPort(t),
 	}
+
+	// will be executed in case of error in this function
+	var cleanup = server.Close
+	defer func() {
+		if cleanup != nil {
+			cleanup()
+		}
+	}()
 
 	// prepare a database directory
 	server.env = model.NewTestEnv(server.t)
 	server.env.ObjectBox.Close() // close the database so that the server can open it
 
-	server.cmd = exec.Command("./"+executable,
+	server.cmd = exec.Command(execPath,
 		"--unsecure-no-authentication",
-		"--db-directory", server.env.Directory,
-		"--bind", server.URI(),
+		"--db-directory="+server.env.Directory,
+		"--bind="+server.URI(),
+		"--browser-bind=0:0",
 	)
 	server.cmd.Stdout = &bytes.Buffer{}
 	server.cmd.Stderr = &bytes.Buffer{}
@@ -75,7 +89,7 @@ func NewTestSyncServer(t *testing.T) *testSyncServer {
 	uri, err := url.Parse(server.URI())
 	assert.NoErr(t, err)
 	assert.NoErr(t, waitUntil(5*time.Second, func() (b bool, e error) {
-		conn, err := net.DialTimeout("tcp", uri.Hostname() + ":" + uri.Port(), 5 * time.Second)
+		conn, err := net.DialTimeout("tcp", uri.Hostname()+":"+uri.Port(), 5*time.Second)
 
 		// if connection was successful, stop waiting (return true)
 		if err == nil {
@@ -91,7 +105,31 @@ func NewTestSyncServer(t *testing.T) *testSyncServer {
 		return false, err
 	}))
 
+	cleanup = nil // no error, don't close the server
 	return server
+}
+
+func findSyncServerExecutable(t *testing.T) string {
+	// sync-server executable must be located in the `test` directory (CWD when executing tests) or available in $PATH
+	const executable = "sync-server"
+	var path = "./" + executable
+
+	// check if the executable exists in the CWD - that one will have preference
+	if _, err := os.Stat(executable); err != nil {
+		if !os.IsNotExist(err) {
+			assert.NoErr(t, err)
+		}
+
+		// if not found in CWD, try to look up in $PATH
+		path, err = exec.LookPath(executable)
+		if err != nil {
+			cwd, err := os.Getwd()
+			assert.NoErr(t, err)
+
+			t.Skipf("%s executable not found in %v and is not available in $PATH either", executable, cwd)
+		}
+	}
+	return path
 }
 
 func (server *testSyncServer) Close() {
@@ -114,7 +152,7 @@ func (server *testSyncServer) Close() {
 }
 
 func (server *testSyncServer) URI() string {
-	return "ws://127.0.0.1:9999"
+	return "ws://127.0.0.1:" + strconv.FormatInt(int64(server.port), 10)
 }
 
 func TestSyncServer(t *testing.T) {

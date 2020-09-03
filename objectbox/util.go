@@ -48,4 +48,3 @@ func waitUntil(timeout time.Duration, step time.Duration, fn func() (bool, error
 		}
 	}
 }
-

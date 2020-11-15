@@ -44,7 +44,7 @@ func findFreeTCPPort(t *testing.T) int {
 }
 
 // testSyncServer wraps a sync-server binary and executes it.
-// The binary must be present in the test folder in order for sync tests to work.
+// The binary must be present in the test folder or a known executable (available in $PATH).
 type testSyncServer struct {
 	t    *testing.T
 	err  error
@@ -74,7 +74,7 @@ func NewTestSyncServer(t *testing.T) *testSyncServer {
 	server.env.ObjectBox.Close() // close the database so that the server can open it
 
 	server.cmd = exec.Command(execPath,
-		"--unsecure-no-authentication",
+		"--unsecured-no-authentication",
 		"--db-directory="+server.env.Directory,
 		"--bind="+server.URI(),
 		"--browser-bind=0:0",

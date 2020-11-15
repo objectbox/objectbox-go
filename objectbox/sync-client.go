@@ -211,7 +211,7 @@ func (client *SyncClient) Start() error {
 	// That's what the client code/setup implies. Maybe the c-api should do this automatically.
 	if !client.authSet {
 		if err := cCall(func() C.obx_err {
-			return C.obx_sync_credentials(client.cClient, C.OBXSyncCredentialsType_UNCHECKED, nil, 0)
+			return C.obx_sync_credentials(client.cClient, C.OBXSyncCredentialsType_NONE, nil, 0)
 		}); err != nil {
 			return err
 		}

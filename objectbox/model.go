@@ -159,6 +159,16 @@ func (model *Model) Entity(name string, id TypeId, uid uint64) {
 	}
 }
 
+// EntityFlags configures behavior of entities
+func (model *Model) EntityFlags(entityFlags int) {
+	if model.Error != nil {
+		return
+	}
+	model.Error = cCall(func() C.obx_err {
+		return C.obx_model_entity_flags(model.cModel, C.OBXEntityFlags(entityFlags))
+	})
+}
+
 // TODO each Entity-related method (e.g. Property, Relation,...) should check whether currentEntity is not nil
 
 // Relation adds a "standalone" many-to-many relation between the current entity and a target entity

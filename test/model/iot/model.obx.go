@@ -75,7 +75,7 @@ func (event_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Property("Device", 9, 2, 1213411729427304641)
 	model.Property("Date", 10, 3, 5907655274386702697)
 	model.Property("Uid", 9, 4, 472416569173577818)
-	model.PropertyFlags(32)
+	model.PropertyFlags(2080)
 	model.PropertyIndex(1, 3297791712577314158)
 	model.Property("Picture", 23, 5, 6024563395733984005)
 	model.EntityLastPropertyId(5, 6024563395733984005)

@@ -323,7 +323,7 @@ func (qb *QueryBuilder) Any(ids []ConditionId) (ConditionId, error) {
 	var cid ConditionId
 
 	if qb.Err == nil {
-		cid = qb.getConditionId(C.obx_qb_any(qb.cqb, (*C.obx_qb_cond)(unsafe.Pointer(&ids[0])), C.int(len(ids))))
+		cid = qb.getConditionId(C.obx_qb_any(qb.cqb, (*C.obx_qb_cond)(unsafe.Pointer(&ids[0])), C.size_t(len(ids))))
 	}
 
 	return cid, qb.Err
@@ -334,7 +334,7 @@ func (qb *QueryBuilder) All(ids []ConditionId) (ConditionId, error) {
 	var cid ConditionId
 
 	if qb.Err == nil {
-		cid = qb.getConditionId(C.obx_qb_all(qb.cqb, (*C.obx_qb_cond)(unsafe.Pointer(&ids[0])), C.int(len(ids))))
+		cid = qb.getConditionId(C.obx_qb_all(qb.cqb, (*C.obx_qb_cond)(unsafe.Pointer(&ids[0])), C.size_t(len(ids))))
 	}
 
 	return cid, qb.Err
@@ -383,7 +383,7 @@ func (qb *QueryBuilder) StringIn(property *BaseProperty, values []string, caseSe
 		if len(values) > 0 {
 			cStringArray := goStringArrayToC(values)
 			defer cStringArray.free()
-			cid = qb.getConditionId(C.obx_qb_in_strings(qb.cqb, C.obx_schema_id(property.Id), cStringArray.cArray, C.int(cStringArray.size), C.bool(caseSensitive)))
+			cid = qb.getConditionId(C.obx_qb_in_strings(qb.cqb, C.obx_schema_id(property.Id), cStringArray.cArray, C.size_t(cStringArray.size), C.bool(caseSensitive)))
 		} else {
 			cid = qb.getConditionId(C.obx_qb_in_strings(qb.cqb, C.obx_schema_id(property.Id), nil, 0, C.bool(caseSensitive)))
 		}
@@ -525,22 +525,30 @@ func (qb *QueryBuilder) IntNotEqual(property *BaseProperty, value int64) (Condit
 }
 
 // IntGreater is called internally
-func (qb *QueryBuilder) IntGreater(property *BaseProperty, value int64) (ConditionId, error) {
+func (qb *QueryBuilder) IntGreater(property *BaseProperty, value int64, withEqual bool) (ConditionId, error) {
 	var cid ConditionId
 
 	if qb.Err == nil && qb.checkEntityId(property.Entity.Id) {
-		cid = qb.getConditionId(C.obx_qb_greater_than_int(qb.cqb, C.obx_schema_id(property.Id), C.int64_t(value)))
+		if withEqual {
+			cid = qb.getConditionId(C.obx_qb_greater_or_equal_int(qb.cqb, C.obx_schema_id(property.Id), C.int64_t(value)))
+		} else {
+			cid = qb.getConditionId(C.obx_qb_greater_than_int(qb.cqb, C.obx_schema_id(property.Id), C.int64_t(value)))
+		}
 	}
 
 	return cid, qb.Err
 }
 
 // IntLess is called internally
-func (qb *QueryBuilder) IntLess(property *BaseProperty, value int64) (ConditionId, error) {
+func (qb *QueryBuilder) IntLess(property *BaseProperty, value int64, withEqual bool) (ConditionId, error) {
 	var cid ConditionId
 
 	if qb.Err == nil && qb.checkEntityId(property.Entity.Id) {
-		cid = qb.getConditionId(C.obx_qb_less_than_int(qb.cqb, C.obx_schema_id(property.Id), C.int64_t(value)))
+		if withEqual {
+			cid = qb.getConditionId(C.obx_qb_less_or_equal_int(qb.cqb, C.obx_schema_id(property.Id), C.int64_t(value)))
+		} else {
+			cid = qb.getConditionId(C.obx_qb_less_than_int(qb.cqb, C.obx_schema_id(property.Id), C.int64_t(value)))
+		}
 	}
 
 	return cid, qb.Err
@@ -551,7 +559,7 @@ func (qb *QueryBuilder) Int64In(property *BaseProperty, values []int64) (Conditi
 	var cid ConditionId
 
 	if qb.Err == nil && qb.checkEntityId(property.Entity.Id) {
-		cid = qb.getConditionId(C.obx_qb_in_int64s(qb.cqb, C.obx_schema_id(property.Id), goInt64ArrayToC(values), C.int(len(values))))
+		cid = qb.getConditionId(C.obx_qb_in_int64s(qb.cqb, C.obx_schema_id(property.Id), goInt64ArrayToC(values), C.size_t(len(values))))
 	}
 
 	return cid, qb.Err
@@ -562,7 +570,7 @@ func (qb *QueryBuilder) Int64NotIn(property *BaseProperty, values []int64) (Cond
 	var cid ConditionId
 
 	if qb.Err == nil && qb.checkEntityId(property.Entity.Id) {
-		cid = qb.getConditionId(C.obx_qb_not_in_int64s(qb.cqb, C.obx_schema_id(property.Id), goInt64ArrayToC(values), C.int(len(values))))
+		cid = qb.getConditionId(C.obx_qb_not_in_int64s(qb.cqb, C.obx_schema_id(property.Id), goInt64ArrayToC(values), C.size_t(len(values))))
 	}
 
 	return cid, qb.Err
@@ -573,7 +581,7 @@ func (qb *QueryBuilder) Int32In(property *BaseProperty, values []int32) (Conditi
 	var cid ConditionId
 
 	if qb.Err == nil && qb.checkEntityId(property.Entity.Id) {
-		cid = qb.getConditionId(C.obx_qb_in_int32s(qb.cqb, C.obx_schema_id(property.Id), goInt32ArrayToC(values), C.int(len(values))))
+		cid = qb.getConditionId(C.obx_qb_in_int32s(qb.cqb, C.obx_schema_id(property.Id), goInt32ArrayToC(values), C.size_t(len(values))))
 	}
 
 	return cid, qb.Err
@@ -584,29 +592,37 @@ func (qb *QueryBuilder) Int32NotIn(property *BaseProperty, values []int32) (Cond
 	var cid ConditionId
 
 	if qb.Err == nil && qb.checkEntityId(property.Entity.Id) {
-		cid = qb.getConditionId(C.obx_qb_not_in_int32s(qb.cqb, C.obx_schema_id(property.Id), goInt32ArrayToC(values), C.int(len(values))))
+		cid = qb.getConditionId(C.obx_qb_not_in_int32s(qb.cqb, C.obx_schema_id(property.Id), goInt32ArrayToC(values), C.size_t(len(values))))
 	}
 
 	return cid, qb.Err
 }
 
 // DoubleGreater is called internally
-func (qb *QueryBuilder) DoubleGreater(property *BaseProperty, value float64) (ConditionId, error) {
+func (qb *QueryBuilder) DoubleGreater(property *BaseProperty, value float64, withEqual bool) (ConditionId, error) {
 	var cid ConditionId
 
 	if qb.Err == nil && qb.checkEntityId(property.Entity.Id) {
-		cid = qb.getConditionId(C.obx_qb_greater_than_double(qb.cqb, C.obx_schema_id(property.Id), C.double(value)))
+		if withEqual {
+			cid = qb.getConditionId(C.obx_qb_greater_or_equal_double(qb.cqb, C.obx_schema_id(property.Id), C.double(value)))
+		} else {
+			cid = qb.getConditionId(C.obx_qb_greater_than_double(qb.cqb, C.obx_schema_id(property.Id), C.double(value)))
+		}
 	}
 
 	return cid, qb.Err
 }
 
 // DoubleLess is called internally
-func (qb *QueryBuilder) DoubleLess(property *BaseProperty, value float64) (ConditionId, error) {
+func (qb *QueryBuilder) DoubleLess(property *BaseProperty, value float64, withEqual bool) (ConditionId, error) {
 	var cid ConditionId
 
 	if qb.Err == nil && qb.checkEntityId(property.Entity.Id) {
-		cid = qb.getConditionId(C.obx_qb_less_than_double(qb.cqb, C.obx_schema_id(property.Id), C.double(value)))
+		if withEqual {
+			cid = qb.getConditionId(C.obx_qb_less_or_equal_double(qb.cqb, C.obx_schema_id(property.Id), C.double(value)))
+		} else {
+			cid = qb.getConditionId(C.obx_qb_less_than_double(qb.cqb, C.obx_schema_id(property.Id), C.double(value)))
+		}
 	}
 
 	return cid, qb.Err

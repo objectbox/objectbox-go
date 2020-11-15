@@ -268,9 +268,9 @@ func (query *Query) SetStringParamsIn(identifier propertyOrAlias, values ...stri
 
 	return cCall(func() C.obx_err {
 		if cAlias != nil {
-			return C.obx_query_param_alias_strings(query.cQuery, cAlias, cStringArray.cArray, C.int(cStringArray.size))
+			return C.obx_query_param_alias_strings(query.cQuery, cAlias, cStringArray.cArray, C.size_t(cStringArray.size))
 		}
-		return C.obx_query_param_strings(query.cQuery, C.obx_schema_id(identifier.entityId()), C.obx_schema_id(identifier.propertyId()), cStringArray.cArray, C.int(cStringArray.size))
+		return C.obx_query_param_strings(query.cQuery, C.obx_schema_id(identifier.entityId()), C.obx_schema_id(identifier.propertyId()), cStringArray.cArray, C.size_t(cStringArray.size))
 	})
 }
 
@@ -332,9 +332,9 @@ func (query *Query) SetInt64ParamsIn(identifier propertyOrAlias, values ...int64
 
 	return cCall(func() C.obx_err {
 		if cAlias != nil {
-			return C.obx_query_param_alias_int64s(query.cQuery, cAlias, (*C.int64_t)(unsafe.Pointer(&values[0])), C.int(len(values)))
+			return C.obx_query_param_alias_int64s(query.cQuery, cAlias, (*C.int64_t)(unsafe.Pointer(&values[0])), C.size_t(len(values)))
 		}
-		return C.obx_query_param_int64s(query.cQuery, C.obx_schema_id(identifier.entityId()), C.obx_schema_id(identifier.propertyId()), (*C.int64_t)(unsafe.Pointer(&values[0])), C.int(len(values)))
+		return C.obx_query_param_int64s(query.cQuery, C.obx_schema_id(identifier.entityId()), C.obx_schema_id(identifier.propertyId()), (*C.int64_t)(unsafe.Pointer(&values[0])), C.size_t(len(values)))
 	})
 }
 
@@ -358,9 +358,9 @@ func (query *Query) SetInt32ParamsIn(identifier propertyOrAlias, values ...int32
 
 	return cCall(func() C.obx_err {
 		if cAlias != nil {
-			return C.obx_query_param_alias_int32s(query.cQuery, cAlias, (*C.int32_t)(unsafe.Pointer(&values[0])), C.int(len(values)))
+			return C.obx_query_param_alias_int32s(query.cQuery, cAlias, (*C.int32_t)(unsafe.Pointer(&values[0])), C.size_t(len(values)))
 		}
-		return C.obx_query_param_int32s(query.cQuery, C.obx_schema_id(identifier.entityId()), C.obx_schema_id(identifier.propertyId()), (*C.int32_t)(unsafe.Pointer(&values[0])), C.int(len(values)))
+		return C.obx_query_param_int32s(query.cQuery, C.obx_schema_id(identifier.entityId()), C.obx_schema_id(identifier.propertyId()), (*C.int32_t)(unsafe.Pointer(&values[0])), C.size_t(len(values)))
 	})
 }
 

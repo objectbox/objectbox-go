@@ -258,7 +258,16 @@ func (property PropertyInt64) NotEquals(value int64) Condition {
 func (property PropertyInt64) GreaterThan(value int64) Condition {
 	return &conditionClosure{
 		apply: func(qb *QueryBuilder) (ConditionId, error) {
-			return qb.IntGreater(property.BaseProperty, value)
+			return qb.IntGreater(property.BaseProperty, value, false)
+		},
+	}
+}
+
+// GreaterOrEqual finds entities with the stored property value greater than the given value or they're equal
+func (property PropertyInt64) GreaterOrEqual(value int64) Condition {
+	return &conditionClosure{
+		apply: func(qb *QueryBuilder) (ConditionId, error) {
+			return qb.IntGreater(property.BaseProperty, value, true)
 		},
 	}
 }
@@ -267,7 +276,16 @@ func (property PropertyInt64) GreaterThan(value int64) Condition {
 func (property PropertyInt64) LessThan(value int64) Condition {
 	return &conditionClosure{
 		apply: func(qb *QueryBuilder) (ConditionId, error) {
-			return qb.IntLess(property.BaseProperty, value)
+			return qb.IntLess(property.BaseProperty, value, false)
+		},
+	}
+}
+
+// LessOrEqual finds entities with the stored property value less than the given value or they're equal
+func (property PropertyInt64) LessOrEqual(value int64) Condition {
+	return &conditionClosure{
+		apply: func(qb *QueryBuilder) (ConditionId, error) {
+			return qb.IntLess(property.BaseProperty, value, true)
 		},
 	}
 }
@@ -346,7 +364,16 @@ func (property PropertyInt) NotEquals(value int) Condition {
 func (property PropertyInt) GreaterThan(value int) Condition {
 	return &conditionClosure{
 		apply: func(qb *QueryBuilder) (ConditionId, error) {
-			return qb.IntGreater(property.BaseProperty, int64(value))
+			return qb.IntGreater(property.BaseProperty, int64(value), false)
+		},
+	}
+}
+
+// GreaterOrEqual finds entities with the stored property value greater than the given value or they're equal
+func (property PropertyInt) GreaterOrEqual(value int) Condition {
+	return &conditionClosure{
+		apply: func(qb *QueryBuilder) (ConditionId, error) {
+			return qb.IntGreater(property.BaseProperty, int64(value), true)
 		},
 	}
 }
@@ -355,7 +382,16 @@ func (property PropertyInt) GreaterThan(value int) Condition {
 func (property PropertyInt) LessThan(value int) Condition {
 	return &conditionClosure{
 		apply: func(qb *QueryBuilder) (ConditionId, error) {
-			return qb.IntLess(property.BaseProperty, int64(value))
+			return qb.IntLess(property.BaseProperty, int64(value), false)
+		},
+	}
+}
+
+// LessOrEqual finds entities with the stored property value less than the given value or they're equal
+func (property PropertyInt) LessOrEqual(value int) Condition {
+	return &conditionClosure{
+		apply: func(qb *QueryBuilder) (ConditionId, error) {
+			return qb.IntLess(property.BaseProperty, int64(value), true)
 		},
 	}
 }
@@ -444,7 +480,16 @@ func (property PropertyUint64) NotEquals(value uint64) Condition {
 func (property PropertyUint64) GreaterThan(value uint64) Condition {
 	return &conditionClosure{
 		apply: func(qb *QueryBuilder) (ConditionId, error) {
-			return qb.IntGreater(property.BaseProperty, int64(value))
+			return qb.IntGreater(property.BaseProperty, int64(value), false)
+		},
+	}
+}
+
+// GreaterOrEqual finds entities with the stored property value greater than the given value or they're equal
+func (property PropertyUint64) GreaterOrEqual(value uint64) Condition {
+	return &conditionClosure{
+		apply: func(qb *QueryBuilder) (ConditionId, error) {
+			return qb.IntGreater(property.BaseProperty, int64(value), true)
 		},
 	}
 }
@@ -453,7 +498,16 @@ func (property PropertyUint64) GreaterThan(value uint64) Condition {
 func (property PropertyUint64) LessThan(value uint64) Condition {
 	return &conditionClosure{
 		apply: func(qb *QueryBuilder) (ConditionId, error) {
-			return qb.IntLess(property.BaseProperty, int64(value))
+			return qb.IntLess(property.BaseProperty, int64(value), false)
+		},
+	}
+}
+
+// LessOrEqual finds entities with the stored property value less than the given value or they're equal
+func (property PropertyUint64) LessOrEqual(value uint64) Condition {
+	return &conditionClosure{
+		apply: func(qb *QueryBuilder) (ConditionId, error) {
+			return qb.IntLess(property.BaseProperty, int64(value), true)
 		},
 	}
 }
@@ -542,7 +596,16 @@ func (property PropertyUint) NotEquals(value uint) Condition {
 func (property PropertyUint) GreaterThan(value uint) Condition {
 	return &conditionClosure{
 		apply: func(qb *QueryBuilder) (ConditionId, error) {
-			return qb.IntGreater(property.BaseProperty, int64(value))
+			return qb.IntGreater(property.BaseProperty, int64(value), false)
+		},
+	}
+}
+
+// GreaterOrEqual finds entities with the stored property value greater than the given value
+func (property PropertyUint) GreaterOrEqual(value uint) Condition {
+	return &conditionClosure{
+		apply: func(qb *QueryBuilder) (ConditionId, error) {
+			return qb.IntGreater(property.BaseProperty, int64(value), true)
 		},
 	}
 }
@@ -551,7 +614,16 @@ func (property PropertyUint) GreaterThan(value uint) Condition {
 func (property PropertyUint) LessThan(value uint) Condition {
 	return &conditionClosure{
 		apply: func(qb *QueryBuilder) (ConditionId, error) {
-			return qb.IntLess(property.BaseProperty, int64(value))
+			return qb.IntLess(property.BaseProperty, int64(value), false)
+		},
+	}
+}
+
+// LessOrEqual finds entities with the stored property value less than the given value
+func (property PropertyUint) LessOrEqual(value uint) Condition {
+	return &conditionClosure{
+		apply: func(qb *QueryBuilder) (ConditionId, error) {
+			return qb.IntLess(property.BaseProperty, int64(value), true)
 		},
 	}
 }
@@ -640,7 +712,16 @@ func (property PropertyRune) NotEquals(value rune) Condition {
 func (property PropertyRune) GreaterThan(value rune) Condition {
 	return &conditionClosure{
 		apply: func(qb *QueryBuilder) (ConditionId, error) {
-			return qb.IntGreater(property.BaseProperty, int64(value))
+			return qb.IntGreater(property.BaseProperty, int64(value), false)
+		},
+	}
+}
+
+// GreaterOrEqual finds entities with the stored property value greater than the given value
+func (property PropertyRune) GreaterOrEqual(value rune) Condition {
+	return &conditionClosure{
+		apply: func(qb *QueryBuilder) (ConditionId, error) {
+			return qb.IntGreater(property.BaseProperty, int64(value), true)
 		},
 	}
 }
@@ -649,7 +730,16 @@ func (property PropertyRune) GreaterThan(value rune) Condition {
 func (property PropertyRune) LessThan(value rune) Condition {
 	return &conditionClosure{
 		apply: func(qb *QueryBuilder) (ConditionId, error) {
-			return qb.IntLess(property.BaseProperty, int64(value))
+			return qb.IntLess(property.BaseProperty, int64(value), false)
+		},
+	}
+}
+
+// LessOrEqual finds entities with the stored property value less than the given value
+func (property PropertyRune) LessOrEqual(value rune) Condition {
+	return &conditionClosure{
+		apply: func(qb *QueryBuilder) (ConditionId, error) {
+			return qb.IntLess(property.BaseProperty, int64(value), true)
 		},
 	}
 }
@@ -738,7 +828,16 @@ func (property PropertyInt32) NotEquals(value int32) Condition {
 func (property PropertyInt32) GreaterThan(value int32) Condition {
 	return &conditionClosure{
 		apply: func(qb *QueryBuilder) (ConditionId, error) {
-			return qb.IntGreater(property.BaseProperty, int64(value))
+			return qb.IntGreater(property.BaseProperty, int64(value), false)
+		},
+	}
+}
+
+// GreaterOrEqual finds entities with the stored property value greater than the given value
+func (property PropertyInt32) GreaterOrEqual(value int32) Condition {
+	return &conditionClosure{
+		apply: func(qb *QueryBuilder) (ConditionId, error) {
+			return qb.IntGreater(property.BaseProperty, int64(value), true)
 		},
 	}
 }
@@ -747,7 +846,16 @@ func (property PropertyInt32) GreaterThan(value int32) Condition {
 func (property PropertyInt32) LessThan(value int32) Condition {
 	return &conditionClosure{
 		apply: func(qb *QueryBuilder) (ConditionId, error) {
-			return qb.IntLess(property.BaseProperty, int64(value))
+			return qb.IntLess(property.BaseProperty, int64(value), false)
+		},
+	}
+}
+
+// LessOrEqual finds entities with the stored property value less than the given value
+func (property PropertyInt32) LessOrEqual(value int32) Condition {
+	return &conditionClosure{
+		apply: func(qb *QueryBuilder) (ConditionId, error) {
+			return qb.IntLess(property.BaseProperty, int64(value), true)
 		},
 	}
 }
@@ -826,7 +934,16 @@ func (property PropertyUint32) NotEquals(value uint32) Condition {
 func (property PropertyUint32) GreaterThan(value uint32) Condition {
 	return &conditionClosure{
 		apply: func(qb *QueryBuilder) (ConditionId, error) {
-			return qb.IntGreater(property.BaseProperty, int64(value))
+			return qb.IntGreater(property.BaseProperty, int64(value), false)
+		},
+	}
+}
+
+// GreaterOrEqual finds entities with the stored property value greater than the given value
+func (property PropertyUint32) GreaterOrEqual(value uint32) Condition {
+	return &conditionClosure{
+		apply: func(qb *QueryBuilder) (ConditionId, error) {
+			return qb.IntGreater(property.BaseProperty, int64(value), true)
 		},
 	}
 }
@@ -835,7 +952,16 @@ func (property PropertyUint32) GreaterThan(value uint32) Condition {
 func (property PropertyUint32) LessThan(value uint32) Condition {
 	return &conditionClosure{
 		apply: func(qb *QueryBuilder) (ConditionId, error) {
-			return qb.IntLess(property.BaseProperty, int64(value))
+			return qb.IntLess(property.BaseProperty, int64(value), false)
+		},
+	}
+}
+
+// LessOrEqual finds entities with the stored property value less than the given value
+func (property PropertyUint32) LessOrEqual(value uint32) Condition {
+	return &conditionClosure{
+		apply: func(qb *QueryBuilder) (ConditionId, error) {
+			return qb.IntLess(property.BaseProperty, int64(value), true)
 		},
 	}
 }
@@ -924,7 +1050,16 @@ func (property PropertyInt16) NotEquals(value int16) Condition {
 func (property PropertyInt16) GreaterThan(value int16) Condition {
 	return &conditionClosure{
 		apply: func(qb *QueryBuilder) (ConditionId, error) {
-			return qb.IntGreater(property.BaseProperty, int64(value))
+			return qb.IntGreater(property.BaseProperty, int64(value), false)
+		},
+	}
+}
+
+// GreaterOrEqual finds entities with the stored property value greater than the given value
+func (property PropertyInt16) GreaterOrEqual(value int16) Condition {
+	return &conditionClosure{
+		apply: func(qb *QueryBuilder) (ConditionId, error) {
+			return qb.IntGreater(property.BaseProperty, int64(value), true)
 		},
 	}
 }
@@ -933,7 +1068,16 @@ func (property PropertyInt16) GreaterThan(value int16) Condition {
 func (property PropertyInt16) LessThan(value int16) Condition {
 	return &conditionClosure{
 		apply: func(qb *QueryBuilder) (ConditionId, error) {
-			return qb.IntLess(property.BaseProperty, int64(value))
+			return qb.IntLess(property.BaseProperty, int64(value), false)
+		},
+	}
+}
+
+// LessOrEqual finds entities with the stored property value less than the given value
+func (property PropertyInt16) LessOrEqual(value int16) Condition {
+	return &conditionClosure{
+		apply: func(qb *QueryBuilder) (ConditionId, error) {
+			return qb.IntLess(property.BaseProperty, int64(value), true)
 		},
 	}
 }
@@ -994,7 +1138,16 @@ func (property PropertyUint16) NotEquals(value uint16) Condition {
 func (property PropertyUint16) GreaterThan(value uint16) Condition {
 	return &conditionClosure{
 		apply: func(qb *QueryBuilder) (ConditionId, error) {
-			return qb.IntGreater(property.BaseProperty, int64(value))
+			return qb.IntGreater(property.BaseProperty, int64(value), false)
+		},
+	}
+}
+
+// GreaterOrEqual finds entities with the stored property value greater than the given value
+func (property PropertyUint16) GreaterOrEqual(value uint16) Condition {
+	return &conditionClosure{
+		apply: func(qb *QueryBuilder) (ConditionId, error) {
+			return qb.IntGreater(property.BaseProperty, int64(value), true)
 		},
 	}
 }
@@ -1003,7 +1156,16 @@ func (property PropertyUint16) GreaterThan(value uint16) Condition {
 func (property PropertyUint16) LessThan(value uint16) Condition {
 	return &conditionClosure{
 		apply: func(qb *QueryBuilder) (ConditionId, error) {
-			return qb.IntLess(property.BaseProperty, int64(value))
+			return qb.IntLess(property.BaseProperty, int64(value), false)
+		},
+	}
+}
+
+// LessOrEqual finds entities with the stored property value less than the given value
+func (property PropertyUint16) LessOrEqual(value uint16) Condition {
+	return &conditionClosure{
+		apply: func(qb *QueryBuilder) (ConditionId, error) {
+			return qb.IntLess(property.BaseProperty, int64(value), true)
 		},
 	}
 }
@@ -1064,7 +1226,16 @@ func (property PropertyInt8) NotEquals(value int8) Condition {
 func (property PropertyInt8) GreaterThan(value int8) Condition {
 	return &conditionClosure{
 		apply: func(qb *QueryBuilder) (ConditionId, error) {
-			return qb.IntGreater(property.BaseProperty, int64(value))
+			return qb.IntGreater(property.BaseProperty, int64(value), false)
+		},
+	}
+}
+
+// GreaterOrEqual finds entities with the stored property value greater than the given value
+func (property PropertyInt8) GreaterOrEqual(value int8) Condition {
+	return &conditionClosure{
+		apply: func(qb *QueryBuilder) (ConditionId, error) {
+			return qb.IntGreater(property.BaseProperty, int64(value), true)
 		},
 	}
 }
@@ -1073,7 +1244,16 @@ func (property PropertyInt8) GreaterThan(value int8) Condition {
 func (property PropertyInt8) LessThan(value int8) Condition {
 	return &conditionClosure{
 		apply: func(qb *QueryBuilder) (ConditionId, error) {
-			return qb.IntLess(property.BaseProperty, int64(value))
+			return qb.IntLess(property.BaseProperty, int64(value), false)
+		},
+	}
+}
+
+// LessOrEqual finds entities with the stored property value less than the given value
+func (property PropertyInt8) LessOrEqual(value int8) Condition {
+	return &conditionClosure{
+		apply: func(qb *QueryBuilder) (ConditionId, error) {
+			return qb.IntLess(property.BaseProperty, int64(value), true)
 		},
 	}
 }
@@ -1134,7 +1314,16 @@ func (property PropertyUint8) NotEquals(value uint8) Condition {
 func (property PropertyUint8) GreaterThan(value uint8) Condition {
 	return &conditionClosure{
 		apply: func(qb *QueryBuilder) (ConditionId, error) {
-			return qb.IntGreater(property.BaseProperty, int64(value))
+			return qb.IntGreater(property.BaseProperty, int64(value), false)
+		},
+	}
+}
+
+// GreaterOrEqual finds entities with the stored property value greater than the given value
+func (property PropertyUint8) GreaterOrEqual(value uint8) Condition {
+	return &conditionClosure{
+		apply: func(qb *QueryBuilder) (ConditionId, error) {
+			return qb.IntGreater(property.BaseProperty, int64(value), true)
 		},
 	}
 }
@@ -1143,7 +1332,16 @@ func (property PropertyUint8) GreaterThan(value uint8) Condition {
 func (property PropertyUint8) LessThan(value uint8) Condition {
 	return &conditionClosure{
 		apply: func(qb *QueryBuilder) (ConditionId, error) {
-			return qb.IntLess(property.BaseProperty, int64(value))
+			return qb.IntLess(property.BaseProperty, int64(value), false)
+		},
+	}
+}
+
+// LessOrEqual finds entities with the stored property value less than the given value
+func (property PropertyUint8) LessOrEqual(value uint8) Condition {
+	return &conditionClosure{
+		apply: func(qb *QueryBuilder) (ConditionId, error) {
+			return qb.IntLess(property.BaseProperty, int64(value), true)
 		},
 	}
 }
@@ -1204,7 +1402,16 @@ func (property PropertyByte) NotEquals(value byte) Condition {
 func (property PropertyByte) GreaterThan(value byte) Condition {
 	return &conditionClosure{
 		apply: func(qb *QueryBuilder) (ConditionId, error) {
-			return qb.IntGreater(property.BaseProperty, int64(value))
+			return qb.IntGreater(property.BaseProperty, int64(value), false)
+		},
+	}
+}
+
+// GreaterOrEqual finds entities with the stored property value greater than the given value
+func (property PropertyByte) GreaterOrEqual(value byte) Condition {
+	return &conditionClosure{
+		apply: func(qb *QueryBuilder) (ConditionId, error) {
+			return qb.IntGreater(property.BaseProperty, int64(value), true)
 		},
 	}
 }
@@ -1213,7 +1420,16 @@ func (property PropertyByte) GreaterThan(value byte) Condition {
 func (property PropertyByte) LessThan(value byte) Condition {
 	return &conditionClosure{
 		apply: func(qb *QueryBuilder) (ConditionId, error) {
-			return qb.IntLess(property.BaseProperty, int64(value))
+			return qb.IntLess(property.BaseProperty, int64(value), false)
+		},
+	}
+}
+
+// LessOrEqual finds entities with the stored property value less than the given value
+func (property PropertyByte) LessOrEqual(value byte) Condition {
+	return &conditionClosure{
+		apply: func(qb *QueryBuilder) (ConditionId, error) {
+			return qb.IntLess(property.BaseProperty, int64(value), true)
 		},
 	}
 }
@@ -1256,7 +1472,16 @@ type PropertyFloat64 struct {
 func (property PropertyFloat64) GreaterThan(value float64) Condition {
 	return &conditionClosure{
 		apply: func(qb *QueryBuilder) (ConditionId, error) {
-			return qb.DoubleGreater(property.BaseProperty, value)
+			return qb.DoubleGreater(property.BaseProperty, value, false)
+		},
+	}
+}
+
+// GreaterOrEqual finds entities with the stored property value greater than the given value
+func (property PropertyFloat64) GreaterOrEqual(value float64) Condition {
+	return &conditionClosure{
+		apply: func(qb *QueryBuilder) (ConditionId, error) {
+			return qb.DoubleGreater(property.BaseProperty, value, true)
 		},
 	}
 }
@@ -1265,7 +1490,16 @@ func (property PropertyFloat64) GreaterThan(value float64) Condition {
 func (property PropertyFloat64) LessThan(value float64) Condition {
 	return &conditionClosure{
 		apply: func(qb *QueryBuilder) (ConditionId, error) {
-			return qb.DoubleLess(property.BaseProperty, value)
+			return qb.DoubleLess(property.BaseProperty, value, false)
+		},
+	}
+}
+
+// LessOrEqual finds entities with the stored property value less than the given value
+func (property PropertyFloat64) LessOrEqual(value float64) Condition {
+	return &conditionClosure{
+		apply: func(qb *QueryBuilder) (ConditionId, error) {
+			return qb.DoubleLess(property.BaseProperty, value, true)
 		},
 	}
 }
@@ -1308,7 +1542,16 @@ type PropertyFloat32 struct {
 func (property PropertyFloat32) GreaterThan(value float32) Condition {
 	return &conditionClosure{
 		apply: func(qb *QueryBuilder) (ConditionId, error) {
-			return qb.DoubleGreater(property.BaseProperty, float64(value))
+			return qb.DoubleGreater(property.BaseProperty, float64(value), false)
+		},
+	}
+}
+
+// GreaterOrEqual finds entities with the stored property value greater than the given value
+func (property PropertyFloat32) GreaterOrEqual(value float32) Condition {
+	return &conditionClosure{
+		apply: func(qb *QueryBuilder) (ConditionId, error) {
+			return qb.DoubleGreater(property.BaseProperty, float64(value), true)
 		},
 	}
 }
@@ -1317,7 +1560,16 @@ func (property PropertyFloat32) GreaterThan(value float32) Condition {
 func (property PropertyFloat32) LessThan(value float32) Condition {
 	return &conditionClosure{
 		apply: func(qb *QueryBuilder) (ConditionId, error) {
-			return qb.DoubleLess(property.BaseProperty, float64(value))
+			return qb.DoubleLess(property.BaseProperty, float64(value), false)
+		},
+	}
+}
+
+// LessOrEqual finds entities with the stored property value less than the given value
+func (property PropertyFloat32) LessOrEqual(value float32) Condition {
+	return &conditionClosure{
+		apply: func(qb *QueryBuilder) (ConditionId, error) {
+			return qb.DoubleLess(property.BaseProperty, float64(value), true)
 		},
 	}
 }

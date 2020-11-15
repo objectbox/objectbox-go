@@ -46,7 +46,7 @@ extern "C" {
 /// When using ObjectBox as a dynamic library, you should verify that a compatible version was linked using
 /// obx_version() or obx_version_is_at_least().
 #define OBX_VERSION_MAJOR 0
-#define OBX_VERSION_MINOR 10
+#define OBX_VERSION_MINOR 11
 #define OBX_VERSION_PATCH 0  // values >= 100 are reserved for dev releases leading to the next minor/major increase
 
 //----------------------------------------------
@@ -109,8 +109,16 @@ bool obx_supports_time_series(void);
 #define OBX_SUCCESS 0
 
 /// Returned by, e.g., get operations if nothing was found for a specific ID.
-/// This is NOT an error condition, and thus no last error info is set.
+/// This is NOT an error condition, and thus no "last error" info (code/text) is set.
 #define OBX_NOT_FOUND 404
+
+/// Indicates that a function had "no success", which is typically a likely outcome and not a "hard error".
+/// This is NOT an error condition, and thus no "last error" info is set.
+#define OBX_NO_SUCCESS 1001
+
+/// Indicates that a function reached a time out, which is typically a likely outcome and not a "hard error".
+/// This is NOT an error condition, and thus no "last error" info is set.
+#define OBX_TIMEOUT 1002
 
 // General errors
 #define OBX_ERROR_ILLEGAL_STATE 10001
@@ -168,7 +176,7 @@ bool obx_supports_time_series(void);
 /// @returns true if an error was pending
 bool obx_last_error_pop(obx_err* out_error, const char** out_message);
 
-/// The last error raised by an ObjectBox API call on the current thread, or OBX_SUCCESS if no error occured yet.
+/// The last error raised by an ObjectBox API call on the current thread, or OBX_SUCCESS if no error occurred yet.
 /// Note that API calls do not clear this error code (also true for this method).
 /// Thus, if you receive an error from this, it's usually a good idea to call obx_last_error_clear() to clear the error
 /// state (or use obx_last_error_pop()) for future API calls.
@@ -212,6 +220,14 @@ typedef enum {
     OBXPropertyType_ByteVector = 23,
     OBXPropertyType_StringVector = 30,
 } OBXPropertyType;
+
+/// Bit-flags defining the behavior of entities.
+/// Note: Numbers indicate the bit position
+typedef enum {
+    /// Enable "data synchronization" for this entity type: objects will be synced with other stores over the network.
+    /// It's possible to have local-only (non-synced) types and synced types in the same store (schema/data model).
+    OBXEntityFlags_SYNC_ENABLED = 2,
+} OBXEntityFlags;
 
 /// Bit-flags defining the behavior of properties.
 /// Note: Numbers indicate the bit position
@@ -305,6 +321,9 @@ const char* obx_model_error_message(OBX_model* model);
 /// @param entity_uid Used to identify entities between versions of the model. Must be globally unique.
 obx_err obx_model_entity(OBX_model* model, const char* name, obx_schema_id entity_id, obx_uid entity_uid);
 
+/// Refine the definition of the entity declared by the most recent obx_model_entity() call, specifying flags.
+obx_err obx_model_entity_flags(OBX_model* model, OBXEntityFlags flags);
+
 /// Starts the definition of a new property for the entity type of the last obx_model_entity() call.
 /// @param name A human readable name for the property. Must be unique within the entity
 /// @param type The type of property required
@@ -313,17 +332,18 @@ obx_err obx_model_entity(OBX_model* model, const char* name, obx_schema_id entit
 obx_err obx_model_property(OBX_model* model, const char* name, OBXPropertyType type, obx_schema_id property_id,
                            obx_uid property_uid);
 
-/// Refine the property definition of the property of the last obx_model_property() call, specifying flags.
+/// Refine the definition of the property declared by the most recent obx_model_property() call, specifying flags.
 obx_err obx_model_property_flags(OBX_model* model, OBXPropertyFlags flags);
 
-/// Refine the property definition of the property of the last obx_model_property() call, declaring it a relation.
+/// Refine the definition of the property declared by the most recent obx_model_property() call, declaring it a
+/// relation.
 /// @param target_entity The name of the entity linked to by the relation
 /// @param index_id Must be unique within this version of the model
 /// @param index_uid Used to identify relations between versions of the model. Must be globally unique.
 obx_err obx_model_property_relation(OBX_model* model, const char* target_entity, obx_schema_id index_id,
                                     obx_uid index_uid);
 
-/// Refine the property definition of the property of the last obx_model_property() call, adding an index.
+/// Refine the definition of the property declared by the most recent obx_model_property() call, adding an index.
 /// @param index_id Must be unique within this version of the model
 /// @param index_uid Used to identify relations between versions of the model. Must be globally unique.
 obx_err obx_model_property_index_id(OBX_model* model, obx_schema_id index_id, obx_uid index_uid);
@@ -456,6 +476,10 @@ typedef struct OBX_float_array {
     size_t count;
 } OBX_float_array;
 
+//----------------------------------------------
+// Store Options
+//----------------------------------------------
+
 /// Create a default set of store options.
 /// @returns NULL on failure, a default set of options on success
 OBX_store_options* obx_opt();
@@ -522,9 +546,73 @@ void obx_opt_read_only(OBX_store_options* opt, bool value);
 /// Configure debug logging. Defaults to NONE
 void obx_opt_debug_flags(OBX_store_options* opt, OBXDebugFlags flags);
 
+/// Maximum of async elements in the queue before new elements will be rejected.
+/// Hitting this limit usually hints that async processing cannot keep up;
+/// data is produced at a faster rate than it can be persisted in the background.
+/// In that case, increasing this value is not the only alternative; other values might also optimize throughput.
+/// For example, increasing maxInTxDurationMicros may help too.
+void obx_opt_async_max_queue_length(OBX_store_options* opt, size_t value);
+
+/// Producers (AsyncTx submitter) is throttled when the queue size hits this
+void obx_opt_async_throttle_at_queue_length(OBX_store_options* opt, size_t value);
+
+/// Sleeping time for throttled producers on each submission
+void obx_opt_async_throttle_micros(OBX_store_options* opt, uint32_t value);
+
+/// Maximum duration spent in a transaction before AsyncQ enforces a commit.
+/// This becomes relevant if the queue is constantly populated at a high rate.
+void obx_opt_async_max_in_tx_duration(OBX_store_options* opt, uint32_t micros);
+
+/// Maximum operations performed in a transaction before AsyncQ enforces a commit.
+/// This becomes relevant if the queue is constantly populated at a high rate.
+void obx_opt_async_max_in_tx_operations(OBX_store_options* opt, uint32_t value);
+
+/// Before the AsyncQ is triggered by a new element in queue to starts a new run, it delays actually starting the
+/// transaction by this value.
+/// This gives a newly starting producer some time to produce more than one a single operation before AsyncQ starts.
+/// Note: this value should typically be low to keep latency low and prevent accumulating too much operations.
+void obx_opt_async_pre_txn_delay(OBX_store_options* opt, uint32_t delay_micros);
+
+/// Before the AsyncQ is triggered by a new element in queue to starts a new run, it delays actually starting the
+/// transaction by this value.
+/// This gives a newly starting producer some time to produce more than one a single operation before AsyncQ starts.
+/// Note: this value should typically be low to keep latency low and prevent accumulating too much operations.
+void obx_opt_async_pre_txn_delay4(OBX_store_options* opt, uint32_t delay_micros, uint32_t delay2_micros,
+                                  size_t min_queue_length_for_delay2);
+
+/// Similar to preTxDelay but after a transaction was committed.
+/// One of the purposes is to give other transactions some time to execute.
+/// In combination with preTxDelay this can prolong non-TX batching time if only a few operations are around.
+void obx_opt_async_post_txn_delay(OBX_store_options* opt, uint32_t delay_micros);
+
+/// Similar to preTxDelay but after a transaction was committed.
+/// One of the purposes is to give other transactions some time to execute.
+/// In combination with preTxDelay this can prolong non-TX batching time if only a few operations are around.
+void obx_opt_async_post_txn_delay4(OBX_store_options* opt, uint32_t delay_micros, uint32_t delay2_micros,
+                                   size_t min_queue_length_for_delay2);
+
+/// Numbers of operations below this value are considered "minor refills"
+void obx_opt_async_minor_refill_threshold(OBX_store_options* opt, size_t queue_length);
+
+/// If non-zero, this allows "minor refills" with small batches that came in (off by default).
+void obx_opt_async_minor_refill_max_count(OBX_store_options* opt, uint32_t value);
+
+/// Default value: 10000, set to 0 to deactivate pooling
+void obx_opt_async_max_tx_pool_size(OBX_store_options* opt, size_t value);
+
+/// Total cache size; default: ~ 0.5 MB
+void obx_opt_async_object_bytes_max_cache_size(OBX_store_options* opt, uint64_t value);
+
+/// Maximal size for an object to be cached (only cache smaller ones)
+void obx_opt_async_object_bytes_max_size_to_cache(OBX_store_options* opt, uint64_t value);
+
 /// Free the options.
 /// Note: Only free *unused* options, obx_store_open() frees the options internally
 void obx_opt_free(OBX_store_options* opt);
+
+//----------------------------------------------
+// Store
+//----------------------------------------------
 
 /// Note: the given options are always freed by this function, including when an error occurs.
 /// @param opt required parameter holding the data model (obx_opt_model()) and optional options (see obx_opt_*())
@@ -694,7 +782,7 @@ obx_id obx_cursor_put_object(OBX_cursor* cursor, void* data, size_t size);
 /// @overload obx_id obx_cursor_put_object(OBX_cursor* cursor, void* data, size_t size)
 obx_id obx_cursor_put_object4(OBX_cursor* cursor, void* data, size_t size, OBXPutMode mode);
 
-obx_err obx_cursor_get(OBX_cursor* cursor, obx_id id, void** data, size_t* size);
+obx_err obx_cursor_get(OBX_cursor* cursor, obx_id id, const void** data, size_t* size);
 
 /// Get all objects as bytes.
 /// For larger quantities, it's recommended to iterate using obx_cursor_first and obx_cursor_next.
@@ -702,13 +790,13 @@ obx_err obx_cursor_get(OBX_cursor* cursor, obx_id id, void** data, size_t* size)
 /// @returns NULL if the operation failed, see functions like obx_last_error_code() to get error details
 OBX_bytes_array* obx_cursor_get_all(OBX_cursor* cursor);
 
-obx_err obx_cursor_first(OBX_cursor* cursor, void** data, size_t* size);
+obx_err obx_cursor_first(OBX_cursor* cursor, const void** data, size_t* size);
 
-obx_err obx_cursor_next(OBX_cursor* cursor, void** data, size_t* size);
+obx_err obx_cursor_next(OBX_cursor* cursor, const void** data, size_t* size);
 
 obx_err obx_cursor_seek(OBX_cursor* cursor, obx_id id);
 
-obx_err obx_cursor_current(OBX_cursor* cursor, void** data, size_t* size);
+obx_err obx_cursor_current(OBX_cursor* cursor, const void** data, size_t* size);
 
 obx_err obx_cursor_remove(OBX_cursor* cursor, obx_id id);
 
@@ -794,7 +882,7 @@ obx_err obx_box_contains_many(OBX_box* box, const OBX_id_array* ids, bool* out_c
 /// \attention The exposed data is only valid as long as the (top) transaction is still active and no write
 /// \attention operation (e.g. put/remove) was executed. Accessing data after this is undefined behavior.
 /// @returns OBX_ERROR_ILLEGAL_STATE if not inside of an active transaction (see obx_txn_read() and obx_txn_write())
-obx_err obx_box_get(OBX_box* box, obx_id id, void** data, size_t* size);
+obx_err obx_box_get(OBX_box* box, obx_id id, const void** data, size_t* size);
 
 /// Fetch multiple objects for the given IDs from the box; must be called inside a (reentrant) transaction.
 /// \attention See obx_box_get() for important notes on the limited lifetime of the exposed data.
@@ -997,7 +1085,7 @@ obx_err obx_async_remove(OBX_async* async, obx_id id);
 
 /// Create a custom OBX_async instance that has to be closed using obx_async_close().
 /// Note: for standard tasks, prefer obx_box_async() giving you a shared instance that does not have to be closed.
-OBX_async* obx_async_create(OBX_box* box, uint64_t enqueueTimeoutMillis);
+OBX_async* obx_async_create(OBX_box* box, uint64_t enqueue_timeout_millis);
 
 /// Close a custom OBX_async instance created with obx_async_create().
 /// @return OBX_ERROR_ILLEGAL_ARGUMENT if you pass the shared instance from obx_box_async()
@@ -1092,7 +1180,7 @@ obx_qb_cond obx_qb_less_or_equal_string(OBX_query_builder* builder, obx_schema_i
 
 /// Note that all string values are copied and thus do not need to be maintained by the calling code.
 obx_qb_cond obx_qb_in_strings(OBX_query_builder* builder, obx_schema_id property_id, const char* const values[],
-                              int count, bool case_sensitive);
+                              size_t count, bool case_sensitive);
 
 /// For OBXPropertyType_StringVector - matches if at least one vector item equals the given value.
 obx_qb_cond obx_qb_any_equals_string(OBX_query_builder* builder, obx_schema_id property_id, const char* value,
@@ -1104,29 +1192,35 @@ obx_qb_cond obx_qb_equals_int(OBX_query_builder* builder, obx_schema_id property
 obx_qb_cond obx_qb_not_equals_int(OBX_query_builder* builder, obx_schema_id property_id, int64_t value);
 
 obx_qb_cond obx_qb_greater_than_int(OBX_query_builder* builder, obx_schema_id property_id, int64_t value);
+obx_qb_cond obx_qb_greater_or_equal_int(OBX_query_builder* builder, obx_schema_id property_id, int64_t value);
 obx_qb_cond obx_qb_less_than_int(OBX_query_builder* builder, obx_schema_id property_id, int64_t value);
+obx_qb_cond obx_qb_less_or_equal_int(OBX_query_builder* builder, obx_schema_id property_id, int64_t value);
 obx_qb_cond obx_qb_between_2ints(OBX_query_builder* builder, obx_schema_id property_id, int64_t value_a,
                                  int64_t value_b);
 
 /// Note that all values are copied and thus do not need to be maintained by the calling code.
-obx_qb_cond obx_qb_in_int64s(OBX_query_builder* builder, obx_schema_id property_id, const int64_t values[], int count);
+obx_qb_cond obx_qb_in_int64s(OBX_query_builder* builder, obx_schema_id property_id, const int64_t values[],
+                             size_t count);
 
 /// Note that all values are copied and thus do not need to be maintained by the calling code.
 obx_qb_cond obx_qb_not_in_int64s(OBX_query_builder* builder, obx_schema_id property_id, const int64_t values[],
-                                 int count);
+                                 size_t count);
 
 /// Note that all values are copied and thus do not need to be maintained by the calling code.
-obx_qb_cond obx_qb_in_int32s(OBX_query_builder* builder, obx_schema_id property_id, const int32_t values[], int count);
+obx_qb_cond obx_qb_in_int32s(OBX_query_builder* builder, obx_schema_id property_id, const int32_t values[],
+                             size_t count);
 
 /// Note that all values are copied and thus do not need to be maintained by the calling code.
 obx_qb_cond obx_qb_not_in_int32s(OBX_query_builder* builder, obx_schema_id property_id, const int32_t values[],
-                                 int count);
+                                 size_t count);
 
 // FP conditions -------------------------------
 // Note: works for float and double properties
 
 obx_qb_cond obx_qb_greater_than_double(OBX_query_builder* builder, obx_schema_id property_id, double value);
+obx_qb_cond obx_qb_greater_or_equal_double(OBX_query_builder* builder, obx_schema_id property_id, double value);
 obx_qb_cond obx_qb_less_than_double(OBX_query_builder* builder, obx_schema_id property_id, double value);
+obx_qb_cond obx_qb_less_or_equal_double(OBX_query_builder* builder, obx_schema_id property_id, double value);
 obx_qb_cond obx_qb_between_2doubles(OBX_query_builder* builder, obx_schema_id property_id, double value_a,
                                     double value_b);
 
@@ -1147,10 +1241,10 @@ obx_qb_cond obx_qb_less_or_equal_bytes(OBX_query_builder* builder, obx_schema_id
                                        size_t size);
 
 /// Combine conditions[] to a new condition using operator AND (all).
-obx_qb_cond obx_qb_all(OBX_query_builder* builder, const obx_qb_cond conditions[], int count);
+obx_qb_cond obx_qb_all(OBX_query_builder* builder, const obx_qb_cond conditions[], size_t count);
 
 /// Combine conditions[] to a new condition using operator OR (any).
-obx_qb_cond obx_qb_any(OBX_query_builder* builder, const obx_qb_cond conditions[], int count);
+obx_qb_cond obx_qb_any(OBX_query_builder* builder, const obx_qb_cond conditions[], size_t count);
 
 /// Create an alias for the previous condition (the one added just before calling this function).
 /// This is useful when you have a query with multiple conditions of the same property (e.g. height < 20 or height > 50)
@@ -1225,6 +1319,12 @@ OBX_query* obx_query_clone(OBX_query* query);
 /// Call with offset=0 to reset to the default behavior, i.e. starting from the first element.
 obx_err obx_query_offset(OBX_query* query, uint64_t offset);
 
+/// Configure an offset and a limit for this query - all methods that support an offset/limit will return/process
+/// objects starting at this offset and up to the given limit. Example use case: get a slice of the whole result, e.g.
+/// for "result paging". Call with offset/limit=0 to reset to the default behavior, i.e. starting from the first element
+/// without limit.
+obx_err obx_query_offset_limit(OBX_query* query, uint64_t offset, uint64_t limit);
+
 /// Configure a limit for this query - all methods that support limit will return/process only the given number of
 /// objects. Example use case: use together with offset to get a slice of the whole result, e.g. for "result paging".
 /// Call with limit=0 to reset to the default behavior - zero limit means no limit applied.
@@ -1272,14 +1372,14 @@ obx_err obx_query_cursor_remove(OBX_query* query, OBX_cursor* cursor, uint64_t* 
 //----------------------------------------------
 obx_err obx_query_param_string(OBX_query* query, obx_schema_id entity_id, obx_schema_id property_id, const char* value);
 obx_err obx_query_param_strings(OBX_query* query, obx_schema_id entity_id, obx_schema_id property_id,
-                                const char* const values[], int count);
+                                const char* const values[], size_t count);
 obx_err obx_query_param_int(OBX_query* query, obx_schema_id entity_id, obx_schema_id property_id, int64_t value);
 obx_err obx_query_param_2ints(OBX_query* query, obx_schema_id entity_id, obx_schema_id property_id, int64_t value_a,
                               int64_t value_b);
 obx_err obx_query_param_int64s(OBX_query* query, obx_schema_id entity_id, obx_schema_id property_id,
-                               const int64_t values[], int count);
+                               const int64_t values[], size_t count);
 obx_err obx_query_param_int32s(OBX_query* query, obx_schema_id entity_id, obx_schema_id property_id,
-                               const int32_t values[], int count);
+                               const int32_t values[], size_t count);
 obx_err obx_query_param_double(OBX_query* query, obx_schema_id entity_id, obx_schema_id property_id, double value);
 obx_err obx_query_param_2doubles(OBX_query* query, obx_schema_id entity_id, obx_schema_id property_id, double value_a,
                                  double value_b);
@@ -1291,11 +1391,11 @@ obx_err obx_query_param_bytes(OBX_query* query, obx_schema_id entity_id, obx_sch
 // Similar to obx_query_param_{type}, but when an alias was used for a parameter, see obx_qb_param_alias().
 //----------------------------------------------
 obx_err obx_query_param_alias_string(OBX_query* query, const char* alias, const char* value);
-obx_err obx_query_param_alias_strings(OBX_query* query, const char* alias, const char* const values[], int count);
+obx_err obx_query_param_alias_strings(OBX_query* query, const char* alias, const char* const values[], size_t count);
 obx_err obx_query_param_alias_int(OBX_query* query, const char* alias, int64_t value);
 obx_err obx_query_param_alias_2ints(OBX_query* query, const char* alias, int64_t value_a, int64_t value_b);
-obx_err obx_query_param_alias_int64s(OBX_query* query, const char* alias, const int64_t values[], int count);
-obx_err obx_query_param_alias_int32s(OBX_query* query, const char* alias, const int32_t values[], int count);
+obx_err obx_query_param_alias_int64s(OBX_query* query, const char* alias, const int64_t values[], size_t count);
+obx_err obx_query_param_alias_int32s(OBX_query* query, const char* alias, const int32_t values[], size_t count);
 obx_err obx_query_param_alias_double(OBX_query* query, const char* alias, double value);
 obx_err obx_query_param_alias_2doubles(OBX_query* query, const char* alias, double value_a, double value_b);
 obx_err obx_query_param_alias_bytes(OBX_query* query, const char* alias, const void* value, size_t size);
@@ -1441,9 +1541,9 @@ typedef struct OBX_observer OBX_observer;
 
 /// Callback for obx_observe()
 /// @param user_data user data given to obx_observe()
-/// @param type_ids IDs of object types that had changes
+/// @param type_ids array of object type IDs that had changes
 /// @param type_ids_count number of IDs of type_ids
-typedef void obx_observer(void* user_data, const obx_schema_id* type_ids, int type_ids_count);
+typedef void obx_observer(void* user_data, const obx_schema_id* type_ids, size_t type_ids_count);
 
 /// Callback for obx_observe_single_type()
 typedef void obx_observer_single_type(void* user_data);
@@ -1458,6 +1558,8 @@ typedef void obx_observer_single_type(void* user_data);
 /// \attention More accurately, no transaction may be strated. (This restriction may be removed in a later version.)
 /// @param user_data any value you want to be forwarded to the given observer callback (usually some context info).
 /// @param callback pointer to be called when the observed data changes.
+/// @returns NULL if a illegal locking situation was detected, e.g. called from an observer itself or a
+///          timeout/deadlock was detected (OBX_ERROR_ILLEGAL_STATE).
 OBX_observer* obx_observe(OBX_store* store, obx_observer* callback, void* user_data);
 
 /// Create an observer (callback) to be notified about data changes for a given object type.
@@ -1472,11 +1574,16 @@ OBX_observer* obx_observe(OBX_store* store, obx_observer* callback, void* user_d
 /// @param type_id ID of the object type to be observer.
 /// @param user_data any value you want to be forwarded to the given observer callback (usually some context info).
 /// @param callback pointer to be called when the observed data changes.
+/// @returns NULL if a illegal locking situation was detected, e.g. called from an observer itself or a
+///          timeout/deadlock was detected (OBX_ERROR_ILLEGAL_STATE).
 OBX_observer* obx_observe_single_type(OBX_store* store, obx_schema_id type_id, obx_observer_single_type* callback,
                                       void* user_data);
 
 /// Free the memory used by the given observer and unsubscribe it from its box or query.
-void obx_observer_close(OBX_observer* observer);
+/// @returns OBX_ERROR_ILLEGAL_STATE if a illegal locking situation was detected, e.g. called from an observer itself
+///          or a timeout/deadlock was detected. In that case, the caller must try to close again in a valid situation
+///          not causing lock failures.
+obx_err obx_observer_close(OBX_observer* observer);
 
 //----------------------------------------------
 // Utilities for bytes/ids/arrays
@@ -1525,6 +1632,15 @@ void obx_float_array_free(OBX_float_array* array);
 /// You must supply the application group identifier for sand-boxed macOS apps here; see also:
 /// https://developer.apple.com/library/archive/documentation/Security/Conceptual/AppSandboxDesignGuide/AppSandboxInDepth/AppSandboxInDepth.html#//apple_ref/doc/uid/TP40011183-CH3-SW24
 void obx_posix_sem_prefix_set(const char* prefix);
+
+//----------------------------------------------
+// Sync (client)
+//----------------------------------------------
+
+/// Before calling any of the other sync APIs, ensure that those are actually available.
+/// If the application is linked a non-sync ObjectBox library, this allows you to fail gracefully.
+/// @return true if this library comes with the sync API
+bool obx_sync_available();
 
 #ifdef __cplusplus
 }

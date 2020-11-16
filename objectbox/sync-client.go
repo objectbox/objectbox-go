@@ -30,6 +30,11 @@ import (
 	"unsafe"
 )
 
+// SyncIsAvailable returns true if the loaded ObjectBox native library supports Sync.
+func SyncIsAvailable() bool {
+	return bool(C.obx_sync_available())
+}
+
 // SyncClient provides automated data synchronization with other clients connected to the same server
 type SyncClient struct {
 	ob      *ObjectBox
@@ -45,10 +50,6 @@ type SyncClient struct {
 // NewSyncClient starts a creation of a new sync client.
 // See other methods for configuration and then use Start() to begin synchronization.
 func NewSyncClient(ob *ObjectBox, serverUri string) (err error, client *SyncClient) {
-	if !C.obx_sync_available() {
-		return errors.New("sync client is not available"), nil
-	}
-
 	client = &SyncClient{ob: ob}
 
 	// close the sync client if some part of the initialization fails

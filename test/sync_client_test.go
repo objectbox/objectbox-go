@@ -27,7 +27,15 @@ import (
 	"github.com/objectbox/objectbox-go/test/model"
 )
 
+func skipTestIfSyncNotAvailable(t *testing.T) {
+	if !objectbox.SyncIsAvailable() {
+		t.Skip("Sync is not available in the currently loaded ObjectBox native library")
+	}
+}
+
 func TestSyncAuth(t *testing.T) {
+	skipTestIfSyncNotAvailable(t)
+
 	var env = model.NewTestEnv(t)
 	defer env.Close()
 
@@ -48,6 +56,8 @@ func TestSyncAuth(t *testing.T) {
 }
 
 func TestSyncUpdatesMode(t *testing.T) {
+	skipTestIfSyncNotAvailable(t)
+
 	var env = model.NewTestEnv(t)
 	defer env.Close()
 
@@ -74,6 +84,8 @@ func TestSyncUpdatesMode(t *testing.T) {
 }
 
 func TestSyncState(t *testing.T) {
+	skipTestIfSyncNotAvailable(t)
+
 	var server = NewTestSyncServer(t)
 	defer func() {
 		if server != nil {
@@ -170,6 +182,8 @@ func (client *testSyncClient) Start() {
 }
 
 func TestSyncDataAutomatic(t *testing.T) {
+	skipTestIfSyncNotAvailable(t)
+
 	var server = NewTestSyncServer(t)
 	defer server.Close()
 
@@ -228,6 +242,8 @@ func TestSyncDataAutomatic(t *testing.T) {
 }
 
 func TestSyncDataManual(t *testing.T) {
+	skipTestIfSyncNotAvailable(t)
+
 	var server = NewTestSyncServer(t)
 	defer server.Close()
 
@@ -297,6 +313,8 @@ func TestSyncDataManual(t *testing.T) {
 }
 
 func TestSyncWaitForLogin(t *testing.T) {
+	skipTestIfSyncNotAvailable(t)
+
 	var server = NewTestSyncServer(t)
 	defer server.Close()
 
@@ -324,6 +342,8 @@ func TestSyncWaitForLogin(t *testing.T) {
 }
 
 func TestSyncOnChange(t *testing.T) {
+	skipTestIfSyncNotAvailable(t)
+
 	var server = NewTestSyncServer(t)
 	defer server.Close()
 

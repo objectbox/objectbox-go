@@ -47,6 +47,7 @@ func main() {
 	for i := 0; i < *runs; i++ {
 		executor.putMany(inserts)
 		items := executor.readAll(*count)
+		executor.changeValues(items)
 		executor.updateAll(items)
 		executor.removeAll()
 

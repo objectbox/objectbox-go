@@ -67,7 +67,7 @@ func NewBuilder() *Builder {
 	// patch version can be higher but only if it's not a "dev" version (100+)
 	var patchMatches = version.Patch >= expectedVersion.Patch && (version.Patch < 100 || version.Patch == expectedVersion.Patch)
 	if version.Major != expectedVersion.Major || version.Minor != expectedVersion.Minor || !patchMatches {
-		panic("libobjectbox version " + expectedVersion.String() + " required, but found " + version.String() + ".\n" +
+		panic("ObjectBox native lib version " + expectedVersion.String() + " required, but found " + version.String() + ".\n" +
 			"Please run install.sh for a full upgrade.\n" +
 			"Or check https://github.com/objectbox/objectbox-c for info about the required library.")
 	}

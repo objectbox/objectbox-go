@@ -85,7 +85,7 @@ type options struct {
 }
 
 // constant during runtime so no need to call this each time it's necessary
-var supportsBytesArray = bool(C.obx_supports_bytes_array())
+var supportsResultArray = bool(C.obx_has_feature(C.OBXFeature_ResultArray))
 
 // Close fully closes the database and frees resources
 func (ob *ObjectBox) Close() {

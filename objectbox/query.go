@@ -96,7 +96,7 @@ func (query *Query) Find() (objects interface{}, err error) {
 	}
 
 	const existingOnly = true
-	if supportsBytesArray {
+	if supportsResultArray {
 		var cFn = func() *C.OBX_bytes_array {
 			return C.obx_query_find(query.cQuery)
 		}

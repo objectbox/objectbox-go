@@ -266,7 +266,7 @@ func (box *Box) PutMany(objects interface{}) (ids []uint64, err error) {
 	// Execute everything in a single single transaction - for performance and consistency.
 	// This is necessary even if count < chunkSize because of relations (PutRelated)
 	err = box.ObjectBox.RunInWriteTx(func() error {
-		if supportsBytesArray {
+		if supportsResultArray {
 			// Process the data in chunks so that we don't consume too much memory.
 			const chunkSize = 10000 // 10k is the limit currently enforced by obx_box_ids_for_put, maybe make configurable
 
@@ -501,7 +501,7 @@ func (box *Box) GetMany(ids ...uint64) (slice interface{}, err error) {
 	const existingOnly = false
 	if cIds, err := goIdsArrayToC(ids); err != nil {
 		return nil, err
-	} else if supportsBytesArray {
+	} else if supportsResultArray {
 		return box.readManyObjects(existingOnly, func() *C.OBX_bytes_array { return C.obx_box_get_many(box.cBox, cIds.cArray) })
 	} else {
 		var cFn = func(visitorArg unsafe.Pointer) C.obx_err {
@@ -519,7 +519,7 @@ func (box *Box) GetManyExisting(ids ...uint64) (slice interface{}, err error) {
 	const existingOnly = true
 	if cIds, err := goIdsArrayToC(ids); err != nil {
 		return nil, err
-	} else if supportsBytesArray {
+	} else if supportsResultArray {
 		return box.readManyObjects(existingOnly, func() *C.OBX_bytes_array { return C.obx_box_get_many(box.cBox, cIds.cArray) })
 	} else {
 		var cFn = func(visitorArg unsafe.Pointer) C.obx_err {
@@ -535,7 +535,7 @@ func (box *Box) GetManyExisting(ids ...uint64) (slice interface{}, err error) {
 // The cast is done automatically when using the generated BoxFor* code.
 func (box *Box) GetAll() (slice interface{}, err error) {
 	const existingOnly = true
-	if supportsBytesArray {
+	if supportsResultArray {
 		return box.readManyObjects(existingOnly, func() *C.OBX_bytes_array { return C.obx_box_get_all(box.cBox) })
 	}
 

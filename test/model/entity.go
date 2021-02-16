@@ -78,7 +78,7 @@ type Entity struct {
 
 // TestStringIdEntity model
 type TestStringIdEntity struct {
-	Id string `objectbox:"id"`
+	Id string `objectbox:"id(assignable)"` // id(assignable) also works with integer IDs, but let's test this "harder" case
 }
 
 // TestEntityInline model

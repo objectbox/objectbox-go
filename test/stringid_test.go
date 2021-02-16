@@ -96,3 +96,20 @@ func TestStringIdMultiOps(t *testing.T) {
 	assert.NoErr(t, err)
 	assert.Eq(t, uint64(0), count)
 }
+
+func TestSelfAssignedId(t *testing.T) {
+	env := model.NewTestEnv(t)
+	defer env.Close()
+
+	box := model.BoxForTestStringIdEntity(env.ObjectBox)
+
+	objects := []*model.TestStringIdEntity{{}, {Id: "10"}}
+
+	ids, err := box.PutMany(objects)
+	assert.NoErr(t, err)
+	assert.Eq(t, len(objects), len(ids))
+	assert.Eq(t, "1", objects[0].Id)
+	assert.Eq(t, "10", objects[1].Id)
+	assert.Eq(t, uint64(1), ids[0])
+	assert.Eq(t, uint64(10), ids[1])
+}

@@ -1,4 +1,4 @@
 github.com/google/flatbuffers v1.11.0 h1:O7CEyB8Cb3/DmtxODGtLHcEvpr81Jm5qLg/hsHnxA2A=
 github.com/google/flatbuffers v1.11.0/go.mod h1:1AeVuKshWv4vARoZatz6mlQ0JxURH0Kv5+zNeJKJCa8=
-github.com/objectbox/objectbox-generator v0.11.0 h1:9uID1q4kbsHfKbvlu+1OfhNfQ0/TPlv3dk+UdDx++CM=
-github.com/objectbox/objectbox-generator v0.11.0/go.mod h1:2jUhmjcgZ/W2R1Hn+DsGYfo9GV0ffLtkipB27dJ13CI=
+github.com/objectbox/objectbox-generator v0.11.1-0.20210216143316-69727dd909e1 h1:s1aH3ufSwWY/v8RW676A1rTFjwkptl8BpM5GtaLLvv8=
+github.com/objectbox/objectbox-generator v0.11.1-0.20210216143316-69727dd909e1/go.mod h1:2jUhmjcgZ/W2R1Hn+DsGYfo9GV0ffLtkipB27dJ13CI=

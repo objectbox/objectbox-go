@@ -34,7 +34,7 @@ Getting started
 To install ObjectBox, execute the following command in your project directory. 
 You can have a look at [installation docs](https://golang.objectbox.io/install) for more details and further instructions. 
 ```bash
-bash <(curl -s https://raw.githubusercontent.com/objectbox/objectbox-go/master/install.sh)
+bash <(curl -s https://raw.githubusercontent.com/objectbox/objectbox-go/main/install.sh)
 ```
 
 You can run tests to validate your installation
@@ -82,7 +82,7 @@ This is important as diverging versions of any component might result in errors.
   
 The `install.sh` script can also be used for upgrading:
  ```bash
-bash <(curl -s https://raw.githubusercontent.com/objectbox/objectbox-go/master/install.sh)
+bash <(curl -s https://raw.githubusercontent.com/objectbox/objectbox-go/main/install.sh)
  ```
  
 Afterwards, don't forget to re-run the code generation on your project

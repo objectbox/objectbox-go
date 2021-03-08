@@ -81,7 +81,7 @@ cat >update-objectbox.sh <<'EOL'
 #!/bin/bash
 set -eu
 cd "$(dirname "$0")"
-bash <(curl -s https://raw.githubusercontent.com/objectbox/objectbox-go/master/install.sh)
+bash <(curl -s https://raw.githubusercontent.com/objectbox/objectbox-go/main/install.sh)
 EOL
 chmod +x update-objectbox.sh
 ./update-objectbox.sh

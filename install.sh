@@ -72,7 +72,7 @@ fi
 
 # install the ObjectBox-C library
 mkdir -p objectboxlib && cd objectboxlib
-bash <(curl -s https://raw.githubusercontent.com/objectbox/objectbox-c/master/download.sh) ${cLibArgs} ${cLibVersion}
+bash <(curl -s https://raw.githubusercontent.com/objectbox/objectbox-c/main/download.sh) ${cLibArgs} ${cLibVersion}
 if [[ "$os" == MINGW* ]] || [[ "$os" == CYGWIN* ]]; then
   localLibDir=$(realpath lib)
   echo "Windows must be able to find the objectbox.dll when executing ObjectBox based programs (even tests)."

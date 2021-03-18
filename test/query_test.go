@@ -637,51 +637,51 @@ func TestQueryLinks(t *testing.T) {
 
 	testQueries(t, env, queryTestOptions{baseCount: 10}, []queryTestCase{
 		// to-one link
-		{2, s{`TRUE Link: Name == "rel-Val-1"`}, box.Query(E.Related.Link(R.Name.Equals("", true))),
+		{2, s{`TRUE| Link TestEntityRelated via Related with conditions: Name == "rel-Val-1"`}, box.Query(E.Related.Link(R.Name.Equals("", true))),
 			func(q i) error { return eq(q).SetStringParams(R.Name, "rel-Val-1") }},
 
 		// to-one backlink = one-to-many
-		{1, s{`TRUE Link: String == "Val-1"`}, boxR.Query(E.Related.Link(E.String.Equals("", true))),
+		{1, s{`TRUE| Backlink Entity via Related with conditions: String == "Val-1"`}, boxR.Query(E.Related.Link(E.String.Equals("", true))),
 			func(q i) error { return eq(q).SetStringParams(E.String, e.String) }},
 
 		// to-one empty
-		{10, s{`TRUE Link: TRUE`}, box.Query(E.Related.Link()), nil},
-		{10, s{`TRUE Link: TRUE`}, boxR.Query(E.Related.Link()), nil},
+		{10, s{`TRUE| Link TestEntityRelated via Related with conditions: TRUE`}, box.Query(E.Related.Link()), nil},
+		{10, s{`TRUE| Backlink Entity via Related with conditions: TRUE`}, boxR.Query(E.Related.Link()), nil},
 
 		// to-many link
-		{2, s{`TRUE Link: Name == "relPtr-Val-1"`}, box.Query(E.RelatedPtrSlice.Link(R.Name.Equals("", true))),
+		{2, s{`TRUE| Link TestEntityRelated via standalone Relation 5 (from entity 1 to 5) with conditions: Name == "relPtr-Val-1"`}, box.Query(E.RelatedPtrSlice.Link(R.Name.Equals("", true))),
 			func(q i) error { return eq(q).SetStringParams(R.Name, "relPtr-Val-1") }},
 
 		// to-many backlink = many-to-many
-		{1, s{`TRUE Link: String == "Val-1"`}, boxR.Query(E.RelatedPtrSlice.Link(E.String.Equals("", true))),
+		{1, s{`TRUE| Backlink Entity via standalone Relation 5 (from entity 1 to 5) with conditions: String == "Val-1"`}, boxR.Query(E.RelatedPtrSlice.Link(E.String.Equals("", true))),
 			func(q i) error { return eq(q).SetStringParams(E.String, e.String) }},
 
 		// to-many empty
-		{10, s{`TRUE Link: TRUE`}, box.Query(E.RelatedPtrSlice.Link()), nil},
-		{10, s{`TRUE Link: TRUE`}, boxR.Query(E.RelatedPtrSlice.Link()), nil},
+		{10, s{`TRUE| Link TestEntityRelated via standalone Relation 5 (from entity 1 to 5) with conditions: TRUE`}, box.Query(E.RelatedPtrSlice.Link()), nil},
+		{10, s{`TRUE| Backlink Entity via standalone Relation 5 (from entity 1 to 5) with conditions: TRUE`}, boxR.Query(E.RelatedPtrSlice.Link()), nil},
 
 		// to-one three entities deep link
-		{2, s{`TRUE Link: TRUE Link: Text == "RelatedPtr-Next-Val-1"`},
+		{2, s{`TRUE| Link TestEntityRelated via RelatedPtr with conditions: TRUE|| Link EntityByValue via Next with conditions: Text == "RelatedPtr-Next-Val-1"`},
 			box.Query(E.RelatedPtr.Link(R.Next.Link(V.Text.Equals("", true)))),
 			func(q i) error { return eq(q).SetStringParams(V.Text, "RelatedPtr-Next-Val-1") }},
 
 		// to-one three entities deep backlink
-		{1, s{`TRUE Link: TRUE Link: String == "Val-1"`},
+		{1, s{`TRUE| Backlink TestEntityRelated via Next with conditions: TRUE|| Backlink Entity via RelatedPtr with conditions: String == "Val-1"`},
 			boxV.Query(R.Next.Link(E.RelatedPtr.Link(E.String.Equals("", true)))),
 			func(q i) error { return eq(q).SetStringParams(E.String, e.String) }},
 
 		// to-many three entities deep link
-		{2, s{`TRUE Link: TRUE Link: Text == "RelatedPtr-NextSlice-Val-1"`},
+		{2, s{`TRUE| Link TestEntityRelated via RelatedPtr with conditions: TRUE|| Link EntityByValue via standalone Relation 6 (from entity 5 to 3) with conditions: Text == "RelatedPtr-NextSlice-Val-1"`},
 			box.Query(E.RelatedPtr.Link(R.NextSlice.Link(V.Text.Equals("", true)))),
 			func(q i) error { return eq(q).SetStringParams(V.Text, "RelatedPtr-NextSlice-Val-1") }},
 
 		// to-many three entities deep backlink
-		{1, s{`TRUE Link: TRUE Link: String == "Val-1"`},
+		{1, s{`TRUE| Backlink TestEntityRelated via standalone Relation 6 (from entity 5 to 3) with conditions: TRUE|| Backlink Entity via RelatedPtr with conditions: String == "Val-1"`},
 			boxV.Query(R.NextSlice.Link(E.RelatedPtr.Link(E.String.Equals("", true)))),
 			func(q i) error { return eq(q).SetStringParams(E.String, e.String) }},
 
 		// ALL (implicit): two to-one links and a source-entity condition
-		{1, s{`String == "Val-1" Link: Name == "rel-Val-1" Link: Name == "relPtr-Val-1"`}, box.Query(
+		{1, s{`String == "Val-1"| Link TestEntityRelated via Related with conditions: Name == "rel-Val-1"| Link TestEntityRelated via RelatedPtr with conditions: Name == "relPtr-Val-1"`}, box.Query(
 			E.String.Equals("Val-1", true),
 			E.Related.Link(R.Name.Equals("rel-Val-1", true)),
 			E.RelatedPtr.Link(R.Name.Equals("relPtr-Val-1", true)),

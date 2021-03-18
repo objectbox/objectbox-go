@@ -8,7 +8,7 @@ $ErrorActionPreference = "Stop"
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12, [Net.SecurityProtocolType]::Tls11, [Net.SecurityProtocolType]::Tls
 
 function DownloadLibrary {
-    $libVersion = '0.12.0'
+    $libVersion = '0.13.0'
     $downloadDir = 'download'
     
     # Windows hashes and URL sourced from objectbox-c download.sh

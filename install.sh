@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-cLibVersion=0.12.0
+cLibVersion=0.13.0
 os=$(uname)
+cLibArgs="$*"
 
 # verify installed Go version
 goVersion=$(go version | cut -d' ' -f 3)
@@ -65,7 +66,6 @@ if [[ "$os" != MINGW* ]] && [[ "$os" != CYGWIN* ]]; then
 fi
 
 # if there's no tty this is probably part of a docker build - therefore we install the c-api explicitly
-cLibArgs=
 if [[ "$os" != MINGW* ]] && [[ "$os" != CYGWIN* ]]; then
   tty -s || cLibArgs="${cLibArgs} --install"
 fi

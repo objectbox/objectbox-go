@@ -33,6 +33,34 @@ func skipTestIfSyncNotAvailable(t *testing.T) {
 	}
 }
 
+func TestSyncBasics(t *testing.T) {
+	skipTestIfSyncNotAvailable(t)
+
+	var env = model.NewTestEnv(t)
+	defer env.Close()
+
+	// actually starting a server for this test case is not necessary
+	const serverURI = "ws://127.0.0.1:9999"
+
+	client, err := env.ObjectBox.SyncClient()
+	assert.Err(t, err)
+	assert.True(t, client == nil)
+
+	client = env.SyncClient(serverURI)
+	assert.True(t, !client.IsClosed())
+
+	clientFromStore, err := env.ObjectBox.SyncClient()
+	assert.NoErr(t, err)
+	assert.Eq(t, clientFromStore, client)
+
+	assert.NoErr(t, client.Close())
+	assert.True(t, client.IsClosed())
+
+	client, err = env.ObjectBox.SyncClient()
+	assert.Err(t, err)
+	assert.True(t, client == nil)
+}
+
 func TestSyncAuth(t *testing.T) {
 	skipTestIfSyncNotAvailable(t)
 
@@ -42,17 +70,11 @@ func TestSyncAuth(t *testing.T) {
 	// actually starting a server for this test case is not necessary
 	const serverURI = "ws://127.0.0.1:9999"
 
-	{
-		var client = env.SyncClient(serverURI)
-		assert.NoErr(t, client.AuthSharedSecret(nil))
-		assert.NoErr(t, client.Close())
-	}
-
-	{
-		var client = env.SyncClient(serverURI)
-		assert.NoErr(t, client.AuthSharedSecret([]byte{1, 2, 3}))
-		assert.NoErr(t, client.Close())
-	}
+	var client = env.SyncClient(serverURI)
+	assert.Err(t, client.SetCredentials(nil))
+	assert.NoErr(t, client.SetCredentials(objectbox.SyncCredentialsSharedSecret([]byte{1, 2, 3})))
+	assert.NoErr(t, client.SetCredentials(objectbox.SyncCredentialsGoogleAuth([]byte{4, 5, 6})))
+	assert.NoErr(t, client.Close())
 }
 
 func TestSyncUpdatesMode(t *testing.T) {
@@ -66,19 +88,19 @@ func TestSyncUpdatesMode(t *testing.T) {
 
 	{
 		var client = env.SyncClient(serverURI)
-		assert.NoErr(t, client.UpdatesMode(objectbox.SyncClientUpdatesManual))
+		assert.NoErr(t, client.SetRequestUpdatesMode(objectbox.SyncRequestUpdatesManual))
 		assert.NoErr(t, client.Close())
 	}
 
 	{
 		var client = env.SyncClient(serverURI)
-		assert.NoErr(t, client.UpdatesMode(objectbox.SyncClientUpdatesAutomatic))
+		assert.NoErr(t, client.SetRequestUpdatesMode(objectbox.SyncRequestUpdatesAutomatic))
 		assert.NoErr(t, client.Close())
 	}
 
 	{
 		var client = env.SyncClient(serverURI)
-		assert.NoErr(t, client.UpdatesMode(objectbox.SyncClientUpdatesOnLogin))
+		assert.NoErr(t, client.SetRequestUpdatesMode(objectbox.SyncRequestUpdatesAutoNoPushes))
 		assert.NoErr(t, client.Close())
 	}
 }
@@ -249,12 +271,12 @@ func TestSyncDataManual(t *testing.T) {
 
 	var a = NewTestSyncClient(t, server.URI(), "a")
 	defer a.Close()
-	assert.NoErr(t, a.sync.UpdatesMode(objectbox.SyncClientUpdatesManual))
+	assert.NoErr(t, a.sync.SetRequestUpdatesMode(objectbox.SyncRequestUpdatesManual))
 	a.Start()
 
 	var b = NewTestSyncClient(t, server.URI(), "b")
 	defer b.Close()
-	assert.NoErr(t, b.sync.UpdatesMode(objectbox.SyncClientUpdatesManual))
+	assert.NoErr(t, b.sync.SetRequestUpdatesMode(objectbox.SyncRequestUpdatesManual))
 	b.Start()
 
 	isEmpty, err := a.env.Box.IsEmpty()
@@ -328,7 +350,7 @@ func TestSyncWaitForLogin(t *testing.T) {
 	// failure
 	var b = NewTestSyncClient(t, server.URI(), "b")
 	defer b.Close()
-	assert.NoErr(t, b.sync.AuthSharedSecret([]byte{1}))
+	assert.NoErr(t, b.sync.SetCredentials(objectbox.SyncCredentialsSharedSecret([]byte{1})))
 	timedOut, err = b.sync.WaitForLogin(time.Second)
 	assert.True(t, strings.Contains(err.Error(), "credentials rejected"))
 	assert.True(t, !timedOut)
@@ -356,15 +378,15 @@ func TestSyncOnChange(t *testing.T) {
 
 	var b = NewTestSyncClient(t, server.URI(), "b")
 	defer b.Close()
-	assert.NoErr(t, b.sync.OnChange(func(changes []*objectbox.SyncChangeNotification) {
+	assert.NoErr(t, b.sync.SetChangeListener(func(changes []*objectbox.SyncChange) {
 		t.Logf("received %d changes", len(changes))
 		for i, change := range changes {
 			t.Logf("change %d: %v", i, change)
 
 			// only count the main entity, not relations
 			if change.EntityId == model.EntityBinding.Id {
-				putIDs = append(putIDs, change.PutIds...)
-				removedIDs = append(removedIDs, change.RemovedIds...)
+				putIDs = append(putIDs, change.Puts...)
+				removedIDs = append(removedIDs, change.Removals...)
 			}
 		}
 	}))

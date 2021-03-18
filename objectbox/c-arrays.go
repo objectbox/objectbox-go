@@ -208,9 +208,9 @@ func cVoidPtrToByteSlice(data unsafe.Pointer, size int, bytes *[]byte) {
 	header.Cap = size
 }
 
-func cSyncChangeArrayToGo(cArray *C.OBX_sync_change_array) []*SyncChangeNotification {
+func cSyncChangeArrayToGo(cArray *C.OBX_sync_change_array) []*SyncChange {
 	var size = uint(cArray.count)
-	var changes = make([]*SyncChangeNotification, 0, size)
+	var changes = make([]*SyncChange, 0, size)
 	if size > 0 {
 		var cArrayStart = unsafe.Pointer(cArray.list)
 		var cItemSize = unsafe.Sizeof(*cArray.list)
@@ -218,16 +218,16 @@ func cSyncChangeArrayToGo(cArray *C.OBX_sync_change_array) []*SyncChangeNotifica
 			var offset = uintptr(cArrayStart) + uintptr(i)*cItemSize
 			var itemPtr = (*C.OBX_sync_change)(unsafe.Pointer(offset))
 
-			var change = &SyncChangeNotification{
+			var change = &SyncChange{
 				EntityId: TypeId(itemPtr.entity_id),
 			}
 
 			if itemPtr.puts != nil {
-				change.PutIds = cIdsArrayToGo(itemPtr.puts)
+				change.Puts = cIdsArrayToGo(itemPtr.puts)
 			}
 
 			if itemPtr.removals != nil {
-				change.RemovedIds = cIdsArrayToGo(itemPtr.removals)
+				change.Removals = cIdsArrayToGo(itemPtr.removals)
 			}
 
 			changes = append(changes, change)

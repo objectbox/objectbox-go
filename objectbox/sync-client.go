@@ -30,16 +30,10 @@ import (
 	"unsafe"
 )
 
-// SyncIsAvailable returns true if the loaded ObjectBox native library supports Sync.
-func SyncIsAvailable() bool {
-	return bool(C.obx_sync_available())
-}
-
-// SyncClient provides automated data synchronization with other clients connected to the same server
+// SyncClient is used to connect to an ObjectBox sync server.
 type SyncClient struct {
 	ob      *ObjectBox
 	cClient *C.OBX_sync
-	authSet bool
 	started bool
 	state   syncClientInternalState
 
@@ -47,9 +41,15 @@ type SyncClient struct {
 	cCallbackIds []cCallbackId
 }
 
-// NewSyncClient starts a creation of a new sync client.
-// See other methods for configuration and then use Start() to begin synchronization.
-func NewSyncClient(ob *ObjectBox, serverUri string) (err error, client *SyncClient) {
+// NewSyncClient creates a sync client associated with the given store and configures it with the given options.
+// This does not initiate any connection attempts yet, call SyncClient.Start() to do so.
+//
+// Before SyncClient.Start(), you can still configure some aspects, e.g. SyncClient.SetRequestUpdatesMode().
+func NewSyncClient(ob *ObjectBox, serverUri string, credentials *SyncCredentials) (err error, client *SyncClient) {
+	if ob.syncClient != nil {
+		return errors.New("only one sync client can be active for a store"), nil
+	}
+
 	client = &SyncClient{ob: ob}
 
 	// close the sync client if some part of the initialization fails
@@ -73,21 +73,16 @@ func NewSyncClient(ob *ObjectBox, serverUri string) (err error, client *SyncClie
 		err = client.registerCallbacks()
 	}
 
+	if err == nil {
+		err = client.SetCredentials(credentials)
+	}
+
+	if err == nil {
+		ob.syncClient = client
+	}
+
 	return err, client
 }
-
-type syncClientCode uint64
-
-const (
-	syncClientCodeOk                  syncClientCode = C.OBXSyncCode_OK
-	syncClientCodeRequestRejected     syncClientCode = C.OBXSyncCode_REQ_REJECTED
-	syncClientCodeCredentialsRejected syncClientCode = C.OBXSyncCode_CREDENTIALS_REJECTED
-	syncClientCodeUnknown             syncClientCode = C.OBXSyncCode_UNKNOWN
-	syncClientCodeAuthUnreachable     syncClientCode = C.OBXSyncCode_AUTH_UNREACHABLE
-	syncClientCodeBadVersion          syncClientCode = C.OBXSyncCode_BAD_VERSION
-	syncClientCodeClientIdTaken       syncClientCode = C.OBXSyncCode_CLIENT_ID_TAKEN
-	syncClientCodeTxViolatedUnique    syncClientCode = C.OBXSyncCode_TX_VIOLATED_UNIQUE
-)
 
 func (client *SyncClient) registerCallbacks() error {
 	// login
@@ -107,10 +102,10 @@ func (client *SyncClient) registerCallbacks() error {
 	if callbackId, err := cCallbackRegister(cVoidUint64Callback(func(code uint64) {
 		client.state.Update(func(state *syncClientInternalState) {
 			state.loggedIn = false
-			switch syncClientCode(code) {
-			case syncClientCodeCredentialsRejected:
+			switch code {
+			case C.OBXSyncCode_CREDENTIALS_REJECTED:
 				state.loginError = errors.New("credentials rejected")
-			case syncClientCodeAuthUnreachable:
+			case C.OBXSyncCode_AUTH_UNREACHABLE:
 				state.loginError = errors.New("authentication unreachable")
 			default:
 				state.loginError = fmt.Errorf("error code %v", code)
@@ -136,36 +131,54 @@ func (client *SyncClient) Close() error {
 		cCallbackUnregister(cbId)
 	}
 
+	client.ob.syncClient = nil
+
 	return cCall(func() C.obx_err {
 		defer func() { client.cClient = nil }()
 		return C.obx_sync_close(client.cClient)
 	})
 }
 
-// AuthSharedSecret configures the client to use shared-secret authentication
-func (client *SyncClient) AuthSharedSecret(data []byte) error {
-	client.authSet = true
+// IsClosed returns true if this sync client is closed and can no longer be used.
+func (client *SyncClient) IsClosed() bool {
+	return client.cClient == nil
+}
+
+// SetCredentials configures authentication credentials, depending on your server config.
+func (client *SyncClient) SetCredentials(credentials *SyncCredentials) error {
+	if credentials == nil {
+		return errors.New("credentials must not be nil")
+	}
+
 	return cCall(func() C.obx_err {
 		var dataPtr unsafe.Pointer = nil
-		if len(data) > 0 {
-			dataPtr = unsafe.Pointer(&data[0])
+		if len(credentials.data) > 0 {
+			dataPtr = unsafe.Pointer(&credentials.data[0])
 		}
-		return C.obx_sync_credentials(client.cClient, C.OBXSyncCredentialsType_SHARED_SECRET, dataPtr, C.size_t(len(data)))
+		return C.obx_sync_credentials(client.cClient, credentials.cType, dataPtr, C.size_t(len(credentials.data)))
 	})
 }
 
-type syncClientUpdatesMode uint
+type syncRequestUpdatesMode uint
 
 const (
-	// SyncClientUpdatesManual configures the client to only get updates when triggered manually using RequestUpdates()
-	SyncClientUpdatesManual syncClientUpdatesMode = C.OBXRequestUpdatesMode_MANUAL
+	// SyncRequestUpdatesManual configures the client to only get updates when triggered manually using RequestUpdates()
+	SyncRequestUpdatesManual syncRequestUpdatesMode = C.OBXRequestUpdatesMode_MANUAL
 
-	// SyncClientUpdatesAutomatic configures the client to get all updates automatically
-	SyncClientUpdatesAutomatic syncClientUpdatesMode = C.OBXRequestUpdatesMode_AUTO
+	// SyncRequestUpdatesAutomatic configures the client to get all updates automatically
+	SyncRequestUpdatesAutomatic syncRequestUpdatesMode = C.OBXRequestUpdatesMode_AUTO
 
-	// SyncClientUpdatesOnLogin configures the client to get all updates during log-in (initial and reconnects)
-	SyncClientUpdatesOnLogin syncClientUpdatesMode = C.OBXRequestUpdatesMode_AUTO_NO_PUSHES
+	// SyncRequestUpdatesAutoNoPushes configures the client to get all updates during log-in (initial and reconnects)
+	SyncRequestUpdatesAutoNoPushes syncRequestUpdatesMode = C.OBXRequestUpdatesMode_AUTO_NO_PUSHES
 )
+
+// SetRequestUpdatesMode configures how/when the server will send the changes to us (the client). Can only be called
+// before Start(). See SyncRequestUpdatesManual, SyncRequestUpdatesAutomatic, SyncRequestUpdatesAutoNoPushes.
+func (client *SyncClient) SetRequestUpdatesMode(mode syncRequestUpdatesMode) error {
+	return cCall(func() C.obx_err {
+		return C.obx_sync_request_updates_mode(client.cClient, C.OBXRequestUpdatesMode(mode))
+	})
+}
 
 type SyncClientState uint
 
@@ -192,14 +205,6 @@ const (
 	SyncClientStateDead SyncClientState = C.OBXSyncState_DEAD
 )
 
-// UpdatesMode configures how/when the server will send the changes to us (the client).
-// Can only be called before Start(). See SyncClientUpdatesManual, SyncClientUpdatesAutomatic, SyncClientUpdatesOnLogin.
-func (client *SyncClient) UpdatesMode(mode syncClientUpdatesMode) error {
-	return cCall(func() C.obx_err {
-		return C.obx_sync_request_updates_mode(client.cClient, C.OBXRequestUpdatesMode(mode))
-	})
-}
-
 // State returns the current state of the sync client
 func (client *SyncClient) State() SyncClientState {
 	return SyncClientState(C.obx_sync_state(client.cClient))
@@ -208,22 +213,12 @@ func (client *SyncClient) State() SyncClientState {
 // Start initiates the connection to the server and begins the synchronization
 func (client *SyncClient) Start() error {
 	client.started = true
-	// If no authentication was provided by the user, try if the server accepts clients without any credentials at all.
-	// That's what the client code/setup implies. Maybe the c-api should do this automatically.
-	if !client.authSet {
-		if err := cCall(func() C.obx_err {
-			return C.obx_sync_credentials(client.cClient, C.OBXSyncCredentialsType_NONE, nil, 0)
-		}); err != nil {
-			return err
-		}
-	}
-
 	return cCall(func() C.obx_err {
 		return C.obx_sync_start(client.cClient)
 	})
 }
 
-// Stop stops the synchronization and closes the connection to the server
+// Stop stops the synchronization and closes the connection to the server Does nothing if it is already stopped.
 func (client *SyncClient) Stop() error {
 	var err = cCall(func() C.obx_err {
 		return C.obx_sync_stop(client.cClient)
@@ -253,9 +248,9 @@ func (client *SyncClient) WaitForLogin(timeout time.Duration) (timedOut bool, er
 	})
 }
 
-// RequestUpdates can be used to manually synchronize incomming changes in case the client is running in "Manual" or
-// "OnLogin" mode (i.e. it doesn't get the updates automatically). Additionally, it can be used to subscribe for future
-// pushes (similar to the "Auto" mode).
+// RequestUpdates can be used to manually synchronize incoming changes in case the client is running in "Manual" or
+// "AutoNoPushes" mode (i.e. it doesn't get the updates automatically). Additionally, it can be used to subscribe for
+// future pushes (similar to the "Auto" mode).
 func (client *SyncClient) RequestUpdates(alsoSubscribe bool) error {
 	return cCall(func() C.obx_err {
 		return C.obx_sync_updates_request(client.cClient, C.bool(alsoSubscribe))
@@ -269,20 +264,20 @@ func (client *SyncClient) CancelUpdates() error {
 	})
 }
 
-// SyncChangeNotification describes a single incoming change received by the sync client
-type SyncChangeNotification struct {
-	EntityId   TypeId
-	PutIds     []uint64
-	RemovedIds []uint64
+// SyncChange describes a single incoming data event received by the sync client
+type SyncChange struct {
+	EntityId TypeId
+	Puts     []uint64
+	Removals []uint64
 }
 
-type syncChangeNotificationListener func(changes []*SyncChangeNotification)
+type syncChangeListener func(changes []*SyncChange)
 
-// OnChange attaches a callback to receive incoming changes notifications.
-// OnChange event is issued after a transaction is applied to the local database.
-func (client *SyncClient) OnChange(callback syncChangeNotificationListener) error {
+// SetChangeListener attaches a callback to receive incoming changes notifications.
+// SyncChange event is issued after a transaction is applied to the local database.
+func (client *SyncClient) SetChangeListener(callback syncChangeListener) error {
 	if client.started {
-		return errors.New("cannot attach an OnChange listener - already started")
+		return errors.New("cannot attach an SetChangeListener listener - already started")
 	}
 
 	if callbackId, err := cCallbackRegister(cVoidConstVoidCallback(func(cChangeList unsafe.Pointer) {

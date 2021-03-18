@@ -18,7 +18,7 @@ package objectbox
 
 /*
 #include <stdlib.h>
-#include "objectbox.h"
+#include "objectbox-sync.h"
 */
 import "C"
 

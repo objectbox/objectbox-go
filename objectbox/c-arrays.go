@@ -18,7 +18,7 @@ package objectbox
 
 /*
 #include <stdlib.h>
-#include "objectbox.h"
+#include "objectbox-sync.h"
 
 char** newCharArray(int size) {
 	return calloc(sizeof(char*), size);

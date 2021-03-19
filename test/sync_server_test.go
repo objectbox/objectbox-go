@@ -133,7 +133,15 @@ func findSyncServerExecutable(t *testing.T) string {
 }
 
 func (server *testSyncServer) Close() {
-	defer server.env.Close()
+	if server.env == nil {
+		return
+	}
+
+	defer func() {
+		server.env.Close()
+		server.env = nil
+		server.cmd = nil
+	}()
 
 	// wait for the server to finish
 	assert.NotNil(server.t, server.cmd.Process)

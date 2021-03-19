@@ -343,24 +343,27 @@ func TestSyncWaitForLogin(t *testing.T) {
 	// success
 	var a = NewTestSyncClient(t, server.URI(), "a")
 	defer a.Close()
-	timedOut, err := a.sync.WaitForLogin(time.Second)
+	successful, err := a.sync.WaitForLogin(time.Second)
 	assert.NoErr(t, err)
-	assert.True(t, !timedOut)
+	assert.True(t, successful)
 
 	// failure
 	var b = NewTestSyncClient(t, server.URI(), "b")
 	defer b.Close()
 	assert.NoErr(t, b.sync.SetCredentials(objectbox.SyncCredentialsSharedSecret([]byte{1})))
-	timedOut, err = b.sync.WaitForLogin(time.Second)
-	assert.True(t, strings.Contains(err.Error(), "credentials rejected"))
-	assert.True(t, !timedOut)
+	successful, err = b.sync.WaitForLogin(time.Second)
+	if !strings.Contains(err.Error(), "credentials") {
+		assert.Failf(t, "Error was expected to contain 'credentials': %v", err)
+	}
+	assert.True(t, !successful)
 
 	// time out
 	var c = NewTestSyncClient(t, server.URI(), "b")
 	defer c.Close()
-	timedOut, err = c.sync.WaitForLogin(time.Nanosecond)
+	server.Close()
+	successful, err = c.sync.WaitForLogin(time.Millisecond)
 	assert.NoErr(t, err)
-	assert.True(t, timedOut)
+	assert.True(t, !successful)
 }
 
 func TestSyncOnChange(t *testing.T) {

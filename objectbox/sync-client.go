@@ -70,10 +70,6 @@ func NewSyncClient(ob *ObjectBox, serverUri string, credentials *SyncCredentials
 	})
 
 	if err == nil {
-		err = client.registerCallbacks()
-	}
-
-	if err == nil {
 		err = client.SetCredentials(credentials)
 	}
 
@@ -82,43 +78,6 @@ func NewSyncClient(ob *ObjectBox, serverUri string, credentials *SyncCredentials
 	}
 
 	return err, client
-}
-
-func (client *SyncClient) registerCallbacks() error {
-	// login
-	if callbackId, err := cCallbackRegister(cVoidCallback(func() {
-		client.state.Update(func(state *syncClientInternalState) {
-			state.loggedIn = true
-			state.loginError = nil
-		})
-	})); err != nil {
-		return err
-	} else {
-		client.cCallbackIds = append(client.cCallbackIds, callbackId)
-		C.obx_sync_listener_login(client.cClient, (*C.OBX_sync_listener_login)(cVoidCallbackDispatchPtr), unsafe.Pointer(&callbackId))
-	}
-
-	// login failed
-	if callbackId, err := cCallbackRegister(cVoidUint64Callback(func(code uint64) {
-		client.state.Update(func(state *syncClientInternalState) {
-			state.loggedIn = false
-			switch code {
-			case C.OBXSyncCode_CREDENTIALS_REJECTED:
-				state.loginError = errors.New("credentials rejected")
-			case C.OBXSyncCode_AUTH_UNREACHABLE:
-				state.loginError = errors.New("authentication unreachable")
-			default:
-				state.loginError = fmt.Errorf("error code %v", code)
-			}
-		})
-	})); err != nil {
-		return err
-	} else {
-		client.cCallbackIds = append(client.cCallbackIds, callbackId)
-		C.obx_sync_listener_login_failure(client.cClient, (*C.OBX_sync_listener_login_failure)(cVoidUint64CallbackDispatchPtr), unsafe.Pointer(&callbackId))
-	}
-
-	return nil
 }
 
 // Close stops synchronization and frees the resources.
@@ -227,25 +186,38 @@ func (client *SyncClient) Stop() error {
 	return err
 }
 
-// WaitForLogin initiates the connection to the server and waits for a login response (either a success or a failure)
+// WaitForLogin - waits for the sync client to get into the given state or until the given timeout is reached.
+// For an asynchronous alternative, please check the listeners. Start() is called automatically if it hasn't been yet.
 // Returns:
-// 		(true, nil) in case of a time out;
-// 		(false, nil) in case the login was successful;
+// 		(true, nil) in case the login was successful;
+// 		(false, nil) in case of a time out;
 // 		(false, error) if an error occurred (such as wrong credentials)
-func (client *SyncClient) WaitForLogin(timeout time.Duration) (timedOut bool, err error) {
+func (client *SyncClient) WaitForLogin(timeout time.Duration) (successful bool, err error) {
 	if !client.started {
 		if err := client.Start(); err != nil {
 			return false, err
 		}
 	}
 
-	return waitUntil(timeout, time.Millisecond, func() (result bool, err error) {
-		client.state.Lock()
-		result = client.state.loggedIn
-		err = client.state.loginError
-		client.state.Unlock()
-		return
-	})
+	var timeoutMs = timeout.Milliseconds()
+	if timeoutMs < 0 {
+		return false, fmt.Errorf("timeout must be >= 1 millisecond, %d given", timeoutMs)
+	}
+
+	var code = C.obx_sync_wait_for_logged_in_state(client.cClient, C.uint64_t(timeoutMs))
+	switch code {
+	case C.OBX_SUCCESS:
+		return true, nil
+	case C.OBX_TIMEOUT:
+		return false, nil
+	case C.OBX_NO_SUCCESS:
+		// From native function documentation: a state was reached within the given timeout that is unlikely to result
+		// in a successful login, e.g. "disconnected". Note: obx_last_error_code() is not set
+		return false, errors.New("a state unlikely to lead to a successful login was encountered, " +
+			"this usually indicates an issue with credentials (not set yet, wrong credentials)")
+	default:
+		return false, createError()
+	}
 }
 
 // RequestUpdates can be used to manually synchronize incoming changes in case the client is running in "Manual" or

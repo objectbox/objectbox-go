@@ -1,55 +1,42 @@
-.test:linux:x64:
+.test:
   stage: test
+  script:
+    - bash <(curl -s https://raw.githubusercontent.com/objectbox/objectbox-c/main/download.sh) --quiet --sync 0.13.0
+    - export CGO_LDFLAGS="-L$(pwd -P)/lib -Wl,-rpath -Wl,$(pwd -P)/lib"
+    - ./build/build.sh ${BUILD_ARGS:-}
+
+test:linux:x64:old:
+  extends: .test
   tags: [x64, linux, docker]
+  image: golang:$GOVERSION
+  parallel:
+    matrix:
+      - GOVERSION: [ '1.11.4', '1.12' ]
+        BUILD_ARGS: -test.short
   before_script:
-    - 'cd /usr/local/lib && { curl --fail -o libobjectbox.so -H "PRIVATE-TOKEN: $CI_API_TOKEN" "${OBXLIB_URL_Linux64}" ; ldconfig ; cd - ; }'
-  script:
-    - ./build/build.sh
+    - rm go.sum   # issues with checksum mismatch, if anyone still uses old Go, they may need to delete go.sum
 
-# minimal supported Go version is 1.11.4
-test:linux:x64:go1.11.4:
-  extends: .test:linux:x64
-  image: golang:1.11.4
-  script:
-    - ./build/build.sh -test.short
-
-test:linux:x64:go1.12:
-  extends: .test:linux:x64
-  image: golang:1.12
-  script:
-    - ./build/build.sh -test.short
-
-test:linux:x64:go1.13:
-  extends: .test:linux:x64
-  image: golang:1.13
-
-test:linux:x64:go1.14:
-  extends: .test:linux:x64
-  image: golang:1.14
-
-test:linux:x64:go1.15:
-  extends: .test:linux:x64
-  image: golang:1.15
+test:linux:x64:
+  extends: .test
+  tags: [x64, linux, docker]
+  image: golang:$GOVERSION
+  parallel:
+    matrix:
+      - GOVERSION: [ '1.13', '1.14', '1.15', '1.16' ]
 
 test:linux:ARMv7hf:
-  stage: test
+  extends: .test
   image: golang
   tags: [armv7hf, linux, docker]
-  script:
-    - 'cd /usr/local/lib && { curl --fail -o libobjectbox.so -H "PRIVATE-TOKEN: $CI_API_TOKEN" "${OBXLIB_URL_LinuxARMv7hf}" ; ldconfig ; cd - ; }'
-    - ./build/build.sh -test.short
+  variables:
+    BUILD_ARGS: -test.short
 
 test:mac:x64:
-  stage: test
+  extends: .test
   tags: [x64, mac, go]
-  script:
-    - 'curl --fail -o /usr/local/lib/libobjectbox.dylib -H "PRIVATE-TOKEN: $CI_API_TOKEN" "$OBXLIB_URL_Mac64"'
-    - ./build/build.sh
 
 test:win:x64:
-  stage: test
+  extends: .test
   tags: [x64, windows, go]
-  script:
-    - libDir=$(realpath $(dirname $(which gcc))/../lib)
-    - 'curl --fail -o $libDir/objectbox.dll -H "PRIVATE-TOKEN: $CI_API_TOKEN" "$OBXLIB_URL_Win64"'
-    - ./build/build.sh
+  before_script:
+    - rm go.sum   # issues with checksum mismatch, if anyone still uses old Go, they may need to delete go.sum

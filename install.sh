@@ -66,7 +66,7 @@ if [[ "$os" != MINGW* ]] && [[ "$os" != CYGWIN* ]]; then
 fi
 
 # if there's no tty this is probably part of a docker build - therefore we install the c-api explicitly
-if [[ "$os" != MINGW* ]] && [[ "$os" != CYGWIN* ]]; then
+if [[ "$os" != MINGW* ]] && [[ "$os" != CYGWIN* ]] && [[ "$cLibArgs" != *"--install"* ]]; then
   tty -s || cLibArgs="${cLibArgs} --install"
 fi
 

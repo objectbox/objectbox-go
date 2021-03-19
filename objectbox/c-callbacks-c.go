@@ -47,6 +47,14 @@ func cVoidUint64CallbackDispatch(callbackIdPtr unsafe.Pointer, arg uint64) {
 	}
 }
 
+//export cVoidInt64CallbackDispatch
+func cVoidInt64CallbackDispatch(callbackIdPtr unsafe.Pointer, arg int64) {
+	var callback = cCallbackLookup(callbackIdPtr)
+	if callback != nil {
+		callback.callVoidInt64(arg)
+	}
+}
+
 //export cVoidConstVoidCallbackDispatch
 func cVoidConstVoidCallbackDispatch(callbackIdPtr unsafe.Pointer, arg unsafe.Pointer) {
 	var callback = cCallbackLookup(callbackIdPtr)

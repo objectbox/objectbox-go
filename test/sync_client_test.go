@@ -18,6 +18,7 @@ package objectbox_test
 
 import (
 	"errors"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -437,21 +438,62 @@ func TestSyncConnectionListenerReset(t *testing.T) {
 	assert.StringChannelMustTimeout(t, messages, env.defaultTimeout/10) // no messages
 }
 
+func TestSyncLoginListener(t *testing.T) {
+	var env = NewSyncTestEnv(t)
+	defer env.Close()
+
+	var messages = make(chan string, 10) // buffer up to 10 values
+
+	assert.NoErr(t, env.SyncClient().SetLoginListener(func() { messages <- "success" }))
+	assert.NoErr(t, env.SyncClient().SetLoginFailureListener(func(code objectbox.SyncLoginFailure) { messages <- "failure " + strconv.FormatUint(uint64(code), 10) }))
+
+	assert.StringChannelMustTimeout(t, messages, env.defaultTimeout/10)
+	assert.NoErr(t, env.SyncClient().SetCredentials(objectbox.SyncCredentialsSharedSecret([]byte("invalid secret"))))
+	assert.NoErr(t, env.SyncClient().Start())
+	assert.StringChannelExpect(t, "failure 43", messages, env.defaultTimeout)
+	assert.StringChannelMustTimeout(t, messages, env.defaultTimeout/10) // no more messages
+	assert.NoErr(t, env.SyncClient().SetCredentials(objectbox.SyncCredentialsNone()))
+	assert.StringChannelExpect(t, "success", messages, env.defaultTimeout)
+	assert.StringChannelMustTimeout(t, messages, env.defaultTimeout/10) // no more messages
+}
+
+func TestSyncServerTimeListener(t *testing.T) {
+	var env = NewSyncTestEnv(t)
+	defer env.Close()
+
+	var messages = make(chan time.Time, 10) // buffer up to 10 values
+
+	var before = time.Now()
+	assert.NoErr(t, env.SyncClient().SetServerTimeListener(func(serverTime time.Time) { messages <- serverTime }))
+	assert.NoErr(t, env.SyncClient().Start())
+
+	select {
+	case received := <-messages:
+		var after = time.Now().Add(time.Second)
+		t.Logf("Server time received %v\n", received)
+		t.Logf("Checking if its between %v and %v\n", before, after)
+		assert.True(t, received.Nanosecond() >= before.Nanosecond())
+		assert.True(t, received.Nanosecond() <= after.Nanosecond())
+	case <-time.After(env.defaultTimeout):
+		assert.Failf(t, "Waiting for a server-time listener timed out after %v", env.defaultTimeout)
+	}
+}
+
 func TestSyncChangeListener(t *testing.T) {
 	skipTestIfSyncNotAvailable(t)
 
-	var server = NewTestSyncServer(t)
-	defer server.Close()
+	var env = NewSyncTestEnv(t)
 
-	var a = NewTestSyncClient(t, server.URI(), "a")
-	defer a.Close()
+	var a = env.NamedClient("a")
 	a.Start()
+
+	var b = env.NamedClient("b")
 
 	var putIDs = make([]uint64, 0)
 	var removedIDs = make([]uint64, 0)
+	var messages = make(chan string, 10) // buffer up to 10 values
 
-	var b = NewTestSyncClient(t, server.URI(), "b")
-	defer b.Close()
+	assert.NoErr(t, b.sync.SetCompletionListener(func() { messages <- "sync-completed" }))
 	assert.NoErr(t, b.sync.SetChangeListener(func(changes []*objectbox.SyncChange) {
 		t.Logf("received %d changes", len(changes))
 		for i, change := range changes {
@@ -476,6 +518,8 @@ func TestSyncChangeListener(t *testing.T) {
 	}))
 
 	assert.Eq(t, 0, len(removedIDs))
+
+	assert.StringChannelExpect(t, "sync-completed", messages, env.defaultTimeout)
 
 	var expectedIds []uint64
 	for id := uint(1); id <= count; id++ {

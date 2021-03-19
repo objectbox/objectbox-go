@@ -52,6 +52,10 @@ typedef void cVoidCallback(void* callbackId);
 extern void cVoidUint64CallbackDispatch(void* callbackId);
 typedef void cVoidUint64Callback(void* callbackId, uint64_t arg);
 
+// void return, int64 argument
+extern void cVoidInt64CallbackDispatch(void* callbackId);
+typedef void cVoidInt64Callback(void* callbackId, int64_t arg);
+
 // void return, const void* argument
 extern void cVoidConstVoidCallbackDispatch(void* callbackId);
 typedef void cVoidConstVoidCallback(void* callbackId, const void* arg);
@@ -69,6 +73,7 @@ import (
 type cCallable interface {
 	callVoid()
 	callVoidUint64(uint64)
+	callVoidInt64(int64)
 	callVoidConstVoid(unsafe.Pointer)
 }
 
@@ -79,6 +84,7 @@ type cVoidCallback func()
 
 func (fn cVoidCallback) callVoid()                        { fn() }
 func (fn cVoidCallback) callVoidUint64(uint64)            { panic(cCallablePanicMsg) }
+func (fn cVoidCallback) callVoidInt64(int64)              { panic(cCallablePanicMsg) }
 func (fn cVoidCallback) callVoidConstVoid(unsafe.Pointer) { panic(cCallablePanicMsg) }
 
 var cVoidCallbackDispatchPtr = (*C.cVoidCallback)(unsafe.Pointer(C.cVoidCallbackDispatch))
@@ -87,14 +93,25 @@ type cVoidUint64Callback func(uint64)
 
 func (fn cVoidUint64Callback) callVoid()                        { panic(cCallablePanicMsg) }
 func (fn cVoidUint64Callback) callVoidUint64(arg uint64)        { fn(arg) }
+func (fn cVoidUint64Callback) callVoidInt64(int64)              { panic(cCallablePanicMsg) }
 func (fn cVoidUint64Callback) callVoidConstVoid(unsafe.Pointer) { panic(cCallablePanicMsg) }
 
 var cVoidUint64CallbackDispatchPtr = (*C.cVoidUint64Callback)(unsafe.Pointer(C.cVoidUint64CallbackDispatch))
+
+type cVoidInt64Callback func(int64)
+
+func (fn cVoidInt64Callback) callVoid()                        { panic(cCallablePanicMsg) }
+func (fn cVoidInt64Callback) callVoidUint64(uint64)            { panic(cCallablePanicMsg) }
+func (fn cVoidInt64Callback) callVoidInt64(arg int64)          { fn(arg) }
+func (fn cVoidInt64Callback) callVoidConstVoid(unsafe.Pointer) { panic(cCallablePanicMsg) }
+
+var cVoidInt64CallbackDispatchPtr = (*C.cVoidInt64Callback)(unsafe.Pointer(C.cVoidInt64CallbackDispatch))
 
 type cVoidConstVoidCallback func(unsafe.Pointer)
 
 func (fn cVoidConstVoidCallback) callVoid()                            { panic(cCallablePanicMsg) }
 func (fn cVoidConstVoidCallback) callVoidUint64(uint64)                { panic(cCallablePanicMsg) }
+func (fn cVoidConstVoidCallback) callVoidInt64(int64)                  { panic(cCallablePanicMsg) }
 func (fn cVoidConstVoidCallback) callVoidConstVoid(arg unsafe.Pointer) { fn(arg) }
 
 var cVoidConstVoidCallbackDispatchPtr = (*C.cVoidConstVoidCallback)(unsafe.Pointer(C.cVoidConstVoidCallbackDispatch))

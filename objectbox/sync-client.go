@@ -208,7 +208,7 @@ func (client *SyncClient) WaitForLogin(timeout time.Duration) (successful bool, 
 		}
 	}
 
-	var timeoutMs = timeout.Milliseconds()
+	var timeoutMs = timeout.Nanoseconds() / 1000 / 1000 // .Milliseconds() only since Go 1.13+
 	if timeoutMs < 0 {
 		return false, fmt.Errorf("timeout must be >= 1 millisecond, %d given", timeoutMs)
 	}

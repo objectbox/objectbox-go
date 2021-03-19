@@ -105,15 +105,23 @@ var cCallbackLastId cCallbackId
 var cCallbackMutex sync.Mutex
 var cCallbackMap = make(map[cCallbackId]cCallable)
 
+// Returns the next cCallbackId in a sequence (NOT checking its availability), skipping zero.
+func cCallbackNextId() cCallbackId {
+	cCallbackLastId++
+	if cCallbackLastId == 0 {
+		cCallbackLastId++
+	}
+	return cCallbackLastId
+}
+
 func cCallbackRegister(fn cCallable) (cCallbackId, error) {
 	cCallbackMutex.Lock()
 	defer cCallbackMutex.Unlock()
 
 	// cycle through ids until we find an empty slot
-	cCallbackLastId++
-	var initialId = cCallbackLastId
+	var initialId = cCallbackNextId()
 	for cCallbackMap[cCallbackLastId] != nil {
-		cCallbackLastId++
+		cCallbackNextId()
 
 		if initialId == cCallbackLastId {
 			return 0, fmt.Errorf("full queue of data-callback callbacks - can't allocate another")
@@ -139,6 +147,11 @@ func cCallbackLookup(id cCallbackId) cCallable {
 }
 
 func cCallbackUnregister(id cCallbackId) {
+	// special value - not registered
+	if id == 0 {
+		return
+	}
+
 	cCallbackMutex.Lock()
 	defer cCallbackMutex.Unlock()
 

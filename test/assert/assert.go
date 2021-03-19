@@ -23,6 +23,7 @@ import (
 	"regexp"
 	"runtime"
 	"testing"
+	"time"
 )
 
 // True asserts that the given value is a boolean true
@@ -176,5 +177,23 @@ func MustPanic(t *testing.T, match *regexp.Regexp) {
 		}
 	} else {
 		Failf(t, "Expected panic hasn't occurred: %s", match.String())
+	}
+}
+
+// StringChannelExpect that the given channel receives the expected string next, with the given timeout
+func StringChannelExpect(t *testing.T, expected string, channel chan string, timeout time.Duration) {
+	select {
+	case received := <-channel:
+		Eq(t, expected, received)
+	case <-time.After(timeout):
+		Failf(t, "Waiting for '%s' on the channel timed out after %v", expected, timeout)
+	}
+}
+
+func StringChannelMustTimeout(t *testing.T, channel chan string, timeout time.Duration) {
+	select {
+	case received := <-channel:
+		Failf(t, "Received an unexpected value '%s' on the channel. Instead, it was expected to time out after %v", received, timeout)
+	case <-time.After(timeout):
 	}
 }

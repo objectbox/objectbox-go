@@ -175,6 +175,50 @@ func waitUntil(timeout time.Duration, fn func() (bool, error)) error {
 	}
 }
 
+type syncTestEnv struct {
+	t              *testing.T
+	server         *testSyncServer
+	clients        map[string]*testSyncClient
+	defaultTimeout time.Duration
+}
+
+func NewSyncTestEnv(t *testing.T) *syncTestEnv {
+	skipTestIfSyncNotAvailable(t)
+
+	return &syncTestEnv{
+		t:              t,
+		server:         NewTestSyncServer(t),
+		clients:        map[string]*testSyncClient{},
+		defaultTimeout: 500 * time.Millisecond,
+	}
+}
+
+func (env *syncTestEnv) NamedClient(name string) *testSyncClient {
+	if env.clients[name] == nil {
+		env.clients[name] = NewTestSyncClient(env.t, env.server.URI(), name)
+	}
+	return env.clients[name]
+}
+
+func (env *syncTestEnv) Client() *testSyncClient {
+	return env.NamedClient("")
+}
+
+func (env *syncTestEnv) SyncClient() *objectbox.SyncClient {
+	return env.Client().sync
+}
+
+func (env *syncTestEnv) Close() {
+	if env.server != nil {
+		for _, client := range env.clients {
+			client.Close()
+		}
+		env.clients = nil
+		env.server.Close()
+		env.server = nil
+	}
+}
+
 type testSyncClient struct {
 	t    *testing.T
 	env  *model.TestEnv
@@ -191,8 +235,11 @@ func NewTestSyncClient(t *testing.T, serverURI, name string) *testSyncClient {
 }
 
 func (client *testSyncClient) Close() {
-	assert.NoErr(client.t, client.sync.Close())
-	client.env.Close()
+	if client.sync != nil {
+		assert.NoErr(client.t, client.sync.Close())
+		client.env.Close()
+		client.sync = nil
+	}
 }
 
 func (client *testSyncClient) Start() {
@@ -204,17 +251,13 @@ func (client *testSyncClient) Start() {
 }
 
 func TestSyncDataAutomatic(t *testing.T) {
-	skipTestIfSyncNotAvailable(t)
+	var env = NewSyncTestEnv(t)
+	defer env.Close()
 
-	var server = NewTestSyncServer(t)
-	defer server.Close()
-
-	var a = NewTestSyncClient(t, server.URI(), "a")
-	defer a.Close()
+	var a = env.NamedClient("a")
 	a.Start()
 
-	var b = NewTestSyncClient(t, server.URI(), "b")
-	defer b.Close()
+	var b = env.NamedClient("b")
 	b.Start()
 
 	isEmpty, err := a.env.Box.IsEmpty()
@@ -264,18 +307,14 @@ func TestSyncDataAutomatic(t *testing.T) {
 }
 
 func TestSyncDataManual(t *testing.T) {
-	skipTestIfSyncNotAvailable(t)
+	var env = NewSyncTestEnv(t)
+	defer env.Close()
 
-	var server = NewTestSyncServer(t)
-	defer server.Close()
-
-	var a = NewTestSyncClient(t, server.URI(), "a")
-	defer a.Close()
+	var a = env.NamedClient("a")
 	assert.NoErr(t, a.sync.SetRequestUpdatesMode(objectbox.SyncRequestUpdatesManual))
 	a.Start()
 
-	var b = NewTestSyncClient(t, server.URI(), "b")
-	defer b.Close()
+	var b = env.NamedClient("b")
 	assert.NoErr(t, b.sync.SetRequestUpdatesMode(objectbox.SyncRequestUpdatesManual))
 	b.Start()
 
@@ -335,21 +374,17 @@ func TestSyncDataManual(t *testing.T) {
 }
 
 func TestSyncWaitForLogin(t *testing.T) {
-	skipTestIfSyncNotAvailable(t)
-
-	var server = NewTestSyncServer(t)
-	defer server.Close()
+	var env = NewSyncTestEnv(t)
+	defer env.Close()
 
 	// success
-	var a = NewTestSyncClient(t, server.URI(), "a")
-	defer a.Close()
+	var a = env.NamedClient("a")
 	successful, err := a.sync.WaitForLogin(time.Second)
 	assert.NoErr(t, err)
 	assert.True(t, successful)
 
 	// failure
-	var b = NewTestSyncClient(t, server.URI(), "b")
-	defer b.Close()
+	var b = env.NamedClient("b")
 	assert.NoErr(t, b.sync.SetCredentials(objectbox.SyncCredentialsSharedSecret([]byte{1})))
 	successful, err = b.sync.WaitForLogin(time.Second)
 	if !strings.Contains(err.Error(), "credentials") {
@@ -358,15 +393,51 @@ func TestSyncWaitForLogin(t *testing.T) {
 	assert.True(t, !successful)
 
 	// time out
-	var c = NewTestSyncClient(t, server.URI(), "b")
-	defer c.Close()
-	server.Close()
+	var c = env.NamedClient("c")
+	env.server.Close()
 	successful, err = c.sync.WaitForLogin(time.Millisecond)
 	assert.NoErr(t, err)
 	assert.True(t, !successful)
 }
 
-func TestSyncOnChange(t *testing.T) {
+func TestSyncConnectionListener(t *testing.T) {
+	var env = NewSyncTestEnv(t)
+	defer env.Close()
+
+	var messages = make(chan string, 10) // buffer up to 10 values
+
+	assert.NoErr(t, env.SyncClient().SetConnectionListener(func() { messages <- "connected" }))
+	assert.NoErr(t, env.SyncClient().SetDisconnectionListener(func() { messages <- "disconnected" }))
+
+	assert.StringChannelMustTimeout(t, messages, env.defaultTimeout/10)
+	assert.NoErr(t, env.SyncClient().Start())
+	assert.StringChannelExpect(t, "connected", messages, env.defaultTimeout)
+	assert.StringChannelMustTimeout(t, messages, env.defaultTimeout/10) // no more messages
+	env.server.Close()
+	assert.StringChannelExpect(t, "disconnected", messages, env.defaultTimeout)
+	assert.StringChannelMustTimeout(t, messages, env.defaultTimeout/10) // no more messages
+}
+
+func TestSyncConnectionListenerReset(t *testing.T) {
+	var env = NewSyncTestEnv(t)
+	defer env.Close()
+
+	var messages = make(chan string, 10) // buffer up to 10 values
+
+	assert.NoErr(t, env.SyncClient().SetConnectionListener(func() { messages <- "connected" }))
+	assert.NoErr(t, env.SyncClient().SetDisconnectionListener(func() { messages <- "disconnected" }))
+
+	// reset should remove the listener
+	assert.NoErr(t, env.SyncClient().SetConnectionListener(nil))
+	assert.NoErr(t, env.SyncClient().SetDisconnectionListener(nil))
+
+	assert.NoErr(t, env.SyncClient().Start())
+	assert.StringChannelMustTimeout(t, messages, env.defaultTimeout/10) // no messages
+	env.server.Close()
+	assert.StringChannelMustTimeout(t, messages, env.defaultTimeout/10) // no messages
+}
+
+func TestSyncChangeListener(t *testing.T) {
 	skipTestIfSyncNotAvailable(t)
 
 	var server = NewTestSyncServer(t)

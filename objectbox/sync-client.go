@@ -37,9 +37,20 @@ type SyncClient struct {
 	started bool
 	state   syncClientInternalState
 
-	// these are unregistered when closing
-	cCallbackIds []cCallbackId
+	// callback IDs for the "trampoline", see c-callbacks.go and how it's used in listeners
+	cCallbacks [7]cCallbackId
 }
+
+// indexes into cCallbacks array
+const (
+	cCallbackIndexConnection = iota // 0
+	cCallbackIndexDisconnection
+	cCallbackIndexLogin
+	cCallbackIndexLoginFailure
+	cCallbackIndexComplete
+	cCallbackIndexChange
+	cCallbackIndexServerTime // 6
+)
 
 // NewSyncClient creates a sync client associated with the given store and configures it with the given options.
 // This does not initiate any connection attempts yet, call SyncClient.Start() to do so.
@@ -86,7 +97,7 @@ func (client *SyncClient) Close() error {
 		return nil
 	}
 
-	for _, cbId := range client.cCallbackIds {
+	for _, cbId := range client.cCallbacks {
 		cCallbackUnregister(cbId)
 	}
 
@@ -244,23 +255,56 @@ type SyncChange struct {
 }
 
 type syncChangeListener func(changes []*SyncChange)
+type syncConnectionListener func()
+type syncDisconnectionListener func()
 
-// SetChangeListener attaches a callback to receive incoming changes notifications.
+// SetConnectionListener sets or overrides a previously set listener for a "connection" event.
+func (client *SyncClient) SetConnectionListener(callback syncConnectionListener) error {
+	cCallbackUnregister(client.cCallbacks[cCallbackIndexConnection])
+	if callback != nil {
+		var err error
+		if client.cCallbacks[cCallbackIndexConnection], err = cCallbackRegister(cVoidCallback(func() {
+			callback()
+		})); err != nil {
+			return err
+		} else {
+			// TODO check if passing pointer to that memory is valid - this is an async callback... maybe GC can move the whole `cCallbacks` somewhere else in memory!?
+			C.obx_sync_listener_connect(client.cClient, (*C.OBX_sync_listener_connect)(cVoidCallbackDispatchPtr), unsafe.Pointer(&(client.cCallbacks[cCallbackIndexConnection])))
+		}
+	}
+	return nil
+}
+
+// SetDisconnectionListener sets or overrides a previously set listener for a "disconnection" event.
+func (client *SyncClient) SetDisconnectionListener(callback syncDisconnectionListener) error {
+	cCallbackUnregister(client.cCallbacks[cCallbackIndexDisconnection])
+	if callback != nil {
+		var err error
+		if client.cCallbacks[cCallbackIndexDisconnection], err = cCallbackRegister(cVoidCallback(func() {
+			callback()
+		})); err != nil {
+			return err
+		} else {
+			C.obx_sync_listener_disconnect(client.cClient, (*C.OBX_sync_listener_disconnect)(cVoidCallbackDispatchPtr), unsafe.Pointer(&(client.cCallbacks[cCallbackIndexDisconnection])))
+		}
+	}
+	return nil
+}
+
+// SetChangeListener sets or overrides a previously set listener for incoming changes notifications.
 // SyncChange event is issued after a transaction is applied to the local database.
 func (client *SyncClient) SetChangeListener(callback syncChangeListener) error {
-	if client.started {
-		return errors.New("cannot attach an SetChangeListener listener - already started")
+	cCallbackUnregister(client.cCallbacks[cCallbackIndexChange])
+	if callback != nil {
+		var err error
+		if client.cCallbacks[cCallbackIndexChange], err = cCallbackRegister(cVoidConstVoidCallback(func(cChangeList unsafe.Pointer) {
+			callback(cSyncChangeArrayToGo((*C.OBX_sync_change_array)(cChangeList)))
+		})); err != nil {
+			return err
+		} else {
+			C.obx_sync_listener_change(client.cClient, (*C.OBX_sync_listener_change)(cVoidConstVoidCallbackDispatchPtr), unsafe.Pointer(&(client.cCallbacks[cCallbackIndexChange])))
+		}
 	}
-
-	if callbackId, err := cCallbackRegister(cVoidConstVoidCallback(func(cChangeList unsafe.Pointer) {
-		callback(cSyncChangeArrayToGo((*C.OBX_sync_change_array)(cChangeList)))
-	})); err != nil {
-		return err
-	} else {
-		client.cCallbackIds = append(client.cCallbackIds, callbackId)
-		C.obx_sync_listener_change(client.cClient, (*C.OBX_sync_listener_change)(cVoidConstVoidCallbackDispatchPtr), unsafe.Pointer(&callbackId))
-	}
-
 	return nil
 }
 

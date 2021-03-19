@@ -344,6 +344,7 @@ func (entity_EntityInfo) GeneratorVersion() int {
 // AddToModel is called by ObjectBox during model build
 func (entity_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("Entity", 1, 3022148985475790732)
+	model.EntityFlags(2)
 	model.Property("Id", 6, 1, 1213346202559552829)
 	model.PropertyFlags(1)
 	model.Property("Int", 6, 2, 6609825840127351046)
@@ -1711,6 +1712,7 @@ func (testEntityRelated_EntityInfo) GeneratorVersion() int {
 // AddToModel is called by ObjectBox during model build
 func (testEntityRelated_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Entity("TestEntityRelated", 5, 145948658381494339)
+	model.EntityFlags(2)
 	model.Property("Id", 6, 1, 710127486443861244)
 	model.PropertyFlags(1)
 	model.Property("Name", 9, 2, 1781092268467778149)

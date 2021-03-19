@@ -24,6 +24,7 @@ package objectbox
 import "C"
 
 import (
+	"errors"
 	"fmt"
 	"runtime"
 	"strconv"
@@ -78,6 +79,7 @@ type ObjectBox struct {
 	boxes          map[TypeId]*Box
 	boxesMutex     sync.Mutex
 	options        options
+	syncClient     *SyncClient
 }
 
 type options struct {
@@ -91,6 +93,9 @@ var supportsResultArray = bool(C.obx_has_feature(C.OBXFeature_ResultArray))
 func (ob *ObjectBox) Close() {
 	storeToClose := ob.store
 	ob.store = nil
+	if ob.syncClient != nil {
+		_ = ob.syncClient.Close()
+	}
 	if storeToClose != nil {
 		C.obx_store_close(storeToClose)
 	}
@@ -214,4 +219,13 @@ func (ob *ObjectBox) AwaitAsyncCompletion() error {
 	return cCallBool(func() bool {
 		return bool(C.obx_store_await_async_completion(ob.store))
 	})
+}
+
+// SyncClient returns an existing client associated with the store or nil if not available.
+// Use NewSyncClient() to create it the first time.
+func (ob *ObjectBox) SyncClient() (*SyncClient, error) {
+	if ob.syncClient == nil {
+		return nil, errors.New("this store doesn't have a SyncClient associated, use NewSyncClient() to create one")
+	}
+	return ob.syncClient, nil
 }

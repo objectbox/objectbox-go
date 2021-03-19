@@ -7,6 +7,7 @@
       "id": "1:3022148985475790732",
       "lastPropertyId": "44:6100401720382402484",
       "name": "Entity",
+      "flags": 2,
       "properties": [
         {
           "id": "1:1213346202559552829",
@@ -271,6 +272,7 @@
       "id": "3:2793387980842421409",
       "lastPropertyId": "2:6704507893545428268",
       "name": "EntityByValue",
+      "flags": 2,
       "properties": [
         {
           "id": "1:8853550994304785841",
@@ -312,6 +314,7 @@
       "id": "5:145948658381494339",
       "lastPropertyId": "3:3103593908461833729",
       "name": "TestEntityRelated",
+      "flags": 2,
       "properties": [
         {
           "id": "1:710127486443861244",

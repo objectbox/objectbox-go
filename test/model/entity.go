@@ -21,6 +21,7 @@ import "time"
 //go:generate go run github.com/objectbox/objectbox-go/cmd/objectbox-gogen
 
 // Entity model for tests
+// `objectbox:"sync"`
 type Entity struct {
 	// base types
 	Id           uint64
@@ -90,6 +91,7 @@ type TestEntityInline struct {
 }
 
 // TestEntityRelated model
+// `objectbox:"sync"`
 type TestEntityRelated struct {
 	Id   uint64
 	Name string

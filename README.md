@@ -18,7 +18,7 @@ id, err := box.Put(&Person{ FirstName: "Joe", LastName:  "Green" })
 Want details? **[Read the docs](https://golang.objectbox.io/)** or
 **[check out the API reference](https://godoc.org/github.com/objectbox/objectbox-go/objectbox)**.
 
-Latest release: [v1.2.0 (2020-08-25)](https://golang.objectbox.io/)
+Latest release: [v1.3.0 (2021-03-19)](https://golang.objectbox.io/)
 
 Some features
 -------------
@@ -28,6 +28,7 @@ Some features
 * Asynchronous puts
 * Automatic model migration (no schema upgrade scripts etc.)
 * inline/prefix complex embedded structs (or you can use custom converters)
+* **[ObjectBox Sync](https://objectbox.io/sync/):** keeps data in sync between devices and servers.
 
 Getting started
 ---------------
@@ -35,6 +36,12 @@ To install ObjectBox, execute the following command in your project directory.
 You can have a look at [installation docs](https://golang.objectbox.io/install) for more details and further instructions. 
 ```bash
 bash <(curl -s https://raw.githubusercontent.com/objectbox/objectbox-go/main/install.sh)
+```
+
+To install [ObjectBox Sync](https://objectbox.io/sync/) variant of the library, pass `--sync` argument to the command above:
+
+```bash
+bash <(curl -s https://raw.githubusercontent.com/objectbox/objectbox-go/main/install.sh) --sync
 ```
 
 You can run tests to validate your installation

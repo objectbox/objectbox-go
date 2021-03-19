@@ -33,8 +33,7 @@ import (
 
 //export cVoidCallbackDispatch
 func cVoidCallbackDispatch(callbackIdPtr unsafe.Pointer) {
-	var callbackId = *(*cCallbackId)(callbackIdPtr)
-	var callback = cCallbackLookup(callbackId)
+	var callback = cCallbackLookup(callbackIdPtr)
 	if callback != nil {
 		callback.callVoid()
 	}
@@ -42,8 +41,7 @@ func cVoidCallbackDispatch(callbackIdPtr unsafe.Pointer) {
 
 //export cVoidUint64CallbackDispatch
 func cVoidUint64CallbackDispatch(callbackIdPtr unsafe.Pointer, arg uint64) {
-	var callbackId = *(*cCallbackId)(callbackIdPtr)
-	var callback = cCallbackLookup(callbackId)
+	var callback = cCallbackLookup(callbackIdPtr)
 	if callback != nil {
 		callback.callVoidUint64(arg)
 	}
@@ -51,8 +49,7 @@ func cVoidUint64CallbackDispatch(callbackIdPtr unsafe.Pointer, arg uint64) {
 
 //export cVoidConstVoidCallbackDispatch
 func cVoidConstVoidCallbackDispatch(callbackIdPtr unsafe.Pointer, arg unsafe.Pointer) {
-	var callbackId = *(*cCallbackId)(callbackIdPtr)
-	var callback = cCallbackLookup(callbackId)
+	var callback = cCallbackLookup(callbackIdPtr)
 	if callback != nil {
 		callback.callVoidConstVoid(arg)
 	}

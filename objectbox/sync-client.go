@@ -266,8 +266,7 @@ func (client *SyncClient) SetConnectionListener(callback syncConnectionListener)
 		})); err != nil {
 			return err
 		} else {
-			// TODO check if passing pointer to that memory is valid - this is an async callback... maybe GC can move the whole `cCallbacks` somewhere else in memory!?
-			C.obx_sync_listener_connect(client.cClient, (*C.OBX_sync_listener_connect)(cVoidCallbackDispatchPtr), unsafe.Pointer(&(client.cCallbacks[cCallbackIndexConnection])))
+			C.obx_sync_listener_connect(client.cClient, (*C.OBX_sync_listener_connect)(cVoidCallbackDispatchPtr), client.cCallbacks[cCallbackIndexConnection].cPtrArg())
 		}
 	}
 	return nil
@@ -283,7 +282,7 @@ func (client *SyncClient) SetDisconnectionListener(callback syncDisconnectionLis
 		})); err != nil {
 			return err
 		} else {
-			C.obx_sync_listener_disconnect(client.cClient, (*C.OBX_sync_listener_disconnect)(cVoidCallbackDispatchPtr), unsafe.Pointer(&(client.cCallbacks[cCallbackIndexDisconnection])))
+			C.obx_sync_listener_disconnect(client.cClient, (*C.OBX_sync_listener_disconnect)(cVoidCallbackDispatchPtr), client.cCallbacks[cCallbackIndexDisconnection].cPtrArg())
 		}
 	}
 	return nil
@@ -300,7 +299,7 @@ func (client *SyncClient) SetChangeListener(callback syncChangeListener) error {
 		})); err != nil {
 			return err
 		} else {
-			C.obx_sync_listener_change(client.cClient, (*C.OBX_sync_listener_change)(cVoidConstVoidCallbackDispatchPtr), unsafe.Pointer(&(client.cCallbacks[cCallbackIndexChange])))
+			C.obx_sync_listener_change(client.cClient, (*C.OBX_sync_listener_change)(cVoidConstVoidCallbackDispatchPtr), client.cCallbacks[cCallbackIndexChange].cPtrArg())
 		}
 	}
 	return nil
@@ -313,8 +312,7 @@ func cSyncChangeArrayToGo(cArray *C.OBX_sync_change_array) []*SyncChange {
 		var cArrayStart = unsafe.Pointer(cArray.list)
 		var cItemSize = unsafe.Sizeof(*cArray.list)
 		for i := uint(0); i < size; i++ {
-			var offset = uintptr(cArrayStart) + uintptr(i)*cItemSize
-			var itemPtr = (*C.OBX_sync_change)(unsafe.Pointer(offset))
+			var itemPtr = (*C.OBX_sync_change)(unsafe.Pointer(uintptr(cArrayStart) + uintptr(i)*cItemSize))
 
 			var change = &SyncChange{
 				EntityId: TypeId(itemPtr.entity_id),

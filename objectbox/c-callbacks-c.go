@@ -32,7 +32,7 @@ import (
 // These functions find the callback based on the pointer to the callbackId and call it.
 
 //export cVoidCallbackDispatch
-func cVoidCallbackDispatch(callbackIdPtr unsafe.Pointer) {
+func cVoidCallbackDispatch(callbackIdPtr C.uintptr_t) {
 	var callback = cCallbackLookup(callbackIdPtr)
 	if callback != nil {
 		callback.callVoid()
@@ -40,7 +40,7 @@ func cVoidCallbackDispatch(callbackIdPtr unsafe.Pointer) {
 }
 
 //export cVoidUint64CallbackDispatch
-func cVoidUint64CallbackDispatch(callbackIdPtr unsafe.Pointer, arg uint64) {
+func cVoidUint64CallbackDispatch(callbackIdPtr C.uintptr_t, arg uint64) {
 	var callback = cCallbackLookup(callbackIdPtr)
 	if callback != nil {
 		callback.callVoidUint64(arg)
@@ -48,7 +48,7 @@ func cVoidUint64CallbackDispatch(callbackIdPtr unsafe.Pointer, arg uint64) {
 }
 
 //export cVoidInt64CallbackDispatch
-func cVoidInt64CallbackDispatch(callbackIdPtr unsafe.Pointer, arg int64) {
+func cVoidInt64CallbackDispatch(callbackIdPtr C.uintptr_t, arg int64) {
 	var callback = cCallbackLookup(callbackIdPtr)
 	if callback != nil {
 		callback.callVoidInt64(arg)
@@ -56,7 +56,7 @@ func cVoidInt64CallbackDispatch(callbackIdPtr unsafe.Pointer, arg int64) {
 }
 
 //export cVoidConstVoidCallbackDispatch
-func cVoidConstVoidCallbackDispatch(callbackIdPtr unsafe.Pointer, arg unsafe.Pointer) {
+func cVoidConstVoidCallbackDispatch(callbackIdPtr C.uintptr_t, arg unsafe.Pointer) {
 	var callback = cCallbackLookup(callbackIdPtr)
 	if callback != nil {
 		callback.callVoidConstVoid(arg)

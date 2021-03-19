@@ -15,8 +15,7 @@ if [[ ${unformatted_files} ]]; then
     exit 1
 fi
 
-# Temporarily disabled due to invalid report of unsafe.Pointer use in cPtrArg()
-# go vet ./...
+go vet ./...
 
 # find a list of all tests in the project (go list output ending with "test]")
 tests=$(go list -test ./... | $grep -oP '\[\K.*(?=.test\])')

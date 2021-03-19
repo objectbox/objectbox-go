@@ -45,20 +45,20 @@ Code example:
 // following functions implement forwarding and are passed to the c-api
 
 // void return, no arguments
-extern void cVoidCallbackDispatch(void* callbackId);
-typedef void cVoidCallback(void* callbackId);
+extern void cVoidCallbackDispatch(uintptr_t callbackId);
+typedef void cVoidCallback(uintptr_t callbackId);
 
 // void return, uint64 argument
-extern void cVoidUint64CallbackDispatch(void* callbackId);
-typedef void cVoidUint64Callback(void* callbackId, uint64_t arg);
+extern void cVoidUint64CallbackDispatch(uintptr_t callbackId);
+typedef void cVoidUint64Callback(uintptr_t callbackId, uint64_t arg);
 
 // void return, int64 argument
-extern void cVoidInt64CallbackDispatch(void* callbackId);
-typedef void cVoidInt64Callback(void* callbackId, int64_t arg);
+extern void cVoidInt64CallbackDispatch(uintptr_t callbackId);
+typedef void cVoidInt64Callback(uintptr_t callbackId, int64_t arg);
 
-// void return, const void* argument
-extern void cVoidConstVoidCallbackDispatch(void* callbackId);
-typedef void cVoidConstVoidCallback(void* callbackId, const void* arg);
+// void return, const uintptr_t argument
+extern void cVoidConstVoidCallbackDispatch(uintptr_t callbackId);
+typedef void cVoidConstVoidCallback(uintptr_t callbackId, const void* arg);
 */
 import "C"
 import (
@@ -123,9 +123,8 @@ var cCallbackMutex sync.Mutex
 var cCallbackMap = make(map[cCallbackId]cCallable)
 
 // The result is actually not a memory pointer, just a number. That's also how it's used in cCallbackLookup().
-func (cbId cCallbackId) cPtrArg() unsafe.Pointer {
-	//goland:noinspection GoVetUnsafePointer
-	return unsafe.Pointer(uintptr(cbId))
+func (cbId cCallbackId) cPtrArg() C.uintptr_t {
+	return C.uintptr_t(cbId)
 }
 
 // Returns the next cCallbackId in a sequence (NOT checking its availability), skipping zero.
@@ -155,11 +154,11 @@ func cCallbackRegister(fn cCallable) (cCallbackId, error) {
 	return cCallbackLastId, nil
 }
 
-func cCallbackLookup(id unsafe.Pointer) cCallable {
+func cCallbackLookup(id C.uintptr_t) cCallable {
 	cCallbackMutex.Lock()
 	defer cCallbackMutex.Unlock()
 
-	fn, found := cCallbackMap[cCallbackId(uintptr(id))]
+	fn, found := cCallbackMap[cCallbackId(id)]
 	if !found {
 		// this might happen in extraordinary circumstances, e.g. during shutdown if there are still some sync listeners
 		fmt.Println(fmt.Errorf("invalid C-API callback ID %d", id))

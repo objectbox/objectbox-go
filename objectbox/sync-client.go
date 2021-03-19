@@ -266,7 +266,7 @@ type SyncLoginFailure uint64 // TODO enumerate possible values
 // SetConnectionListener sets or overrides a previously set listener for a "connection" event.
 func (client *SyncClient) SetConnectionListener(callback syncConnectionListener) error {
 	if callback == nil {
-		C.obx_sync_listener_connect(client.cClient, nil, nil)
+		C.obx_sync_listener_connect(client.cClient, nil, 0)
 		cCallbackUnregister(client.cCallbacks[cCallbackIndexConnection])
 	} else {
 		if cbId, err := cCallbackRegister(cVoidCallback(func() {
@@ -284,7 +284,7 @@ func (client *SyncClient) SetConnectionListener(callback syncConnectionListener)
 // SetDisconnectionListener sets or overrides a previously set listener for a "disconnection" event.
 func (client *SyncClient) SetDisconnectionListener(callback syncDisconnectionListener) error {
 	if callback == nil {
-		C.obx_sync_listener_disconnect(client.cClient, nil, nil)
+		C.obx_sync_listener_disconnect(client.cClient, nil, 0)
 		cCallbackUnregister(client.cCallbacks[cCallbackIndexDisconnection])
 	} else {
 		if cbId, err := cCallbackRegister(cVoidCallback(func() {
@@ -302,7 +302,7 @@ func (client *SyncClient) SetDisconnectionListener(callback syncDisconnectionLis
 // SetLoginListener sets or overrides a previously set listener for a "login" event.
 func (client *SyncClient) SetLoginListener(callback syncLoginListener) error {
 	if callback == nil {
-		C.obx_sync_listener_login(client.cClient, nil, nil)
+		C.obx_sync_listener_login(client.cClient, nil, 0)
 		cCallbackUnregister(client.cCallbacks[cCallbackIndexLogin])
 	} else {
 		if cbId, err := cCallbackRegister(cVoidCallback(func() {
@@ -320,7 +320,7 @@ func (client *SyncClient) SetLoginListener(callback syncLoginListener) error {
 // SetLoginFailureListener sets or overrides a previously set listener for a "login" event.
 func (client *SyncClient) SetLoginFailureListener(callback syncLoginFailureListener) error {
 	if callback == nil {
-		C.obx_sync_listener_login_failure(client.cClient, nil, nil)
+		C.obx_sync_listener_login_failure(client.cClient, nil, 0)
 		cCallbackUnregister(client.cCallbacks[cCallbackIndexLoginFailure])
 	} else {
 		if cbId, err := cCallbackRegister(cVoidUint64Callback(func(code uint64) {
@@ -338,7 +338,7 @@ func (client *SyncClient) SetLoginFailureListener(callback syncLoginFailureListe
 // SetCompletionListener sets or overrides a previously set listener for a "login" event.
 func (client *SyncClient) SetCompletionListener(callback syncCompletionListener) error {
 	if callback == nil {
-		C.obx_sync_listener_complete(client.cClient, nil, nil)
+		C.obx_sync_listener_complete(client.cClient, nil, 0)
 		cCallbackUnregister(client.cCallbacks[cCallbackIndexCompletion])
 	} else {
 		if cbId, err := cCallbackRegister(cVoidCallback(func() {
@@ -356,7 +356,7 @@ func (client *SyncClient) SetCompletionListener(callback syncCompletionListener)
 // SetServerTimeListener sets or overrides a previously set listener for a "login" event.
 func (client *SyncClient) SetServerTimeListener(callback syncTimeListener) error {
 	if callback == nil {
-		C.obx_sync_listener_server_time(client.cClient, nil, nil)
+		C.obx_sync_listener_server_time(client.cClient, nil, 0)
 		cCallbackUnregister(client.cCallbacks[cCallbackIndexServerTime])
 	} else {
 		if cbId, err := cCallbackRegister(cVoidInt64Callback(func(timestampNs int64) {
@@ -376,7 +376,7 @@ func (client *SyncClient) SetServerTimeListener(callback syncTimeListener) error
 // SyncChange event is issued after a transaction is applied to the local database.
 func (client *SyncClient) SetChangeListener(callback syncChangeListener) error {
 	if callback == nil {
-		C.obx_sync_listener_change(client.cClient, nil, nil)
+		C.obx_sync_listener_change(client.cClient, nil, 0)
 		cCallbackUnregister(client.cCallbacks[cCallbackIndexChange])
 	} else {
 		if cbId, err := cCallbackRegister(cVoidConstVoidCallback(func(cChangeList unsafe.Pointer) {

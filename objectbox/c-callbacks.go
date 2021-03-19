@@ -63,9 +63,9 @@ import (
 	"unsafe"
 )
 
-// cCallable allows us to avoid defining bellow register/unregister/lookup methods for all possible function signatures.
+// cCallable allows us to avoid defining below register/unregister/lookup methods for all possible function signatures.
 // This interface is implemented by callback functions and each function signature should only implement a single method
-// and panic in all others. Method name format used bellow: "call<ReturnType><...ArgNType>()"
+// and panic in all others. Method name format used below: "call<ReturnType><...ArgNType>()"
 type cCallable interface {
 	callVoid()
 	callVoidUint64(uint64)

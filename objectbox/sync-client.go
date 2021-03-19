@@ -25,7 +25,6 @@ import "C"
 import (
 	"errors"
 	"fmt"
-	"sync"
 	"time"
 	"unsafe"
 )
@@ -35,7 +34,6 @@ type SyncClient struct {
 	ob      *ObjectBox
 	cClient *C.OBX_sync
 	started bool
-	state   syncClientInternalState
 
 	// callback IDs for the "trampoline", see c-callbacks.go and how it's used in listeners
 	cCallbacks [7]cCallbackId
@@ -138,7 +136,7 @@ const (
 	// SyncRequestUpdatesAutomatic configures the client to get all updates automatically
 	SyncRequestUpdatesAutomatic syncRequestUpdatesMode = C.OBXRequestUpdatesMode_AUTO
 
-	// SyncRequestUpdatesAutoNoPushes configures the client to get all updates during log-in (initial and reconnects)
+	// SyncRequestUpdatesAutoNoPushes configures the client to get all updates right after a log-in (initial and reconnects)
 	SyncRequestUpdatesAutoNoPushes syncRequestUpdatesMode = C.OBXRequestUpdatesMode_AUTO_NO_PUSHES
 )
 
@@ -308,17 +306,30 @@ func (client *SyncClient) SetChangeListener(callback syncChangeListener) error {
 	return nil
 }
 
-type syncClientInternalState struct {
-	sync.Mutex
-	loggedIn   bool
-	loginError error
-}
+func cSyncChangeArrayToGo(cArray *C.OBX_sync_change_array) []*SyncChange {
+	var size = uint(cArray.count)
+	var changes = make([]*SyncChange, 0, size)
+	if size > 0 {
+		var cArrayStart = unsafe.Pointer(cArray.list)
+		var cItemSize = unsafe.Sizeof(*cArray.list)
+		for i := uint(0); i < size; i++ {
+			var offset = uintptr(cArrayStart) + uintptr(i)*cItemSize
+			var itemPtr = (*C.OBX_sync_change)(unsafe.Pointer(offset))
 
-// Update changes the state under a mutex and signals the conditional variable
-func (state *syncClientInternalState) Update(fn func(*syncClientInternalState)) {
-	state.Lock()
-	defer func() {
-		state.Unlock()
-	}()
-	fn(state)
+			var change = &SyncChange{
+				EntityId: TypeId(itemPtr.entity_id),
+			}
+
+			if itemPtr.puts != nil {
+				change.Puts = cIdsArrayToGo(itemPtr.puts)
+			}
+
+			if itemPtr.removals != nil {
+				change.Removals = cIdsArrayToGo(itemPtr.removals)
+			}
+
+			changes = append(changes, change)
+		}
+	}
+	return changes
 }

@@ -54,12 +54,13 @@ const (
 // This does not initiate any connection attempts yet, call SyncClient.Start() to do so.
 //
 // Before SyncClient.Start(), you can still configure some aspects, e.g. SyncClient.SetRequestUpdatesMode().
-func NewSyncClient(ob *ObjectBox, serverUri string, credentials *SyncCredentials) (err error, client *SyncClient) {
+func NewSyncClient(ob *ObjectBox, serverUri string, credentials *SyncCredentials) (*SyncClient, error) {
 	if ob.syncClient != nil {
-		return errors.New("only one sync client can be active for a store"), nil
+		return nil, errors.New("only one sync client can be active for a store, use ObjectBox.SyncClient() to access it")
 	}
 
-	client = &SyncClient{ob: ob}
+	var err error
+	var client = &SyncClient{ob: ob}
 
 	// close the sync client if some part of the initialization fails
 	defer func() {
@@ -86,7 +87,7 @@ func NewSyncClient(ob *ObjectBox, serverUri string, credentials *SyncCredentials
 		ob.syncClient = client
 	}
 
-	return err, client
+	return client, err
 }
 
 // Close stops synchronization and frees the resources.

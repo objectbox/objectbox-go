@@ -72,7 +72,7 @@ func (env *TestEnv) Close() {
 }
 
 func (env *TestEnv) SyncClient(serverUri string) *objectbox.SyncClient {
-	err, client := objectbox.NewSyncClient(env.ObjectBox, serverUri, objectbox.SyncCredentialsNone())
+	client, err := objectbox.NewSyncClient(env.ObjectBox, serverUri, objectbox.SyncCredentialsNone())
 	assert.NoErr(env.t, err)
 	assert.True(env.t, client != nil)
 	return client

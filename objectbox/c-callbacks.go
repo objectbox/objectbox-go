@@ -116,7 +116,7 @@ func (fn cVoidConstVoidCallback) callVoidConstVoid(arg unsafe.Pointer) { fn(arg)
 
 var cVoidConstVoidCallbackDispatchPtr = (*C.cVoidConstVoidCallback)(unsafe.Pointer(C.cVoidConstVoidCallbackDispatch))
 
-type cCallbackId uintptr
+type cCallbackId uint32
 
 var cCallbackLastId cCallbackId
 var cCallbackMutex sync.Mutex
@@ -125,7 +125,7 @@ var cCallbackMap = make(map[cCallbackId]cCallable)
 // The result is actually not a memory pointer, just a number. That's also how it's used in cCallbackLookup().
 func (cbId cCallbackId) cPtrArg() unsafe.Pointer {
 	//goland:noinspection GoVetUnsafePointer
-	return unsafe.Pointer(cbId)
+	return unsafe.Pointer(uintptr(cbId))
 }
 
 // Returns the next cCallbackId in a sequence (NOT checking its availability), skipping zero.
@@ -159,7 +159,7 @@ func cCallbackLookup(id unsafe.Pointer) cCallable {
 	cCallbackMutex.Lock()
 	defer cCallbackMutex.Unlock()
 
-	fn, found := cCallbackMap[cCallbackId(id)]
+	fn, found := cCallbackMap[cCallbackId(uintptr(id))]
 	if !found {
 		// this might happen in extraordinary circumstances, e.g. during shutdown if there are still some sync listeners
 		fmt.Println(fmt.Errorf("invalid C-API callback ID %d", id))

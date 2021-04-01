@@ -489,9 +489,10 @@ func TestSyncChangeListener(t *testing.T) {
 
 	var b = env.NamedClient("b")
 
-	var putIDs = make([]uint64, 0)
-	var removedIDs = make([]uint64, 0)
-	var messages = make(chan string, 10) // buffer up to 10 values
+	// make a couple of buffered channels
+	var putIDs = make(chan uint64, 100)
+	var removedIDs = make(chan uint64, 100)
+	var messages = make(chan string, 10)
 
 	assert.NoErr(t, b.sync.SetCompletionListener(func() { messages <- "sync-completed" }))
 	assert.NoErr(t, b.sync.SetChangeListener(func(changes []*objectbox.SyncChange) {
@@ -501,8 +502,12 @@ func TestSyncChangeListener(t *testing.T) {
 
 			// only count the main entity, not relations
 			if change.EntityId == model.EntityBinding.Id {
-				putIDs = append(putIDs, change.Puts...)
-				removedIDs = append(removedIDs, change.Removals...)
+				for j := 0; j < len(change.Puts); j++ {
+					putIDs <- change.Puts[j]
+				}
+				for j := 0; j < len(change.Removals); j++ {
+					removedIDs <- change.Removals[j]
+				}
 			}
 		}
 	}))
@@ -521,9 +526,13 @@ func TestSyncChangeListener(t *testing.T) {
 
 	assert.StringChannelExpect(t, "sync-completed", messages, env.defaultTimeout)
 
-	var expectedIds []uint64
+	// check expected IDs
 	for id := uint(1); id <= count; id++ {
-		expectedIds = append(expectedIds, uint64(id))
+		select {
+		case received := <-putIDs:
+			assert.Eq(t, uint64(id), received)
+		default:
+			assert.Failf(t, "Didn't receive the expected id %v in putIDs", id)
+		}
 	}
-	assert.Eq(t, expectedIds, putIDs)
 }

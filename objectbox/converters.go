@@ -49,6 +49,18 @@ func TimeInt64ConvertToDatabaseValue(goValue time.Time) (int64, error) {
 	return goValue.Unix()*1000 + ms, nil
 }
 
+// NanoTimeInt64ConvertToEntityProperty converts Unix timestamp in nanoseconds (ObjectBox date-nano field) to time.Time
+func NanoTimeInt64ConvertToEntityProperty(dbValue int64) (time.Time, error) {
+	const nsInSec = 1000 * 1000 * 1000
+	var seconds = dbValue / nsInSec
+	return time.Unix(seconds, dbValue-seconds*nsInSec).UTC(), nil
+}
+
+// NanoTimeInt64ConvertToDatabaseValue converts time.Time to Unix timestamp in nanoseconds (internal format expected by ObjectBox on a date-nano field)
+func NanoTimeInt64ConvertToDatabaseValue(goValue time.Time) (int64, error) {
+	return goValue.UnixNano(), nil
+}
+
 // TimeTextConvertToEntityProperty uses time.Time.UnmarshalText() to decode RFC 3339 formatted string to time.Time.
 func TimeTextConvertToEntityProperty(dbValue string) (goValue time.Time, err error) {
 	err = goValue.UnmarshalText([]byte(dbValue))

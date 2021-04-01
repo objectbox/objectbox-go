@@ -105,6 +105,27 @@ func TestTimeInt64Converter(t *testing.T) {
 	}
 }
 
+func TestNanoTimeInt64Converter(t *testing.T) {
+	var test = func(expected string, timestamp int64) {
+		value, err := objectbox.NanoTimeInt64ConvertToEntityProperty(timestamp)
+		assert.NoErr(t, err)
+		assert.Eq(t, expected, value.String())
+	}
+
+	test("1970-01-01 00:00:00 +0000 UTC", 0)
+	test("1970-01-01 00:00:00.000001234 +0000 UTC", 1234)
+	test("1969-12-31 23:59:59.999994322 +0000 UTC", -5678)
+
+	{
+		var date = time.Now().UTC()
+		value, err := objectbox.NanoTimeInt64ConvertToDatabaseValue(date)
+		assert.NoErr(t, err)
+		assert.Eq(t, date.UnixNano(), value)
+		date2, err := objectbox.NanoTimeInt64ConvertToEntityProperty(value)
+		assert.Eq(t, date, date2)
+	}
+}
+
 func TestTimeTextConverter(t *testing.T) {
 	date := time.Unix(time.Now().Unix(), int64(time.Now().Nanosecond())) // get date without monotonic clock reading
 	bytes, err := date.MarshalText()

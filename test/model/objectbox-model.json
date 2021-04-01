@@ -126,7 +126,7 @@
           "name": "Related",
           "indexId": "1:7297830522090799401",
           "type": 11,
-          "flags": 8712,
+          "flags": 520,
           "relationTarget": "TestEntityRelated"
         },
         {
@@ -134,7 +134,7 @@
           "name": "RelatedPtr",
           "indexId": "2:1636618737379039866",
           "type": 11,
-          "flags": 8712,
+          "flags": 520,
           "relationTarget": "TestEntityRelated"
         },
         {
@@ -142,7 +142,7 @@
           "name": "RelatedPtr2",
           "indexId": "3:6077259218141868916",
           "type": 11,
-          "flags": 8712,
+          "flags": 520,
           "relationTarget": "TestEntityRelated"
         },
         {
@@ -332,7 +332,7 @@
           "name": "Next",
           "indexId": "4:3414034888235702623",
           "type": 11,
-          "flags": 8712,
+          "flags": 520,
           "relationTarget": "EntityByValue"
         }
       ],
@@ -343,9 +343,47 @@
           "targetId": "3:2793387980842421409"
         }
       ]
+    },
+    {
+      "id": "6:2767047163049667536",
+      "lastPropertyId": "2:180851766275559029",
+      "name": "TSDate",
+      "properties": [
+        {
+          "id": "1:1462677146136716215",
+          "name": "Id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:180851766275559029",
+          "name": "Time",
+          "type": 10,
+          "flags": 16384
+        }
+      ]
+    },
+    {
+      "id": "7:8200223062288330287",
+      "lastPropertyId": "2:6159670697406080312",
+      "name": "TSDateNano",
+      "properties": [
+        {
+          "id": "1:7438841713427308701",
+          "name": "Id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:6159670697406080312",
+          "name": "Time",
+          "type": 12,
+          "flags": 16384
+        }
+      ]
     }
   ],
-  "lastEntityId": "5:145948658381494339",
+  "lastEntityId": "7:8200223062288330287",
   "lastIndexId": "4:3414034888235702623",
   "lastRelationId": "6:3119566795324383223",
   "modelVersion": 5,

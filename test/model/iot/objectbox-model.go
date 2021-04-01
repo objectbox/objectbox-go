@@ -10,7 +10,7 @@ import (
 // It is usually used when setting-up ObjectBox as an argument to the Builder.Model() function.
 func ObjectBoxModel() *objectbox.Model {
 	model := objectbox.NewModel()
-	model.GeneratorVersion(5)
+	model.GeneratorVersion(6)
 
 	model.RegisterBinding(EventBinding)
 	model.RegisterBinding(ReadingBinding)

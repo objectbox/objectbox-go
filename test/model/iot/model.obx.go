@@ -64,7 +64,7 @@ var Event_ = struct {
 
 // GeneratorVersion is called by ObjectBox to verify the compatibility of the generator used to generate this code
 func (event_EntityInfo) GeneratorVersion() int {
-	return 5
+	return 6
 }
 
 // AddToModel is called by ObjectBox during model build
@@ -454,7 +454,7 @@ var Reading_ = struct {
 
 // GeneratorVersion is called by ObjectBox to verify the compatibility of the generator used to generate this code
 func (reading_EntityInfo) GeneratorVersion() int {
-	return 5
+	return 6
 }
 
 // AddToModel is called by ObjectBox during model build
@@ -464,7 +464,7 @@ func (reading_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.PropertyFlags(1)
 	model.Property("Date", 10, 2, 4852407661923085028)
 	model.Property("EventId", 11, 3, 1403806151574554320)
-	model.PropertyFlags(8712)
+	model.PropertyFlags(520)
 	model.PropertyRelation("Event", 2, 2642563953244304959)
 	model.Property("ValueName", 9, 4, 5626221656121286670)
 	model.Property("ValueString", 9, 5, 7303099924122013060)

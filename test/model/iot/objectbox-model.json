@@ -59,7 +59,7 @@
           "name": "EventId",
           "indexId": "2:2642563953244304959",
           "type": 11,
-          "flags": 8712,
+          "flags": 520,
           "relationTarget": "Event"
         },
         {

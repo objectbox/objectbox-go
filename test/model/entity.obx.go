@@ -338,7 +338,7 @@ var Entity_ = struct {
 
 // GeneratorVersion is called by ObjectBox to verify the compatibility of the generator used to generate this code
 func (entity_EntityInfo) GeneratorVersion() int {
-	return 5
+	return 6
 }
 
 // AddToModel is called by ObjectBox during model build
@@ -374,13 +374,13 @@ func (entity_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Property("Complex128", 23, 20, 2323084480359838337)
 	model.Property("StringVector", 30, 21, 3893192683529392073)
 	model.Property("Related", 11, 22, 6981354105569415135)
-	model.PropertyFlags(8712)
+	model.PropertyFlags(520)
 	model.PropertyRelation("TestEntityRelated", 1, 7297830522090799401)
 	model.Property("RelatedPtr", 11, 23, 2938782103279095882)
-	model.PropertyFlags(8712)
+	model.PropertyFlags(520)
 	model.PropertyRelation("TestEntityRelated", 2, 1636618737379039866)
 	model.Property("RelatedPtr2", 11, 24, 7776035803207726954)
-	model.PropertyFlags(8712)
+	model.PropertyFlags(520)
 	model.PropertyRelation("TestEntityRelated", 3, 6077259218141868916)
 	model.Property("IntPtr", 6, 25, 373339162565757738)
 	model.Property("Int8Ptr", 2, 26, 4408376776468442700)
@@ -1020,7 +1020,7 @@ var TestStringIdEntity_ = struct {
 
 // GeneratorVersion is called by ObjectBox to verify the compatibility of the generator used to generate this code
 func (testStringIdEntity_EntityInfo) GeneratorVersion() int {
-	return 5
+	return 6
 }
 
 // AddToModel is called by ObjectBox during model build
@@ -1357,7 +1357,7 @@ var TestEntityInline_ = struct {
 
 // GeneratorVersion is called by ObjectBox to verify the compatibility of the generator used to generate this code
 func (testEntityInline_EntityInfo) GeneratorVersion() int {
-	return 5
+	return 6
 }
 
 // AddToModel is called by ObjectBox during model build
@@ -1706,7 +1706,7 @@ var TestEntityRelated_ = struct {
 
 // GeneratorVersion is called by ObjectBox to verify the compatibility of the generator used to generate this code
 func (testEntityRelated_EntityInfo) GeneratorVersion() int {
-	return 5
+	return 6
 }
 
 // AddToModel is called by ObjectBox during model build
@@ -1717,7 +1717,7 @@ func (testEntityRelated_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.PropertyFlags(1)
 	model.Property("Name", 9, 2, 1781092268467778149)
 	model.Property("Next", 11, 3, 3103593908461833729)
-	model.PropertyFlags(8712)
+	model.PropertyFlags(520)
 	model.PropertyRelation("EntityByValue", 4, 3414034888235702623)
 	model.EntityLastPropertyId(3, 3103593908461833729)
 	model.Relation(6, 3119566795324383223, EntityByValueBinding.Id, EntityByValueBinding.Uid)

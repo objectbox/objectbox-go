@@ -21,14 +21,14 @@ package objectbox
 #include "objectbox-sync.h"
 
 char** newCharArray(int size) {
-	return calloc(sizeof(char*), size);
+	return malloc(sizeof(char*) * size);
 }
 
-void setArrayString(const char **array, size_t index, const char *value) {
+void setArrayString(const char** array, size_t index, const char* value) {
     array[index] = value;
 }
 
-void freeCharArray(char **a, int size) {
+void freeCharArray(char** a, int size) {
 	// old compiler errors out if part of the for loop: 'for' loop initial declarations are only allowed in C99 mode
 	size_t i;
     for (i = 0; i < size; i++) {

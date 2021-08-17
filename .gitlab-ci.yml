@@ -32,6 +32,12 @@ test:linux:ARMv7hf:
   variables:
     BUILD_ARGS: -test.short
 
+test:linux:aarch64:
+  extends: .test
+  tags: [ aarch64, linux, shell ]
+  variables:
+    BUILD_ARGS: -test.short
+
 test:mac:x64:
   extends: .test
   tags: [ x64, mac, go ]

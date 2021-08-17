@@ -3,11 +3,12 @@
   script:
     - bash <(curl -s https://raw.githubusercontent.com/objectbox/objectbox-c/main/download.sh) --quiet --sync 0.14.0
     - export CGO_LDFLAGS="-L$(pwd -P)/lib -Wl,-rpath -Wl,$(pwd -P)/lib"
+    - '[[ "$(uname)" != MINGW* ]] || cp -vf lib/objectbox.dll /c/TDM-GCC-64/lib/'   # copy the dll or ld.exe fails
     - ./build/build.sh ${BUILD_ARGS:-}
 
 test:linux:x64:old:
   extends: .test
-  tags: [x64, linux, docker]
+  tags: [ x64, linux, docker ]
   image: golang:$GOVERSION
   parallel:
     matrix:
@@ -18,7 +19,7 @@ test:linux:x64:old:
 
 test:linux:x64:
   extends: .test
-  tags: [x64, linux, docker]
+  tags: [ x64, linux, docker ]
   image: golang:$GOVERSION
   parallel:
     matrix:
@@ -27,16 +28,16 @@ test:linux:x64:
 test:linux:ARMv7hf:
   extends: .test
   image: golang
-  tags: [armv7hf, linux, docker]
+  tags: [ armv7hf, linux, docker ]
   variables:
     BUILD_ARGS: -test.short
 
 test:mac:x64:
   extends: .test
-  tags: [x64, mac, go]
+  tags: [ x64, mac, go ]
 
 test:win:x64:
   extends: .test
-  tags: [x64, windows, go]
+  tags: [ x64, windows, go ]
   before_script:
     - rm go.sum   # issues with checksum mismatch, if anyone still uses old Go, they may need to delete go.sum

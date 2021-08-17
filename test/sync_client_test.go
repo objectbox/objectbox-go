@@ -251,6 +251,13 @@ func (client *testSyncClient) Start() {
 	}))
 }
 
+func populateSyncedBox(t *testing.T, box *model.TestEntitySyncedBox, count uint) {
+	for i := uint(0); i < count; i++ {
+		_, err := box.Put(&model.TestEntitySynced{Name: "foo"})
+		assert.NoErr(t, err)
+	}
+}
+
 func TestSyncDataAutomatic(t *testing.T) {
 	var env = NewSyncTestEnv(t)
 	defer env.Close()
@@ -261,50 +268,52 @@ func TestSyncDataAutomatic(t *testing.T) {
 	var b = env.NamedClient("b")
 	b.Start()
 
-	isEmpty, err := a.env.Box.IsEmpty()
+	var aBox = model.BoxForTestEntitySynced(a.env.ObjectBox)
+	isEmpty, err := aBox.IsEmpty()
 	assert.NoErr(t, err)
 	assert.True(t, isEmpty)
 
-	isEmpty, err = b.env.Box.IsEmpty()
+	var bBox = model.BoxForTestEntitySynced(b.env.ObjectBox)
+	isEmpty, err = bBox.IsEmpty()
 	assert.NoErr(t, err)
 	assert.True(t, isEmpty)
 
 	// insert into one box
 	var count uint = 10
-	a.env.Populate(count)
+	populateSyncedBox(t, aBox, count)
 
 	// wait for the data to be synced to the other box
 	assert.NoErr(t, waitUntil(time.Second, func() (bool, error) {
-		bCount, err := b.env.Box.Count()
+		bCount, err := bBox.Count()
 		return bCount == uint64(count), err
 	}))
 
-	var assertEqualBoxes = func(boxA, boxB *model.EntityBox) {
-		itemsA, err := a.env.Box.GetAll()
+	var assertEqualBoxes = func(boxA, boxB *model.TestEntitySyncedBox) {
+		itemsA, err := aBox.GetAll()
 		assert.NoErr(t, err)
 
-		itemsB, err := b.env.Box.GetAll()
+		itemsB, err := bBox.GetAll()
 		assert.NoErr(t, err)
 
 		assert.Eq(t, count, uint(len(itemsA)))
 		assert.Eq(t, count, uint(len(itemsB)))
 		assert.Eq(t, itemsA, itemsB)
 	}
-	assertEqualBoxes(a.env.Box, b.env.Box)
+	assertEqualBoxes(aBox, bBox)
 
 	// remove from one of the boxes
-	removed, err := b.env.Box.RemoveIds(1, 3, 6)
+	removed, err := bBox.RemoveIds(1, 3, 6)
 	assert.NoErr(t, err)
 	assert.True(t, 3 == removed)
 	count = count - uint(removed)
 
 	// wait for the data to be synced to the other box
 	assert.NoErr(t, waitUntil(time.Second, func() (bool, error) {
-		bCount, err := a.env.Box.Count()
+		bCount, err := aBox.Count()
 		return bCount == uint64(count), err
 	}))
 
-	assertEqualBoxes(a.env.Box, b.env.Box)
+	assertEqualBoxes(aBox, bBox)
 }
 
 func TestSyncDataManual(t *testing.T) {
@@ -319,21 +328,23 @@ func TestSyncDataManual(t *testing.T) {
 	assert.NoErr(t, b.sync.SetRequestUpdatesMode(objectbox.SyncRequestUpdatesManual))
 	b.Start()
 
-	isEmpty, err := a.env.Box.IsEmpty()
+	var aBox = model.BoxForTestEntitySynced(a.env.ObjectBox)
+	isEmpty, err := aBox.IsEmpty()
 	assert.NoErr(t, err)
 	assert.True(t, isEmpty)
 
-	isEmpty, err = b.env.Box.IsEmpty()
+	var bBox = model.BoxForTestEntitySynced(b.env.ObjectBox)
+	isEmpty, err = bBox.IsEmpty()
 	assert.NoErr(t, err)
 	assert.True(t, isEmpty)
 
 	// insert into one box
 	var count uint = 10
-	a.env.Populate(count)
+	populateSyncedBox(t, aBox, count)
 
 	// this will time out because we haven't manually initiated an update
 	assert.True(t, strings.Contains(waitUntil(500*time.Millisecond, func() (bool, error) {
-		bCount, err := b.env.Box.Count()
+		bCount, err := bBox.Count()
 		return bCount == uint64(count), err
 	}).Error(), "timeout"))
 
@@ -342,16 +353,16 @@ func TestSyncDataManual(t *testing.T) {
 
 	// wait for the data to be synced to the other box
 	assert.NoErr(t, waitUntil(time.Second, func() (bool, error) {
-		bCount, err := b.env.Box.Count()
+		bCount, err := bBox.Count()
 		return bCount == uint64(count), err
 	}))
 
-	assert.NoErr(t, a.env.Box.RemoveAll())
+	assert.NoErr(t, aBox.RemoveAll())
 	count = 0
 
 	// this will time out because we haven't subscribed for all further updates
 	assert.True(t, strings.Contains(waitUntil(500*time.Millisecond, func() (bool, error) {
-		bCount, err := b.env.Box.Count()
+		bCount, err := bBox.Count()
 		return bCount == uint64(count), err
 	}).Error(), "timeout"))
 
@@ -360,16 +371,16 @@ func TestSyncDataManual(t *testing.T) {
 
 	// wait for the data to be synced to the other box
 	assert.NoErr(t, waitUntil(time.Second, func() (bool, error) {
-		bCount, err := b.env.Box.Count()
+		bCount, err := bBox.Count()
 		return bCount == uint64(count), err
 	}))
 
 	count = 10
-	a.env.Populate(count)
+	populateSyncedBox(t, aBox, count)
 
 	// wait for the data to be synced to the other box
 	assert.NoErr(t, waitUntil(time.Second, func() (bool, error) {
-		bCount, err := b.env.Box.Count()
+		bCount, err := bBox.Count()
 		return bCount == uint64(count), err
 	}))
 }
@@ -500,22 +511,23 @@ func TestSyncChangeListener(t *testing.T) {
 		for i, change := range changes {
 			t.Logf("change %d: %v", i, change)
 
-			// only count the main entity, not relations
-			if change.EntityId == model.EntityBinding.Id {
-				for j := 0; j < len(change.Puts); j++ {
-					putIDs <- change.Puts[j]
-				}
-				for j := 0; j < len(change.Removals); j++ {
-					removedIDs <- change.Removals[j]
-				}
+			assert.Eq(t, model.TestEntitySyncedBinding.Id, change.EntityId)
+
+			for j := 0; j < len(change.Puts); j++ {
+				putIDs <- change.Puts[j]
 			}
+			for j := 0; j < len(change.Removals); j++ {
+				removedIDs <- change.Removals[j]
+			}
+
 		}
 	}))
 	b.Start()
 
 	// insert on one client
 	var count uint = 100
-	a.env.Populate(count)
+	var aBox = model.BoxForTestEntitySynced(a.env.ObjectBox)
+	populateSyncedBox(t, aBox, count)
 
 	// wait for the data to be received by another client - its onChange() listener is called
 	assert.NoErr(t, waitUntil(time.Second, func() (bool, error) {

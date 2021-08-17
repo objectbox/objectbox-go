@@ -19,7 +19,8 @@ func ObjectBoxModel() *objectbox.Model {
 	model.RegisterBinding(TestEntityRelatedBinding)
 	model.RegisterBinding(TSDateBinding)
 	model.RegisterBinding(TSDateNanoBinding)
-	model.LastEntityId(7, 8200223062288330287)
+	model.RegisterBinding(TestEntitySyncedBinding)
+	model.LastEntityId(8, 1967687883385423038)
 	model.LastIndexId(4, 3414034888235702623)
 	model.LastRelationId(6, 3119566795324383223)
 

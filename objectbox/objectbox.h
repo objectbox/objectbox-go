@@ -46,7 +46,7 @@ extern "C" {
 /// When using ObjectBox as a dynamic library, you should verify that a compatible version was linked using
 /// obx_version() or obx_version_is_at_least().
 #define OBX_VERSION_MAJOR 0
-#define OBX_VERSION_MINOR 13
+#define OBX_VERSION_MINOR 14
 #define OBX_VERSION_PATCH 0  // values >= 100 are reserved for dev releases leading to the next minor/major increase
 
 //----------------------------------------------
@@ -996,12 +996,12 @@ obx_err obx_box_put5(OBX_box* box, obx_id id, const void* data, size_t size, OBX
 
 /// FB ID slot must be present in the given data; new entities must have an ID value of zero or OBX_ID_NEW.
 /// @param data writable data buffer, which may be updated for the ID
-/// @returns 0 on error
+/// @returns id if the object could be put, or 0 in case of an error
 obx_id obx_box_put_object(OBX_box* box, void* data, size_t size);
 
 /// FB ID slot must be present in the given data; new entities must have an ID value of zero or OBX_ID_NEW
 /// @param data writable data buffer, which may be updated for the ID
-/// @returns 0 on error, e.g. the entity was not put according to OBXPutMode
+/// @returns id if the object, or 0 in case of an error, e.g. the entity was not put according to OBXPutMode
 obx_id obx_box_put_object4(OBX_box* box, void* data, size_t size, OBXPutMode mode);
 
 /// Put all given objects in the database in a single transaction. If any of the individual objects failed to put,
@@ -1124,11 +1124,18 @@ obx_err obx_async_update(OBX_async* async, obx_id id, const void* data, size_t s
 /// Reserve an ID, which is returned immediately for future reference, and put asynchronously.
 /// Note: of course, it can NOT be guaranteed that the entity will actually be put successfully in the DB.
 /// @param data the given bytes are mutated to update the contained ID data.
+/// @returns id of the new object, 0 on error
 obx_id obx_async_put_object(OBX_async* async, void* data, size_t size);
+
+/// FB ID slot must be present in the given data; new entities must have an ID value of zero or OBX_ID_NEW
+/// @param data writable data buffer, which may be updated for the ID
+/// @returns id of the new object, 0 on error, e.g. the entity can't be put according to OBXPutMode
+obx_id obx_async_put_object4(OBX_async* async, void* data, size_t size, OBXPutMode mode);
 
 /// Reserve an ID, which is returned immediately for future reference, and insert asynchronously.
 /// Note: of course, it can NOT be guaranteed that the entity will actually be inserted successfully in the DB.
 /// @param data the given bytes are mutated to update the contained ID data.
+/// @returns id of the new object, 0 on error
 obx_id obx_async_insert_object(OBX_async* async, void* data, size_t size);
 
 /// Remove asynchronously.
@@ -1383,6 +1390,22 @@ obx_err obx_query_limit(OBX_query* query, uint64_t limit);
 
 /// Find entities matching the query. NOTE: the returned data is only valid as long the transaction is active!
 OBX_bytes_array* obx_query_find(OBX_query* query);
+
+/// Find the first object matching the query.
+/// @returns OBX_NOT_FOUND if no object matches.
+/// The exposed data comes directly from the OS to allow zero-copy access, which limits the data lifetime:
+/// @warning Currently ignores offset, taking the the first matching element.
+/// @attention The exposed data is only valid as long as the (top) transaction is still active and no write
+///            operation (e.g. put/remove) was executed. Accessing data after this is undefined behavior.
+obx_err obx_query_find_first(OBX_query* query, const void** data, size_t* size);
+
+/// Find the only object matching the query.
+/// @returns OBX_NOT_FOUND if no object matches, an error if there are multiple objects matching the query.
+/// The exposed data comes directly from the OS to allow zero-copy access, which limits the data lifetime:
+/// @warning Currently ignores offset and limit, considering all matching elements.
+/// @attention The exposed data is only valid as long as the (top) transaction is still active and no write
+///            operation (e.g. put/remove) was executed. Accessing data after this is undefined behavior.
+obx_err obx_query_find_unique(OBX_query* query, const void** data, size_t* size);
 
 /// Walk over matching objects using the given data visitor
 obx_err obx_query_visit(OBX_query* query, obx_data_visitor* visitor, void* user_data);

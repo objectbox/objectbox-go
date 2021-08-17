@@ -33,6 +33,11 @@
 
 #include "objectbox.h"
 
+#if defined(static_assert) || defined(__cplusplus)
+static_assert(OBX_VERSION_MAJOR == 0 && OBX_VERSION_MINOR == 14 && OBX_VERSION_PATCH == 0,
+              "Versions of objectbox.h and objectbox-sync.h files do not match, please update");
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -51,9 +56,9 @@ struct OBX_sync;
 typedef struct OBX_sync OBX_sync;
 
 typedef enum {
-    OBXSyncCredentialsType_NONE = 0,
-    OBXSyncCredentialsType_SHARED_SECRET = 1,
-    OBXSyncCredentialsType_GOOGLE_AUTH = 2,
+    OBXSyncCredentialsType_NONE = 1,
+    OBXSyncCredentialsType_SHARED_SECRET = 2,
+    OBXSyncCredentialsType_GOOGLE_AUTH = 3,
 } OBXSyncCredentialsType;
 
 // TODO sync prefix

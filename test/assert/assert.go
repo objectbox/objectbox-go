@@ -154,6 +154,14 @@ func Fail(t *testing.T, text string) {
 	}
 }
 
+// MustMatch checks the value against a given regular expression.
+func MustMatch(t *testing.T, match *regexp.Regexp, value interface{}) {
+	var str = fmt.Sprint(value)
+	if !match.MatchString(str) {
+		Failf(t, "Doesn't match regexp\nExpected: '%s'\nReceived: '%s'", match.String(), str)
+	}
+}
+
 // MustPanic ensures that the caller's context will panic and that the panic will match the given regular expression
 //   func() {
 //   	defer mustPanic(t, regexp.MustCompile("+*"))

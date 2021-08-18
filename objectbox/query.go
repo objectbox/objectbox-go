@@ -55,6 +55,7 @@ func (query *Query) Close() error {
 		return cCall(func() C.obx_err {
 			var err = C.obx_query_close(query.cQuery)
 			query.cQuery = nil
+			runtime.SetFinalizer(query, nil) // remove the finalizer
 			return err
 		})
 	}
@@ -64,7 +65,7 @@ func (query *Query) Close() error {
 func queryFinalizer(query *Query) {
 	err := query.Close()
 	if err != nil {
-		fmt.Printf("Error while finalizer closed query: %s", err)
+		fmt.Printf("Error in Query finalizer: %s", err)
 	}
 }
 
@@ -85,6 +86,26 @@ func (query *Query) check() error {
 	}
 
 	return nil
+}
+
+// Property provides a way to access a value of a single property or run aggregate functions.
+// Note: this method panics in case a property query could not be created, e.g. property doesn't belong to the queried
+// entity. Consider using PropertyOrError if you need an explicit error check, e.g. when using dynamic arguments.
+func (query *Query) Property(prop Property) *PropertyQuery {
+	pq, err := query.PropertyOrError(prop)
+	if err != nil {
+		panic(fmt.Sprintf("Could not create query - please check your query conditions: %s", err))
+	}
+	return pq
+}
+
+// PropertyOrError is just like Property except it returns a potential error instead of issuing a panic.
+func (query *Query) PropertyOrError(prop Property) (*PropertyQuery, error) {
+	if query.entity.id != prop.entityId() {
+		return nil, fmt.Errorf("property from a different entity %d passed, expected %d", prop.entityId(), query.entity.id)
+	}
+
+	return newPropertyQuery(query, prop.propertyId())
 }
 
 // Find returns all objects matching the query
@@ -202,6 +223,12 @@ func (query *Query) checkIdentifier(identifier propertyOrAlias) error {
 	}
 
 	return fmt.Errorf("property from a different entity %d passed, expected %d", entityId, query.entity.id)
+}
+
+// Property represents any property type
+type Property interface {
+	propertyId() TypeId
+	entityId() TypeId
 }
 
 // propertyOrAlias is used to identify a condition in a query.

@@ -1,8 +1,6 @@
-ObjectBox Go API
+Go Database API
 ================
-ObjectBox is a superfast database for objects.
-Using this Golang API, you can use ObjectBox as an embedded database in your Go application.
-A client/server mode will follow soon.
+ObjectBox is a superfast Go database persisting objects; [check the performance benchmarks vs SQLite (GORM) & Storm](https://objectbox.io/go-1-0-release-and-performance-benchmarks/). Using this Golang API, you can use ObjectBox as an embedded database in your Go application.
 
 ObjectBox persists your native Go structs using a simple CRUD API:
 

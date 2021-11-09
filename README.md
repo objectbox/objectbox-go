@@ -13,15 +13,39 @@ Want details? **[Read the docs](https://golang.objectbox.io/)** or
 
 Latest release: [v1.5.0 (2021-08-18)](https://golang.objectbox.io/)
 
-Some features
+High-performance Golang database
 -------------
-* [Powerful queries](https://golang.objectbox.io/queries)
-* [Relations (to-one, to-many)](https://golang.objectbox.io/relations)
-* Secondary indexes based on object properties
-* Asynchronous puts
-* Automatic model migration (no schema upgrade scripts etc.)
-* inline/prefix complex embedded structs (or you can use custom converters)
-* **[ObjectBox Sync](https://objectbox.io/sync/):** keeps data in sync between devices and servers.
+🏁 High-speed data persistence enabling realtime applications
+
+💻 Cross-platform Database for Linux, Windows, Android, iOS, macOS
+
+🪂 ACID compliant: Atomic, Consistent, Isolated, Durable
+
+🌱 Scalable: grows with your needs, handling millions of objects with ease
+
+
+
+**Easy to use**
+
+🔗 Built-in [Relations (to-one, to-many)](https://golang.objectbox.io/relations)
+
+❓ [Powerful queries](https://golang.objectbox.io/queries): filter data as needed, even across relations
+
+🦮 Statically typed: compile time checks & optimizations
+
+📃 Automatic schema migrations: no update scripts needed
+
+
+
+**And much more than just data persistence**
+
+✨ **[ObjectBox Sync](https://objectbox.io/sync/): keeps data in sync between devices and servers
+
+🕒 ObjectBox TS: time series extension for time based data
+
+
+Enjoy ❤️
+
 
 Getting started
 ---------------
@@ -89,6 +113,8 @@ Afterwards, don't forget to re-run the code generation on your project
 ```bash
 go generate ./...
 ```
+
+Secondary indexes based on object properties; Asynchronous puts, inline/prefix complex embedded structs (or you can use custom converters)
 
 License
 -------

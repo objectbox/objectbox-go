@@ -1,8 +1,3 @@
-Do you ♥️ using ObjectBox?
-==========================
-We want to [hear about your app](https://docs.google.com/forms/d/e/1FAIpQLScIYiOIThcq-AnDVoCvnZOMgxO4S-fBtDSFPQfWldJnhi2c7Q/viewform)!
-It will - literally - take just a minute, but help us a lot. Thank you!​ 🙏​
-
 ObjectBox Go API
 ================
 ObjectBox is a superfast database for objects.

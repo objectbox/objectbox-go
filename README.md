@@ -39,7 +39,7 @@ High-performance Golang database
 
 **And much more than just data persistence**
 
-✨ **[ObjectBox Sync](https://objectbox.io/sync/): keeps data in sync between devices and servers
+✨ **[ObjectBox Sync](https://objectbox.io/sync/)**: keeps data in sync between devices and servers
 
 🕒 ObjectBox TS: time series extension for time based data
 

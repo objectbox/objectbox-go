@@ -1,13 +1,6 @@
-Do you ♥️ using ObjectBox?
-==========================
-We want to [hear about your app](https://docs.google.com/forms/d/e/1FAIpQLScIYiOIThcq-AnDVoCvnZOMgxO4S-fBtDSFPQfWldJnhi2c7Q/viewform)!
-It will - literally - take just a minute, but help us a lot. Thank you!​ 🙏​
-
-ObjectBox Go API
+Go Database API
 ================
-ObjectBox is a superfast database for objects.
-Using this Golang API, you can use ObjectBox as an embedded database in your Go application.
-A client/server mode will follow soon.
+ObjectBox is a superfast Go database persisting objects; [check the performance benchmarks vs SQLite (GORM) & Storm](https://objectbox.io/go-1-0-release-and-performance-benchmarks/). Using this Golang API, you can use ObjectBox as an embedded database in your Go application.
 
 ObjectBox persists your native Go structs using a simple CRUD API:
 
@@ -20,15 +13,39 @@ Want details? **[Read the docs](https://golang.objectbox.io/)** or
 
 Latest release: [v1.5.0 (2021-08-18)](https://golang.objectbox.io/)
 
-Some features
+High-performance Golang database
 -------------
-* [Powerful queries](https://golang.objectbox.io/queries)
-* [Relations (to-one, to-many)](https://golang.objectbox.io/relations)
-* Secondary indexes based on object properties
-* Asynchronous puts
-* Automatic model migration (no schema upgrade scripts etc.)
-* inline/prefix complex embedded structs (or you can use custom converters)
-* **[ObjectBox Sync](https://objectbox.io/sync/):** keeps data in sync between devices and servers.
+🏁 High-speed data persistence enabling realtime applications
+
+💻 Cross-platform Database for Linux, Windows, Android, iOS, macOS
+
+🪂 ACID compliant: Atomic, Consistent, Isolated, Durable
+
+🌱 Scalable: grows with your needs, handling millions of objects with ease
+
+
+
+**Easy to use**
+
+🔗 Built-in [Relations (to-one, to-many)](https://golang.objectbox.io/relations)
+
+❓ [Powerful queries](https://golang.objectbox.io/queries): filter data as needed, even across relations
+
+🦮 Statically typed: compile time checks & optimizations
+
+📃 Automatic schema migrations: no update scripts needed
+
+
+
+**And much more than just data persistence**
+
+✨ **[ObjectBox Sync](https://objectbox.io/sync/)**: keeps data in sync between devices and servers
+
+🕒 ObjectBox TS: time series extension for time based data
+
+
+Enjoy ❤️
+
 
 Getting started
 ---------------

@@ -114,8 +114,6 @@ Afterwards, don't forget to re-run the code generation on your project
 go generate ./...
 ```
 
-Secondary indexes based on object properties; Asynchronous puts, inline/prefix complex embedded structs (or you can use custom converters)
-
 License
 -------
     Copyright 2018-2021 ObjectBox Ltd. All rights reserved.

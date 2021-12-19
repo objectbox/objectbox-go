@@ -270,39 +270,39 @@ OBX_C_API uint32_t obx_sync_protocol_version_server(OBX_sync* sync);
 /// Set or overwrite a previously set 'connect' listener.
 /// @param listener set NULL to reset
 /// @param listener_arg is a pass-through argument passed to the listener
-OBX_C_API void obx_sync_listener_connect(OBX_sync* sync, OBX_sync_listener_connect* listener, void* listener_arg);
+OBX_C_API void obx_sync_listener_connect(OBX_sync* sync, OBX_sync_listener_connect* listener, uintptr_t listener_arg);
 
 /// Set or overwrite a previously set 'disconnect' listener.
 /// @param listener set NULL to reset
 /// @param listener_arg is a pass-through argument passed to the listener
-OBX_C_API void obx_sync_listener_disconnect(OBX_sync* sync, OBX_sync_listener_disconnect* listener, void* listener_arg);
+OBX_C_API void obx_sync_listener_disconnect(OBX_sync* sync, OBX_sync_listener_disconnect* listener, uintptr_t listener_arg);
 
 /// Set or overwrite a previously set 'login' listener.
 /// @param listener set NULL to reset
 /// @param listener_arg is a pass-through argument passed to the listener
-OBX_C_API void obx_sync_listener_login(OBX_sync* sync, OBX_sync_listener_login* listener, void* listener_arg);
+OBX_C_API void obx_sync_listener_login(OBX_sync* sync, OBX_sync_listener_login* listener, uintptr_t listener_arg);
 
 /// Set or overwrite a previously set 'login failure' listener.
 /// @param listener set NULL to reset
 /// @param listener_arg is a pass-through argument passed to the listener
 OBX_C_API void obx_sync_listener_login_failure(OBX_sync* sync, OBX_sync_listener_login_failure* listener,
-                                               void* listener_arg);
+                                               uintptr_t listener_arg);
 
 /// Set or overwrite a previously set 'complete' listener - notifies when the latest sync has finished.
 /// @param listener set NULL to reset
 /// @param listener_arg is a pass-through argument passed to the listener
-OBX_C_API void obx_sync_listener_complete(OBX_sync* sync, OBX_sync_listener_complete* listener, void* listener_arg);
+OBX_C_API void obx_sync_listener_complete(OBX_sync* sync, OBX_sync_listener_complete* listener, uintptr_t listener_arg);
 
 /// Set or overwrite a previously set 'change' listener - provides information about incoming changes.
 /// @param listener set NULL to reset
 /// @param listener_arg is a pass-through argument passed to the listener
-OBX_C_API void obx_sync_listener_change(OBX_sync* sync, OBX_sync_listener_change* listener, void* listener_arg);
+OBX_C_API void obx_sync_listener_change(OBX_sync* sync, OBX_sync_listener_change* listener, uintptr_t listener_arg);
 
 /// Set or overwrite a previously set 'serverTime' listener - provides current time updates from the sync-server.
 /// @param listener set NULL to reset
 /// @param listener_arg is a pass-through argument passed to the listener
 OBX_C_API void obx_sync_listener_server_time(OBX_sync* sync, OBX_sync_listener_server_time* listener,
-                                             void* listener_arg);
+                                             uintptr_t listener_arg);
 
 struct OBX_sync_server;
 typedef struct OBX_sync_server OBX_sync_server;

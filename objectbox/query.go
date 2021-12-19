@@ -132,13 +132,13 @@ func (query *Query) Find() (objects interface{}, err error) {
 
 // Offset defines the index of the first object to process (how many objects to skip)
 func (query *Query) Offset(offset uint64) *Query {
-	query.offsetErr = cCall(func() C.obx_err { return C.obx_query_offset(query.cQuery, C.uint64_t(offset)) })
+	query.offsetErr = cCall(func() C.obx_err { return C.obx_query_offset(query.cQuery, C.size_t(offset)) })
 	return query
 }
 
 // Limit sets the number of elements to process by the query
 func (query *Query) Limit(limit uint64) *Query {
-	query.limitErr = cCall(func() C.obx_err { return C.obx_query_limit(query.cQuery, C.uint64_t(limit)) })
+	query.limitErr = cCall(func() C.obx_err { return C.obx_query_limit(query.cQuery, C.size_t(limit)) })
 	return query
 }
 

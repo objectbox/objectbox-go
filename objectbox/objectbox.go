@@ -155,10 +155,11 @@ func (ob *ObjectBox) runInTxn(readOnly bool, fn func() error) (err error) {
 	err = fn()
 
 	if !readOnly && err == nil {
-		if rc := C.obx_txn_success(cTxn); rc != 0 {
+		var ptr = cTxn
+		cTxn = nil
+		if rc := C.obx_txn_success(ptr); rc != 0 {
 			err = createError()
 		}
-		cTxn = nil
 	}
 
 	return err

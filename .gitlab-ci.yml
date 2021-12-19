@@ -1,7 +1,7 @@
 .test:
   stage: test
   script:
-    - bash <(curl -s https://raw.githubusercontent.com/objectbox/objectbox-c/main/download.sh) --quiet --sync 0.14.0
+    - bash <(curl -s https://raw.githubusercontent.com/objectbox/objectbox-c/main/download.sh) --quiet --sync 0.15.0
     - export CGO_LDFLAGS="-L$(pwd -P)/lib -Wl,-rpath -Wl,$(pwd -P)/lib"
     - '[[ "$(uname)" != MINGW* ]] || cp -vf lib/objectbox.dll /c/TDM-GCC-64/lib/'   # copy the dll or ld.exe fails
     - ./build/build.sh ${BUILD_ARGS:-}

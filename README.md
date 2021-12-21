@@ -1,5 +1,3 @@
-<img width="466" src="https://raw.githubusercontent.com/objectbox/objectbox-java/master/logo.png">
-
 Go ObjectBox Database API
 ================
 ObjectBox is a superfast Go database persisting objects; [check the performance benchmarks vs SQLite (GORM) & Storm](https://objectbox.io/go-1-0-release-and-performance-benchmarks/). Using this Golang API, you can use ObjectBox as an embedded database in your Go application.
@@ -17,34 +15,18 @@ Latest release: [v1.5.0 (2021-08-18)](https://golang.objectbox.io/)
 
 High-performance Golang database
 -------------
-🏁 High-speed data persistence enabling realtime applications
-
-💻 Cross-platform Database for Linux, Windows, Android, iOS, macOS
-
-🪂 ACID compliant: Atomic, Consistent, Isolated, Durable
-
-🌱 Scalable: grows with your needs, handling millions of objects with ease
-
-
-
-**Easy to use**
-
-🔗 Built-in [Relations (to-one, to-many)](https://golang.objectbox.io/relations)
-
-❓ [Powerful queries](https://golang.objectbox.io/queries): filter data as needed, even across relations
-
-🦮 Statically typed: compile time checks & optimizations
-
-📃 Automatic schema migrations: no update scripts needed
-
-
+* 🏁 High-speed data persistence enabling realtime applications
+* 💻 Cross-platform Database for Linux, Windows, Android, iOS, macOS
+* 🪂 ACID compliant: Atomic, Consistent, Isolated, Durable
+* 🌱 Scalable: grows with your needs, handling millions of objects with ease
+* 🔗 Built-in [Relations (to-one, to-many)](https://golang.objectbox.io/relations)
+* ❓ [Powerful queries](https://golang.objectbox.io/queries): filter data as needed, even across relations
+* 🦮 Statically typed: compile time checks & optimizations
+* 📃 Automatic schema migrations: no update scripts needed
 
 **And much more than just data persistence**
-
-✨ **[ObjectBox Sync](https://objectbox.io/sync/)**: keeps data in sync between devices and servers
-
-🕒 [ObjectBox TS](https://objectbox.io/time-series-database/): time series extension for time based data
-
+* ✨ **[ObjectBox Sync](https://objectbox.io/sync/)**: keeps data in sync between devices and servers
+* 🕒 [ObjectBox TS](https://objectbox.io/time-series-database/): time series extension for time based data
 
 Enjoy ❤️
 

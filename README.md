@@ -43,7 +43,7 @@ High-performance Golang database
 
 ✨ **[ObjectBox Sync](https://objectbox.io/sync/)**: keeps data in sync between devices and servers
 
-🕒 ObjectBox TS: time series extension for time based data
+🕒 [ObjectBox TS](https://objectbox.io/time-series-database/): time series extension for time based data
 
 
 Enjoy ❤️
@@ -115,6 +115,36 @@ Afterwards, don't forget to re-run the code generation on your project
 ```bash
 go generate ./...
 ```
+
+Other languages/bindings
+------------------------
+ObjectBox supports multiple platforms and languages.
+Besides JVM based languages like Java and Kotlin, ObjectBox also offers: 
+
+* [ObjectBox Java/Kotlin Database:](https://github.com/objectbox/objectbox-java): runs on Android, desktop, and servers
+* [ObjectBox Swift](https://github.com/objectbox/objectbox-swift): build fast mobile apps for iOS (and macOS) 
+* [ObjectBox Dart/Flutter](https://github.com/objectbox/objectbox-dart): cross-platform for mobile and desktop apps 
+* [ObjectBox Go](https://github.com/objectbox/objectbox-go): great for data-driven tools and embedded server applications 
+* [ObjectBox C and C++](https://github.com/objectbox/objectbox-c): native speed with zero copy access to FlatBuffer objects
+
+
+How I help ObjectBox?
+---------------------------
+We're on a mission to bring joy and delight to Mobile app developers.
+We want ObjectBox not only to be the fastest Swift database, but also the swiftiest Swift data persistence, making you enjoy coding with ObjectBox.
+
+To do that, we want your feedback: what do you love? What's amiss? Where do you struggle in everyday app development?
+
+**We're looking forward to receiving your comments and requests:**
+
+- Add [GitHub issues](https://github.com/ObjectBox/objectbox-go/issues) 
+- Upvote issues you find important by hitting the 👍/+1 reaction button
+- Drop us a line via [@ObjectBox_io](https://twitter.com/ObjectBox_io/)
+- ⭐ us, if you like what you see 
+
+Thank you! 🙏
+
+Keep in touch: For general news on ObjectBox, [check our blog](https://objectbox.io/blog)!
 
 License
 -------

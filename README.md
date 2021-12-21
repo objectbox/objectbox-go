@@ -15,18 +15,19 @@ Latest release: [v1.5.0 (2021-08-18)](https://golang.objectbox.io/)
 
 High-performance Golang database
 -------------
-* 🏁 High-speed data persistence enabling realtime applications
-* 💻 Cross-platform Database for Linux, Windows, Android, iOS, macOS
-* 🪂 ACID compliant: Atomic, Consistent, Isolated, Durable
-* 🌱 Scalable: grows with your needs, handling millions of objects with ease
-* 🔗 Built-in [Relations (to-one, to-many)](https://golang.objectbox.io/relations)
-* ❓ [Powerful queries](https://golang.objectbox.io/queries): filter data as needed, even across relations
-* 🦮 Statically typed: compile time checks & optimizations
-* 📃 Automatic schema migrations: no update scripts needed
+🏁 **High performance** on restricted devices, like IoT gateways, micro controllers, ECUs etc.\
+🪂 **Resourceful** with minimal CPU, power and Memory usage for maximum flexibility and sustainability\
+🔗 **Relations:** object links / relationships are built-in\
+💻 **Multiplatform:** Linux, Windows, Android, iOS, macOS
 
-**And much more than just data persistence**
-* ✨ **[ObjectBox Sync](https://objectbox.io/sync/)**: keeps data in sync between devices and servers
-* 🕒 [ObjectBox TS](https://objectbox.io/time-series-database/): time series extension for time based data
+🌱 **Scalable:** handling millions of objects resource-efficiently with ease\
+💐 **Queries:** filter data as needed, even across relations\
+🦮 **Statically typed:** compile time checks & optimizations\
+📃 **Automatic schema migrations:** no update scripts needed
+
+**And much more than just data persistence**\
+👥 **[ObjectBox Sync](https://objectbox.io/sync/):** keeps data in sync between devices and servers\
+🕒 **[ObjectBox TS](https://objectbox.io/time-series-database/):** time series extension for time based data
 
 Enjoy ❤️
 
@@ -100,13 +101,11 @@ go generate ./...
 
 Other languages/bindings
 ------------------------
-ObjectBox supports multiple platforms and languages.
-Besides JVM based languages like Java and Kotlin, ObjectBox also offers: 
+ObjectBox supports multiple platforms and languages:
 
-* [ObjectBox Java/Kotlin Database:](https://github.com/objectbox/objectbox-java): runs on Android, desktop, and servers
+* [ObjectBox Java/Kotlin](https://github.com/objectbox/objectbox-java): runs on Android, desktop, and servers
 * [ObjectBox Swift](https://github.com/objectbox/objectbox-swift): build fast mobile apps for iOS (and macOS) 
 * [ObjectBox Dart/Flutter](https://github.com/objectbox/objectbox-dart): cross-platform for mobile and desktop apps 
-* [ObjectBox Go](https://github.com/objectbox/objectbox-go): great for data-driven tools and embedded server applications 
 * [ObjectBox C and C++](https://github.com/objectbox/objectbox-c): native speed with zero copy access to FlatBuffer objects
 
 

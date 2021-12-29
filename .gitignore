@@ -11,3 +11,7 @@ data.mdb
 lock.mdb
 
 build-artifacts
+
+# created by install scripts
+objectboxlib
+download

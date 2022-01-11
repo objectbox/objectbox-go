@@ -109,7 +109,7 @@ ObjectBox supports multiple platforms and languages:
 * [ObjectBox C and C++](https://github.com/objectbox/objectbox-c): native speed with zero copy access to FlatBuffer objects
 
 
-How I help ObjectBox?
+How can I help ObjectBox?
 ---------------------------
 We believe, ObjectBox is super easy to use. We are on a mission to make developers’ lives better, by building developer tools that are intuitive and fun to code with.
 

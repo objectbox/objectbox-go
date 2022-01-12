@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# macOS does not have realpath and readlink does not have -f option, so do this instead:
+script_dir=$( cd "$(dirname "$0")" ; pwd -P )
+cd "${script_dir}/.." # move to project root dir
+
 args="$@"
 
 bash <(curl -s https://raw.githubusercontent.com/objectbox/objectbox-c/main/download.sh) --quiet --sync 0.15.0

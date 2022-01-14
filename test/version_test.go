@@ -31,16 +31,26 @@ func TestVersion(t *testing.T) {
 
 	var format = regexp.MustCompile(`^[0-9]+\.[0-9]+\.[0-9]+(-[a-z]+\.[0-9]+)?$`)
 
-	versionGo := objectbox.VersionGo().String()
-	if !format.MatchString(versionGo) {
-		t.Errorf("ObjectBox-Go version %v doesn't match expected regexp %v", versionGo, format)
+	versionGo := objectbox.VersionGo()
+	versionGoString := versionGo.String()
+	if !format.MatchString(versionGoString) {
+		t.Errorf("ObjectBox-Go version %v doesn't match expected regexp %v", versionGoString, format)
 	}
-	versionLib := objectbox.VersionLib().String()
-	if !format.MatchString(versionGo) {
-		t.Errorf("ObjectBox-C version %v doesn't match expected regexp %v", versionLib, format)
+	versionGoInt := versionGo.Major*10000 + versionGo.Minor*100 + versionGo.Patch
+	assert.True(t, versionGoInt >= 10600) // Update with new releases (won't fail if forgotten)
+	assert.True(t, versionGoInt < 20000)  // Future next major release
+
+	versionLib := objectbox.VersionLib()
+	versionLibString := versionLib.String()
+	if !format.MatchString(versionGoString) {
+		t.Errorf("ObjectBox-C version %v doesn't match expected regexp %v", versionLibString, format)
 	}
-	assert.Eq(t, true, strings.Contains(versionInfo, versionGo))
-	assert.Eq(t, true, strings.Contains(versionInfo, versionLib))
+	versionLibInt := versionLib.Major*10000 + versionLib.Minor*100 + versionLib.Patch
+	assert.True(t, versionLibInt >= 1500) // Update with new releases (won't fail if forgotten)
+	assert.True(t, versionLibInt < 10000) // Future next major release
+
+	assert.Eq(t, true, strings.Contains(versionInfo, versionGoString))
+	assert.Eq(t, true, strings.Contains(versionInfo, versionLibString))
 }
 
 func TestVersionLabel(t *testing.T) {

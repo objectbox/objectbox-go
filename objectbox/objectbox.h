@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 ObjectBox Ltd. All rights reserved.
+ * Copyright 2018-2022 ObjectBox Ltd. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ extern "C" {
 /// obx_version() or obx_version_is_at_least().
 #define OBX_VERSION_MAJOR 0
 #define OBX_VERSION_MINOR 15
-#define OBX_VERSION_PATCH 0  // values >= 100 are reserved for dev releases leading to the next minor/major increase
+#define OBX_VERSION_PATCH 1  // values >= 100 are reserved for dev releases leading to the next minor/major increase
 
 //----------------------------------------------
 // Common types
@@ -692,7 +692,9 @@ OBX_C_API OBX_store* obx_store_open(OBX_store_options* opt);
 /// Check if an open store was found for the given path (i.e. opened before and not yet closed).
 OBX_C_API bool obx_store_is_open(const char* path);
 
-/// Get a store previously opened with createShared() matching the given path of the DB directory.
+/// Attach to a previously opened store matching the path of the DB directory, which was used for opening the store.
+/// The returned store is a new instance (e.g. different pointer value) with its own lifetime and must also be closed.
+/// The actual underlying store is only closed when the last store OBX_store instance is closed.
 /// @returns nullptr if no open store was found (i.e. not opened before or already closed)
 OBX_C_API OBX_store* obx_store_attach(const char* path);
 
@@ -1829,7 +1831,7 @@ typedef struct OBX_admin OBX_admin;
 
 /// Initialize the http-server with the given options.
 /// Note: the given options are always freed by this function, including when an error occurs.
-/// @param opt required parameter holding the options (see obx_admin_opt_*())
+/// @param options required parameter holding the options (see obx_admin_opt_*())
 /// @returns NULL if the operation failed, see functions like obx_last_error_code() to get error details
 OBX_C_API OBX_admin* obx_admin(OBX_admin_options* options);
 

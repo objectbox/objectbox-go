@@ -7,7 +7,7 @@ cd "${script_dir}/.." # move to project root dir
 
 args="$@"
 
-bash <(curl -s https://raw.githubusercontent.com/objectbox/objectbox-c/main/download.sh) --quiet --sync 0.15.0
+bash <(curl -s https://raw.githubusercontent.com/objectbox/objectbox-c/main/download.sh) --quiet --sync 0.15.1
 export CGO_LDFLAGS="-L$(pwd -P)/lib -Wl,-rpath -Wl,$(pwd -P)/lib"
 
 if [[ "$(uname)" == MINGW* ]]; then

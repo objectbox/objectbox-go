@@ -46,7 +46,7 @@ func TestVersion(t *testing.T) {
 		t.Errorf("ObjectBox-C version %v doesn't match expected regexp %v", versionLibString, format)
 	}
 	versionLibInt := versionLib.Major*10000 + versionLib.Minor*100 + versionLib.Patch
-	assert.True(t, versionLibInt >= 1500) // Update with new releases (won't fail if forgotten)
+	assert.True(t, versionLibInt >= 1501) // Update with new releases (won't fail if forgotten)
 	assert.True(t, versionLibInt < 10000) // Future next major release
 
 	assert.Eq(t, true, strings.Contains(versionInfo, versionGoString))

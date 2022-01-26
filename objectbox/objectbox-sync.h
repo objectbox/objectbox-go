@@ -34,7 +34,7 @@
 #include "objectbox.h"
 
 #if defined(static_assert) || defined(__cplusplus)
-static_assert(OBX_VERSION_MAJOR == 0 && OBX_VERSION_MINOR == 15 && OBX_VERSION_PATCH == 0,
+static_assert(OBX_VERSION_MAJOR == 0 && OBX_VERSION_MINOR == 15 && OBX_VERSION_PATCH == 1,
               "Versions of objectbox.h and objectbox-sync.h files do not match, please update");
 #endif
 
@@ -318,7 +318,7 @@ typedef struct OBX_sync_server OBX_sync_server;
 ///       E.g. a client with an incompatible model will be rejected during login.
 /// @param store_options Options for the server's store.
 ///        It is freed automatically (same as with obx_store_open()) - don't use or free it afterwards.
-/// @param uri The URI (following the pattern protocol:://IP:port) the server should listen on.
+/// @param uri The URI (following the pattern "protocol://IP:port") the server should listen on.
 ///        Supported \b protocols are "ws" (WebSockets) and "wss" (secure WebSockets).
 ///        To use the latter ("wss"), you must also call obx_sync_server_certificate_path().
 ///        To bind to all available \b interfaces, including those that are available from the "outside", use 0.0.0.0 as
@@ -383,7 +383,12 @@ OBX_C_API uint64_t obx_sync_server_connections(OBX_sync_server* server);
 /// The returned char* is valid until another call to obx_sync_server_stats_string() or the server is closed.
 OBX_C_API const char* obx_sync_server_stats_string(OBX_sync_server* server, bool include_zero_values);
 
-// TODO admin UI ("browser")
+/// Configure admin with a sync server, attaching the store and enabling custom sync-server functionality in the UI.
+/// This is a replacement for obx_admin_opt_store() and obx_admin_opt_store_path() - don't set them for the server.
+/// After configuring, this acts as obx_admin() - see for more details.
+/// You must use obx_admin_close() to stop & free resources after you're done; obx_sync_server_stop() doesn't do that.
+/// @param options configuration set up with obx_admin_opt_*. You can pass NULL to use the default options.
+OBX_C_API OBX_admin* obx_sync_server_admin(OBX_sync_server* server, OBX_admin_options* options);
 
 #ifdef __cplusplus
 }

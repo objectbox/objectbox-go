@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 ObjectBox Ltd. All rights reserved.
+ * Copyright 2018-2022 ObjectBox Ltd. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,14 @@ type Version struct {
 	Label string
 }
 
+func (v Version) LessThan(other Version) bool {
+	return v.Major < other.Major || v.Minor < other.Minor || v.Patch < other.Patch
+}
+
+func (v Version) GreaterThanOrEqualTo(other Version) bool {
+	return !v.LessThan(other)
+}
+
 func (v Version) String() string {
 	versionString := fmt.Sprintf("%d.%d.%d", v.Major, v.Minor, v.Patch)
 	if len(v.Label) > 0 {
@@ -46,13 +54,32 @@ func VersionGo() Version {
 	return Version{1, 6, 0, ""}
 }
 
-// VersionLib returns the Version of the dynamic linked ObjectBox library
+// VersionLib returns the Version of the dynamic linked ObjectBox library (loaded at runtime)
 func VersionLib() Version {
 	var major C.int
 	var minor C.int
 	var patch C.int
 	C.obx_version(&major, &minor, &patch)
 	return Version{int(major), int(minor), int(patch), ""}
+}
+
+// VersionLibStatic returns the Version of ObjectBox library this Go version was compiled against (build time);
+// see VersionLib() for the actually loaded version.
+// This version is at least VersionLibMinRecommended().
+func VersionLibStatic() Version {
+	return Version{C.OBX_VERSION_MAJOR, C.OBX_VERSION_MINOR, C.OBX_VERSION_PATCH, ""}
+}
+
+// VersionLibMin returns the minimum Version of the dynamic linked ObjectBox library that is compatible with this Go version
+func VersionLibMin() Version {
+	return Version{0, 15, 0, ""}
+}
+
+// VersionLibMinRecommended returns the minimum recommended Version of the dynamic linked ObjectBox library.
+// This version not only considers compatibility with this Go version, but also known issues older (compatible) versions.
+// It is guaranteed to be at least VersionLibMin()
+func VersionLibMinRecommended() Version {
+	return Version{0, 15, 1, ""}
 }
 
 // VersionInfo returns a printable version string

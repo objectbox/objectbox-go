@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 ObjectBox Ltd. All rights reserved.
+ * Copyright 2018-2022 ObjectBox Ltd. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,31 +45,16 @@ type Builder struct {
 
 // NewBuilder creates a new ObjectBox instance builder object
 func NewBuilder() *Builder {
-	// these constants are based on the objectbox.h file, not on the loaded library
-	var expectedVersion = Version{C.OBX_VERSION_MAJOR, C.OBX_VERSION_MINOR, C.OBX_VERSION_PATCH, ""}
-
-	// NOTE, this is currently not used as the C-API currently still breaks compatibility before v1.0.
-	//if !C.obx_version_is_at_least(C.int(expectedVersion.Major), C.int(expectedVersion.Minor), C.int(expectedVersion.Patch)) {
-	//	var version string
-	//	msg := C.obx_version_string()
-	//	if msg == nil {
-	//		version = "unknown"
-	//	} else {
-	//		version = C.GoString(msg)
-	//	}
-	//	panic("Minimum libobjectbox version " + expectedVersion.String() + " required, but found " + version + "\n" +
-	//		"Please run install.sh for a full upgrade\n" +
-	//		"Or check https://github.com/objectbox/objectbox-c for info about the required library.")
-	//}
-
-	// Therefore, we're checking the exact version match
 	var version = VersionLib()
-	// patch version can be higher but only if it's not a "dev" version (100+)
-	var patchMatches = version.Patch >= expectedVersion.Patch && (version.Patch < 100 || version.Patch == expectedVersion.Patch)
-	if version.Major != expectedVersion.Major || version.Minor != expectedVersion.Minor || !patchMatches {
-		panic("ObjectBox native lib version " + expectedVersion.String() + " required, but found " + version.String() + ".\n" +
-			"Please run install.sh for a full upgrade.\n" +
-			"Or check https://github.com/objectbox/objectbox-c for info about the required library.")
+	if version.LessThan(VersionLibMin()) {
+		panic("The loaded ObjectBox C library is too old for this build of ObjectBox Go.\n" +
+			"Found version " + version.String() + ", but at least " + VersionLibMin().String() + " is required.\n" +
+			"Please see https://github.com/objectbox/objectbox-go on how to upgrade.\n" +
+			"Or, check https://github.com/objectbox/objectbox-c for the C library.")
+	} else if version.LessThan(VersionLibMinRecommended()) {
+		println("Note: the loaded ObjectBox C library should be updated.\n" +
+			"      Found ObjectBox version " + version.String() + ", but the minimum recommended version is " +
+			VersionLibMinRecommended().String() + ".")
 	}
 
 	return &Builder{

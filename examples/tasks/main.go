@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 ObjectBox Ltd. All rights reserved.
+ * Copyright 2018-2022 ObjectBox Ltd. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,13 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"github.com/objectbox/objectbox-go/examples/tasks/internal/model"
-	"github.com/objectbox/objectbox-go/objectbox"
 	"os"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/objectbox/objectbox-go/examples/tasks/internal/model"
+	"github.com/objectbox/objectbox-go/objectbox"
 )
 
 func main() {
@@ -33,6 +34,8 @@ func main() {
 	defer ob.Close()
 
 	box := model.BoxForTask(ob)
+
+	checkStartSyncClient(ob, box)
 
 	runInteractiveShell(box)
 }
@@ -106,7 +109,7 @@ func printHelp() {
 func createTask(box *model.TaskBox, text string) {
 	task := &model.Task{
 		Text:        text,
-		DateCreated: obNow(),
+		DateCreated: time.Now(),
 	}
 
 	if id, err := box.Put(task); err != nil {
@@ -126,17 +129,17 @@ func printList(box *model.TaskBox, all bool) {
 		list, err = box.GetAll()
 	} else {
 		// load only the unfinished tasks
-		list, err = box.Query(model.Task_.DateFinished.Equals(0)).Find()
+		list, err = box.Query(model.Task_.DateFinished.Equals(-62135596800000)).Find()
 	}
 
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "could not list tasks: %s\n", err)
 	}
 
-	fmt.Printf("%3s  %-29s  %-29s  %s\n", "ID", "Created", "Finished", "Text")
+	fmt.Printf("%3s  %-23s  %-23s  %s\n", "ID", "Created", "Finished", "Text")
 	for _, task := range list {
-		fmt.Printf("%3d  %-29s  %-29s  %s\n",
-			task.Id, fmtTime(task.DateCreated), fmtTime(task.DateFinished), task.Text)
+		fmt.Printf("%3d  %-23s  %-23s  %s\n",
+			task.Id, task.DateCreated.Format("2006-01-02 15:04:05"), task.DateFinished.Format("2006-01-02 15:04:05"), task.Text)
 	}
 }
 
@@ -146,22 +149,35 @@ func setDone(box *model.TaskBox, id uint64) {
 	} else if task == nil {
 		fmt.Fprintf(os.Stderr, "task ID %d doesn't exist\n", id)
 	} else {
-		task.DateFinished = obNow()
+		task.DateFinished = time.Now()
 		if _, err := box.Put(task); err != nil {
 			fmt.Fprintf(os.Stderr, "could not update task ID %d: %s\n", id, err)
 		} else {
-			fmt.Printf("task ID %d completed at %s\n", id, fmtTime(task.DateFinished))
+			fmt.Printf("task ID %d completed at %s\n", id, task.DateFinished.String())
 		}
 	}
 }
 
-func fmtTime(obTimestamp int64) string {
-	if obTimestamp != 0 {
-		return time.Unix(obTimestamp/1000, obTimestamp%1000*1000000).String()
-	}
-	return ""
-}
+func checkStartSyncClient(ob *objectbox.ObjectBox, box *model.TaskBox) { // only if sync-enabled library is used
 
-func obNow() int64 {
-	return time.Now().Unix() * 1000
+	if objectbox.SyncIsAvailable() {
+		syncClient, err := objectbox.NewSyncClient(
+			ob,
+			"ws://127.0.0.1", // wss for SSL, ws for unencrypted traffic
+			objectbox.SyncCredentialsNone())
+
+		if err == nil {
+			syncClient.Start() // Connect and start syncing.
+			fmt.Println("Sync client started.")
+			syncClient.SetChangeListener(func(changes []*objectbox.SyncChange) {
+
+				fmt.Printf("received %d changes\n", len(changes))
+				printList(box, true)
+			})
+		} else {
+			fmt.Println("Could not start the sync client.")
+		}
+	} else {
+		fmt.Println("Sync is not available. Please go to https://sync.objectbox.io/ for more information.")
+	}
 }

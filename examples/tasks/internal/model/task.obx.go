@@ -19,7 +19,7 @@ var TaskBinding = task_EntityInfo{
 	Entity: objectbox.Entity{
 		Id: 1,
 	},
-	Uid: 1306759095002958910,
+	Uid: 6645479796472661392,
 }
 
 // Task_ contains type-based Property helpers to facilitate some common operations such as Queries.
@@ -43,13 +43,13 @@ var Task_ = struct {
 	},
 	DateCreated: &objectbox.PropertyInt64{
 		BaseProperty: &objectbox.BaseProperty{
-			Id:     3,
+			Id:     4,
 			Entity: &TaskBinding.Entity,
 		},
 	},
 	DateFinished: &objectbox.PropertyInt64{
 		BaseProperty: &objectbox.BaseProperty{
-			Id:     4,
+			Id:     5,
 			Entity: &TaskBinding.Entity,
 		},
 	},
@@ -62,13 +62,13 @@ func (task_EntityInfo) GeneratorVersion() int {
 
 // AddToModel is called by ObjectBox during model build
 func (task_EntityInfo) AddToModel(model *objectbox.Model) {
-	model.Entity("Task", 1, 1306759095002958910)
-	model.Property("Id", 6, 1, 2193439623591184445)
+	model.Entity("Task", 1, 6645479796472661392)
+	model.Property("Id", 6, 1, 9211738071025439652)
 	model.PropertyFlags(1)
-	model.Property("Text", 9, 2, 6177929178231325611)
-	model.Property("DateCreated", 6, 3, 9141374017424160113)
-	model.Property("DateFinished", 6, 4, 8083684673086871702)
-	model.EntityLastPropertyId(4, 8083684673086871702)
+	model.Property("Text", 9, 2, 8804670454579230281)
+	model.Property("DateCreated", 10, 4, 1260602348787983453)
+	model.Property("DateFinished", 10, 5, 6240065879507520219)
+	model.EntityLastPropertyId(5, 6240065879507520219)
 }
 
 // GetId is called by ObjectBox during Put operations to check for existing ID on an object
@@ -90,14 +90,32 @@ func (task_EntityInfo) PutRelated(ob *objectbox.ObjectBox, object interface{}, i
 // Flatten is called by ObjectBox to transform an object to a FlatBuffer
 func (task_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) error {
 	obj := object.(*Task)
+	var propDateCreated int64
+	{
+		var err error
+		propDateCreated, err = objectbox.TimeInt64ConvertToDatabaseValue(obj.DateCreated)
+		if err != nil {
+			return errors.New("converter objectbox.TimeInt64ConvertToDatabaseValue() failed on Task.DateCreated: " + err.Error())
+		}
+	}
+
+	var propDateFinished int64
+	{
+		var err error
+		propDateFinished, err = objectbox.TimeInt64ConvertToDatabaseValue(obj.DateFinished)
+		if err != nil {
+			return errors.New("converter objectbox.TimeInt64ConvertToDatabaseValue() failed on Task.DateFinished: " + err.Error())
+		}
+	}
+
 	var offsetText = fbutils.CreateStringOffset(fbb, obj.Text)
 
 	// build the FlatBuffers object
-	fbb.StartObject(4)
+	fbb.StartObject(5)
 	fbutils.SetUint64Slot(fbb, 0, id)
 	fbutils.SetUOffsetTSlot(fbb, 1, offsetText)
-	fbutils.SetInt64Slot(fbb, 2, obj.DateCreated)
-	fbutils.SetInt64Slot(fbb, 3, obj.DateFinished)
+	fbutils.SetInt64Slot(fbb, 3, propDateCreated)
+	fbutils.SetInt64Slot(fbb, 4, propDateFinished)
 	return nil
 }
 
@@ -114,11 +132,21 @@ func (task_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{},
 
 	var propId = table.GetUint64Slot(4, 0)
 
+	propDateCreated, err := objectbox.TimeInt64ConvertToEntityProperty(fbutils.GetInt64Slot(table, 10))
+	if err != nil {
+		return nil, errors.New("converter objectbox.TimeInt64ConvertToEntityProperty() failed on Task.DateCreated: " + err.Error())
+	}
+
+	propDateFinished, err := objectbox.TimeInt64ConvertToEntityProperty(fbutils.GetInt64Slot(table, 12))
+	if err != nil {
+		return nil, errors.New("converter objectbox.TimeInt64ConvertToEntityProperty() failed on Task.DateFinished: " + err.Error())
+	}
+
 	return &Task{
 		Id:           propId,
 		Text:         fbutils.GetStringSlot(table, 6),
-		DateCreated:  fbutils.GetInt64Slot(table, 8),
-		DateFinished: fbutils.GetInt64Slot(table, 10),
+		DateCreated:  propDateCreated,
+		DateFinished: propDateFinished,
 	}, nil
 }
 

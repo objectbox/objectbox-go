@@ -29,13 +29,12 @@ import (
 )
 
 func main() {
-	// load objectbox
-	ob := initObjectBox()
-	defer ob.Close()
+	objectBox := initObjectBox()
+	defer objectBox.Close()
 
-	box := model.BoxForTask(ob)
+	box := model.BoxForTask(objectBox)
 
-	checkStartSyncClient(ob, box)
+	checkStartSyncClient(objectBox, box)
 
 	runInteractiveShell(box)
 }
@@ -108,8 +107,9 @@ func printHelp() {
 
 func createTask(box *model.TaskBox, text string) {
 	task := &model.Task{
-		Text:        text,
-		DateCreated: time.Now(),
+		Text:         text,
+		DateCreated:  time.Now(),
+		DateFinished: time.Unix(0, 0), // use "epoch start" to unify values across platforms (e.g for Sync)
 	}
 
 	if id, err := box.Put(task); err != nil {
@@ -124,12 +124,10 @@ func printList(box *model.TaskBox, all bool) {
 	var list []*model.Task
 	var err error
 
-	if all {
-		// load all tasks
+	if all { // load all tasks
 		list, err = box.GetAll()
-	} else {
-		// load only the unfinished tasks
-		list, err = box.Query(model.Task_.DateFinished.Equals(-62135596800000)).Find()
+	} else { // load only unfinished tasks (value 0 is "epoch start")
+		list, err = box.Query(model.Task_.DateFinished.Equals(0)).Find()
 	}
 
 	if err != nil {

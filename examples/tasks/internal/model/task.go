@@ -24,8 +24,10 @@ import (
 
 // Put this on a new line to enable sync: // `objectbox:"sync"`
 type Task struct {
-	Id           uint64
-	Text         string
-	DateCreated  time.Time `objectbox:"date"`
+	Id          uint64
+	Text        string
+	DateCreated time.Time `objectbox:"date"`
+
+	// DateFinished is initially set to unix epoch (value 0 in ObjectBox DB) to tag the task as "unfinished"
 	DateFinished time.Time `objectbox:"date"`
 }

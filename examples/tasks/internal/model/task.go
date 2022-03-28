@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 ObjectBox Ltd. All rights reserved.
+ * Copyright 2018-2022 ObjectBox Ltd. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,18 @@
 
 package model
 
+import (
+	"time"
+)
+
 //go:generate go run github.com/objectbox/objectbox-go/cmd/objectbox-gogen
 
-// Task model
+// Put this on a new line to enable sync: // `objectbox:"sync"`
 type Task struct {
-	Id           uint64
-	Text         string
-	DateCreated  int64
-	DateFinished int64
+	Id          uint64
+	Text        string
+	DateCreated time.Time `objectbox:"date"`
+
+	// DateFinished is initially set to unix epoch (value 0 in ObjectBox DB) to tag the task as "unfinished"
+	DateFinished time.Time `objectbox:"date"`
 }

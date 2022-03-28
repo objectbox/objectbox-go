@@ -2,6 +2,8 @@ Go ObjectBox Database API
 =========================
 ObjectBox is a superfast Go database persisting objects; [check the performance benchmarks vs SQLite (GORM) & Storm](https://objectbox.io/go-1-0-release-and-performance-benchmarks/). Using this Golang API, you can use ObjectBox as an embedded database in your Go application.
 
+**Your opinion matters to us!** Please fill in this 2-minute [Anonymous Feedback Form](https://forms.gle/LvVjN6jfFHuivxZX6).
+
 ObjectBox persists your native Go structs using a simple CRUD API:
 
 ```go
@@ -79,7 +81,6 @@ Also, please have a look at the [examples](examples) directory and for the API r
 
 Already using ObjectBox?
 ---------------------------
-Your opinion matters to us! Please fill in this 2-minute [Anonymous Feedback Form](https://forms.gle/LvVjN6jfFHuivxZX6).
 
 We believe, ObjectBox is super easy to use. We are on a mission to make developers’ lives better, by building developer tools that are intuitive and fun to code with.
 To do that, we want your feedback: what do you love? What's amiss? Where do you struggle in everyday app development?

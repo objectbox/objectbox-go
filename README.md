@@ -15,6 +15,16 @@ Want details? **[Read the docs](https://golang.objectbox.io/)** or
 
 Latest release: [v1.6.1 (2022-01-27)](https://golang.objectbox.io/)
 
+## Table of Contents:
+- [High-performance Golang database](#high-performance-golang-database)
+- [Getting started](#getting-started)
+- [Already using ObjectBox?](#already-using-objectbox)
+- [Upgrading to a newer version](#upgrading-to-a-newer-version)
+- [Other languages/bindings](#other-languagesbindings)
+- [License](#license)
+
+<hr/>
+
 High-performance Golang database
 --------------------------------
 🏁 **High performance** on restricted devices, like IoT gateways, micro controllers, ECUs etc.\

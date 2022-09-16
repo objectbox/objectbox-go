@@ -1,6 +1,6 @@
-Go ObjectBox Database API
+ObjectBox Go Database - simple but powerful; frugal but fast
 =========================
-ObjectBox is a superfast Go database persisting objects; [check the performance benchmarks vs SQLite (GORM) & Storm](https://objectbox.io/go-1-0-release-and-performance-benchmarks/). Using this Golang API, you can use ObjectBox as an embedded database in your Go application.
+ObjectBox is a superfast Go database persisting objects sustainably; [check the performance benchmarks vs SQLite (GORM) & Storm](https://objectbox.io/go-1-0-release-and-performance-benchmarks/). Using our intuitive Golang API, using ObjectBox as an embedded database in your Go application will be a breeze.
 
 **Your opinion matters to us!** Please fill in this 2-minute [Anonymous Feedback Form](https://forms.gle/LvVjN6jfFHuivxZX6).
 
@@ -28,7 +28,7 @@ Latest release: [v1.6.1 (2022-01-27)](https://golang.objectbox.io/)
 High-performance Golang database
 --------------------------------
 🏁 **High performance** on restricted devices, like IoT gateways, micro controllers, ECUs etc.\
-🪂 **Resourceful** with minimal CPU, power and Memory usage for maximum flexibility and sustainability\
+💚 **Resourceful** with minimal CPU, power and Memory usage for maximum flexibility and sustainability\
 🔗 **Relations:** object links / relationships are built-in\
 💻 **Multiplatform:** Linux, Windows, Android, iOS, macOS
 
@@ -41,7 +41,6 @@ High-performance Golang database
 👥 **[ObjectBox Sync](https://objectbox.io/sync/):** keeps data in sync between devices and servers\
 🕒 **[ObjectBox TS](https://objectbox.io/time-series-database/):** time series extension for time based data
 
-Enjoy ❤️
 
 Getting started
 ---------------
@@ -132,10 +131,10 @@ Other languages/bindings
 ------------------------
 ObjectBox supports multiple platforms and languages:
 
-* [ObjectBox Java/Kotlin](https://github.com/objectbox/objectbox-java): runs on Android, desktop, and servers
-* [ObjectBox Swift](https://github.com/objectbox/objectbox-swift): build fast mobile apps for iOS (and macOS) 
-* [ObjectBox Dart/Flutter](https://github.com/objectbox/objectbox-dart): cross-platform for mobile and desktop apps 
-* [ObjectBox C and C++](https://github.com/objectbox/objectbox-c): native speed with zero copy access to FlatBuffer objects
+* [Java/Kotlin Database](https://github.com/objectbox/objectbox-java): runs on Android, desktop, and servers
+* [Swift Database](https://github.com/objectbox/objectbox-swift): build fast mobile apps for iOS (and macOS) 
+* [Dart/Flutter Database](https://github.com/objectbox/objectbox-dart): cross-platform for mobile and desktop apps 
+* [C and C++ Database](https://github.com/objectbox/objectbox-c): native speed with zero copy access to FlatBuffer objects
 
 
 License

@@ -1,6 +1,7 @@
 ObjectBox Go Database - simple but powerful; frugal but fast
 =========================
-The Golang database persists objects superfast and sustainably; [check the performance benchmarks vs SQLite (GORM) & Storm](https://objectbox.io/go-1-0-release-and-performance-benchmarks/). The intuitive Golang API makes using ObjectBox as an embedded database in your next Go app a breeze.
+The Golang database is easy to use via an intuitive native Golang API and persists objects superfast and sustainably.\
+Go and check out [the performance benchmarks vs SQLite (GORM) & Storm](https://objectbox.io/go-1-0-release-and-performance-benchmarks/).
 
 **Your opinion matters to us!** Please fill in this 2-minute [Anonymous Feedback Form](https://forms.gle/LvVjN6jfFHuivxZX6).
 
@@ -25,7 +26,7 @@ Latest release: [v1.6.1 (2022-01-27)](https://golang.objectbox.io/)
 
 <hr/>
 
-High-performance Golang database
+High-performance Go database
 --------------------------------
 🏁 **High performance** on restricted devices, like IoT gateways, micro controllers, ECUs etc.\
 💚 **Resourceful** with minimal CPU, power and Memory usage for maximum flexibility and sustainability\
@@ -42,7 +43,7 @@ High-performance Golang database
 🕒 **[ObjectBox TS](https://objectbox.io/time-series-database/):** time series extension for time based data
 
 
-Getting started
+Getting started: Go!
 ---------------
 To install ObjectBox, execute the following command in your project directory. 
 You can have a look at [installation docs](https://golang.objectbox.io/install) for more details and further instructions. 
@@ -88,7 +89,7 @@ See the [Getting started](https://golang.objectbox.io/getting-started) section o
 Also, please have a look at the [examples](examples) directory and for the API reference see 
 [ObjectBox GoDocs](https://godoc.org/github.com/objectbox/objectbox-go/objectbox) - and the sources in this repo. 
 
-Already using ObjectBox?
+Already using ObjectBox Database?
 ---------------------------
 
 We believe, ObjectBox is super easy to use. We are on a mission to make developers’ lives better, by building developer tools that are intuitive and fun to code with.

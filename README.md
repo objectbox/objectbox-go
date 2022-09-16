@@ -1,6 +1,6 @@
 ObjectBox Go Database - simple but powerful; frugal but fast
 =========================
-ObjectBox is a superfast Go database persisting objects sustainably; [check the performance benchmarks vs SQLite (GORM) & Storm](https://objectbox.io/go-1-0-release-and-performance-benchmarks/). Using our intuitive Golang API, using ObjectBox as an embedded database in your Go application will be a breeze.
+The Golang database persists objects superfast and sustainably; [check the performance benchmarks vs SQLite (GORM) & Storm](https://objectbox.io/go-1-0-release-and-performance-benchmarks/). The intuitive Golang API makes using ObjectBox as an embedded database in your next Go app a breeze.
 
 **Your opinion matters to us!** Please fill in this 2-minute [Anonymous Feedback Form](https://forms.gle/LvVjN6jfFHuivxZX6).
 

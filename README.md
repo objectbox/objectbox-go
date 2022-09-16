@@ -1,9 +1,31 @@
+<p align="center"><img width="466" src=https://user-images.githubusercontent.com/91467067/190631181-ac090b78-f917-49f2-9293-0f1efa82db18.png></p>
+
+<p align="center">
+  <a href="https://golang.objectbox.io/install">Getting Started</a> •
+  <a href="https://golang.objectbox.io">Documentation</a> •
+  <a href="https://github.com/objectbox/objectbox-go/tree/main/examples">Example Apps</a> •
+  <a href="https://github.com/objectbox/objectbox-go/issues">Issues</a>
+</p>
+
+<p align="center">
+  <a href="https://golang.objectbox.io/#changelog">
+    <img src="https://img.shields.io/github/v/release/objectbox/objectbox-go?color=17A6A6&style=flat-square" alt="Latest Release">
+  </a>
+  <a href="https://github.com/objectbox/objectbox-go/stargazers">
+    <img src="https://img.shields.io/github/stars/objectbox/objectbox-go?color=7DDC7D&logo=github&style=flat-square" alt="Star objectbox-java">
+  </a>
+  <a href="https://github.com/objectbox/objectbox-java/blob/main/LICENSE.txt">
+    <img src="https://img.shields.io/github/license/objectbox/objectbox-java?color=17A6A6&logo=apache&style=flat-square" alt="Apache 2.0 license">
+  </a>
+  <a href="https://twitter.com/ObjectBox_io">
+    <img src="https://img.shields.io/twitter/follow/objectbox_io?color=%20%2300aced&logo=twitter&style=flat-square" alt="Follow @ObjectBox_io">
+  </a>
+</p>
+
 ObjectBox Go Database - simple but powerful; frugal but fast
 =========================
 The Golang database is easy to use via an intuitive native Golang API and persists objects superfast and sustainably.\
 Go and check out [the performance benchmarks vs SQLite (GORM) & Storm](https://objectbox.io/go-1-0-release-and-performance-benchmarks/).
-
-**Your opinion matters to us!** Please fill in this 2-minute [Anonymous Feedback Form](https://forms.gle/LvVjN6jfFHuivxZX6).
 
 ObjectBox persists your native Go structs using a simple CRUD API:
 
@@ -23,8 +45,6 @@ Latest release: [v1.6.1 (2022-01-27)](https://golang.objectbox.io/)
 - [Upgrading to a newer version](#upgrading-to-a-newer-version)
 - [Other languages/bindings](#other-languagesbindings)
 - [License](#license)
-
-<hr/>
 
 High-performance Go database
 --------------------------------
@@ -91,6 +111,8 @@ Also, please have a look at the [examples](examples) directory and for the API r
 
 Already using ObjectBox Database?
 ---------------------------
+
+**Your opinion matters to us!** Please fill in this 2-minute [Anonymous Feedback Form](https://forms.gle/LvVjN6jfFHuivxZX6).
 
 We believe, ObjectBox is super easy to use. We are on a mission to make developers’ lives better, by building developer tools that are intuitive and fun to code with.
 To do that, we want your feedback: what do you love? What's amiss? Where do you struggle in everyday app development?

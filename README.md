@@ -11,8 +11,8 @@
   <a href="https://golang.objectbox.io/#changelog">
     <img src="https://img.shields.io/github/v/release/objectbox/objectbox-go?color=17A6A6&style=flat-square" alt="Latest Release">
   </a>
-  <a href="https://github.com/objectbox/objectbox-go/stargazers">
-    <img src="https://img.shields.io/github/stars/objectbox/objectbox-go?color=7DDC7D&logo=github&style=flat-square" alt="Star objectbox-java">
+  <a href="https://pkg.go.dev/github.com/objectbox/objectbox-go/objectbox">
+    <img src="https://img.shields.io/badge/godoc-objectbox-00b0d7?style=flat-square&logo=go" alt="Godocs">
   </a>
   <a href="https://github.com/objectbox/objectbox-java/blob/main/LICENSE.txt">
     <img src="https://img.shields.io/github/license/objectbox/objectbox-java?color=17A6A6&logo=apache&style=flat-square" alt="Apache 2.0 license">

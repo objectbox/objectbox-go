@@ -8,14 +8,14 @@
 </p>
 
 <p align="center">
-  <a href="https://golang.objectbox.io/#changelog">
-    <img src="https://img.shields.io/github/v/release/objectbox/objectbox-go?color=17A6A6&style=flat-square" alt="Latest Release">
+  <a href="https://goreportcard.com/report/github.com/objectbox/objectbox-go">
+    <img src="https://goreportcard.com/badge/github.com/objectbox/objectbox-go?style=flat-square" alt="Go Report">
   </a>
   <a href="https://pkg.go.dev/github.com/objectbox/objectbox-go/objectbox">
     <img src="https://img.shields.io/badge/godoc-objectbox-00b0d7?style=flat-square&logo=go" alt="Godocs">
   </a>
-  <a href="https://github.com/objectbox/objectbox-java/blob/main/LICENSE.txt">
-    <img src="https://img.shields.io/github/license/objectbox/objectbox-java?color=17A6A6&logo=apache&style=flat-square" alt="Apache 2.0 license">
+  <a href="https://golang.objectbox.io/#changelog">
+    <img src="https://img.shields.io/github/v/release/objectbox/objectbox-go?color=17A6A6&style=flat-square" alt="Latest Release">
   </a>
   <a href="https://twitter.com/ObjectBox_io">
     <img src="https://img.shields.io/twitter/follow/objectbox_io?color=%20%2300aced&logo=twitter&style=flat-square" alt="Follow @ObjectBox_io">

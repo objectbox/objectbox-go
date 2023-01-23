@@ -55,7 +55,7 @@ func TestExpectedObjectBoxVersion(t *testing.T) {
 
 	versionLib := objectbox.VersionLib()
 	versionLibInt := versionLib.Major*10000 + versionLib.Minor*100 + versionLib.Patch
-	assert.True(t, versionLibInt >= 1501) // Update with new releases (won't fail if forgotten)
+	assert.True(t, versionLibInt >= 1801) // Update with new releases (won't fail if forgotten)
 	assert.True(t, versionLibInt < 10000) // Future next major release
 }
 

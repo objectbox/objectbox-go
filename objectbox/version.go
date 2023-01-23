@@ -72,14 +72,14 @@ func VersionLibStatic() Version {
 
 // VersionLibMin returns the minimum Version of the dynamic linked ObjectBox library that is compatible with this Go version
 func VersionLibMin() Version {
-	return Version{0, 15, 0, ""}
+	return Version{0, 18, 0, ""}
 }
 
 // VersionLibMinRecommended returns the minimum recommended Version of the dynamic linked ObjectBox library.
 // This version not only considers compatibility with this Go version, but also known issues older (compatible) versions.
 // It is guaranteed to be at least VersionLibMin()
 func VersionLibMinRecommended() Version {
-	return Version{0, 15, 1, ""}
+	return Version{0, 18, 1, ""}
 }
 
 // VersionInfo returns a printable version string

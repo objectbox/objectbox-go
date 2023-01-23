@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-cLibVersion=0.15.1
+cLibVersion=0.18.1
 os=$(uname)
 cLibArgs="$*"
 

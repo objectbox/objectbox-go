@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 ObjectBox Ltd. All rights reserved.
+ * Copyright 2018-2023 ObjectBox Ltd. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,13 +34,15 @@
 #include "objectbox.h"
 
 #if defined(static_assert) || defined(__cplusplus)
-static_assert(OBX_VERSION_MAJOR == 0 && OBX_VERSION_MINOR == 15 && OBX_VERSION_PATCH == 1,
+static_assert(OBX_VERSION_MAJOR == 0 && OBX_VERSION_MINOR == 18 && OBX_VERSION_PATCH == 1,  // NOLINT
               "Versions of objectbox.h and objectbox-sync.h files do not match, please update");
 #endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+// NOLINTBEGIN(modernize-use-using)
 
 //----------------------------------------------
 // Sync (client)
@@ -123,6 +125,10 @@ typedef struct OBX_sync_msg_objects {
     size_t count;
 } OBX_sync_msg_objects;
 
+/// An outgoing sync objects-message.
+struct OBX_sync_msg_objects_builder;
+typedef struct OBX_sync_msg_objects_builder OBX_sync_msg_objects_builder;
+
 /// Called when connection is established
 /// @param arg is a pass-through argument passed to the called API
 typedef void OBX_sync_listener_connect(void* arg);
@@ -155,12 +161,12 @@ typedef void OBX_sync_listener_server_time(void* arg, int64_t timestamp_ns);
 
 typedef void OBX_sync_listener_msg_objects(void* arg, const OBX_sync_msg_objects* msg_objects);
 
-/// Creates a sync client associated with the given store and sync server URI.
+/// Creates a sync client associated with the given store and sync server URL.
 /// This does not initiate any connection attempts yet: call obx_sync_start() to do so.
 /// Before obx_sync_start(), you must configure credentials via obx_sync_credentials.
 /// By default a sync client automatically receives updates from the server once login succeeded.
 /// To configure this differently, call obx_sync_request_updates_mode() with the wanted mode.
-OBX_C_API OBX_sync* obx_sync(OBX_store* store, const char* server_uri);
+OBX_C_API OBX_sync* obx_sync(OBX_store* store, const char* server_url);
 
 /// Stops and closes (deletes) the sync client, freeing its resources.
 OBX_C_API obx_err obx_sync_close(OBX_sync* sync);
@@ -174,6 +180,11 @@ OBX_C_API obx_err obx_sync_credentials(OBX_sync* sync, OBXSyncCredentialsType ty
 /// Configures the maximum number of outgoing TX messages that can be sent without an ACK from the server.
 /// @returns OBX_ERROR_ILLEGAL_ARGUMENT if value is not in the range 1-20
 OBX_C_API obx_err obx_sync_max_messages_in_flight(OBX_sync* sync, int value);
+
+/// Triggers a reconnection attempt immediately.
+/// By default, an increasing backoff interval is used for reconnection attempts.
+/// But sometimes the user of this API has additional knowledge and can initiate a reconnection attempt sooner.
+OBX_C_API obx_err obx_sync_trigger_reconnect(OBX_sync* sync);
 
 /// Sets the interval in which the client sends "heartbeat" messages to the server, keeping the connection alive.
 /// To detect disconnects early on the client side, you can also use heartbeats with a smaller interval.
@@ -267,42 +278,70 @@ OBX_C_API uint32_t obx_sync_protocol_version();
 /// Gets the protocol version of the server after a connection is established (or attempted), zero otherwise.
 OBX_C_API uint32_t obx_sync_protocol_version_server(OBX_sync* sync);
 
+/// Start here to prepare an 'objects message'.
+/// Use obx_sync_msg_objects_builder_add() to set at least one object and then call obx_sync_send_msg_objects() or
+/// obx_sync_server_send_msg_objects() to initiate the sending process.
+/// @param topic optional, application-specific message qualifier (may be NULL), usually a string but can also be binary
+OBX_C_API OBX_sync_msg_objects_builder* obx_sync_msg_objects_builder(const void* topic, size_t topic_size);
+
+/// Adds an object to the given message (builder). There must be at least one message before sending.
+/// @param id an optional (pass 0 if you don't need it) value that the application can use identify the object
+OBX_C_API obx_err obx_sync_msg_objects_builder_add(OBX_sync_msg_objects_builder* message, OBXSyncObjectType type,
+                                                   const void* data, size_t size, uint64_t id);
+
+/// Free the given message if you end up not sending it. Sending frees it already so never call this after obx_*_send().
+OBX_C_API obx_err obx_sync_msg_objects_builder_discard(OBX_sync_msg_objects_builder* message);
+
+/// Sends the given 'objects message' from the client to the currently connected server.
+/// @param message the prepared outgoing message; it will be freed along with any associated resources during this call
+///        (regardless of the call's success/failure outcome).
+/// @returns OBX_SUCCESS if the message was scheduled to be sent (no guarantees for actual sending/transmission given).
+/// @returns OBX_NO_SUCCESS if the message was not sent (no error will be set).
+/// @returns error code if an unexpected error occurred.
+OBX_C_API obx_err obx_sync_send_msg_objects(OBX_sync* sync, OBX_sync_msg_objects_builder* message);
+
 /// Set or overwrite a previously set 'connect' listener.
 /// @param listener set NULL to reset
 /// @param listener_arg is a pass-through argument passed to the listener
-OBX_C_API void obx_sync_listener_connect(OBX_sync* sync, OBX_sync_listener_connect* listener, uintptr_t listener_arg);
+OBX_C_API void obx_sync_listener_connect(OBX_sync* sync, OBX_sync_listener_connect* listener, void* listener_arg);
 
 /// Set or overwrite a previously set 'disconnect' listener.
 /// @param listener set NULL to reset
 /// @param listener_arg is a pass-through argument passed to the listener
-OBX_C_API void obx_sync_listener_disconnect(OBX_sync* sync, OBX_sync_listener_disconnect* listener, uintptr_t listener_arg);
+OBX_C_API void obx_sync_listener_disconnect(OBX_sync* sync, OBX_sync_listener_disconnect* listener, void* listener_arg);
 
 /// Set or overwrite a previously set 'login' listener.
 /// @param listener set NULL to reset
 /// @param listener_arg is a pass-through argument passed to the listener
-OBX_C_API void obx_sync_listener_login(OBX_sync* sync, OBX_sync_listener_login* listener, uintptr_t listener_arg);
+OBX_C_API void obx_sync_listener_login(OBX_sync* sync, OBX_sync_listener_login* listener, void* listener_arg);
 
 /// Set or overwrite a previously set 'login failure' listener.
 /// @param listener set NULL to reset
 /// @param listener_arg is a pass-through argument passed to the listener
 OBX_C_API void obx_sync_listener_login_failure(OBX_sync* sync, OBX_sync_listener_login_failure* listener,
-                                               uintptr_t listener_arg);
+                                               void* listener_arg);
 
 /// Set or overwrite a previously set 'complete' listener - notifies when the latest sync has finished.
 /// @param listener set NULL to reset
 /// @param listener_arg is a pass-through argument passed to the listener
-OBX_C_API void obx_sync_listener_complete(OBX_sync* sync, OBX_sync_listener_complete* listener, uintptr_t listener_arg);
+OBX_C_API void obx_sync_listener_complete(OBX_sync* sync, OBX_sync_listener_complete* listener, void* listener_arg);
 
 /// Set or overwrite a previously set 'change' listener - provides information about incoming changes.
 /// @param listener set NULL to reset
 /// @param listener_arg is a pass-through argument passed to the listener
-OBX_C_API void obx_sync_listener_change(OBX_sync* sync, OBX_sync_listener_change* listener, uintptr_t listener_arg);
+OBX_C_API void obx_sync_listener_change(OBX_sync* sync, OBX_sync_listener_change* listener, void* listener_arg);
 
 /// Set or overwrite a previously set 'serverTime' listener - provides current time updates from the sync-server.
 /// @param listener set NULL to reset
 /// @param listener_arg is a pass-through argument passed to the listener
 OBX_C_API void obx_sync_listener_server_time(OBX_sync* sync, OBX_sync_listener_server_time* listener,
-                                             uintptr_t listener_arg);
+                                             void* listener_arg);
+
+/// Set or overwrite a previously set 'objects message' listener to receive application specific data objects.
+/// @param listener set NULL to reset
+/// @param listener_arg is a pass-through argument passed to the listener
+OBX_C_API void obx_sync_listener_msg_objects(OBX_sync* sync, OBX_sync_listener_msg_objects* listener,
+                                             void* listener_arg);
 
 struct OBX_sync_server;
 typedef struct OBX_sync_server OBX_sync_server;
@@ -318,18 +357,18 @@ typedef struct OBX_sync_server OBX_sync_server;
 ///       E.g. a client with an incompatible model will be rejected during login.
 /// @param store_options Options for the server's store.
 ///        It is freed automatically (same as with obx_store_open()) - don't use or free it afterwards.
-/// @param uri The URI (following the pattern "protocol://IP:port") the server should listen on.
+/// @param url The URL (following the pattern "protocol://IP:port") the server should listen on.
 ///        Supported \b protocols are "ws" (WebSockets) and "wss" (secure WebSockets).
 ///        To use the latter ("wss"), you must also call obx_sync_server_certificate_path().
 ///        To bind to all available \b interfaces, including those that are available from the "outside", use 0.0.0.0 as
 ///        the IP. On the other hand, "127.0.0.1" is typically (may be OS dependent) only available on the same device.
 ///        If you do not require a fixed \b port, use 0 (zero) as a port to tell the server to pick an arbitrary port
 ///        that is available. The port can be queried via obx_sync_server_port() once the server was started.
-///        \b Examples: "ws://0.0.0.0:9999" could be used during development (no certificate config needed),
-///        while in a production system, you may want to use wss and a specific IP for security reasons.
+///        \b Examples: "ws://0.0.0.0:9999" could be used during development (WS no certificate config needed),
+///        while in a production system, you may want to use WSS and a specific IP for security reasons.
 /// @see obx_store_open()
-/// @returns NULL if server could not be created (e.g. the store could not be opened, bad uri, etc.)
-OBX_C_API OBX_sync_server* obx_sync_server(OBX_store_options* store_options, const char* uri);
+/// @returns NULL if server could not be created (e.g. the store could not be opened, bad URL, etc.)
+OBX_C_API OBX_sync_server* obx_sync_server(OBX_store_options* store_options, const char* url);
 
 /// Stops and closes (deletes) the sync server, freeing its resources.
 /// This includes the store associated with the server; it gets closed and must not be used anymore after this call.
@@ -345,6 +384,20 @@ OBX_C_API obx_err obx_sync_server_certificate_path(OBX_sync_server* server, cons
 /// @param data may be NULL in combination with OBXSyncCredentialsType_NONE
 OBX_C_API obx_err obx_sync_server_credentials(OBX_sync_server* server, OBXSyncCredentialsType type, const void* data,
                                               size_t size);
+
+/// Sets the number of worker threads. Use before obx_sync_server_start().
+/// @param thread_count The default is "0" which is hardware dependent, e.g. a multiple of CPU "cores".
+OBX_C_API obx_err obx_sync_server_worker_threads(OBX_sync_server* server, int thread_count);
+
+/// Sets a maximum size for sync history entries to limit storage: old entries are removed to stay below this limit.
+/// Deleting older history entries may require clients to do a full sync if they have not contacted the server for
+/// a certain time.
+/// @param max_in_kb Once this maximum size is reached, old history entries are deleted (default 0: no limit).
+/// @param target_in_kb If this value is non-zero, the deletion of old history entries is extended until reaching this
+///                     target (lower than the maximum) allowing deletion "batching", which may be more efficient.
+///                     If zero, the deletion stops already stops when reaching the max size (or lower).
+OBX_C_API obx_err obx_sync_server_history_max_size_in_kb(OBX_sync_server* server, uint64_t max_in_kb,
+                                                         uint64_t target_in_kb);
 
 /// Set or overwrite a previously set 'change' listener - provides information about incoming changes.
 /// @param listener set NULL to reset
@@ -373,7 +426,7 @@ OBX_C_API bool obx_sync_server_running(OBX_sync_server* server);
 OBX_C_API const char* obx_sync_server_url(OBX_sync_server* server);
 
 /// Returns a port this server listens on. This is especially useful if the port was assigned arbitrarily
-/// (a "0" port was used in the URI given to obx_sync_server()).
+/// (a "0" port was used in the URL given to obx_sync_server()).
 OBX_C_API uint16_t obx_sync_server_port(OBX_sync_server* server);
 
 /// Returns the number of clients connected to this server.
@@ -383,12 +436,241 @@ OBX_C_API uint64_t obx_sync_server_connections(OBX_sync_server* server);
 /// The returned char* is valid until another call to obx_sync_server_stats_string() or the server is closed.
 OBX_C_API const char* obx_sync_server_stats_string(OBX_sync_server* server, bool include_zero_values);
 
+/// Broadcast the given 'objects message' from the server to all currently connected (and logged-in) clients.
+/// @param message the prepared outgoing message; it will be freed along with any associated resources during this call
+///        (regardless of the call's success/failure outcome).
+/// @returns OBX_SUCCESS if the message was scheduled to be sent (no guarantees for actual sending/transmission given).
+/// @returns OBX_NO_SUCCESS if the message was not sent (no error will be set).
+/// @returns error code if an unexpected error occurred.
+OBX_C_API obx_err obx_sync_server_send_msg_objects(OBX_sync_server* server, OBX_sync_msg_objects_builder* message);
+
 /// Configure admin with a sync server, attaching the store and enabling custom sync-server functionality in the UI.
 /// This is a replacement for obx_admin_opt_store() and obx_admin_opt_store_path() - don't set them for the server.
 /// After configuring, this acts as obx_admin() - see for more details.
 /// You must use obx_admin_close() to stop & free resources after you're done; obx_sync_server_stop() doesn't do that.
 /// @param options configuration set up with obx_admin_opt_*. You can pass NULL to use the default options.
 OBX_C_API OBX_admin* obx_sync_server_admin(OBX_sync_server* server, OBX_admin_options* options);
+
+//---------------------------------------------------------------------------
+// Custom messaging server
+//---------------------------------------------------------------------------
+
+/// Callback to create a custom messaging server.
+/// Must be provided to implement a custom server. See notes on OBX_custom_msg_server_functions for more details.
+/// @param server_id the ID that was assigned to the custom server instance
+/// @param config_user_data user provided data set at registration of the server
+/// @returns server user data, which will be passed on to the subsequent callbacks (OBX_custom_msg_server_func_*)
+/// @returns null to indicate an error that the server could not be created
+typedef void* OBX_custom_msg_server_func_create(uint64_t server_id, const char* url, const char* cert_path,
+                                                void* config_user_data);
+
+/// Callback to start a custom server.
+/// Must be provided to implement a custom server. See notes on OBX_custom_msg_server_functions for more details.
+/// @param server_user_data User supplied data returned by the function that created the server
+/// @param out_port When starting, the custom server can optionally supply a port by writing to the given pointer.
+///        The port value is arbitrary and, for now, is only used for debug logs.
+/// @returns OBX_SUCCESS if the server was successfully started
+/// @returns Any other fitting error code (OBX_ERROR_*) if the server could be started
+typedef obx_err OBX_custom_msg_server_func_start(void* server_user_data, uint64_t* out_port);
+
+/// Callback to stop and close the custom server (e.g. further messages delivery will be rejected).
+/// Must be provided to implement a custom server. See notes on OBX_custom_msg_server_functions for more details.
+/// This includes the store associated with the server; it gets closed and must not be used anymore after this call.
+/// @param server_user_data User supplied data returned by the function that created the server
+typedef void OBX_custom_msg_server_func_stop(void* server_user_data);
+
+/// Callback to shut the custom server down, freeing its resources (the custom server is not used after this point).
+/// Must be provided to implement a custom server. See notes on OBX_custom_msg_server_functions for more details.
+/// @param server_user_data User supplied data returned by the function that created the server
+typedef void OBX_custom_msg_server_func_shutdown(void* server_user_data);
+
+/// Callback to enqueue a message for sending.
+/// Must be provided to implement a custom server. See notes on OBX_custom_msg_server_functions for more details.
+/// @param bytes lazy bytes storing the message
+/// @param server_user_data User supplied data returned by the function that created the server
+typedef bool OBX_custom_msg_server_func_client_connection_send_async(OBX_bytes_lazy* bytes, void* server_user_data,
+                                                                     void* connection_user_data);
+
+/// Callback to close the sync client connection to the custom server.
+/// Must be provided to implement a custom server. See notes on OBX_custom_msg_server_functions for more details.
+/// @param server_user_data User supplied data returned by the function that created the server
+typedef void OBX_custom_msg_server_func_client_connection_close(void* server_user_data, void* connection_user_data);
+
+/// Callback to shutdown and free all resources associated with the sync client connection to the custom server.
+/// Note that the custom server may already have been shutdown at this point (e.g. no server user data is supplied).
+/// Must be provided to implement a custom server. See notes on OBX_custom_msg_server_functions for more details.
+/// @param server_user_data User supplied data returned by the function that created the server
+typedef void OBX_custom_msg_server_func_client_connection_shutdown(void* connection_user_data);
+
+/// Struct of the custom server function callbacks. In order to implement the custom server, you must provide
+/// custom methods for each of the members of this struct. This is then passed to obx_custom_msg_server_register()
+/// to register the custom server.
+typedef struct OBX_custom_msg_server_functions {
+    /// Must be initialized with sizeof(OBX_custom_msg_server_functions) to "version" the struct.
+    /// This allows the library (whi) to detect older or newer versions and react properly.
+    size_t version;
+
+    OBX_custom_msg_server_func_create* func_create;
+    OBX_custom_msg_server_func_start* func_start;
+    OBX_custom_msg_server_func_stop* func_stop;
+    OBX_custom_msg_server_func_shutdown* func_shutdown;
+
+    OBX_custom_msg_server_func_client_connection_send_async* func_conn_send_async;
+    OBX_custom_msg_server_func_client_connection_close* func_conn_close;
+    OBX_custom_msg_server_func_client_connection_shutdown* func_conn_shutdown;
+} OBX_custom_msg_server_functions;
+
+/// Must be called to register a protocol for a custom messaging server. Call before starting a server.
+/// @param protocol the communication protocol to use, e.g. "tcp"
+/// @param functions the custom server function callbacks
+/// @param config_user_data user provided data set at registration of custom server
+/// @returns OBX_SUCCESS if the operation was successful
+/// @returns Any other fitting error code (OBX_ERROR_*) if the protocol could not be registered
+OBX_C_API obx_err obx_custom_msg_server_register(const char* protocol, OBX_custom_msg_server_functions* functions,
+                                                 void* config_user_data);
+
+/// Must be called from the custom server when a new client connection becomes available.
+/// @param server_id the ID that was assigned to the custom server instance
+/// @param user_data user provided data set at registration of custom server
+/// @returns a client connection ID that must be passed on to obx_custom_msg_server_receive_message_from_client().
+/// @returns 0 in case the operation encountered an exceptional issue
+OBX_C_API uint64_t obx_custom_msg_server_add_client_connection(uint64_t server_id, void* user_data);
+
+/// Must be called from the custom server when a client connection becomes inactive (e.g. closed) and can be removed.
+/// @param server_id the ID that was assigned to the custom server instance
+/// @param client_connection_id the ID that was assigned to the custom client connection
+/// @returns OBX_SUCCESS if the operation was successful
+/// @returns OBX_NO_SUCCESS if no active server or active connection was found matching the given IDs
+/// @returns OBX_ERROR_* in case the operation encountered an exceptional issue
+OBX_C_API obx_err obx_custom_msg_server_remove_client_connection(uint64_t server_id, uint64_t client_connection_id);
+
+/// Must be called from the custom server when a message is received from a client connection.
+/// @param server_id the ID that was assigned to the custom server instance
+/// @param client_connection_id the ID that was assigned to the custom client connection
+/// @param message_data the message data in bytes
+/// @returns OBX_SUCCESS if the operation was successful
+/// @returns OBX_NO_SUCCESS if no active server or active connection was found matching the given IDs
+/// @returns OBX_ERROR_* in case the operation encountered an exceptional issue
+OBX_C_API obx_err obx_custom_msg_server_receive_message_from_client(uint64_t server_id, uint64_t client_connection_id,
+                                                                    const void* message_data, size_t message_size);
+
+//---------------------------------------------------------------------------
+//  Custom messaging client
+//---------------------------------------------------------------------------
+
+/// Callback to create a custom messaging client.
+/// Must be provided to implement a custom client. See notes on OBX_custom_msg_client_functions for more details.
+/// @param client_id the ID that was assigned to the client instance
+/// @param config_user_data user provided data set at registration of the client
+/// @returns client user data, which will be passed on to the subsequent callbacks (OBX_custom_msg_client_func_*)
+/// @returns null to indicate an error that the client could not be created
+typedef void* OBX_custom_msg_client_func_create(uint64_t client_id, const char* url, const char* cert_path,
+                                                void* config_user_data);
+
+/// Callback to start the client.
+/// Must be provided to implement a custom client. See notes on OBX_custom_msg_client_functions for more details.
+/// @param client_user_data user supplied data returned by the function that created the client
+/// @returns OBX_SUCCESS if the client was successfully started
+/// @returns Any other fitting error code (OBX_ERROR_*) if the client could be started
+typedef obx_err OBX_custom_msg_client_func_start(void* client_user_data);
+
+/// Callback to stop and close the client (e.g. further messages delivery will be rejected).
+/// Must be provided to implement a custom client. See notes on OBX_custom_msg_client_functions for more details.
+/// @param client_user_data user supplied data returned by the function that created the client
+typedef void OBX_custom_msg_client_func_stop(void* client_user_data);
+
+/// Must be provided to implement a custom client. See notes on OBX_custom_msg_client_functions for more details.
+/// @param client_user_data user supplied data returned by the function that created the client
+typedef void OBX_custom_msg_client_func_join(void* client_user_data);
+
+/// Callback that tells the client it shall start trying to connect.
+/// Must be provided to implement a custom client. See notes on OBX_custom_msg_client_functions for more details.
+/// @param client_user_data user supplied data returned by the function that created the client
+typedef bool OBX_custom_msg_client_func_connect(void* client_user_data);
+
+/// Callback that tells the client it shall disconnect.
+/// Must be provided to implement a custom client. See notes on OBX_custom_msg_client_functions for more details.
+/// @param client_user_data user supplied data returned by the function that created the client
+typedef void OBX_custom_msg_client_func_disconnect(bool clear_outgoing_messages, void* client_user_data);
+
+/// Callback to shut the custom client down, freeing its resources.
+/// The custom client is not used after this point.
+/// Must be provided to implement a custom client. See notes on OBX_custom_msg_client_functions for more details.
+/// @param client_user_data user supplied data returned by the function that created the client
+typedef void OBX_custom_msg_client_func_shutdown(void* client_user_data);
+
+/// Callback to enqueue a message for sending.
+/// Must be provided to implement a custom client. See notes on OBX_custom_msg_client_functions for more details.
+/// @param bytes lazy bytes storing the message
+/// @param client_user_data user supplied data returned by the function that created the client
+typedef bool OBX_custom_msg_client_func_send_async(OBX_bytes_lazy* bytes, void* client_user_data);
+
+/// Callback to clear all outgoing messages.
+/// Must be provided to implement a custom client. See notes on OBX_custom_msg_client_functions for more details.
+/// @param client_user_data user supplied data returned by the function that created the client
+typedef void OBX_custom_msg_client_func_clear_outgoing_messages(void* client_user_data);
+
+/// Struct of the custom client function callbacks. In order to implement the custom client, you must provide
+/// custom methods for each of the members of this struct. This is then passed to obx_custom_msg_client_register()
+/// to register the custom client.
+typedef struct OBX_custom_msg_client_functions {
+    /// Must be initialized with sizeof(OBX_custom_msg_client_functions) to "version" the struct.
+    /// This allows the library to detect older or newer versions and react properly.
+    size_t version;
+
+    OBX_custom_msg_client_func_create* func_create;
+    OBX_custom_msg_client_func_start* func_start;
+    OBX_custom_msg_client_func_connect* func_connect;
+    OBX_custom_msg_client_func_disconnect* func_disconnect;
+    OBX_custom_msg_client_func_stop* func_stop;
+    OBX_custom_msg_client_func_join* func_join;
+    OBX_custom_msg_client_func_shutdown* func_shutdown;
+    OBX_custom_msg_client_func_send_async* func_send_async;
+    OBX_custom_msg_client_func_clear_outgoing_messages* func_clear_outgoing_messages;
+} OBX_custom_msg_client_functions;
+
+/// States of custom msg client that must be forwarded to obx_custom_msg_client_set_state().
+typedef enum {
+    OBXCustomMsgClientState_Connecting = 1,
+    OBXCustomMsgClientState_Connected = 2,
+    OBXCustomMsgClientState_Disconnected = 3,
+} OBXCustomMsgClientState;
+
+/// Must be called to register a protocol for your custom messaging client. Call before starting a client.
+/// @param protocol the communication protocol to use, e.g. "tcp"
+/// @returns OBX_SUCCESS if the operation was successful
+/// @returns Any other fitting error code (OBX_ERROR_*) if the protocol could not be registered
+OBX_C_API obx_err obx_custom_msg_client_register(const char* protocol, OBX_custom_msg_client_functions* functions,
+                                                 void* config_user_data);
+
+/// The custom msg client must call this whenever a message is received from the server.
+/// @param client_id the ID that was assigned to the client instance
+/// @param message_data the message data in bytes
+/// @returns OBX_SUCCESS if the given message could be forwarded
+/// @returns OBX_NO_SUCCESS if no active client or active connection was found matching the given ID
+/// @returns OBX_ERROR_* in case the operation encountered an exceptional issue
+OBX_C_API obx_err obx_custom_msg_client_receive_message_from_server(uint64_t client_id, const void* message_data,
+                                                                    size_t message_size);
+
+/// The custom msg client must call this whenever the state (according to given enum values) changes.
+/// @param client_id the ID that was assigned to the client instance
+/// @param state the state to transition the custom client to
+/// @returns OBX_SUCCESS if the client was in a state that allowed the transition to the given state.
+/// @returns OBX_NO_SUCCESS if no active client or active connection was found matching the given ID.
+/// @returns OBX_NO_SUCCESS if no state transition was possible from the current to the given state (e.g. an internal
+///          "closed" state was reached).
+/// @returns OBX_ERROR_* in case the operation encountered an exceptional issue
+OBX_C_API obx_err obx_custom_msg_client_set_state(uint64_t client_id, OBXCustomMsgClientState state);
+
+/// The custom msg client may call this if it has knowledge when a reconnection attempt makes sense,
+/// for example, when the network becomes available.
+/// @param client_id the ID that was assigned to the client instance
+/// @returns OBX_SUCCESS if a reconnect was actually triggered.
+/// @returns OBX_NO_SUCCESS if no reconnect was triggered.
+/// @returns OBX_ERROR_* in case the operation encountered an exceptional issue
+OBX_C_API obx_err obx_custom_msg_client_trigger_reconnect(uint64_t client_id);
+
+// NOLINTEND(modernize-use-using)
 
 #ifdef __cplusplus
 }

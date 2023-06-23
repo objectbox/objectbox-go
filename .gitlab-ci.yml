@@ -1,12 +1,25 @@
+stages:
+  - gatekeeper
+  - test
+
 .test:
   stage: test
   script:
     - ./build/ci.sh
 
-test:linux:x64:old:
+.test:linux:x64:
   extends: .test
   tags: [ x64, linux, docker ]
   image: golang:$GOVERSION
+
+gatekeeper-test:
+  extends: .test:linux:x64
+  stage: gatekeeper
+  variables:
+    GOVERSION: '1.20'
+
+test:linux:x64:old:
+  extends: .test:linux:x64
   parallel:
     matrix:
       - GOVERSION: [ '1.11.4', '1.12' ]
@@ -15,17 +28,14 @@ test:linux:x64:old:
     - rm go.sum   # issues with checksum mismatch, if anyone still uses old Go, they may need to delete go.sum
 
 test:linux:x64:
-  extends: .test
-  tags: [ x64, linux, docker ]
-  image: golang:$GOVERSION
+  extends: .test:linux:x64
   parallel:
     matrix:
-      - GOVERSION: [ '1.13', '1.14', '1.15', '1.16', '1.17' ]
+      - GOVERSION: [ '1.13', '1.14', '1.15', '1.16', '1.17', '1.18', '1.19', '1.20' ]
 
 test:linux:ARMv7hf:
   extends: .test
-  image: golang
-  tags: [ armv7hf, linux, docker ]
+  tags: [ armv7hf, linux ]
   variables:
     BUILD_ARGS: -test.short
 

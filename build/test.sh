@@ -32,11 +32,17 @@ go_vet_result_lines=$(echo "$go_vet_result" | wc -l)
 if [ $go_vet_rc -ne 0 ]; then
   if [[ $go_vet_result_lines == 2 && $go_vet_result == *objectbox/c-callbacks.go*possible\ misuse\ of\ unsafe.Pointer* ]]; then
     echo "Ignoring known false positive of go vet"
+    go_vet_rc=0
   else
     echo "go vet failed ($go_vet_rc)"
-    exit $go_vet_rc
+    # Fail later because we want to run tests for now too; was: exit $go_vet_rc
   fi
 fi
 
 echo "******** Testing: go test ********"
 go test "$@" ./...
+
+if [ $go_vet_rc -ne 0 ]; then
+  echo "go vet failed ($go_vet_rc)"
+  exit $go_vet_rc
+fi

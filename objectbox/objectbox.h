@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 ObjectBox Ltd. All rights reserved.
+ * Copyright 2018-2023 ObjectBox Ltd. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,8 @@
 extern "C" {
 #endif
 
+// NOLINTBEGIN(modernize-use-using)
+
 #ifndef OBX_C_API
 #define OBX_C_API
 #endif
@@ -50,7 +52,7 @@ extern "C" {
 /// When using ObjectBox as a dynamic library, you should verify that a compatible version was linked using
 /// obx_version() or obx_version_is_at_least().
 #define OBX_VERSION_MAJOR 0
-#define OBX_VERSION_MINOR 15
+#define OBX_VERSION_MINOR 18
 #define OBX_VERSION_PATCH 1  // values >= 100 are reserved for dev releases leading to the next minor/major increase
 
 //----------------------------------------------
@@ -69,11 +71,11 @@ typedef uint64_t obx_id;
 typedef int obx_err;
 
 /// The callback for reading data one-by-one
-/// @param user_data is a pass-through argument passed to the called API
 /// @param data is the read data buffer
 /// @param size specifies the length of the read data
+/// @param user_data is a pass-through argument passed to the called API
 /// @return true to keep going, false to cancel.
-typedef bool obx_data_visitor(void* user_data, const void* data, size_t size);
+typedef bool obx_data_visitor(const void* data, size_t size, void* user_data);
 
 //----------------------------------------------
 // Runtime library information
@@ -82,20 +84,20 @@ typedef bool obx_data_visitor(void* user_data, const void* data, size_t size);
 // Their return values are invariable during runtime - they depend solely on the loaded library and its build settings.
 //----------------------------------------------
 
-/// Return the version of the library as ints. Pointers may be null
+/// Return the (runtime) version of the library as ints. Pointers may be null
 OBX_C_API void obx_version(int* major, int* minor, int* patch);
 
-/// Check if the version of the library is equal to or higher than the given version ints.
+/// Check if the (runtime) version of the library is equal to or higher than the given version ints.
 OBX_C_API bool obx_version_is_at_least(int major, int minor, int patch);
 
-/// Return the version of the library to be printed.
-/// The format may change in any future release; only use for information purposes.
-/// @see obx_version() and obx_version_is_at_least()
+/// Return the (runtime) version of the library to be printed.
+/// The current format is "major.minor.patch" (e.g. "1.0.0") but may change in any future release.
+/// Thus, only use for information purposes.
+/// @see obx_version() and obx_version_is_at_least() for integer based versions
 OBX_C_API const char* obx_version_string(void);
 
-/// Return the version of the ObjectBox core to be printed.
+/// Return the version of the ObjectBox core to be printed (currently also contains a version date and features).
 /// The format may change in any future release; only use for information purposes.
-/// @see obx_version() and obx_version_is_at_least()
 OBX_C_API const char* obx_version_core_string(void);
 
 typedef enum {
@@ -132,18 +134,52 @@ OBX_C_API bool obx_has_feature(OBXFeature feature);
 // Utilities
 //----------------------------------------------
 
+/// Log level as passed to obx_log_callback.
+typedef enum {
+    /// Log level for verbose messages (not emitted at the moment)
+    OBXLogLevel_Verbose = 10,
+
+    /// Log level for debug messages (may be limited to special debug builds)
+    OBXLogLevel_Debug = 20,
+
+    /// Log level for info messages
+    OBXLogLevel_Info = 30,
+
+    /// Log level for warning messages
+    OBXLogLevel_Warn = 40,
+
+    /// Log level for error messages
+    OBXLogLevel_Error = 50,
+} OBXLogLevel;
+
+/// Callback for logging, which can be provided to store creation via options.
+typedef void obx_log_callback(OBXLogLevel log_level, const char* message, size_t message_size, void* user_data);
+
 /// To be used for putting objects with prepared ID slots, e.g. obx_cursor_put_object().
 #define OBX_ID_NEW 0xFFFFFFFFFFFFFFFF
 
 /// Delete the store files from the given directory
 OBX_C_API obx_err obx_remove_db_files(char const* directory);
 
-/// Enable (or disable) debug logging. This requires a version of the library with OBXFeature_DebugLog.
-/// Use obx_has_feature(OBXFeature_DebugLog) to check if the feature is available.
+/// @returns the file size of the main database file, or 0 if the file does not exist or some error occurred.
+OBX_C_API size_t obx_db_file_size(char const* directory);
+
+/// Enable (or disable) debug logging for ObjectBox internals.
+/// This requires a version of the library with the DebugLog feature.
+/// You can check if the feature is available with obx_has_feature(OBXFeature_DebugLog).
 OBX_C_API obx_err obx_debug_log(bool enabled);
 
+/// Checks if debug logs are enabled for ObjectBox internals. This depends on the availability of the DebugLog feature.
+/// If the feature is available, it returns the current state, which is adjustable via obx_debug_log().
+/// Otherwise, it always returns false for standard release builds (or true if you are having a special debug version).
+OBX_C_API bool obx_debug_log_enabled();
+
+/// Gets the number, as used by ObjectBox, of the current thread.
+/// This e.g. allows to "associate" the thread with ObjectBox logs (each log entry contains the thread number).
+OBX_C_API int obx_thread_number();
+
 //----------------------------------------------
-// Return codes
+// Return and error codes
 //----------------------------------------------
 
 /// Value returned when no error occurred (0)
@@ -161,32 +197,102 @@ OBX_C_API obx_err obx_debug_log(bool enabled);
 /// This is NOT an error condition, and thus no "last error" info is set.
 #define OBX_TIMEOUT 1002
 
-// General errors
+// --- General errors --------------------------------------------------------
+
+/// A request does not make sense in the current state. For example, doing actions on a closed object.
 #define OBX_ERROR_ILLEGAL_STATE 10001
+
+/// The passed arguments were illegal; e.g. passed null to a non-null argument.
 #define OBX_ERROR_ILLEGAL_ARGUMENT 10002
+
+/// A resource could not be allocated. This usually indicates a severe system status, e.g running out of memory.
 #define OBX_ERROR_ALLOCATION 10003
+
+/// Thrown when a numeric value did overflow/underflow, e.g. an addition would result in a value of the type's limits.
 #define OBX_ERROR_NUMERIC_OVERFLOW 10004
-#define OBX_ERROR_FEATURE_NOT_AVAILABLE 10005  ///< Tried to use a special feature that is not part of this lib edition
+
+/// Tried to use a special feature that is not part of this lib edition.
+/// The ObjectBox library comes in different flavors, and may not contain all features.
+#define OBX_ERROR_FEATURE_NOT_AVAILABLE 10005
+
+/// A required resource (e.g. a store or some internal queue) is shutting down, and thus, the current request could not
+/// be fulfilled. Typically occurs in asynchronous operations.
+#define OBX_ERROR_SHUTTING_DOWN 10006
+
+/// An error occurred but error information could not be extracted.
+/// This falls in the "should not happen" category and should be very rare;
+/// please report if you ever encounter this in a reproducible fashion.
 #define OBX_ERROR_NO_ERROR_INFO 10097
+
+/// A general error occurred that did not fit in a more specific category.
 #define OBX_ERROR_GENERAL 10098
+
+/// An error of unknown type occurred.
+/// This falls in the "should not happen" category and should be very rare;
+/// please report if you ever encounter this in a reproducible fashion.
 #define OBX_ERROR_UNKNOWN 10099
 
-// Storage errors (often have a secondary error code)
+// --- Storage errors (often have a secondary error code) --------------------
+
+/// The database has reached its given storage limit.
+/// Note that is limit is user defined and thus you can set it as an option when opening a database via
+/// obx_opt_max_db_size_in_kb(). Further note that this limit is in place to protect the system from unreasonable
+/// storage consumption due to unexpected usage and user errors (e.g. inserting data in an infinite loop).
 #define OBX_ERROR_DB_FULL 10101
+
+/// Thrown when the maximum of readers (read transactions) was exceeded.
+/// Verify that you run a reasonable amount of threads only.
+/// If you actually intend to work with a very high number of threads (>100), consider increasing the number of maximum
+/// readers via obx_opt_max_readers().
 #define OBX_ERROR_MAX_READERS_EXCEEDED 10102
+
+/// Can not continue, ObjectBox store must be closed.
+/// This falls in the "should not happen" category and should be very rare;
+/// please report if you ever encounter this in a reproducible fashion.
 #define OBX_ERROR_STORE_MUST_SHUTDOWN 10103
+
+/// Occurs when a transaction is about to commit but it would exceed the user-defined data size limit.
+/// See obx_opt_max_data_size_in_kb() for details.
+#define OBX_ERROR_MAX_DATA_SIZE_EXCEEDED 10104
+
+/// A general database related error occurred that did not fit in a more specific category.
+/// No secondary error code is available.
+#define OBX_ERROR_DB_GENERAL 10198
+
+/// A storage error occurred that did not fit in a more specific (storage) category.
+/// A secondary error code is available via obx_last_error_secondary().
 #define OBX_ERROR_STORAGE_GENERAL 10199
 
-// Data errors
+// --- Data errors -----------------------------------------------------------
+
+/// A unique constraint of was violated when trying to put.
 #define OBX_ERROR_UNIQUE_VIOLATED 10201
+
+/// A result was supposed to be unique, but was not. E.g. a query results in multiple results where one one is expected.
 #define OBX_ERROR_NON_UNIQUE_RESULT 10202
+
+/// A Property did not match an expected type; e.g. when defining a string-based query condition for an integer type.
 #define OBX_ERROR_PROPERTY_TYPE_MISMATCH 10203
+
+/// A given ID already existed, e.g. when trying to insert with a pre-existing ID.
+/// Should happen only with user assigned IDs.
 #define OBX_ERROR_ID_ALREADY_EXISTS 10210
+
+/// A given ID was not found (does not exist), e.g. when trying to update an object that does not exist.
+/// Typically happens when an object was removed before while trying to update it.
 #define OBX_ERROR_ID_NOT_FOUND 10211
+
+/// A Time Series operation failed, e.g. a time value was out of range
 #define OBX_ERROR_TIME_SERIES 10212
+
+/// A constraint violation occurred that did not fit in a more specific (constraint violation) category.
 #define OBX_ERROR_CONSTRAINT_VIOLATED 10299
 
-// STD errors
+// --- STD errors --------------------------------------------------------
+
+// These are low-level errors falling in the "should not happen" category and should be very rare;
+// please report if you ever encounter one of these in a reproducible fashion.
+
 #define OBX_ERROR_STD_ILLEGAL_ARGUMENT 10301
 #define OBX_ERROR_STD_OUT_OF_RANGE 10302
 #define OBX_ERROR_STD_LENGTH 10303
@@ -195,7 +301,10 @@ OBX_C_API obx_err obx_debug_log(bool enabled);
 #define OBX_ERROR_STD_OVERFLOW 10306
 #define OBX_ERROR_STD_OTHER 10399
 
-// Inconsistencies detected
+// --- Schema and file errors ------------------------------------------------
+
+/// Data schema (aka data model) related error;
+/// typically when a provided schema is inconsistent/incompatible to an existing one (on disk).
 #define OBX_ERROR_SCHEMA 10501
 
 /// DB file has errors, e.g. illegal values or structural inconsistencies were detected.
@@ -204,8 +313,28 @@ OBX_C_API obx_err obx_debug_log(bool enabled);
 /// DB file has errors related to pages, e.g. bad page refs outside of the file.
 #define OBX_ERROR_FILE_PAGES_CORRUPT 10503
 
-/// A requested schema object (e.g., an entity or a property) was not found in the schema
+/// A requested schema object (e.g. an entity or a property) was not found in the schema
 #define OBX_ERROR_SCHEMA_OBJECT_NOT_FOUND 10504
+
+// --- Tree errors: 106xx ----------------------------------------------------
+
+/// Could not setup tree because the data model (schema) of the database does not contain all required tree
+/// types/properties.
+#define OBX_ERROR_TREE_MODEL_INVALID 10601
+
+/// Accessing a tree value failed because the stored value was put using a different value type.
+#define OBX_ERROR_TREE_VALUE_TYPE_MISMATCH 10602
+
+/// At a given path, a leaf was expected but a branch node was found; e.g. values can only be stored in leaves.
+#define OBX_ERROR_TREE_PATH_NON_UNIQUE 10603
+
+/// When trying to put or get using an illegal tree path. Examples for illegal paths with delimiter '/':
+/// "", "/", "a", "/a", "a/", "a//b", " ", " / ", "a/ /b", " a/b", "a/b ".
+#define OBX_ERROR_TREE_PATH_ILLEGAL 10604
+
+/// An error related to tree functionality was detected;
+/// please check the error message for details (see obx_last_error_message()).
+#define OBX_ERROR_TREE_OTHER 10699
 
 //----------------------------------------------
 // Error info; obx_last_error_*
@@ -338,7 +467,13 @@ typedef enum {
 
     /// Unique on-conflict strategy: the object being put replaces any existing conflicting object (deletes it).
     OBXPropertyFlags_UNIQUE_ON_CONFLICT_REPLACE = 32768,
+
+    /// If a date property has this flag (max. one per entity type), the date value specifies the time by which
+    /// the object expires, at which point it MAY be removed (deleted), which can be triggered by an API call.
+    OBXPropertyFlags_EXPIRATION_TIME = 65536,
 } OBXPropertyFlags;
+
+struct OBX_model;  // doxygen (only) picks up the typedef struct below
 
 /// Model represents a database schema and must be provided when opening the store.
 /// Model initialization is usually done by language bindings, which automatically build the model based on parsed
@@ -348,7 +483,6 @@ typedef enum {
 /// - define entity types using obx_model_entity() and obx_model_property()
 /// - Pass the last ever used IDs with obx_model_last_entity_id(), obx_model_last_index_id(),
 ///   obx_model_last_relation_id()
-struct OBX_model;
 typedef struct OBX_model OBX_model;
 
 /// Create an (empty) data meta model which is to be consumed by obx_opt_model().
@@ -432,25 +566,40 @@ OBX_C_API obx_err obx_model_entity_last_property_id(OBX_model* model, obx_schema
 // Store
 //----------------------------------------------
 
-/// Store represents a single database.
+struct OBX_store;  // doxygen (only) picks up the typedef struct below
+
+/// \brief A ObjectBox store represents a database storing data in a given directory on a local file system.
+///
 /// Once opened using obx_store_open(), it's an entry point to data access APIs such as box, query, cursor, transaction.
 /// After your work is done, you must close obx_store_close() to safely release all the handles and avoid data loss.
-/// It's possible to have multiple stores open at once, there's no globally shared state.
-struct OBX_store;
+///
+/// It's possible open multiple stores in different directories.
 typedef struct OBX_store OBX_store;
+
+struct OBX_store_options;  // doxygen (only) picks up the typedef struct below
 
 /// Store options customize the behavior of ObjectBox before opening a store. Options can't be changed once the store is
 /// open but of course you can close the store and open it again with the changed options.
 /// Some of the notable options are obx_opt_directory() and obx_opt_max_db_size_in_kb().
-struct OBX_store_options;
 typedef struct OBX_store_options OBX_store_options;
 
+/// Debug flags typically enable additional "debug logging" that can be helpful to better understand what is going on
+/// internally. These are intended for the development process only; typically one does not enable them for releases.
 typedef enum {
     OBXDebugFlags_LOG_TRANSACTIONS_READ = 1,
     OBXDebugFlags_LOG_TRANSACTIONS_WRITE = 2,
     OBXDebugFlags_LOG_QUERIES = 4,
     OBXDebugFlags_LOG_QUERY_PARAMETERS = 8,
     OBXDebugFlags_LOG_ASYNC_QUEUE = 16,
+    OBXDebugFlags_LOG_CACHE_HITS = 32,
+    OBXDebugFlags_LOG_CACHE_ALL = 64,
+    OBXDebugFlags_LOG_TREE = 128,
+    /// For a limited number of error conditions, this will try to print stack traces.
+    /// Note: this is Linux-only, experimental, and has several limitations:
+    /// The usefulness of these stack traces depends on several factors and might not be helpful at all.
+    OBXDebugFlags_LOG_EXCEPTION_STACK_TRACE = 256,
+    /// Run a quick self-test to verify basic threading; somewhat paranoia to check the platform and the library setup.
+    OBXDebugFlags_RUN_THREADING_SELF_TEST = 512,
 } OBXDebugFlags;
 
 /// Defines a padding mode for putting data bytes.
@@ -483,6 +632,21 @@ typedef struct OBX_bytes_array {
     OBX_bytes* bytes;
     size_t count;
 } OBX_bytes_array;
+
+struct OBX_bytes_lazy;  // doxygen (only) picks up the typedef struct below
+
+/// Bytes, which must be resolved "lazily" via obx_bytes_lazy_get() and released via obx_bytes_lazy_free().
+/// Unlike OBX_bytes, this may represent allocated resources and/or bytes that are only produced on demand.
+typedef struct OBX_bytes_lazy OBX_bytes_lazy;
+
+/// Get the actual bytes from the given OBX_bytes_lazy.
+/// Because of the potential lazy creation of bytes, the given bytes are not const as it may be resolved internally.
+/// For the same reason, this function is not thread-safe, at least for the first call on a OBX_bytes_lazy instance.
+/// @param out_bytes The pointer to a data pointer may be null, e.g. if you are only interested in the size.
+OBX_C_API obx_err obx_bytes_lazy_get(OBX_bytes_lazy* bytes, const void** out_bytes, size_t* out_size);
+
+/// Releases any resources associated with the given OBX_bytes_lazy.
+OBX_C_API void obx_bytes_lazy_free(OBX_bytes_lazy* bytes);
 
 /// ID array struct is an input/output wrapper for an array of object IDs.
 typedef struct OBX_id_array {
@@ -544,7 +708,14 @@ OBX_C_API OBX_store_options* obx_opt();
 OBX_C_API obx_err obx_opt_directory(OBX_store_options* opt, const char* dir);
 
 /// Set the maximum db size on the options. The default is 1Gb.
-OBX_C_API void obx_opt_max_db_size_in_kb(OBX_store_options* opt, size_t size_in_kb);
+OBX_C_API void obx_opt_max_db_size_in_kb(OBX_store_options* opt, uint64_t size_in_kb);
+
+/// Data size tracking is more involved than DB size tracking, e.g. it stores an internal counter.
+/// Thus only use it if a stricter, more accurate limit is required (it's off by default).
+/// It tracks the size of actual data bytes of objects (system and metadata is not considered).
+/// On the upside, reaching the data limit still allows data to be removed (assuming DB limit is not reached).
+/// Max data and DB sizes can be combined; data size must be below the DB size.
+OBX_C_API void obx_opt_max_data_size_in_kb(OBX_store_options* opt, uint64_t size_in_kb);
 
 /// Set the file mode on the options. The default is 0644 (unix-style)
 OBX_C_API void obx_opt_file_mode(OBX_store_options* opt, unsigned int file_mode);
@@ -610,8 +781,13 @@ OBX_C_API void obx_opt_use_previous_commit(OBX_store_options* opt, bool value);
 /// Open store in read-only mode: no schema update, no write transactions. Defaults to false.
 OBX_C_API void obx_opt_read_only(OBX_store_options* opt, bool value);
 
-/// Configure debug logging. Defaults to NONE
-OBX_C_API void obx_opt_debug_flags(OBX_store_options* opt, OBXDebugFlags flags);
+/// Configure debug flags (OBXDebugFlags); e.g. to influence logging. Defaults to NONE.
+/// Combine multiple flags using bitwise OR.
+OBX_C_API void obx_opt_debug_flags(OBX_store_options* opt, uint32_t flags);
+
+/// Adds debug flags (OBXDebugFlags) to potentially existing ones.
+/// Combine multiple flags using bitwise OR.
+OBX_C_API void obx_opt_add_debug_flags(OBX_store_options* opt, uint32_t flags);
 
 /// Maximum of async elements in the queue before new elements will be rejected.
 /// Hitting this limit usually hints that async processing cannot keep up;
@@ -676,6 +852,28 @@ OBX_C_API void obx_opt_async_object_bytes_max_cache_size(OBX_store_options* opt,
 /// Maximal size for an object to be cached (only cache smaller ones)
 OBX_C_API void obx_opt_async_object_bytes_max_size_to_cache(OBX_store_options* opt, uint64_t value);
 
+/// Registers a log callback, which is called for a selection of log events.
+/// Note: this does not replace the default logging, which is much more extensive (at least at this point).
+OBX_C_API void obx_opt_log_callback(OBX_store_options* opt, obx_log_callback* callback, void* user_data);
+
+/// Gets the option for "directory"; this is either the default, or, the value set by obx_opt_directory().
+/// The returned value must not be modified and is only valid for the lifetime of the options or until the value is
+/// changed.
+/// @returns null if an error occurred, e.g. the given options were null.
+OBX_C_API const char* obx_opt_get_directory(OBX_store_options* opt);
+
+/// Gets the option for "max DB size"; this is either the default, or, the value set by obx_opt_max_db_size_in_kb().
+/// @returns 0 if an error occurred, e.g. the given options were null.
+OBX_C_API uint64_t obx_opt_get_max_db_size_in_kb(OBX_store_options* opt);
+
+/// Gets the option for "max data size"; this is either the default, or, the value set by obx_opt_max_data_size_in_kb().
+/// @returns 0 if an error occurred, e.g. the given options were null.
+OBX_C_API uint64_t obx_opt_get_max_data_size_in_kb(OBX_store_options* opt);
+
+/// Gets the option for "debug flags"; this is either the default, or, the value set by obx_opt_debug_flags().
+/// @returns 0 if an error occurred, e.g. the given options were null.
+OBX_C_API uint32_t obx_opt_get_debug_flags(OBX_store_options* opt);
+
 /// Free the options.
 /// Note: Only free *unused* options, obx_store_open() frees the options internally
 OBX_C_API void obx_opt_free(OBX_store_options* opt);
@@ -684,6 +882,11 @@ OBX_C_API void obx_opt_free(OBX_store_options* opt);
 // Store
 //----------------------------------------------
 
+/// Opens (creates) a "store", which represents an ObjectBox database instance in a given directory.
+/// The store is an entry point to data access APIs such as box (obx_box_*), query (obx_qb_* and obx_query_*),
+/// and transaction (obx_txn_*).
+/// It's possible open multiple stores in different directories, e.g. at the same time.
+/// See also obx_store_close() to close a previously opened store.
 /// Note: the given options are always freed by this function, including when an error occurs.
 /// @param opt required parameter holding the data model (obx_opt_model()) and optional options (see obx_opt_*())
 /// @returns NULL if the operation failed, see functions like obx_last_error_code() to get error details
@@ -693,10 +896,19 @@ OBX_C_API OBX_store* obx_store_open(OBX_store_options* opt);
 OBX_C_API bool obx_store_is_open(const char* path);
 
 /// Attach to a previously opened store matching the path of the DB directory, which was used for opening the store.
-/// The returned store is a new instance (e.g. different pointer value) with its own lifetime and must also be closed.
+/// The returned store is a new instance (e.g. different pointer value) and must also be closed via obx_store_close().
 /// The actual underlying store is only closed when the last store OBX_store instance is closed.
 /// @returns nullptr if no open store was found (i.e. not opened before or already closed)
+/// @see obx_store_clone() for "attaching" to a available store instance.
 OBX_C_API OBX_store* obx_store_attach(const char* path);
+
+/// Attach to a previously opened store matching the given store ID.
+/// The returned store is a new instance (e.g. different pointer value) and must also be closed via obx_store_close().
+/// The actual underlying store is only closed when the last store OBX_store instance is closed.
+/// @param store_id
+/// @returns nullptr if no open store was found (i.e. not opened before or already closed)
+/// @see obx_store_clone() for "attaching" to a available store instance.
+OBX_C_API OBX_store* obx_store_attach_id(uint64_t store_id);
 
 /// Combines the functionality of obx_store_attach() and obx_store_open() in a thread-safe way.
 /// @param check_matching_options if true, some effort will be taken to check if the given options match an existing
@@ -705,6 +917,20 @@ OBX_C_API OBX_store* obx_store_attach(const char* path);
 /// @param out_attached (optional) if given a pointer to a flag that telling if the function attached to an existing
 ///        store (true) or a new store was created (false).
 OBX_C_API OBX_store* obx_store_attach_or_open(OBX_store_options* opt, bool check_matching_options, bool* out_attached);
+
+/// Store IDs can be used to attach to a store later.
+/// The IDs are stable and unique during the lifetime of the process.
+/// E.g. these IDs can be shared across threads efficiently and can serve a similar purpose as weak pointers do.
+OBX_C_API uint64_t obx_store_id(OBX_store* store);
+
+/// Clone a previously opened store; while a store instance is usable from multiple threads, situations may exist
+/// in which cloning a store simplifies the overall lifecycle.
+/// E.g. when a store is used for multiple threads and it may only be fully released once the last thread completes.
+/// The returned store is a new instance (e.g. different pointer value) and must also be closed via obx_store_close().
+/// The actual underlying store is only closed when the last store OBX_store instance is closed.
+/// @returns nullptr if the store could not be cloned
+/// @see obx_store_attach() for "cloning" using the store's path.
+OBX_C_API OBX_store* obx_store_clone(OBX_store* store);
 
 /// For stores created outside of this C API, e.g. via C++ or Java, this is how you can use it via C too.
 /// Like this, it is OK to use the same store instance (same database) from multiple languages in parallel.
@@ -722,13 +948,14 @@ OBX_C_API obx_schema_id obx_store_entity_id(OBX_store* store, const char* entity
 OBX_C_API obx_schema_id obx_store_entity_property_id(OBX_store* store, obx_schema_id entity_id,
                                                      const char* property_name);
 
-/// Await for all (including future) async submissions to be completed (the async queue becomes idle for a moment).
-/// @returns true if all submissions were completed or async processing was not started; false if shutting down
+/// Await for all (including future) async submissions to be completed (the async queue becomes empty).
+/// @returns true if all submissions were completed or async processing was not started
 /// @returns false if shutting down or an error occurred
 OBX_C_API bool obx_store_await_async_completion(OBX_store* store);
 
-/// Await for previously submitted async operations to be completed (the async queue does not have to become idle).
-/// @returns true if all submissions were completed or async processing was not started
+/// Await async operations that have been submitted up to this point to be completed
+/// (the async queue may still contain elements).
+/// @returns true if all submissions were completed (or async processing was not started)
 /// @returns false if shutting down or an error occurred
 OBX_C_API bool obx_store_await_async_submitted(OBX_store* store);
 
@@ -739,12 +966,23 @@ OBX_C_API obx_err obx_store_debug_flags(OBX_store* store, OBXDebugFlags flags);
 /// @see obx_opt_use_previous_commit()
 OBX_C_API bool obx_store_opened_with_previous_commit(OBX_store* store);
 
+/// Prepares the store to close by setting its internal state to "closing".
+/// Functions relying on the store will result in OBX_ERROR_SHUTTING_DOWN status once closing is initiated.
+/// Unlike obx_store_close(), this method will return immediately and does not free resources just yet.
+/// This is typically used in a multi-threaded context to allow an orderly shutdown in stages which go through a
+/// "not accepting new requests" state.
+OBX_C_API obx_err obx_store_prepare_to_close(OBX_store* store);
+
+/// Closes a previously opened store and thus freeing all resources associated with the store.
+/// \note This waits for write transactions to finish before returning from this call.
 /// @param store may be NULL
 OBX_C_API obx_err obx_store_close(OBX_store* store);
 
 //----------------------------------------------
 // Transaction
 //----------------------------------------------
+
+struct OBX_txn;  // doxygen (only) picks up the typedef struct below
 
 /// Transaction provides the mean to use explicit database transactions, grouping several operations into a single unit
 /// of work that either executes completely or not at all. If you are looking for a more detailed introduction to
@@ -755,7 +993,6 @@ OBX_C_API obx_err obx_store_close(OBX_store* store);
 /// is done under the hood and transparent to you.
 /// However, there are situations where an explicit read transaction is necessary, e.g. obx_box_get(). Also, it’s
 /// usually worth learning transaction basics to make your app more consistent and efficient, especially for writes.
-struct OBX_txn;
 typedef struct OBX_txn OBX_txn;
 
 /// Create a write transaction (read and write).
@@ -790,12 +1027,15 @@ OBX_C_API obx_err obx_txn_close(OBX_txn* txn);
 /// Only obx_txn_close() is allowed to be called on the transaction after calling this.
 OBX_C_API obx_err obx_txn_abort(OBX_txn* txn);  // Internal note: will make more sense once we introduce obx_txn_reset
 
+OBX_C_API obx_err obx_txn_data_size(OBX_txn* txn, uint64_t* out_committed_size, uint64_t* out_size_change);
+
 //------------------------------------------------------------------
 // Cursor (lower level API, check also the more convenient Box API)
 //------------------------------------------------------------------
 
+struct OBX_cursor;  // doxygen (only) picks up the typedef struct below
+
 /// Cursor provides fine-grained (lower level API) access to the stored objects. Check also the more convenient Box API.
-struct OBX_cursor;
 typedef struct OBX_cursor OBX_cursor;
 
 typedef enum {
@@ -937,13 +1177,21 @@ OBX_C_API obx_err obx_cursor_ts_min_max_range(OBX_cursor* cursor, int64_t range_
 // Box
 //----------------------------------------------
 
-/// From ObjectBox you vend Box instances to manage your entities. While you can have multiple Box instances of the same
-/// type (for the same Entity) "open" at once, it's usually preferable to just use one instance and pass it around.
+struct OBX_box;  // doxygen (only) picks up the typedef struct below
+
+/// \brief A Box offers database operations for objects of a specific type.
+///
+/// Given an OBX_store, obx_box() gives you Box instances to interact with object data (e.g. get and put operations).
+/// A Box instance is associated with a specific object type (data class) and gives you a high level API to interact
+/// with data objects of that type.
+///
 /// Box operations automatically start an implicit transaction when accessing the database.
 /// And because transactions offered by this C API are always reentrant, you can set your own transaction boundary
-/// using obx_txn_read() or obx_txn_write(). This is very much encouraged for calling multiple write operations that
-/// logically belong together (or for better performance).
-struct OBX_box;
+/// using obx_txn_read() or obx_txn_write().
+/// Using these explicit transactions is very much encouraged for calling multiple write operations that
+/// logically belong together for better consistency (ACID) and performance.
+///
+/// Box instances are thread-safe and cached internally (see obx_box()).
 typedef struct OBX_box OBX_box;
 
 /// Get access to the box for the given entity. A box may be used across threads.
@@ -1111,6 +1359,30 @@ OBX_C_API OBX_id_array* obx_box_rel_get_ids(OBX_box* box, obx_schema_id relation
 /// @returns resulting IDs representing objects in this Box, or NULL in case of an error
 OBX_C_API OBX_id_array* obx_box_rel_get_backlink_ids(OBX_box* box, obx_schema_id relation_id, obx_id id);
 
+//------------------------------------------------------------------
+// Misc ops not tied to cursor/box
+// - obx_expired_objects_*
+//------------------------------------------------------------------
+
+/// Callback for simple async functions that only deliver a obx_err status.
+/// @param status The result status of the async operation
+/// @param user_data The data initially passed to the async function call is passed back.
+typedef void obx_status_callback(obx_err status, void* user_data);
+
+/// Removes expired objects of one or all entity types.
+/// @param entity_id Type of the objects to be remove; if zero, all types are included.
+///        Hint: if you only have the entity type's name, use obx_store_entity_id() to get the ID.
+/// @param out_removed_count If given (non-null), it will receive the count of removed objects.
+/// @see OBXPropertyFlags_EXPIRATION_TIME to define a property for the expiration time.
+OBX_C_API obx_err obx_expired_objects_remove(OBX_txn* txn, obx_schema_id entity_id, size_t* out_removed_count);
+
+/// Asynchronously removes expired objects of one or all entity types.
+/// @param entity_id Type of the objects to be remove; if zero, all types are included.
+///        Hint: if you only have the entity type's name, use obx_store_entity_id() to get the ID.
+/// @see OBXPropertyFlags_EXPIRATION_TIME to define a property for the expiration time.
+OBX_C_API obx_err obx_expired_objects_remove_async(OBX_store* store, obx_schema_id entity_id,
+                                                   obx_status_callback* callback, void* user_data);
+
 //----------------------------------------------
 // Time series
 //----------------------------------------------
@@ -1137,8 +1409,9 @@ OBX_C_API obx_err obx_box_ts_min_max_range(OBX_box* box, int64_t range_begin, in
 // Async
 //----------------------------------------------
 
+struct OBX_async;  // doxygen (only) picks up the typedef struct below
+
 /// Created by obx_box_async, used for async operations like obx_async_put.
-struct OBX_async;
 typedef struct OBX_async OBX_async;
 
 /// Note: DO NOT close this OBX_async; its lifetime is tied to the OBX_box instance.
@@ -1188,9 +1461,10 @@ OBX_C_API obx_err obx_async_close(OBX_async* async);
 // Query Builder
 //----------------------------------------------
 
+struct OBX_query_builder;  // doxygen (only) picks up the typedef struct below
+
 /// You use QueryBuilder to specify criteria and create a Query which actually executes the query and returns matching
 /// objects.
-struct OBX_query_builder;
 typedef struct OBX_query_builder OBX_query_builder;
 
 /// Not really an enum, but binary flags to use across languages
@@ -1227,6 +1501,9 @@ OBX_C_API OBX_query_builder* obx_query_builder(OBX_store* store, obx_schema_id e
 /// Close the query builder; note that OBX_query objects outlive their builder and thus are not affected by this call.
 /// @param builder may be NULL
 OBX_C_API obx_err obx_qb_close(OBX_query_builder* builder);
+
+/// @returns the entity type ID that was used to construct the query builder.
+OBX_C_API obx_schema_id obx_qb_type_id(OBX_query_builder* builder);
 
 /// To minimise the amount of error handling code required when building a query, the first error is stored in the query
 /// and can be obtained here. All the obx_qb_XXX functions are null operations after the first query error has occurred.
@@ -1344,6 +1621,21 @@ OBX_C_API obx_qb_cond obx_qb_less_than_bytes(OBX_query_builder* builder, obx_sch
 OBX_C_API obx_qb_cond obx_qb_less_or_equal_bytes(OBX_query_builder* builder, obx_schema_id property_id,
                                                  const void* value, size_t size);
 
+// Other conditions ---------------------
+
+/// An object matches, if it has a given number of related objects pointing to it.
+/// At this point, there are a couple of limitations (later version may improve on that):
+/// 1) 1:N relations only, 2) the complexity is O(n * (relationCount + 1)) and cannot be improved via indexes,
+/// 3) The relation count cannot be set as an parameter.
+/// @param relation_entity_id ID of the entity type the relation comes from.
+/// @param relation_property_id ID of the property in the related entity type representing the relation.
+/// @param relation_count Number of related object an object must have to match. May be 0 if objects shall be matched
+///        that do not have related objects. (Typically low numbers are used for the count.)
+OBX_C_API obx_qb_cond obx_qb_relation_count_property(OBX_query_builder* builder, obx_schema_id relation_entity_id,
+                                                     obx_schema_id relation_property_id, int32_t relation_count);
+
+// Other condition related functions ---------------------
+
 /// Combine conditions[] to a new condition using operator AND (all).
 OBX_C_API obx_qb_cond obx_qb_all(OBX_query_builder* builder, const obx_qb_cond conditions[], size_t count);
 
@@ -1404,11 +1696,12 @@ OBX_C_API OBX_query_builder* obx_qb_link_time(OBX_query_builder* builder, obx_sc
 // Query
 //----------------------------------------------
 
+struct OBX_query;  // doxygen (only) picks up the typedef struct below
+
 /// Query holds the information necessary to execute a database query. It's prepared by QueryBuilder and may be reused
 /// any number of times. It also supports parametrization before executing, further improving the reusability.
 /// Query is NOT thread safe and must only be used from a single thread at the same time. If you prefer to avoid locks,
 /// you may want to create clonse using obx_query_clone().
-struct OBX_query;
 typedef struct OBX_query OBX_query;
 
 /// @returns NULL if the operation failed, see functions like obx_last_error_code() to get error details
@@ -1550,8 +1843,9 @@ OBX_C_API size_t obx_query_param_alias_get_type_size(OBX_query* query, const cha
 // Property-Query - getting a single property instead of whole objects
 //----------------------------------------------
 
+struct OBX_query_prop;  // doxygen (only) picks up the typedef struct below
+
 /// PropertyQuery - getting a single property instead of whole objects. Also provides aggregation over properties.
-struct OBX_query_prop;
 typedef struct OBX_query_prop OBX_query_prop;
 
 /// Create a "property query" with results referring to single property (not complete objects).
@@ -1680,16 +1974,17 @@ OBX_C_API OBX_double_array* obx_query_prop_find_doubles(OBX_query_prop* query, c
 /// @returns NULL if the operation failed, see functions like obx_last_error_code() to get error details
 OBX_C_API OBX_float_array* obx_query_prop_find_floats(OBX_query_prop* query, const float* value_if_null);
 
+struct OBX_observer;  // doxygen (only) picks up the typedef struct below
+
 /// Observers are called back when data has changed in the database.
 /// See obx_observe(), or obx_observe_single_type() to listen to a changes that affect a single entity type
-struct OBX_observer;
 typedef struct OBX_observer OBX_observer;
 
 /// Callback for obx_observe()
 /// @param user_data user data given to obx_observe()
 /// @param type_ids array of object type IDs that had changes
 /// @param type_ids_count number of IDs of type_ids
-typedef void obx_observer(void* user_data, const obx_schema_id* type_ids, size_t type_ids_count);
+typedef void obx_observer(const obx_schema_id* type_ids, size_t type_ids_count, void* user_data);
 
 /// Callback for obx_observe_single_type()
 typedef void obx_observer_single_type(void* user_data);
@@ -1716,7 +2011,7 @@ OBX_C_API OBX_observer* obx_observe(OBX_store* store, obx_observer* callback, vo
 /// Future versions might change that to a background thread, so be careful with threading assumptions.
 /// Also, it's a usually good idea to make the callback return quickly to let the calling thread continue.
 /// \attention Currently, you can not call any data operations from inside the call back.
-/// \attention More accurately, no transaction may be strated. (This restriction may be removed in a later version.)
+/// \attention More accurately, no transaction may be started. (This restriction may be removed in a later version.)
 /// @param type_id ID of the object type to be observer.
 /// @param user_data any value you want to be forwarded to the given observer callback (usually some context info).
 /// @param callback pointer to be called when the observed data changes.
@@ -1730,6 +2025,176 @@ OBX_C_API OBX_observer* obx_observe_single_type(OBX_store* store, obx_schema_id 
 ///          or a timeout/deadlock was detected. In that case, the caller must try to close again in a valid situation
 ///          not causing lock failures.
 OBX_C_API obx_err obx_observer_close(OBX_observer* observer);
+
+//----------------------------------------------
+// Tree
+//----------------------------------------------
+typedef enum {
+    /// If true, debug logs are always disabled for this tree regardless of the store's debug flags.
+    OBXTreeOptionFlags_DebugLogsDisable = 1,
+
+    /// If true, debug logs are always enabled for this tree regardless of the store's debug flags.
+    OBXTreeOptionFlags_DebugLogsEnable = 2,
+
+    /// By default, a path such as "a/b/c" can address a branch and a leaf at the same time.
+    /// E.g. under the common parent path "a/b", a branch "c" and a "c" leaf may exist.
+    /// To disable this, set this flag to true.
+    /// This will enable an additional check when inserting new leafs and new branches for the existence of the other.
+    OBXTreeOptionFlags_EnforceUniquePath = 4,
+
+    /// In some scenarios, e.g. when using Sync, multiple node objects of the same type (e.g. branch or leaf) at the
+    /// same path may exist temporarily. By enabling this flag, this is not considered an error situation. Instead, the
+    /// first node is picked.
+    OBXTreeOptionFlags_AllowNonUniqueNodes = 8,
+
+    /// Nodes described in AllowNonUniqueNodes will be automatically detected to consolidate them (manually).
+    OBXTreeOptionFlags_DetectNonUniqueNodes = 16,
+
+    /// Nodes described in AllowNonUniqueNodes will be automatically consolidated to make them unique.
+    /// This consolidation happens e.g. on put/remove operations.
+    /// Using this value implies DetectNonUniqueNodes.
+    OBXTreeOptionFlags_AutoConsolidateNonUniqueNodes = 32,
+
+} OBXTreeOptionFlags;
+
+struct OBX_tree_options;  // doxygen (only) picks up the typedef struct below
+
+/// @brief Structural/behavioral options for a tree passed during tree creation.
+typedef struct OBX_tree_options OBX_tree_options;
+
+struct OBX_tree;  // doxygen (only) picks up the typedef struct below
+
+/// @brief Top level tree API representing a tree structure/schema associated with a store.
+///
+/// Data is accessed via "tree cursors" that can be created using obx_tree_cursor().
+typedef struct OBX_tree OBX_tree;
+
+struct OBX_tree_cursor;  // doxygen (only) picks up the typedef struct below
+typedef struct OBX_tree_cursor OBX_tree_cursor;
+
+/// Creates a options object that is passed to tree creation via obx_tree().
+OBX_C_API OBX_tree_options* obx_tree_options();
+
+/// Free the tree options if they were not used (and "consumed") by obx_tree().
+/// Note: Only free *unused* options, obx_tree() frees the options internally.
+OBX_C_API void obx_tree_options_free(OBX_tree_options* options);
+
+/// Adjusts the path delimiter character, which is by default "/".
+OBX_C_API obx_err obx_tree_opt_path_delimiter(OBX_tree_options* options, char path_delimiter);
+
+/// Sets the given OBXTreeOptionFlags at the tree options.
+/// Combine multiple flags using bitwise OR.
+OBX_C_API obx_err obx_tree_opt_flags(OBX_tree_options* options, uint32_t flags);
+
+/// Creates a tree for the given store.
+/// @param options can be null for default options (e.g. use '/' as a path delimiter).
+///        The options are always freed when calling this function.
+OBX_C_API OBX_tree* obx_tree(OBX_store* store, OBX_tree_options* options);
+OBX_C_API void obx_tree_close(OBX_tree* tree);
+
+/// To get/put data from tree, you need to create a tree cursor using this method.
+/// @param txn may be null if the transaction will be set later via obx_tree_cursor_txn()
+OBX_C_API OBX_tree_cursor* obx_tree_cursor(OBX_tree* tree, OBX_txn* txn);
+
+/// Gets the number of currently tracked node conflicts (non-unique nodes at the same path).
+/// This count gets resent when conflicts get consolidated.
+/// Only tracked if OBXTreeOptionFlags_DetectNonUniqueNodes (or OBXTreeOptionFlags_AutoConsolidateNonUniqueNodes) is
+/// set.
+OBX_C_API size_t obx_tree_node_conflict_count(OBX_tree* tree);
+
+/// \brief Closes the tree cursor, e.g. before a transaction is ending.
+/// The cursor cannot be used afterwards (consider obx_tree_cursor_reset() if you want to keep using it).
+OBX_C_API void obx_tree_cursor_close(OBX_tree_cursor* cursor);
+
+/// \brief Sets or clears a transaction from the tree cursor.
+///
+/// A typical use case for this function is to cache the tree cursor for reusing it later.
+/// Note: before closing a transaction, ensure to clear it here first (set to null).
+OBX_C_API obx_err obx_tree_cursor_txn(OBX_tree_cursor* cursor, OBX_txn* txn);
+
+/// \brief A "low-level" get operation to access a tree leaf using the raw FlatBuffer bytes stored in the database.
+/// As usual, the data is only valid during the lifetime of the transaction and before the first write to the DB.
+/// An advantage of using "raw" operations is that custom properties can be passed in the FlatBuffer.
+/// @param data receiver of the data pointer (non-null pointer to a pointer), which will be pointing to FlatBuffers
+///        bytes for the data leaf after this call.
+/// @param metadata optional FlatBuffers receiver (nullable pointer to a pointer) for the meta leaf.
+/// @returns general success/error codes and some tree-specific ones (OBX_ERROR_TREE_*)
+OBX_C_API obx_err obx_tree_cursor_get_raw(OBX_tree_cursor* cursor, const char* path, const void** data, size_t* size,
+                                          const void** metadata, size_t* metadata_size);
+
+/// \brief A "low-level" put operation for a tree leaf using given raw FlatBuffer bytes.
+/// Any non-existing branches and meta nodes are put on the fly if an optional meta-leaf FlatBuffers is given.
+/// A typical usage pattern is to first try without the meta-leaf, and if it does not work, create the meta-leaf and
+/// call again with the meta leaf. This approach takes into account that meta-leaves typically exist, and thus no
+/// resources are wasted for meta-leaf creation if it's not required.
+/// An advantage of using "raw" operations is that custom properties can be passed in the FlatBuffers.
+/// @param leaf_data prepared FlatBuffers bytes for the data leaf (non-const as the data buffer will be mutated);
+///        note: slots for IDs must be already be prepared (zero values)
+/// @param type value type of the given leafObject: it has to be passed to verify against stored metadata
+/// @param leaf_metadata optional FlatBuffers for the meta leaf; at minimum, "name" and "type" must be set.
+///        Note: slots for IDs must be already be prepared (zero values).
+///        Passing null indicates that the branches and meta nodes must already exist; otherwise
+///        the operation will fail and OBX_NOT_FOUND will be returned.
+/// @param leaf_put_mode For the data leaf only (the actual value tree node)
+/// @returns OBX_NOT_FOUND if the path did not exist (and no metadata was given)
+/// @returns OBX_NO_SUCCESS if the put was not successful according to the put mode
+/// @returns also other standard result codes like OBX_SUCCESS or OBX_ERR_*
+OBX_C_API obx_err obx_tree_cursor_put_raw(OBX_tree_cursor* cursor, const char* path, void* leaf_data,
+                                          size_t leaf_data_size, OBXPropertyType type, obx_id* out_id,
+                                          void* leaf_metadata, size_t leaf_metadata_size, OBXPutMode leaf_put_mode);
+
+/// Explicitly consolidates tree node conflicts (non unique nodes sharing a common path).
+/// See also obx_tree_async_consolidate_node_conflicts() for an asynchronous version.
+OBX_C_API obx_err obx_tree_cursor_consolidate_node_conflicts(OBX_tree_cursor* cursor, size_t* out_consolidated_count);
+
+/// Callback for obx_tree_async_put_raw().
+/// \note If the given status is an error, you can use functions like obx_last_error_message() to gather more info
+/// during this callback (error state is thread bound and the callback uses an internal thread).
+/// @param status The result status of the async operation
+/// @param id If the operation was successful, the ID of the leaf, which was put (otherwise zero).
+/// @param user_data The data initially passed to the async function call is passed back.
+typedef void obx_tree_async_put_callback(obx_err status, obx_id id, void* user_data);
+
+/// Like obx_tree_cursor_put_raw(), but asynchronous.
+/// @param callback Optional (may be null) function that is called with results once the async operation completes.
+/// @param callback_user_data Any value you can supply, which is passed on to the callback (e.g. to identify user
+///        specific context).
+OBX_C_API obx_err obx_tree_async_put_raw(OBX_tree* tree, const char* path, void* leaf_data, size_t leaf_data_size,
+                                         OBXPropertyType type, void* leaf_metadata, size_t leaf_metadata_size,
+                                         OBXPutMode leaf_put_mode, obx_tree_async_put_callback* callback,
+                                         void* callback_user_data);
+
+/// Explicitly consolidates tree node conflicts (non unique nodes sharing a common path) asynchronously.
+/// See also obx_tree_cursor_consolidate_node_conflicts() for a synchronous version.
+OBX_C_API obx_err obx_tree_async_consolidate_node_conflicts(OBX_tree* tree);
+
+//----------------------------------------------
+// Weak store
+//----------------------------------------------
+
+struct OBX_weak_store;  // doxygen (only) picks up the typedef struct below
+
+/// \brief A "weak store" is a weakly referenced store.
+///
+/// While you can "attach" to a store multiple time; each instance will keep the store open.
+/// Alternatively for "secondary stores" (e.g. used in a background thread), a weakly referenced store does not keep
+/// the store open by itself. Only strong references (e.g. the store created and attached stores) do.
+/// A weak store needs to be "locked" to get a regular store (strong reference) in order to actually use it.
+typedef struct OBX_weak_store OBX_weak_store;
+
+/// Creates a weak reference to the given store.
+OBX_C_API OBX_weak_store* obx_weak_store(OBX_store* store);
+
+/// Frees a weak store reference.
+OBX_C_API void obx_weak_store_free(OBX_weak_store* weak_store);
+
+/// Tries to get a weak reference to the store with the given ID.
+/// @returns null if no store was found for the given ID
+OBX_C_API OBX_weak_store* obx_weak_store_by_id(uint64_t store_id);
+
+/// Tries to create a regular store instance for the given weak reference.
+/// @returns null if the store was already closed (all "strong references" are gone)
+OBX_C_API OBX_store* obx_weak_store_lock(OBX_weak_store* weak_store);
 
 //----------------------------------------------
 // Utilities for bytes/ids/arrays
@@ -1784,7 +2249,9 @@ OBX_C_API obx_err obx_posix_sem_prefix_set(const char* prefix);
 // Admin web UI (e.g. object browser, DB & Sync stats, admin tasks)
 //----------------------------------------------
 
-struct OBX_admin_options;
+struct OBX_admin_options;  // doxygen (only) picks up the typedef struct below
+
+/// Options to configure the OBX_admin to be created
 typedef struct OBX_admin_options OBX_admin_options;
 
 /// Create a default set of admin options.
@@ -1825,8 +2292,10 @@ OBX_C_API obx_err obx_admin_opt_log_requests(OBX_admin_options* opt, bool value)
 /// Note: Only free *unused* options, obx_admin() frees the options internally
 OBX_C_API obx_err obx_admin_opt_free(OBX_admin_options* opt);
 
-/// Admin web UI
-struct OBX_admin;
+struct OBX_admin;  // doxygen (only) picks up the typedef struct below
+
+/// The admin web UI is an optional feature consisting of an embedded http server, that comes with an object (data)
+/// browser and an administration UI.
 typedef struct OBX_admin OBX_admin;
 
 /// Initialize the http-server with the given options.
@@ -1836,12 +2305,14 @@ typedef struct OBX_admin OBX_admin;
 OBX_C_API OBX_admin* obx_admin(OBX_admin_options* options);
 
 /// Returns a port this server listens on. This is especially useful if the port was assigned arbitrarily
-/// (a "0" port was used in the URI given to obx_admin_opt_bind()).
+/// (a "0" port was used in the URL given to obx_admin_opt_bind()).
 OBX_C_API uint16_t obx_admin_port(OBX_admin* admin);
 
 /// Stop the http-server and free all the resources.
 /// @param admin may be NULL
 OBX_C_API obx_err obx_admin_close(OBX_admin* admin);
+
+// NOLINTEND(modernize-use-using)
 
 #ifdef __cplusplus
 }

@@ -229,12 +229,12 @@ func TestQueries(t *testing.T) {
 		{1, s{`Float32 between -1.000000 and 1.000000`}, box.Query(E.Float32.Between(-1, 1)), nil},
 		{2, s{`Float32 between 47.740002 and 95.480003`}, box.Query(E.Float32.Between(e.Float32, e.Float32*2)), nil},
 
-		{6, s{`ByteVector == byte[5]{0x01020305 08}`}, box.Query(E.ByteVector.Equals(e.ByteVector)), nil},
-		// {994, s{`ByteVector != byte[5]{0x01020305 08`}, box.Query(E.ByteVector.NotEquals(e.ByteVector)), nil},
-		{989, s{`ByteVector > byte[5]{0x01020305 08}`}, box.Query(E.ByteVector.GreaterThan(e.ByteVector)), nil},
-		{995, s{`ByteVector >= byte[5]{0x01020305 08}`}, box.Query(E.ByteVector.GreaterOrEqual(e.ByteVector)), nil},
-		{5, s{`ByteVector < byte[5]{0x01020305 08}`}, box.Query(E.ByteVector.LessThan(e.ByteVector)), nil},
-		{11, s{`ByteVector <= byte[5]{0x01020305 08}`}, box.Query(E.ByteVector.LessOrEqual(e.ByteVector)), nil},
+		{6, s{`ByteVector == byte[5]{0x0102030508}`}, box.Query(E.ByteVector.Equals(e.ByteVector)), nil},
+		// {994, s{`ByteVector != byte[5]{0x0102030508`}, box.Query(E.ByteVector.NotEquals(e.ByteVector)), nil},
+		{989, s{`ByteVector > byte[5]{0x0102030508}`}, box.Query(E.ByteVector.GreaterThan(e.ByteVector)), nil},
+		{995, s{`ByteVector >= byte[5]{0x0102030508}`}, box.Query(E.ByteVector.GreaterOrEqual(e.ByteVector)), nil},
+		{5, s{`ByteVector < byte[5]{0x0102030508}`}, box.Query(E.ByteVector.LessThan(e.ByteVector)), nil},
+		{11, s{`ByteVector <= byte[5]{0x0102030508}`}, box.Query(E.ByteVector.LessOrEqual(e.ByteVector)), nil},
 
 		{256, s{`Bool == 1`}, box.Query(E.Bool.Equals(true)), nil},
 		{744, s{`Bool == 0`}, box.Query(E.Bool.Equals(false)), nil},
@@ -384,11 +384,11 @@ func TestQueryParams(t *testing.T) {
 		{498, s{`Float32 > 47.740002`}, box.Query(E.Float32.GreaterThan(e.Float32)),
 			func(q i) error { return eq(q).SetFloat64Params(E.Float32, float64(e.Float32)) }},
 
-		{6, s{`ByteVector == byte[5]{0x01020305 08}`}, box.Query(E.ByteVector.Equals(nil)),
+		{6, s{`ByteVector == byte[5]{0x0102030508}`}, box.Query(E.ByteVector.Equals(nil)),
 			func(q i) error { return eq(q).SetBytesParams(E.ByteVector, e.ByteVector) }},
 		{1000, s{`ByteVector > byte[0]""`}, box.Query(E.ByteVector.GreaterThan(nil)),
 			func(q i) error { return eq(q).SetBytesParams(E.ByteVector, nil) }},
-		{5, s{`ByteVector < byte[5]{0x01020305 08}`}, box.Query(E.ByteVector.LessThan(nil)),
+		{5, s{`ByteVector < byte[5]{0x0102030508}`}, box.Query(E.ByteVector.LessThan(nil)),
 			func(q i) error { return eq(q).SetBytesParams(E.ByteVector, e.ByteVector) }},
 
 		{1, s{`Related == 1`}, box.Query(E.Related.Equals(0)),
@@ -566,11 +566,11 @@ func TestQueryAliasParams(t *testing.T) {
 		{498, s{`Float32 > 47.740002`}, box.Query(E.Float32.GreaterThan(e.Float32).As(alias)),
 			func(q i) error { return eq(q).SetFloat64Params(alias, float64(e.Float32)) }},
 
-		{6, s{`ByteVector == byte[5]{0x01020305 08}`}, box.Query(E.ByteVector.Equals(nil).As(alias)),
+		{6, s{`ByteVector == byte[5]{0x0102030508}`}, box.Query(E.ByteVector.Equals(nil).As(alias)),
 			func(q i) error { return eq(q).SetBytesParams(alias, e.ByteVector) }},
 		{1000, s{`ByteVector > byte[0]""`}, box.Query(E.ByteVector.GreaterThan(nil).As(alias)),
 			func(q i) error { return eq(q).SetBytesParams(alias, nil) }},
-		{5, s{`ByteVector < byte[5]{0x01020305 08}`}, box.Query(E.ByteVector.LessThan(nil).As(alias)),
+		{5, s{`ByteVector < byte[5]{0x0102030508}`}, box.Query(E.ByteVector.LessThan(nil).As(alias)),
 			func(q i) error { return eq(q).SetBytesParams(alias, e.ByteVector) }},
 	})
 }

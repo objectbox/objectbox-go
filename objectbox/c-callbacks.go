@@ -123,8 +123,9 @@ var cCallbackMutex sync.Mutex
 var cCallbackMap = make(map[cCallbackId]cCallable)
 
 // The result is actually not a memory pointer, just a number. That's also how it's used in cCallbackLookup().
-func (cbId cCallbackId) cPtrArg() C.uintptr_t {
-	return C.uintptr_t(cbId)
+func (cbId cCallbackId) cPtr() unsafe.Pointer {
+	//goland:noinspection GoVetUnsafePointer
+	return unsafe.Pointer(uintptr(cbId))
 }
 
 // Returns the next cCallbackId in a sequence (NOT checking its availability), skipping zero.

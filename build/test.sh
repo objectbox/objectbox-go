@@ -22,7 +22,21 @@ else
 fi
 
 echo "******** Testing: go vet ********"
-go vet ./...
+set +e
+go_vet_result=$(go 2>&1 vet ./...)
+go_vet_rc=$?
+set -e
+
+echo "$go_vet_result"
+go_vet_result_lines=$(echo "$go_vet_result" | wc -l)
+if [ $go_vet_rc -ne 0 ]; then
+  if [[ $go_vet_result_lines == 2 && $go_vet_result == *objectbox/c-callbacks.go*possible\ misuse\ of\ unsafe.Pointer* ]]; then
+    echo "Ignoring known false positive of go vet"
+  else
+    echo "go vet failed ($go_vet_rc)"
+    exit $go_vet_rc
+  fi
+fi
 
 echo "******** Testing: go test ********"
 go test "$@" ./...

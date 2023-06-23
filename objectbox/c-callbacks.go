@@ -124,6 +124,7 @@ var cCallbackMap = make(map[cCallbackId]cCallable)
 
 // The result is actually not a memory pointer, just a number. That's also how it's used in cCallbackLookup().
 func (cbId cCallbackId) cPtr() unsafe.Pointer {
+	//goland:noinspection GoVetUnsafePointer
 	return unsafe.Pointer(uintptr(cbId))
 }
 

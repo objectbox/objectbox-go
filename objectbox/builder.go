@@ -149,7 +149,7 @@ func (builder *Builder) BuildOrError() (*ObjectBox, error) {
 	}
 
 	if builder.maxSizeInKb != nil {
-		C.obx_opt_max_db_size_in_kb(cOptions, C.size_t(*builder.maxSizeInKb))
+		C.obx_opt_max_db_size_in_kb(cOptions, C.uint64_t(*builder.maxSizeInKb))
 	}
 
 	if builder.maxReaders != nil {

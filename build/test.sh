@@ -30,7 +30,7 @@ set -e
 echo "$go_vet_result"
 go_vet_result_lines=$(echo "$go_vet_result" | wc -l)
 if [ $go_vet_rc -ne 0 ]; then
-  if [[ $go_vet_result_lines == 2 && $go_vet_result == *objectbox/c-callbacks.go*possible\ misuse\ of\ unsafe.Pointer* ]]; then
+  if [[ $go_vet_result_lines -eq 2 && $go_vet_result == *objectbox[/\\]c-callbacks.go*possible\ misuse\ of\ unsafe.Pointer* ]]; then
     echo "Ignoring known false positive of go vet"
     go_vet_rc=0
   else

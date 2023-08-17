@@ -32,7 +32,7 @@ import (
 //export dataVisitorDispatch
 // This function finds the data visitor (based on the pointer to the visitorId) and calls it with the given data
 // NOTE: don't change ptr contents, it's `const void*` in C but go doesn't support const pointers
-func dataVisitorDispatch(visitorIdPtr unsafe.Pointer, data unsafe.Pointer, size C.size_t) C.bool {
+func dataVisitorDispatch(data unsafe.Pointer, size C.size_t, visitorIdPtr unsafe.Pointer) C.bool {
 	var visitorId = *(*uint32)(visitorIdPtr)
 
 	// create an empty byte slice and map the C data to it, no copy required

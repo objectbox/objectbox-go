@@ -34,7 +34,7 @@
 #include "objectbox.h"
 
 #if defined(static_assert) || defined(__cplusplus)
-static_assert(OBX_VERSION_MAJOR == 0 && OBX_VERSION_MINOR == 18 && OBX_VERSION_PATCH == 1,  // NOLINT
+static_assert(OBX_VERSION_MAJOR == 0 && OBX_VERSION_MINOR == 21 && OBX_VERSION_PATCH == 0,  // NOLINT
               "Versions of objectbox.h and objectbox-sync.h files do not match, please update");
 #endif
 
@@ -51,10 +51,16 @@ extern "C" {
 struct OBX_sync;
 typedef struct OBX_sync OBX_sync;
 
+/// Specifies user-side credential types as well as server-side authenticator types.
+/// Some credentail types do not make sense as authenticators such as OBXSyncCredentialsType_USER_PASSWORD which
+/// specifies a generic client-side credential type.
 typedef enum {
     OBXSyncCredentialsType_NONE = 1,
     OBXSyncCredentialsType_SHARED_SECRET = 2,
     OBXSyncCredentialsType_GOOGLE_AUTH = 3,
+    OBXSyncCredentialsType_SHARED_SECRET_SIPPED = 4,
+    OBXSyncCredentialsType_OBX_ADMIN_USER = 5,
+    OBXSyncCredentialsType_USER_PASSWORD = 6,
 } OBXSyncCredentialsType;
 
 // TODO sync prefix
@@ -90,6 +96,13 @@ typedef enum {
     OBXSyncCode_CLIENT_ID_TAKEN = 61,
     OBXSyncCode_TX_VIOLATED_UNIQUE = 71,
 } OBXSyncCode;
+
+/// Sync-level error reporting codes, passed via obx_sync_listener_error().
+typedef enum {
+    /// Sync client received rejection of transaction writes due to missing permissions.
+    /// Until reconnecting with new credentials client will run in receive-only mode.
+    OBXSyncError_REJECT_TX_NO_PERMISSION = 1
+} OBXSyncError;
 
 typedef enum {
     OBXSyncObjectType_FlatBuffers = 1,
@@ -150,6 +163,11 @@ typedef void OBX_sync_listener_login_failure(void* arg, OBXSyncCode code);
 /// @param arg is a pass-through argument passed to the called API
 typedef void OBX_sync_listener_complete(void* arg);
 
+/// Callend when sync-level errors occur
+/// @param arg is a pass-through argument passed to the called API
+/// @param error error code indicating sync-level error events
+typedef void OBX_sync_listener_error(void* arg, OBXSyncError error);
+
 /// Called with fine grained sync changes (IDs of put and removed entities)
 /// @param arg is a pass-through argument passed to the called API
 typedef void OBX_sync_listener_change(void* arg, const OBX_sync_change_array* changes);
@@ -168,6 +186,10 @@ typedef void OBX_sync_listener_msg_objects(void* arg, const OBX_sync_msg_objects
 /// To configure this differently, call obx_sync_request_updates_mode() with the wanted mode.
 OBX_C_API OBX_sync* obx_sync(OBX_store* store, const char* server_url);
 
+/// Creates a sync client associated with the given store and a list of sync server URL.
+/// For details, see obx_sync()
+OBX_C_API OBX_sync* obx_sync_urls(OBX_store* store, const char* server_urls[], size_t server_urls_count);
+
 /// Stops and closes (deletes) the sync client, freeing its resources.
 OBX_C_API obx_err obx_sync_close(OBX_sync* sync);
 
@@ -176,6 +198,14 @@ OBX_C_API obx_err obx_sync_close(OBX_sync* sync);
 /// The accepted OBXSyncCredentials type depends on your sync-server configuration.
 /// @param data may be NULL in combination with OBXSyncCredentialsType_NONE
 OBX_C_API obx_err obx_sync_credentials(OBX_sync* sync, OBXSyncCredentialsType type, const void* data, size_t size);
+
+/// Set username/password credentials to authenticate the client with the server.
+/// This is suitable for OBXSyncCredentialsType_OBX_ADMIN_USER and OBXSyncCredentialsType_USER_PASSWORD credential
+/// types. Use obx_sync_credentials() for other credential types.
+/// @param type should be OBXSyncCredentialsType_OBX_ADMIN_USER or OBXSyncCredentialsType_USER_PASSWORD
+/// @returns OBX_ERROR_ILLEGAL_ARGUMENT if credential type does not support username/password authentication.
+OBX_C_API obx_err obx_sync_credentials_user_password(OBX_sync* sync, OBXSyncCredentialsType type, const char* username,
+                                                     const char* password);
 
 /// Configures the maximum number of outgoing TX messages that can be sent without an ACK from the server.
 /// @returns OBX_ERROR_ILLEGAL_ARGUMENT if value is not in the range 1-20
@@ -343,6 +373,50 @@ OBX_C_API void obx_sync_listener_server_time(OBX_sync* sync, OBX_sync_listener_s
 OBX_C_API void obx_sync_listener_msg_objects(OBX_sync* sync, OBX_sync_listener_msg_objects* listener,
                                              void* listener_arg);
 
+/// Set or overwrite a previously set 'error' listener - provides information about occurred sync-level errors.
+/// @param listener set NULL to reset
+/// @param listener_arg is a pass-through argument passed to the listener
+OBX_C_API void obx_sync_listener_error(OBX_sync* sync, OBX_sync_listener_error* error, void* listener_arg);
+
+//----------------------------------------------
+// Sync Stats
+//----------------------------------------------
+
+/// Stats counter type IDs as passed to obx_sync_stats_u64().
+typedef enum {
+    /// Total number of connects (u64)
+    OBXSyncStats_connects = 1,
+
+    /// Total number of succesful logins (u64)
+    OBXSyncStats_logins = 2,
+
+    /// Total number of messages received (u64)
+    OBXSyncStats_messagesReceived = 3,
+
+    /// Total number of messages sent (u64)
+    OBXSyncStats_messagesSent = 4,
+
+    /// Total number of errors during message sending (u64)
+    OBXSyncStats_messageSendFailures = 5,
+
+    /// Total number of bytes received via messages.
+    /// Note: this is measured on the application level and thus may not match e.g. the network level. (u64)
+    OBXSyncStats_messageBytesReceived = 6,
+
+    /// Total number of bytes sent via messages.
+    /// Note: this is measured on the application level and thus may not match e.g. the network level.
+    /// E.g. messages may be still enqueued so at least the timing will differ. (u64)
+    OBXSyncStats_messageBytesSent = 7,
+
+} OBXSyncStats;
+
+/// Get u64 value for sync statistics.
+/// @param counter_type the counter value to be read.
+/// @param out_count receives the counter value.
+/// @return OBX_SUCCESS if the counter has been successfully retrieved.
+/// @return OBX_ERROR_ILLEGAL_ARGUMENT if counter_type is undefined.
+OBX_C_API obx_err obx_sync_stats_u64(OBX_sync* sync, OBXSyncStats counter_type, uint64_t* out_count);
+
 struct OBX_sync_server;
 typedef struct OBX_sync_server OBX_sync_server;
 
@@ -384,6 +458,12 @@ OBX_C_API obx_err obx_sync_server_certificate_path(OBX_sync_server* server, cons
 /// @param data may be NULL in combination with OBXSyncCredentialsType_NONE
 OBX_C_API obx_err obx_sync_server_credentials(OBX_sync_server* server, OBXSyncCredentialsType type, const void* data,
                                               size_t size);
+
+/// Enables authenticator for server. Can be called multiple times. Use before obx_sync_server_start().
+/// Use obx_sync_server_credentials() for authenticators which requires additional credentials data (i.e. Google Auth
+/// and shared secrets authenticators).
+/// @param type should be one of the available authentications, it should not be OBXSyncCredentialsType_USER_PASSWORD.
+OBX_C_API obx_err obx_sync_server_enable_auth(OBX_sync_server* server, OBXSyncCredentialsType type);
 
 /// Sets the number of worker threads. Use before obx_sync_server_start().
 /// @param thread_count The default is "0" which is hardware dependent, e.g. a multiple of CPU "cores".
@@ -431,6 +511,192 @@ OBX_C_API uint16_t obx_sync_server_port(OBX_sync_server* server);
 
 /// Returns the number of clients connected to this server.
 OBX_C_API uint64_t obx_sync_server_connections(OBX_sync_server* server);
+
+//----------------------------------------------
+// Sync Server Stats
+//----------------------------------------------
+
+/// Stats counter type IDs as passed to obx_sync_server_stats_u64() (for u64 values) and obx_sync_server_stats_f64()
+/// (for double (f64) values).
+typedef enum {
+    /// Total number of client connections established (u64)
+    OBXSyncServerStats_connects = 1,
+
+    /// Total number of messages received from clients (u64)
+    OBXSyncServerStats_messagesReceived = 2,
+
+    /// Total number of messages sent to clients (u64)
+    OBXSyncServerStats_messagesSent = 3,
+
+    /// Total number of bytes received from clients via messages. (u64)
+    /// Note: this is measured on the application level and thus may not match e.g. the network level.
+    OBXSyncServerStats_messageBytesReceived = 4,
+
+    /// Total number of bytes sent to clients via messages. (u64)
+    /// Note: this is measured on the application level and thus may not match e.g. the network level.
+    /// E.g. messages may be still enqueued so at least the timing will differ.
+    OBXSyncServerStats_messageBytesSent = 5,
+
+    /// Full syncs performed (u64)
+    OBXSyncServerStats_fullSyncs = 6,
+
+    /// Processing was aborted due to clients disconnected (u64)
+    OBXSyncServerStats_disconnectAborts = 7,
+
+    /// Total number of client transactions applied (u64)
+    OBXSyncServerStats_clientTxsApplied = 8,
+
+    /// Total size in bytes of client transactions applied (u64)
+    OBXSyncServerStats_clientTxBytesApplied = 9,
+
+    /// Total size in number of operations of transactions applied (u64)
+    OBXSyncServerStats_clientTxOpsApplied = 10,
+
+    /// Total number of local (server initiated) transactions applied (u64)
+    OBXSyncServerStats_localTxsApplied = 11,
+
+    /// AsyncQ committed TXs (u64)
+    OBXSyncServerStats_asyncDbCommits = 12,
+
+    /// Total number of skipped transactions duplicates (have been already applied before) (u64)
+    OBXSyncServerStats_skippedTxDups = 13,
+
+    /// Total number of login successes (u64)
+    OBXSyncServerStats_loginSuccesses = 14,
+
+    /// Total number of login failures (u64)
+    OBXSyncServerStats_loginFailures = 15,
+
+    /// Total number of login failures due to bad user credentials (u64)
+    OBXSyncServerStats_loginFailuresUserBadCredentials = 16,
+
+    /// Total number of login failures due to authenticator not available (u64)
+    OBXSyncServerStats_loginFailuresAuthUnavailable = 17,
+
+    /// Total number of login failures due to user has no permissions (u64)
+    OBXSyncServerStats_loginFailuresUserNoPermission = 18,
+
+    /// Total number of errors during message sending (u64)
+    OBXSyncServerStats_messageSendFailures = 19,
+
+    /// Total number of protocol errors; e.g. offending clients (u64)
+    OBXSyncServerStats_errorsProtocol = 20,
+
+    /// Total number of errors in message handlers (u64)
+    OBXSyncServerStats_errorsInHandlers = 21,
+
+    /// Total number of times a client has been disconnected due to heart failure (u64)
+    OBXSyncServerStats_heartbeatFailures = 22,
+
+    /// Total number of received client heartbeats (u64)
+    OBXSyncServerStats_heartbeatsReceived = 23,
+
+    /// Total APPLY_TX messages HistoryPusher has sent out (u64)
+    OBXSyncServerStats_historicUpdateTxsSent = 24,
+
+    /// Total APPLY_TX messages newDataPusher has sent out (u64)
+    OBXSyncServerStats_newUpdateTxsSent = 25,
+
+    /// Total number of messages received from clients (u64)
+    OBXSyncServerStats_forwardedMessagesReceived = 26,
+
+    /// Total number of messages sent to clients (u64)
+    OBXSyncServerStats_forwardedMessagesSent = 27,
+
+    /// Total number of global-to-local cache hits (u64)
+    OBXSyncServerStats_cacheGlobalToLocalHits = 28,
+
+    /// Total number of global-to-local cache misses (u64)
+    OBXSyncServerStats_cacheGlobalToLocalMisses = 29,
+
+    /// Internal dev stat for ID Map caching  (u64)
+    OBXSyncServerStats_cacheGlobalToLocalSize = 30,
+
+    /// Internal dev stat for ID Map caching  (u64)
+    OBXSyncServerStats_cachePeerToLocalHits = 31,
+
+    /// Internal dev stat for ID Map caching  (u64)
+    OBXSyncServerStats_cachePeerToLocalMisses = 32,
+
+    /// Internal dev stat for ID Map caching  (u64)
+    OBXSyncServerStats_cacheLocalToPeerHits = 33,
+
+    /// Internal dev stat for ID Map caching  (u64)
+    OBXSyncServerStats_cacheLocalToPeerMisses = 34,
+
+    /// Internal dev stat for ID Map caching  (u64)
+    OBXSyncServerStats_cachePeerSize = 35,
+
+    /// Current cluster peer state (0 = unknown, 1 = leader, 2 = follower, 3 = candidate) (u64)
+    OBXSyncServerStats_clusterPeerState = 36,
+
+    /// Number of transactions between the current Tx and the oldest Tx currently ACKed on any client (current)
+    /// (f64)
+    OBXSyncServerStats_clientTxsBehind = 37,
+
+    /// Number of transactions between the current Tx and the oldest Tx currently ACKed on any client (minimum)
+    /// (u64)
+    OBXSyncServerStats_clientTxsBehind_min = 38,
+
+    /// Number of transactions between the current Tx and the oldest Tx currently ACKed on any client (maximum)
+    /// (u64)
+    OBXSyncServerStats_clientTxsBehind_max = 39,
+
+    /// Number of connected clients (current) (f64)
+    OBXSyncServerStats_connectedClients = 40,
+
+    /// Number of connected clients (minimum) (u64)
+    OBXSyncServerStats_connectedClients_min = 41,
+
+    /// Number of connected clients (maximum) (u64)
+    OBXSyncServerStats_connectedClients_max = 42,
+
+    /// Length of the queue for regular Tasks (current) (f64)
+    OBXSyncServerStats_queueLength = 43,
+
+    /// Length of the queue for regular Tasks (minimum) (u64)
+    OBXSyncServerStats_queueLength_min = 44,
+
+    /// Length of the queue for regular Tasks (maximum) (u64)
+    OBXSyncServerStats_queueLength_max = 45,
+
+    /// Length of the async queue (current) (f64)
+    OBXSyncServerStats_queueLengthAsync = 46,
+
+    /// Length of the async queue (minimum) (u64)
+    OBXSyncServerStats_queueLengthAsync_min = 47,
+
+    /// Length of the async queue (maximum) (u64)
+    OBXSyncServerStats_queueLengthAsync_max = 48,
+
+    /// Sequence number of TX log history (current) (f64)
+    OBXSyncServerStats_txHistorySequence = 49,
+
+    /// Sequence number of TX log history (minimum) (u64)
+    OBXSyncServerStats_txHistorySequence_min = 50,
+
+    /// Sequence number of TX log history (maximum) (u64)
+    OBXSyncServerStats_txHistorySequence_max = 51,
+
+} OBXSyncServerStats;
+
+/// Get u64 value for sync server statistics.
+/// @param counter_type the counter value to be read (make sure to choose a uint64_t (u64) metric value type).
+/// @param out_count receives the counter value.
+/// @return OBX_SUCCESS if the counter has been successfully retrieved.
+/// @return OBX_ERROR_ILLEGAL_ARGUMENT if counter_type is undefined (this also happens if the wrong type is requested)
+/// @return OBX_ERROR_ILLEGAL_STATE if the server is not started.
+OBX_C_API obx_err obx_sync_server_stats_u64(OBX_sync_server* server, OBXSyncServerStats counter_type,
+                                            uint64_t* out_value);
+
+/// Get double value for sync server statistics.
+/// @param counter_type the counter value to be read (make sure to use a double (f64) metric value type).
+/// @param out_count receives the counter value.
+/// @return OBX_SUCCESS if the counter has been successfully retrieved.
+/// @return OBX_ERROR_ILLEGAL_ARGUMENT if counter_type is undefined (this also happens if the wrong type is requested)
+/// @return OBX_ERROR_ILLEGAL_STATE if the server is not started.
+OBX_C_API obx_err obx_sync_server_stats_f64(OBX_sync_server* server, OBXSyncServerStats counter_type,
+                                            double* out_value);
 
 /// Get server runtime statistics.
 /// The returned char* is valid until another call to obx_sync_server_stats_string() or the server is closed.

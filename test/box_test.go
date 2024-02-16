@@ -17,7 +17,6 @@
 package objectbox_test
 
 import (
-	"errors"
 	"github.com/objectbox/objectbox-go/test/assert"
 	"github.com/objectbox/objectbox-go/test/model"
 	"github.com/objectbox/objectbox-go/test/model/iot"
@@ -176,7 +175,8 @@ func TestPutInMemoryDB(t *testing.T) {
 	var dir = "memory:iot-test"
 	env := iot.NewTestEnvWithDir(t, dir)
 	_, err := os.Stat(dir)
-	assert.True(t, errors.Is(err, os.ErrNotExist)) // Must not exist in file system
+	assert.Err(t, err) // Must not exist in file system
+	// This is Go 1.13+ only: assert.True(t, errors.Is(err, os.ErrNotExist)) // Must not exist in file system
 	RunTestPut(t, env)
 }
 

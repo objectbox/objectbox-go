@@ -421,6 +421,7 @@ func (box *Box) RemoveIds(ids ...uint64) (uint64, error) {
 
 	var cResult C.uint64_t
 	err = cCall(func() C.obx_err {
+		defer cIds.free()
 		return C.obx_box_remove_many(box.cBox, cIds.cArray, &cResult)
 	})
 	return uint64(cResult), err
@@ -502,9 +503,11 @@ func (box *Box) GetMany(ids ...uint64) (slice interface{}, err error) {
 	if cIds, err := goIdsArrayToC(ids); err != nil {
 		return nil, err
 	} else if supportsResultArray {
+		defer cIds.free()
 		return box.readManyObjects(existingOnly, func() *C.OBX_bytes_array { return C.obx_box_get_many(box.cBox, cIds.cArray) })
 	} else {
 		var cFn = func(visitorArg unsafe.Pointer) C.obx_err {
+			defer cIds.free()
 			return C.obx_box_visit_many(box.cBox, cIds.cArray, dataVisitor, visitorArg)
 		}
 		return box.readUsingVisitor(existingOnly, cFn)
@@ -520,9 +523,11 @@ func (box *Box) GetManyExisting(ids ...uint64) (slice interface{}, err error) {
 	if cIds, err := goIdsArrayToC(ids); err != nil {
 		return nil, err
 	} else if supportsResultArray {
+		defer cIds.free()
 		return box.readManyObjects(existingOnly, func() *C.OBX_bytes_array { return C.obx_box_get_many(box.cBox, cIds.cArray) })
 	} else {
 		var cFn = func(visitorArg unsafe.Pointer) C.obx_err {
+			defer cIds.free()
 			return C.obx_box_visit_many(box.cBox, cIds.cArray, dataVisitor, visitorArg)
 		}
 		return box.readUsingVisitor(existingOnly, cFn)
@@ -643,6 +648,7 @@ func (box *Box) ContainsIds(ids ...uint64) (bool, error) {
 
 	var cResult C.bool
 	err = cCall(func() C.obx_err {
+		defer cIds.free()
 		return C.obx_box_contains_many(box.cBox, cIds.cArray, &cResult)
 	})
 	return bool(cResult), err

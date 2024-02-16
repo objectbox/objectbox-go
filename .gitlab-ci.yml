@@ -31,7 +31,7 @@ test:linux:x64:
   extends: .test:linux:x64
   parallel:
     matrix:
-      - GOVERSION: [ '1.13', '1.14', '1.15', '1.16', '1.17', '1.18', '1.19', '1.20' ]
+      - GOVERSION: [ '1.13', '1.14', '1.15', '1.16', '1.17', '1.18', '1.19', '1.20', '1.21', '1.22' ]
 
 # TODO Not working on shell runner (e.g. with default (old) version): investigate and find a working setup
 .test:linux:ARMv7hf:
@@ -42,13 +42,16 @@ test:linux:x64:
 
 test:linux:aarch64:
   extends: .test
-  tags: [ aarch64, linux, shell ]
+  tags: [ arm64, linux, docker ]
+  image: golang:$GOVERSION
   variables:
+    GOVERSION: '1.22'
     BUILD_ARGS: -test.short
 
 test:mac:x64:
   allow_failure: true  # TODO Investigate and fix
   extends: .test
+
   tags: [ x64, mac, go ]
 
 test:win:x64:

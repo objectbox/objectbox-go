@@ -187,7 +187,7 @@ func (ob *ObjectBox) getEntityByName(name string) *entity {
 // See DebugFlags* constants
 func (ob *ObjectBox) SetDebugFlags(flags uint) error {
 	return cCall(func() C.obx_err {
-		return C.obx_store_debug_flags(ob.store, C.OBXDebugFlags(flags))
+		return C.obx_store_debug_flags(ob.store, C.uint32_t(flags))
 	})
 }
 

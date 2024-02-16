@@ -23,14 +23,16 @@ fi
 
 echo "******** Testing: go vet ********"
 set +e
-go_vet_result=$(go 2>&1 vet ./...)
+# ignore '# <package>' comments to stablize checking false positive below; 
+# newer go version outputs a second-line with bracket ('# [<package]').
+go_vet_result=$(go 2>&1 vet ./... | grep -v ^#)
 go_vet_rc=$?
 set -e
 
 echo "$go_vet_result"
 go_vet_result_lines=$(echo "$go_vet_result" | wc -l)
 if [ $go_vet_rc -ne 0 ]; then
-  if [[ $go_vet_result_lines -eq 2 && $go_vet_result == *objectbox[/\\]c-callbacks.go*possible\ misuse\ of\ unsafe.Pointer* ]]; then
+  if [[ $go_vet_result_lines -eq 1 && $go_vet_result == *objectbox[/\\]c-callbacks.go*possible\ misuse\ of\ unsafe.Pointer* ]]; then
     echo "Ignoring known false positive of go vet"
     go_vet_rc=0
   else

@@ -36,7 +36,7 @@ id, err := box.Put(&Person{ FirstName: "Joe", LastName:  "Green" })
 Want details? **[Read the docs](https://golang.objectbox.io/)** or
 **[check out the API reference](https://godoc.org/github.com/objectbox/objectbox-go/objectbox)**.
 
-Latest release: [v1.7.0 (2023-06-23)](https://golang.objectbox.io/)
+Latest release: [v1.8.0 (2024-02-16)](https://golang.objectbox.io/)
 
 ## Table of Contents:
 - [High-performance Golang database](#high-performance-golang-database)
@@ -162,7 +162,7 @@ ObjectBox supports multiple platforms and languages:
 
 License
 -------
-    Copyright 2018-2022 ObjectBox Ltd. All rights reserved.
+    Copyright 2018-2024 ObjectBox Ltd. All rights reserved.
     
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.

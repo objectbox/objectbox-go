@@ -22,6 +22,7 @@ import (
 	"io/ioutil"
 	"os"
 	"strconv"
+	"testing"
 )
 
 type TestEnv struct {
@@ -44,14 +45,23 @@ func NewTestEnv() *TestEnv {
 		panic(err)
 	}
 
-	objectBox, err := objectbox.NewBuilder().Directory(tempDir).Model(ObjectBoxModel()).Build()
+	return NewTestEnvWithDir(nil, tempDir)
+}
+
+// NewTestEnvWithDir creates an empty ObjectBox instance for a given dir
+func NewTestEnvWithDir(t *testing.T, directory string) *TestEnv {
+	objectBox, err := objectbox.NewBuilder().Directory(directory).Model(ObjectBoxModel()).Build()
 	if err != nil {
 		panic(err)
+	}
+	if t != nil {
+		cwd, _ := os.Getwd()
+		t.Log("Creating store in directory:", directory, "(cwd:", cwd, ")")
 	}
 
 	return &TestEnv{
 		ObjectBox: objectBox,
-		dir:       tempDir,
+		dir:       directory,
 	}
 }
 

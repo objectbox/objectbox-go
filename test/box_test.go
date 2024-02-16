@@ -17,11 +17,12 @@
 package objectbox_test
 
 import (
-	"testing"
-
+	"errors"
 	"github.com/objectbox/objectbox-go/test/assert"
 	"github.com/objectbox/objectbox-go/test/model"
 	"github.com/objectbox/objectbox-go/test/model/iot"
+	"os"
+	"testing"
 )
 
 func TestBox(t *testing.T) {
@@ -168,6 +169,19 @@ func TestBoxBulk(t *testing.T) {
 
 func TestPut(t *testing.T) {
 	env := iot.NewTestEnv()
+	RunTestPut(t, env)
+}
+
+func TestPutInMemoryDB(t *testing.T) {
+	var dir = "memory:iot-test"
+	env := iot.NewTestEnvWithDir(t, dir)
+	_, err := os.Stat(dir)
+	assert.True(t, errors.Is(err, os.ErrNotExist)) // Must not exist in file system
+	RunTestPut(t, env)
+}
+
+// Not sure if this is the best way to "parameterize" test...
+func RunTestPut(t *testing.T, env *iot.TestEnv) {
 	defer env.Close()
 	box := iot.BoxForEvent(env.ObjectBox)
 

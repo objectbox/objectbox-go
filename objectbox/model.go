@@ -165,7 +165,7 @@ func (model *Model) EntityFlags(entityFlags int) {
 		return
 	}
 	model.Error = cCall(func() C.obx_err {
-		return C.obx_model_entity_flags(model.cModel, C.OBXEntityFlags(entityFlags))
+		return C.obx_model_entity_flags(model.cModel, C.uint32_t(entityFlags))
 	})
 }
 
@@ -216,7 +216,7 @@ func (model *Model) PropertyFlags(propertyFlags int) {
 		return
 	}
 	model.Error = cCall(func() C.obx_err {
-		return C.obx_model_property_flags(model.cModel, C.OBXPropertyFlags(propertyFlags))
+		return C.obx_model_property_flags(model.cModel, C.uint32_t(propertyFlags))
 	})
 }
 

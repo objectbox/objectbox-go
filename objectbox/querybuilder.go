@@ -225,7 +225,7 @@ func (qb *QueryBuilder) LinkManyToMany(relation *RelationToMany, conditions []Co
 func (qb *QueryBuilder) order(propertyId C.obx_schema_id, flags C.OBXOrderFlags) {
 	if qb.Err == nil {
 		qb.Err = cCall(func() C.obx_err {
-			return C.obx_qb_order(qb.cqb, propertyId, flags)
+			return C.obx_qb_order(qb.cqb, propertyId, C.uint32_t(flags))
 		})
 	}
 }

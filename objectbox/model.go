@@ -26,8 +26,8 @@ import (
 	"fmt"
 	"unsafe"
 
-	"github.com/google/flatbuffers/go"
-	"github.com/objectbox/objectbox-generator/cmd/objectbox-gogen"
+	flatbuffers "github.com/google/flatbuffers/go"
+	gogen "github.com/objectbox/objectbox-generator/v4/cmd/objectbox-gogen"
 )
 
 // ObjectBinding provides an interface for various object types to be included in the model

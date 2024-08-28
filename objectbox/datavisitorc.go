@@ -30,15 +30,16 @@ import (
 	"unsafe"
 )
 
+// "Implements" the C function obx_data_visitor and dispatches to the registered Go data visitor.
 // This function finds the data visitor (based on the pointer to the visitorId) and calls it with the given data
 // NOTE: don't change ptr contents, it's `const void*` in C but go doesn't support const pointers
 //
 //export dataVisitorDispatch
-func dataVisitorDispatch(visitorIdPtr unsafe.Pointer, data unsafe.Pointer, size C.size_t) C.bool {
-	if visitorIdPtr == nil {
+func dataVisitorDispatch(data unsafe.Pointer, size C.size_t, userData unsafe.Pointer) C.bool {
+	if userData == nil {
 		panic("Internal error: visitor ID pointer is nil")
 	}
-	var visitorId = *(*uint32)(visitorIdPtr)
+	var visitorId = *(*uint32)(userData)
 
 	// create an empty byte slice and map the C data to it, no copy required
 	var bytes []byte
@@ -48,7 +49,7 @@ func dataVisitorDispatch(visitorIdPtr unsafe.Pointer, data unsafe.Pointer, size 
 
 	var fn = dataVisitorLookup(visitorId)
 	if fn == nil {
-		panic(fmt.Sprintf("Internal error: data visitor not found for ID: %d", visitorId))
+		panic(fmt.Sprintf("Internal error: no data visitor found for ID %d", visitorId))
 	}
 
 	return C.bool(fn(bytes))

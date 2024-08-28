@@ -34,7 +34,7 @@ test:linux:x64:
       - GOVERSION: [ '1.13', '1.14', '1.15', '1.16', '1.17', '1.18', '1.19', '1.20', '1.21', '1.22' ]
 
 # TODO Not working on shell runner (e.g. with default (old) version): investigate and find a working setup
-.test:linux:ARMv7hf:
+test:linux:ARMv7hf:
   extends: .test
   tags: [ armv7hf, linux, shell ]
   variables:

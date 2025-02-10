@@ -32,6 +32,7 @@ func SyncIsAvailable() bool {
 type SyncCredentials struct {
 	cType C.OBXSyncCredentialsType
 	data  []byte
+	data2 []byte // used for passing username-password credentials
 }
 
 // SyncCredentialsNone - no credentials - usually only for development, with a server configured to accept all
@@ -55,6 +56,47 @@ func SyncCredentialsSharedSecret(data []byte) *SyncCredentials {
 func SyncCredentialsGoogleAuth(data []byte) *SyncCredentials {
 	return &SyncCredentials{
 		cType: C.OBXSyncCredentialsType_GOOGLE_AUTH,
+		data:  data,
+	}
+}
+
+// SyncCredentialsGoogleAuth - Google authentication
+func SyncCredentialsUsernamePassword(username []byte, password []byte) *SyncCredentials {
+	return &SyncCredentials{
+		cType: C.OBXSyncCredentialsType_USER_PASSWORD,
+		data:  username,
+		data2: password,
+	}
+}
+
+// SyncCredentialsJwtId - JWT authentication with an ID token
+func SyncCredentialsJwtId(data []byte) *SyncCredentials {
+	return &SyncCredentials{
+		cType: C.OBXSyncCredentialsType_JWT_ID,
+		data:  data,
+	}
+}
+
+// SyncCredentialsJwtAccess - JWT authentication with an access token
+func SyncCredentialsJwtAccess(data []byte) *SyncCredentials {
+	return &SyncCredentials{
+		cType: C.OBXSyncCredentialsType_JWT_ACCESS,
+		data:  data,
+	}
+}
+
+// SyncCredentialsJwtRefresh - JWT authentication with a refresh token
+func SyncCredentialsJwtRefresh(data []byte) *SyncCredentials {
+	return &SyncCredentials{
+		cType: C.OBXSyncCredentialsType_JWT_REFRESH,
+		data:  data,
+	}
+}
+
+// SyncCredentialsJwtCustom - JWT authentication with a custom token
+func SyncCredentialsJwtCustom(data []byte) *SyncCredentials {
+	return &SyncCredentials{
+		cType: C.OBXSyncCredentialsType_JWT_CUSTOM,
 		data:  data,
 	}
 }

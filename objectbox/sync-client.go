@@ -119,13 +119,63 @@ func (client *SyncClient) SetCredentials(credentials *SyncCredentials) error {
 		return errors.New("credentials must not be nil")
 	}
 
-	return cCall(func() C.obx_err {
-		var dataPtr unsafe.Pointer = nil
-		if len(credentials.data) > 0 {
-			dataPtr = unsafe.Pointer(&credentials.data[0])
+	if credentials.cType == C.OBXSyncCredentialsType_USER_PASSWORD {
+		return cCall(func() C.obx_err {
+			var username = C.CString(string(credentials.data[:]))
+			defer C.free(unsafe.Pointer(username))
+			var password = C.CString(string(credentials.data2[:]))
+			defer C.free(unsafe.Pointer(password))
+			return C.obx_sync_credentials_user_password(client.cClient, credentials.cType, username, password)
+		})
+	} else {
+		return cCall(func() C.obx_err {
+			var dataPtr unsafe.Pointer = nil
+			if len(credentials.data) > 0 {
+				dataPtr = unsafe.Pointer(&credentials.data[0])
+			}
+			return C.obx_sync_credentials(client.cClient, credentials.cType, dataPtr, C.size_t(len(credentials.data)))
+		})
+	}
+}
+
+// SetMultipleCredentials configures multiple authentication methods.
+func (client *SyncClient) SetMultipleCredentials(multipleCredentials []*SyncCredentials) error {
+	if len(multipleCredentials) == 0 {
+		return errors.New("credentials array must not be empty")
+	}
+
+	for i := 0; i < len(multipleCredentials); i++ {
+		credentials := multipleCredentials[i]
+		if credentials == nil {
+			return errors.New("credentials must not be nil")
 		}
-		return C.obx_sync_credentials(client.cClient, credentials.cType, dataPtr, C.size_t(len(credentials.data)))
-	})
+		var complete = i == len(multipleCredentials)-1
+
+		var err error
+		if credentials.cType == C.OBXSyncCredentialsType_USER_PASSWORD {
+			err = cCall(func() C.obx_err {
+				var username = C.CString(string(credentials.data[:]))
+				defer C.free(unsafe.Pointer(username))
+				var password = C.CString(string(credentials.data2[:]))
+				defer C.free(unsafe.Pointer(password))
+				return C.obx_sync_credentials_add_user_password(client.cClient, credentials.cType, username, password, C.bool(complete))
+			})
+		} else {
+			err = cCall(func() C.obx_err {
+				var dataPtr unsafe.Pointer = nil
+				if len(credentials.data) > 0 {
+					dataPtr = unsafe.Pointer(&credentials.data[0])
+				}
+				return C.obx_sync_credentials_add(client.cClient, credentials.cType, dataPtr, C.size_t(len(credentials.data)), C.bool(complete))
+			})
+		}
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 type syncRequestUpdatesMode uint
@@ -199,9 +249,10 @@ func (client *SyncClient) Stop() error {
 // WaitForLogin - waits for the sync client to get into the given state or until the given timeout is reached.
 // For an asynchronous alternative, please check the listeners. Start() is called automatically if it hasn't been yet.
 // Returns:
-// 		(true, nil) in case the login was successful;
-// 		(false, nil) in case of a time out;
-// 		(false, error) if an error occurred (such as wrong credentials)
+//
+//	(true, nil) in case the login was successful;
+//	(false, nil) in case of a time out;
+//	(false, error) if an error occurred (such as wrong credentials)
 func (client *SyncClient) WaitForLogin(timeout time.Duration) (successful bool, err error) {
 	if !client.started {
 		if err := client.Start(); err != nil {

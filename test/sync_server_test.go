@@ -77,7 +77,7 @@ func NewTestSyncServer(t *testing.T) *testSyncServer {
 		"--unsecured-no-authentication",
 		"--db-directory="+server.env.Directory,
 		"--bind="+server.URI(),
-		"--browser-bind=127.0.0.1:"+strconv.FormatInt(int64(findFreeTCPPort(t)), 10),
+		"--admin-bind=127.0.0.1:"+strconv.FormatInt(int64(findFreeTCPPort(t)), 10),
 	)
 	server.cmd.Stdout = &bytes.Buffer{}
 	server.cmd.Stderr = &bytes.Buffer{}

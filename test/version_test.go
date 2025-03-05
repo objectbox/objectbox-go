@@ -86,6 +86,8 @@ func TestVersion(t *testing.T) {
 	assert.True(t, objectbox.Version{Major: 0, Minor: 1, Patch: 0}.LessThan(objectbox.Version{Major: 0, Minor: 1, Patch: 1}))
 	assert.True(t, objectbox.Version{Major: 1, Minor: 1, Patch: 0}.LessThan(objectbox.Version{Major: 1, Minor: 1, Patch: 1}))
 	assert.True(t, objectbox.Version{Major: 1, Minor: 0, Patch: 1}.LessThan(objectbox.Version{Major: 1, Minor: 1, Patch: 1}))
+	assert.True(t, objectbox.Version{Major: 0, Minor: 21, Patch: 1}.LessThan(objectbox.Version{Major: 4, Minor: 1, Patch: 0}))
+	assert.True(t, objectbox.Version{Major: 0, Minor: 18, Patch: 1}.LessThan(objectbox.Version{Major: 0, Minor: 19, Patch: 0}))
 }
 
 func TestVersionLabel(t *testing.T) {

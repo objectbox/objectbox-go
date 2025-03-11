@@ -1,6 +1,6 @@
 module github.com/objectbox/objectbox-go
 
-go 1.11
+go 1.12
 
 require (
 	github.com/google/flatbuffers v23.5.26+incompatible

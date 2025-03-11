@@ -33,7 +33,7 @@ test:linux:x64:
   extends: .test:linux:x64
   parallel:
     matrix:
-      - GOVERSION: [ '1.13', '1.14', '1.15', '1.16', '1.17', '1.18', '1.19', '1.20', '1.21', '1.22' ]
+      - GOVERSION: [ '1.13', '1.14', '1.15', '1.16', '1.17', '1.18', '1.19', '1.20', '1.21', '1.22', '1.23', '1.24' ]
 
 # TODO Not working on shell runner (e.g. with default (old) version): investigate and find a working setup
 test:linux:ARMv7hf:

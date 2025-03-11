@@ -74,7 +74,6 @@ func NewTestSyncServer(t *testing.T) *testSyncServer {
 	server.env.ObjectBox.Close() // close the database so that the server can open it
 
 	server.cmd = exec.Command(execPath,
-		"--unsecured-no-authentication",
 		"--db-directory="+server.env.Directory,
 		"--bind="+server.URI(),
 		"--admin-bind=127.0.0.1:"+strconv.FormatInt(int64(findFreeTCPPort(t)), 10),

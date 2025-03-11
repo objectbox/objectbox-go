@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 ObjectBox Ltd. All rights reserved.
+ * Copyright 2018-2025 ObjectBox Ltd. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,8 +30,11 @@ func SyncIsAvailable() bool {
 
 // SyncCredentials are used to authenticate a sync client against a server.
 type SyncCredentials struct {
-	cType C.OBXSyncCredentialsType
-	data  []byte
+	cType      C.OBXSyncCredentialsType
+	data       []byte
+	dataString string
+	username   string
+	password   string
 }
 
 // SyncCredentialsNone - no credentials - usually only for development, with a server configured to accept all
@@ -56,5 +59,55 @@ func SyncCredentialsGoogleAuth(data []byte) *SyncCredentials {
 	return &SyncCredentials{
 		cType: C.OBXSyncCredentialsType_GOOGLE_AUTH,
 		data:  data,
+	}
+}
+
+// SyncCredentialsUsernamePassword - authentication with username and password
+func SyncCredentialsObxAdminUser(username string, password string) *SyncCredentials {
+	return &SyncCredentials{
+		cType:    C.OBXSyncCredentialsType_OBX_ADMIN_USER,
+		username: username,
+		password: password,
+	}
+}
+
+// SyncCredentialsUsernamePassword - authentication with username and password
+func SyncCredentialsUsernamePassword(username string, password string) *SyncCredentials {
+	return &SyncCredentials{
+		cType:    C.OBXSyncCredentialsType_USER_PASSWORD,
+		username: username,
+		password: password,
+	}
+}
+
+// SyncCredentialsJwtId - JWT authentication with an ID token
+func SyncCredentialsJwtId(data string) *SyncCredentials {
+	return &SyncCredentials{
+		cType:      C.OBXSyncCredentialsType_JWT_ID,
+		dataString: data,
+	}
+}
+
+// SyncCredentialsJwtAccess - JWT authentication with an access token
+func SyncCredentialsJwtAccess(data string) *SyncCredentials {
+	return &SyncCredentials{
+		cType:      C.OBXSyncCredentialsType_JWT_ACCESS,
+		dataString: data,
+	}
+}
+
+// SyncCredentialsJwtRefresh - JWT authentication with a refresh token
+func SyncCredentialsJwtRefresh(data string) *SyncCredentials {
+	return &SyncCredentials{
+		cType:      C.OBXSyncCredentialsType_JWT_REFRESH,
+		dataString: data,
+	}
+}
+
+// SyncCredentialsJwtCustom - JWT authentication with a custom token
+func SyncCredentialsJwtCustom(data string) *SyncCredentials {
+	return &SyncCredentials{
+		cType:      C.OBXSyncCredentialsType_JWT_CUSTOM,
+		dataString: data,
 	}
 }

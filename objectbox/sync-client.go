@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 ObjectBox Ltd. All rights reserved.
+ * Copyright 2018-2025 ObjectBox Ltd. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -115,17 +115,75 @@ func (client *SyncClient) IsClosed() bool {
 
 // SetCredentials configures authentication credentials, depending on your server config.
 func (client *SyncClient) SetCredentials(credentials *SyncCredentials) error {
+	return client.setOrAddCredentials(credentials, false, true)
+}
+
+// SetMultipleCredentials configures multiple authentication methods.
+func (client *SyncClient) SetMultipleCredentials(multipleCredentials []*SyncCredentials) error {
+	if len(multipleCredentials) == 0 {
+		return errors.New("credentials array must not be empty")
+	}
+
+	for i := 0; i < len(multipleCredentials); i++ {
+		var complete = i == len(multipleCredentials)-1
+		err := client.setOrAddCredentials(multipleCredentials[i], true, complete)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (client *SyncClient) setOrAddCredentials(credentials *SyncCredentials, doAdd bool, complete bool) error {
 	if credentials == nil {
 		return errors.New("credentials must not be nil")
 	}
 
-	return cCall(func() C.obx_err {
-		var dataPtr unsafe.Pointer = nil
-		if len(credentials.data) > 0 {
-			dataPtr = unsafe.Pointer(&credentials.data[0])
-		}
-		return C.obx_sync_credentials(client.cClient, credentials.cType, dataPtr, C.size_t(len(credentials.data)))
-	})
+	var err error
+	if credentials.cType == C.OBXSyncCredentialsType_OBX_ADMIN_USER ||
+		credentials.cType == C.OBXSyncCredentialsType_USER_PASSWORD {
+		err = cCall(func() C.obx_err {
+			var username = C.CString(credentials.username)
+			defer C.free(unsafe.Pointer(username))
+			var password = C.CString(credentials.password)
+			defer C.free(unsafe.Pointer(password))
+			if doAdd {
+				return C.obx_sync_credentials_add_user_password(client.cClient, credentials.cType, username, password,
+					C.bool(complete))
+			} else {
+				return C.obx_sync_credentials_user_password(client.cClient, credentials.cType, username, password)
+			}
+		})
+	} else if credentials.cType == C.OBXSyncCredentialsType_JWT_ID ||
+		credentials.cType == C.OBXSyncCredentialsType_JWT_ACCESS ||
+		credentials.cType == C.OBXSyncCredentialsType_JWT_REFRESH ||
+		credentials.cType == C.OBXSyncCredentialsType_JWT_CUSTOM {
+		err = cCall(func() C.obx_err {
+			var token = unsafe.Pointer(C.CString(credentials.dataString))
+			defer C.free(token)
+			var tokenLen = C.size_t(len(credentials.dataString))
+			if doAdd {
+				return C.obx_sync_credentials_add(client.cClient, credentials.cType, token, tokenLen, C.bool(complete))
+			} else {
+				return C.obx_sync_credentials(client.cClient, credentials.cType, token, tokenLen)
+			}
+		})
+	} else {
+		err = cCall(func() C.obx_err {
+			var dataPtr unsafe.Pointer = nil
+			if len(credentials.data) > 0 {
+				dataPtr = unsafe.Pointer(&credentials.data[0])
+			}
+			var dataLen = C.size_t(len(credentials.data))
+			if doAdd {
+				return C.obx_sync_credentials_add(client.cClient, credentials.cType, dataPtr, dataLen, C.bool(complete))
+			} else {
+				return C.obx_sync_credentials(client.cClient, credentials.cType, dataPtr, dataLen)
+			}
+		})
+	}
+	return err
 }
 
 type syncRequestUpdatesMode uint
@@ -199,9 +257,10 @@ func (client *SyncClient) Stop() error {
 // WaitForLogin - waits for the sync client to get into the given state or until the given timeout is reached.
 // For an asynchronous alternative, please check the listeners. Start() is called automatically if it hasn't been yet.
 // Returns:
-// 		(true, nil) in case the login was successful;
-// 		(false, nil) in case of a time out;
-// 		(false, error) if an error occurred (such as wrong credentials)
+//
+//	(true, nil) in case the login was successful;
+//	(false, nil) in case of a time out;
+//	(false, error) if an error occurred (such as wrong credentials)
 func (client *SyncClient) WaitForLogin(timeout time.Duration) (successful bool, err error) {
 	if !client.started {
 		if err := client.Start(); err != nil {

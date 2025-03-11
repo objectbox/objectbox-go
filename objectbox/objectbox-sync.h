@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2023 ObjectBox Ltd. All rights reserved.
+ * Copyright 2018-2025 ObjectBox Ltd. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@
 #include "objectbox.h"
 
 #if defined(static_assert) || defined(__cplusplus)
-static_assert(OBX_VERSION_MAJOR == 0 && OBX_VERSION_MINOR == 21 && OBX_VERSION_PATCH == 0,  // NOLINT
+static_assert(OBX_VERSION_MAJOR == 4 && OBX_VERSION_MINOR == 2 && OBX_VERSION_PATCH == 0,  // NOLINT
               "Versions of objectbox.h and objectbox-sync.h files do not match, please update");
 #endif
 
@@ -52,15 +52,23 @@ struct OBX_sync;
 typedef struct OBX_sync OBX_sync;
 
 /// Specifies user-side credential types as well as server-side authenticator types.
-/// Some credentail types do not make sense as authenticators such as OBXSyncCredentialsType_USER_PASSWORD which
+/// Some credential types do not make sense as authenticators such as OBXSyncCredentialsType_USER_PASSWORD which
 /// specifies a generic client-side credential type.
 typedef enum {
     OBXSyncCredentialsType_NONE = 1,
-    OBXSyncCredentialsType_SHARED_SECRET = 2,
+    OBXSyncCredentialsType_SHARED_SECRET = 2,  ///< Deprecated, replaced by SHARED_SECRET_SIPPED
     OBXSyncCredentialsType_GOOGLE_AUTH = 3,
-    OBXSyncCredentialsType_SHARED_SECRET_SIPPED = 4,
-    OBXSyncCredentialsType_OBX_ADMIN_USER = 5,
-    OBXSyncCredentialsType_USER_PASSWORD = 6,
+    OBXSyncCredentialsType_SHARED_SECRET_SIPPED = 4,  ///< Uses shared secret to create a hashed credential.
+    OBXSyncCredentialsType_OBX_ADMIN_USER = 5,        ///< ObjectBox admin users (username/password)
+    OBXSyncCredentialsType_USER_PASSWORD = 6,         ///< Generic credential type suitable for ObjectBox admin
+                                                      ///< (and possibly others in the future)
+    OBXSyncCredentialsType_JWT_ID = 7,      ///< JSON Web Token (JWT): an ID token that typically provides identity
+                                            ///< information about the authenticated user.
+    OBXSyncCredentialsType_JWT_ACCESS = 8,  ///< JSON Web Token (JWT): an access token that is used to access resources.
+    OBXSyncCredentialsType_JWT_REFRESH = 9,  ///< JSON Web Token (JWT): a refresh token that is used to obtain a new
+                                             ///< access token.
+    OBXSyncCredentialsType_JWT_CUSTOM = 10,  ///< JSON Web Token (JWT): a token that is neither an ID, access,
+                                             ///< nor refresh token.
 } OBXSyncCredentialsType;
 
 // TODO sync prefix
@@ -194,8 +202,11 @@ OBX_C_API OBX_sync* obx_sync_urls(OBX_store* store, const char* server_urls[], s
 OBX_C_API obx_err obx_sync_close(OBX_sync* sync);
 
 /// Sets credentials to authenticate the client with the server.
-/// See OBXSyncCredentialsType for available options.
-/// The accepted OBXSyncCredentials type depends on your sync-server configuration.
+/// Any credentials that were set before are replaced;
+/// if you want to pass multiple credentials, use obx_sync_credentials_add() instead.
+/// If the client was waiting for credentials, this can trigger a reconnection/login attempt.
+/// @param type See OBXSyncCredentialsType for available options.
+///        The accepted OBXSyncCredentials type depends on your sync-server configuration.
 /// @param data may be NULL in combination with OBXSyncCredentialsType_NONE
 OBX_C_API obx_err obx_sync_credentials(OBX_sync* sync, OBXSyncCredentialsType type, const void* data, size_t size);
 
@@ -206,6 +217,29 @@ OBX_C_API obx_err obx_sync_credentials(OBX_sync* sync, OBXSyncCredentialsType ty
 /// @returns OBX_ERROR_ILLEGAL_ARGUMENT if credential type does not support username/password authentication.
 OBX_C_API obx_err obx_sync_credentials_user_password(OBX_sync* sync, OBXSyncCredentialsType type, const char* username,
                                                      const char* password);
+
+/// For authentication with multiple credentials, collect credentials by calling this function multiple times.
+/// When adding the last credentials element, the "complete" flag must be set to true.
+/// When completed, it will "activate" the collected credentials and replace any previously set credentials and
+/// potentially trigger a reconnection/login attempt.
+/// @param type See OBXSyncCredentialsType for available options.
+///        The accepted OBXSyncCredentials type depends on your sync-server configuration.
+/// @param data non-NULL (OBXSyncCredentialsType_NONE is not allowed)
+/// @param complete set to true when adding the last credentials element to activate the set of credentials
+OBX_C_API obx_err obx_sync_credentials_add(OBX_sync* sync, OBXSyncCredentialsType type, const void* data, size_t size,
+                                           bool complete);
+
+/// For authentication with multiple credentials, collect credentials by calling this function multiple times.
+/// When adding the last credentials element, the "complete" flag must be set to true.
+/// When completed, it will "activate" the collected credentials and replace any previously set credentials and
+/// potentially trigger a reconnection/login attempt.
+/// @param type See OBXSyncCredentialsType for available options.
+///        The accepted OBXSyncCredentials type depends on your sync-server configuration.
+/// @param username non-NULL
+/// @param password non-NULL
+/// @param complete set to true when adding the last credentials element to activate the set of credentials
+OBX_C_API obx_err obx_sync_credentials_add_user_password(OBX_sync* sync, OBXSyncCredentialsType type,
+                                                         const char* username, const char* password, bool complete);
 
 /// Configures the maximum number of outgoing TX messages that can be sent without an ACK from the server.
 /// @returns OBX_ERROR_ILLEGAL_ARGUMENT if value is not in the range 1-20
@@ -374,9 +408,9 @@ OBX_C_API void obx_sync_listener_msg_objects(OBX_sync* sync, OBX_sync_listener_m
                                              void* listener_arg);
 
 /// Set or overwrite a previously set 'error' listener - provides information about occurred sync-level errors.
-/// @param listener set NULL to reset
+/// @param listener The callback to receive sync errors. Set to NULL to reset.
 /// @param listener_arg is a pass-through argument passed to the listener
-OBX_C_API void obx_sync_listener_error(OBX_sync* sync, OBX_sync_listener_error* error, void* listener_arg);
+OBX_C_API void obx_sync_listener_error(OBX_sync* sync, OBX_sync_listener_error* listener, void* listener_arg);
 
 //----------------------------------------------
 // Sync Stats
@@ -444,6 +478,12 @@ typedef struct OBX_sync_server OBX_sync_server;
 /// @returns NULL if server could not be created (e.g. the store could not be opened, bad URL, etc.)
 OBX_C_API OBX_sync_server* obx_sync_server(OBX_store_options* store_options, const char* url);
 
+/// Like obx_sync_server(), but retrieves its options for the Sync Server from the given FlatBuffers options.
+/// @param flat_options FlatBuffers serialized options for the server (start of the bytes buffer, not the "table").
+/// @param flat_options_size Size of the FlatBuffers serialized options.
+OBX_C_API OBX_sync_server* obx_sync_server_from_flat_options(OBX_store_options* store_options, const void* flat_options,
+                                                             size_t flat_options_size);
+
 /// Stops and closes (deletes) the sync server, freeing its resources.
 /// This includes the store associated with the server; it gets closed and must not be used anymore after this call.
 OBX_C_API obx_err obx_sync_server_close(OBX_sync_server* server);
@@ -478,6 +518,20 @@ OBX_C_API obx_err obx_sync_server_worker_threads(OBX_sync_server* server, int th
 ///                     If zero, the deletion stops already stops when reaching the max size (or lower).
 OBX_C_API obx_err obx_sync_server_history_max_size_in_kb(OBX_sync_server* server, uint64_t max_in_kb,
                                                          uint64_t target_in_kb);
+
+/// Configures the cluster ID for the given embedded server (the cluster feature must be enabled).
+/// @param id A user defined string to identify the cluster (all cluster peer must share the same ID).
+OBX_C_API obx_err obx_sync_server_cluster_id(OBX_sync_server* server, const char* id);
+
+/// Adds a remote cluster peer that can be connected to using the given URL and credentials.
+/// Call this method multiple times to add multiple peers (at least 2 times for a cluster of 3).
+/// @param url URL to the remote cluster peer used to connect it.
+/// @param flags For now, always pass 0.
+/// @param credentials the credentials provided to the remote peer to login (it must match the remote's configuration).
+///        May be NULL in combination with OBXSyncCredentialsType_NONE.
+OBX_C_API obx_err obx_sync_server_add_cluster_peer(OBX_sync_server* server, const char* url,
+                                                   OBXSyncCredentialsType credentials_type, const void* credentials,
+                                                   size_t credentials_size, uint32_t flags);
 
 /// Set or overwrite a previously set 'change' listener - provides information about incoming changes.
 /// @param listener set NULL to reset
@@ -682,7 +736,7 @@ typedef enum {
 
 /// Get u64 value for sync server statistics.
 /// @param counter_type the counter value to be read (make sure to choose a uint64_t (u64) metric value type).
-/// @param out_count receives the counter value.
+/// @param out_value receives the counter value.
 /// @return OBX_SUCCESS if the counter has been successfully retrieved.
 /// @return OBX_ERROR_ILLEGAL_ARGUMENT if counter_type is undefined (this also happens if the wrong type is requested)
 /// @return OBX_ERROR_ILLEGAL_STATE if the server is not started.
@@ -691,7 +745,7 @@ OBX_C_API obx_err obx_sync_server_stats_u64(OBX_sync_server* server, OBXSyncServ
 
 /// Get double value for sync server statistics.
 /// @param counter_type the counter value to be read (make sure to use a double (f64) metric value type).
-/// @param out_count receives the counter value.
+/// @param out_value receives the counter value.
 /// @return OBX_SUCCESS if the counter has been successfully retrieved.
 /// @return OBX_ERROR_ILLEGAL_ARGUMENT if counter_type is undefined (this also happens if the wrong type is requested)
 /// @return OBX_ERROR_ILLEGAL_STATE if the server is not started.
@@ -765,7 +819,7 @@ typedef void OBX_custom_msg_server_func_client_connection_close(void* server_use
 /// Callback to shutdown and free all resources associated with the sync client connection to the custom server.
 /// Note that the custom server may already have been shutdown at this point (e.g. no server user data is supplied).
 /// Must be provided to implement a custom server. See notes on OBX_custom_msg_server_functions for more details.
-/// @param server_user_data User supplied data returned by the function that created the server
+/// @param connection_user_data User supplied data returned by the function that created the server
 typedef void OBX_custom_msg_server_func_client_connection_shutdown(void* connection_user_data);
 
 /// Struct of the custom server function callbacks. In order to implement the custom server, you must provide

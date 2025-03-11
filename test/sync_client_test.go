@@ -75,6 +75,10 @@ func TestSyncAuth(t *testing.T) {
 	assert.Err(t, client.SetCredentials(nil))
 	assert.NoErr(t, client.SetCredentials(objectbox.SyncCredentialsSharedSecret([]byte{1, 2, 3})))
 	assert.NoErr(t, client.SetCredentials(objectbox.SyncCredentialsGoogleAuth([]byte{4, 5, 6})))
+	assert.NoErr(t, client.SetCredentials(objectbox.SyncCredentialsJwtId("{}")))
+	assert.NoErr(t, client.SetCredentials(objectbox.SyncCredentialsJwtAccess("{}")))
+	assert.NoErr(t, client.SetCredentials(objectbox.SyncCredentialsJwtRefresh("{}")))
+	assert.NoErr(t, client.SetCredentials(objectbox.SyncCredentialsJwtCustom("{}")))
 	assert.NoErr(t, client.Close())
 }
 
@@ -466,6 +470,106 @@ func TestSyncLoginListener(t *testing.T) {
 	assert.NoErr(t, env.SyncClient().SetCredentials(objectbox.SyncCredentialsNone()))
 	assert.StringChannelExpect(t, "success", messages, env.defaultTimeout)
 	assert.StringChannelMustTimeout(t, messages, env.defaultTimeout/10) // no more messages
+}
+
+func TestSyncJwtLoginValidToken(t *testing.T) {
+	var env = NewSyncTestEnv(t)
+	defer env.Close()
+
+	var messages = make(chan string, 10)
+
+	assert.NoErr(t, env.SyncClient().SetLoginListener(func() { messages <- "success" }))
+	assert.NoErr(t, env.SyncClient().SetLoginFailureListener(func(code objectbox.SyncLoginFailure) { messages <- "failure " + strconv.FormatUint(uint64(code), 10) }))
+
+	// Valid JWT token
+	var jwtToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiJzeW5jLXNlcnZlciIsImlzcyI6Im9iamVjdGJveC1hdXRoIn0.YZSt5XIp7KLSIEtYegEGInea2IvyZajEOWEXcH8p0kYTvhU07LFcxbPWxnNeBtQSjkGp0U0XQUQkCaRjRbNDiHKHCtQHOsUtLefAfQc-WENzSSrGqbb7YKw7FHgsGCQX7FRblcdw3ExU9w8NBgt0xQaDqnwBYfltfu6bmJG5QabGnljcmLGB3Q5EcppxBgWZdLzhmVRiqkiIsCp8kBtELz3Lk8a2LIJP80khJWdls1zIK_NR0XtV6Dbbac1fFN0v5F2VN61VjL9HXZWm68zf2ueW_jobN8IBcJkOAfefgsQu_1e5B0iVAxyRki6F99V1B8Ci_5wbTXRs4bob1Nsl2Q"
+	assert.StringChannelMustTimeout(t, messages, env.defaultTimeout/10)
+	assert.NoErr(t, env.SyncClient().SetCredentials(objectbox.SyncCredentialsJwtId(jwtToken)))
+	assert.NoErr(t, env.SyncClient().Start())
+	assert.StringChannelExpect(t, "success", messages, env.defaultTimeout)
+	assert.StringChannelMustTimeout(t, messages, env.defaultTimeout/10)
+}
+
+func TestSyncJwtLoginInvalidToken(t *testing.T) {
+	var env = NewSyncTestEnv(t)
+	defer env.Close()
+
+	var messages = make(chan string, 10)
+
+	assert.NoErr(t, env.SyncClient().SetLoginListener(func() { messages <- "success" }))
+	assert.NoErr(t, env.SyncClient().SetLoginFailureListener(func(code objectbox.SyncLoginFailure) { messages <- "failure " + strconv.FormatUint(uint64(code), 10) }))
+
+	// Invalid JWT token (expired)
+	var expiredJwtToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiJzeW5jLXNlcnZlciIsImlzcyI6Im9iamVjdGJveC1hdXRoIiwiZXhwIjoxNzM4MjE1NjAwLCJpYXQiOjE3MzgyMTc0MDN9.3auqtgaSEqpFqXhuCyoDM-LbfTOIEGGF6X0AjCcykJ2Nv1WN6LaVbuMDjMf-tKSLyeqFkzQbIckP4FvLHh7wQJ6rafDiT4H2pb6xhouU1QH3szK2S_7VDl_4BhxRbW5pEUt9086HXaVFHEZVS0417pxomlPHxrc1n4Z_A4QxZM5_xh5xcHV8PiGgXWb6_2basjBj5z6POTrazRs67IOQ-ob6ROIsOUGu3om6b8i0h_QSMmeJbujfr2EZqhYWTKijeyidbjRWZ97NFxtGRYN_jPOvy-T3gANXs2a32Er8XvgZTjr_-O8tl_1fHPo2kDE-UCNdwUfBQFhTokDUdJ81bg"
+	assert.NoErr(t, env.SyncClient().SetCredentials(objectbox.SyncCredentialsJwtId(expiredJwtToken)))
+	assert.NoErr(t, env.SyncClient().Start())
+	assert.StringChannelExpect(t, "failure 43", messages, env.defaultTimeout)
+	assert.StringChannelMustTimeout(t, messages, env.defaultTimeout/10)
+}
+
+// func TestSyncMultipleCredentialsSuccess(t *testing.T) {
+// 	var env = NewSyncTestEnv(t)
+// 	defer env.Close()
+
+// 	var messages = make(chan string, 10)
+
+// 	assert.NoErr(t, env.SyncClient().SetLoginListener(func() { messages <- "success" }))
+// 	assert.NoErr(t, env.SyncClient().SetLoginFailureListener(func(code objectbox.SyncLoginFailure) { messages <- "failure " + strconv.FormatUint(uint64(code), 10) }))
+
+// 	// Valid JWT token (valid)
+// 	var jwtToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiJzeW5jLXNlcnZlciIsImlzcyI6Im9iamVjdGJveC1hdXRoIn0.YZSt5XIp7KLSIEtYegEGInea2IvyZajEOWEXcH8p0kYTvhU07LFcxbPWxnNeBtQSjkGp0U0XQUQkCaRjRbNDiHKHCtQHOsUtLefAfQc-WENzSSrGqbb7YKw7FHgsGCQX7FRblcdw3ExU9w8NBgt0xQaDqnwBYfltfu6bmJG5QabGnljcmLGB3Q5EcppxBgWZdLzhmVRiqkiIsCp8kBtELz3Lk8a2LIJP80khJWdls1zIK_NR0XtV6Dbbac1fFN0v5F2VN61VjL9HXZWm68zf2ueW_jobN8IBcJkOAfefgsQu_1e5B0iVAxyRki6F99V1B8Ci_5wbTXRs4bob1Nsl2Q"
+// 	// Shared secret (valid)
+// 	var invalidSharedSecret = "shared-secret"
+// 	assert.StringChannelMustTimeout(t, messages, env.defaultTimeout/10)
+// 	assert.NoErr(t, env.SyncClient().SetMultipleCredentials([]*objectbox.SyncCredentials{
+// 		objectbox.SyncCredentialsJwtId([]byte(jwtToken)),
+// 		objectbox.SyncCredentialsSharedSecret([]byte(invalidSharedSecret)),
+// 	}))
+// 	assert.NoErr(t, env.SyncClient().Start())
+// 	assert.StringChannelExpect(t, "success", messages, env.defaultTimeout)
+// 	assert.StringChannelMustTimeout(t, messages, env.defaultTimeout/10)
+// }
+
+func TestSyncMultipleCredentialsFailure(t *testing.T) {
+	var env = NewSyncTestEnv(t)
+	defer env.Close()
+
+	var messages = make(chan string, 10)
+
+	assert.NoErr(t, env.SyncClient().SetLoginListener(func() { messages <- "success" }))
+	assert.NoErr(t, env.SyncClient().SetLoginFailureListener(func(code objectbox.SyncLoginFailure) { messages <- "failure " + strconv.FormatUint(uint64(code), 10) }))
+
+	// Valid JWT token (valid)
+	var jwtToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiJzeW5jLXNlcnZlciIsImlzcyI6Im9iamVjdGJveC1hdXRoIn0.YZSt5XIp7KLSIEtYegEGInea2IvyZajEOWEXcH8p0kYTvhU07LFcxbPWxnNeBtQSjkGp0U0XQUQkCaRjRbNDiHKHCtQHOsUtLefAfQc-WENzSSrGqbb7YKw7FHgsGCQX7FRblcdw3ExU9w8NBgt0xQaDqnwBYfltfu6bmJG5QabGnljcmLGB3Q5EcppxBgWZdLzhmVRiqkiIsCp8kBtELz3Lk8a2LIJP80khJWdls1zIK_NR0XtV6Dbbac1fFN0v5F2VN61VjL9HXZWm68zf2ueW_jobN8IBcJkOAfefgsQu_1e5B0iVAxyRki6F99V1B8Ci_5wbTXRs4bob1Nsl2Q"
+	// Shared secret (invalid)
+	var invalidSharedSecret = "invalid-shared-secret"
+	assert.StringChannelMustTimeout(t, messages, env.defaultTimeout/10)
+	assert.NoErr(t, env.SyncClient().SetMultipleCredentials([]*objectbox.SyncCredentials{
+		objectbox.SyncCredentialsJwtId(jwtToken),
+		objectbox.SyncCredentialsSharedSecret([]byte(invalidSharedSecret)),
+	}))
+	assert.NoErr(t, env.SyncClient().Start())
+	assert.StringChannelExpect(t, "failure 43", messages, env.defaultTimeout)
+	assert.StringChannelMustTimeout(t, messages, env.defaultTimeout/10)
+}
+
+func TestSyncUserPasswordLogin(t *testing.T) {
+	var env = NewSyncTestEnv(t)
+	defer env.Close()
+
+	var messages = make(chan string, 10)
+
+	assert.NoErr(t, env.SyncClient().SetLoginListener(func() { messages <- "success" }))
+	assert.NoErr(t, env.SyncClient().SetLoginFailureListener(func(code objectbox.SyncLoginFailure) { messages <- "failure " + strconv.FormatUint(uint64(code), 10) }))
+
+	// Valid JWT token
+	var user = ""
+	var password = ""
+	assert.StringChannelMustTimeout(t, messages, env.defaultTimeout/10)
+	assert.NoErr(t, env.SyncClient().SetCredentials(objectbox.SyncCredentialsUsernamePassword(user, password)))
+	assert.NoErr(t, env.SyncClient().Start())
+	assert.StringChannelExpect(t, "success", messages, env.defaultTimeout)
+	assert.StringChannelMustTimeout(t, messages, env.defaultTimeout/10)
 }
 
 func TestSyncServerTimeListener(t *testing.T) {

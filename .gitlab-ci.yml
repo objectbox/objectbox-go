@@ -22,7 +22,9 @@ test:linux:x64:old:
   extends: .test:linux:x64
   parallel:
     matrix:
-      - GOVERSION: [ '1.11.4', '1.12' ]
+      # Removed Go 1.11.4 here, as it results in linker error with ObjectBox 4.1.0 (and probably before):
+      # "libobjectbox.so: undefined reference to `logf@GLIBC_2.27'"
+      - GOVERSION: [ '1.12' ]
         BUILD_ARGS: -test.short
   before_script:
     - rm go.sum   # issues with checksum mismatch, if anyone still uses old Go, they may need to delete go.sum

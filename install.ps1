@@ -7,7 +7,7 @@ $ErrorActionPreference = "Stop"
 # Configure supported HTTPS protocols
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12, [Net.SecurityProtocolType]::Tls11, [Net.SecurityProtocolType]::Tls
 
-$libVersion = '0.21.0'
+$libVersion = '4.2.0'
 $libVariant = 'objectbox'  # or 'objectbox-sync'
 $downloadDir = 'download'
 $extractedLibDir = "$downloadDir\objectbox-$libVersion"

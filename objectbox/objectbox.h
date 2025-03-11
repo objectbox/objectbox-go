@@ -52,7 +52,7 @@ extern "C" {
 /// When using ObjectBox as a dynamic library, you should verify that a compatible version was linked using
 /// obx_version() or obx_version_is_at_least().
 #define OBX_VERSION_MAJOR 4
-#define OBX_VERSION_MINOR 1
+#define OBX_VERSION_MINOR 2
 #define OBX_VERSION_PATCH 0  // values >= 100 are reserved for dev releases leading to the next minor/major increase
 
 //----------------------------------------------
@@ -615,6 +615,76 @@ typedef enum {
     OBXPropertyFlags_EXPIRATION_TIME = 65536,
 } OBXPropertyFlags;
 
+/// A property type of an external system (e.g. another database) that has no default mapping to an ObjectBox type.
+/// External property types numeric values start at 100 to avoid overlaps with ObjectBox's PropertyType.
+/// (And if we ever support one of these as a primary type, we could share the numeric value?)
+typedef enum {
+    /// Not a real type: represents uninitialized state and can be used for forward compatibility.
+    OBXExternalPropertyType_Unknown = 0,
+    /// Representing type: ByteVector
+    /// Encoding: 1:1 binary representation, little endian (16 bytes)
+    OBXExternalPropertyType_Int128 = 100,
+    // OBXExternalPropertyType_Reserved1 = 101,
+    /// Representing type: ByteVector
+    /// Encoding: 1:1 binary representation (16 bytes)
+    OBXExternalPropertyType_Uuid = 102,
+    /// IEEE 754 decimal128 type, e.g. supported by MongoDB
+    /// Representing type: ByteVector
+    /// Encoding: 1:1 binary representation (16 bytes)
+    OBXExternalPropertyType_Decimal128 = 103,
+    // OBXExternalPropertyType_Reserved2 = 104,
+    // OBXExternalPropertyType_Reserved3 = 105,
+    // OBXExternalPropertyType_Reserved4 = 106,
+    /// A key/value map; e.g. corresponds to a JSON object or a MongoDB document (although not keeping the key order).
+    /// Unlike the Flex type, this must contain a map value (e.g. not a vector or a scalar).
+    /// Representing type: Flex
+    /// Encoding: Flex
+    OBXExternalPropertyType_FlexMap = 107,
+    /// A vector (aka list or array) of flexible elements; e.g. corresponds to a JSON array or a MongoDB array.
+    /// Unlike the Flex type, this must contain a vector value (e.g. not a map or a scalar).
+    /// Representing type: Flex
+    /// Encoding: Flex
+    OBXExternalPropertyType_FlexVector = 108,
+    /// Placeholder (not yet used) for a JSON document.
+    /// Representing type: String
+    OBXExternalPropertyType_Json = 109,
+    /// Placeholder (not yet used) for a BSON document.
+    /// Representing type: ByteVector
+    OBXExternalPropertyType_Bson = 110,
+    /// JavaScript source code
+    /// Representing type: String
+    OBXExternalPropertyType_JavaScript = 111,
+    // OBXExternalPropertyType_Reserved5 = 112,
+    // OBXExternalPropertyType_Reserved6 = 113,
+    // OBXExternalPropertyType_Reserved7 = 114,
+    // OBXExternalPropertyType_Reserved8 = 115,
+    /// A vector (array) of Int128 values
+    OBXExternalPropertyType_Int128Vector = 116,
+    // OBXExternalPropertyType_Reserved9 = 117,
+    /// A vector (array) of Int128 values
+    OBXExternalPropertyType_UuidVector = 118,
+    // OBXExternalPropertyType_Reserved10 = 119,
+    // OBXExternalPropertyType_Reserved11 = 120,
+    // OBXExternalPropertyType_Reserved12 = 121,
+    // OBXExternalPropertyType_Reserved13 = 122,
+    /// The 12-byte ObjectId type in MongoDB
+    /// Representing type: ByteVector
+    /// Encoding: 1:1 binary representation (12 bytes)
+    OBXExternalPropertyType_MongoId = 123,
+    /// A vector (array) of MongoId values
+    OBXExternalPropertyType_MongoIdVector = 124,
+    /// Representing type: Long
+    /// Encoding: Two unsigned 32-bit integers merged into a 64-bit integer.
+    OBXExternalPropertyType_MongoTimestamp = 125,
+    /// Representing type: ByteVector
+    /// Encoding: 3 zero bytes (reserved, functions as padding), fourth byte is the sub-type,
+    /// followed by the binary data.
+    OBXExternalPropertyType_MongoBinary = 126,
+    /// Representing type: string vector with 2 elements (index 0: pattern, index 1: options)
+    /// Encoding: 1:1 string representation
+    OBXExternalPropertyType_MongoRegex = 127,
+} OBXExternalPropertyType;
+
 struct OBX_model;  // doxygen (only) picks up the typedef struct below
 
 /// Model represents a database schema and must be provided when opening the store.
@@ -657,6 +727,14 @@ OBX_C_API obx_err obx_model_entity(OBX_model* model, const char* name, obx_schem
 /// @param flags See OBXEntityFlags for values (use bitwise OR to combine multiple flags)
 OBX_C_API obx_err obx_model_entity_flags(OBX_model* model, uint32_t flags);
 
+/// Set the highest ever known property id in the entity. Should always be equal to or higher than the
+/// last property id of the previous version of the entity.
+OBX_C_API obx_err obx_model_entity_last_property_id(OBX_model* model, obx_schema_id property_id, obx_uid property_uid);
+
+/// Refine the definition of the entity declared by the most recent obx_model_entity() call: set the external name.
+/// This is an optional name used in an external system, e.g. another database that ObjectBox syncs with.
+OBX_C_API obx_err obx_model_entity_external_name(OBX_model* model, const char* external_name);
+
 /// Starts the definition of a new property for the entity type of the last obx_model_entity() call.
 /// @param name A human readable name for the property. Must be unique within the entity
 /// @param type The type of property required
@@ -682,6 +760,19 @@ OBX_C_API obx_err obx_model_property_relation(OBX_model* model, const char* targ
 /// @param index_uid Used to identify relations between versions of the model. Must be globally unique.
 OBX_C_API obx_err obx_model_property_index_id(OBX_model* model, obx_schema_id index_id, obx_uid index_uid);
 
+/// Refine the definition of the property declared by the most recent obx_model_property() call: set the external name.
+/// This is an optional name used in an external system, e.g. another database that ObjectBox syncs with.
+/// @param index_id Must be unique within this version of the model
+/// @param index_uid Used to identify relations between versions of the model. Must be globally unique.
+OBX_C_API obx_err obx_model_property_external_name(OBX_model* model, const char* external_name);
+
+/// Refine the definition of the property declared by the most recent obx_model_property() call: set the external type.
+/// This is an optional type used in an external system, e.g. another database that ObjectBox syncs with.
+/// Note that the supported mappings from ObjectBox types to external types are limited.
+/// @param index_id Must be unique within this version of the model
+/// @param index_uid Used to identify relations between versions of the model. Must be globally unique.
+OBX_C_API obx_err obx_model_property_external_type(OBX_model* model, OBXExternalPropertyType external_type);
+
 /// Sets the vector dimensionality for the HNSW index of the latest property (must be of a supported vector type).
 /// This a mandatory option for all HNSW indexes.
 /// Note 1: vectors with higher dimensions than this value are also indexed (ignoring the higher elements).
@@ -702,7 +793,7 @@ OBX_C_API obx_err obx_model_property_index_hnsw_neighbors_per_node(OBX_model* mo
 /// If indexing time is not a major concern, a value of at least 200 is recommended to improve search quality.
 OBX_C_API obx_err obx_model_property_index_hnsw_indexing_search_count(OBX_model* model, uint32_t value);
 
-/// Sets flags for the HNSW index of the latest property ().
+/// Sets flags for the HNSW index of the latest property.
 /// For details see OBXHnswFlags and its individual values.
 /// @param flags See OBXHnswFlags for values (use bitwise OR to combine multiple flags)
 OBX_C_API obx_err obx_model_property_index_hnsw_flags(OBX_model* model, uint32_t flags);
@@ -728,6 +819,15 @@ OBX_C_API obx_err obx_model_property_index_hnsw_vector_cache_hint_size_kb(OBX_mo
 OBX_C_API obx_err obx_model_relation(OBX_model* model, obx_schema_id relation_id, obx_uid relation_uid,
                                      obx_schema_id target_id, obx_uid target_uid);
 
+/// Augments the previously defined relation with a name
+OBX_C_API obx_err obx_model_relation_name(OBX_model* model, const char* name);
+
+/// Augments the previously defined relation with an external name (used outside of ObjectBox)
+OBX_C_API obx_err obx_model_relation_external_name(OBX_model* model, const char* external_name);
+
+/// Augments the previously defined relation with an external type (used outside of ObjectBox)
+OBX_C_API obx_err obx_model_relation_external_type(OBX_model* model, OBXExternalPropertyType external_type);
+
 /// Set the highest ever known entity id in the model. Should always be equal to or higher than the
 /// last entity id of the previous version of the model
 OBX_C_API void obx_model_last_entity_id(OBX_model*, obx_schema_id entity_id, obx_uid entity_uid);
@@ -739,10 +839,6 @@ OBX_C_API void obx_model_last_index_id(OBX_model* model, obx_schema_id index_id,
 /// Set the highest every known relation id in the model. Should always be equal to or higher than the
 /// last relation id of the previous version of the model.
 OBX_C_API void obx_model_last_relation_id(OBX_model* model, obx_schema_id relation_id, obx_uid relation_uid);
-
-/// Set the highest ever known property id in the entity. Should always be equal to or higher than the
-/// last property id of the previous version of the entity.
-OBX_C_API obx_err obx_model_entity_last_property_id(OBX_model* model, obx_schema_id property_id, obx_uid property_uid);
 
 //----------------------------------------------
 // Store

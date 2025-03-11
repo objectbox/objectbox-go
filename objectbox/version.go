@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2024 ObjectBox Ltd. All rights reserved.
+ * Copyright 2018-2025 ObjectBox Ltd. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ func (v Version) String() string {
 // VersionGo returns the Version of the ObjectBox-Go binding
 func VersionGo() Version {
 	// for label, use `beta.0` format, increasing the counter for each subsequent release
-	return Version{1, 8, 1, ""}
+	return Version{2, 0, 0, ""}
 }
 
 // VersionLib returns the Version of the dynamic linked ObjectBox library (loaded at runtime)
